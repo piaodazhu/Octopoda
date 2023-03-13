@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	config.InitConfig()
 	logger.InitLogger()
 	network.InitListener()

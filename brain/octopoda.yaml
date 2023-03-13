@@ -1,0 +1,19 @@
+tentacleFace:
+	ip: "0.0.0.0"
+	port: 2345
+	token: "default"
+	checkInterval: 2
+	purgeMarktime: 60
+brainFace:
+	ip: "127.0.0.1"
+	port: 12345
+redis:
+	ip: "127.0.0.1"
+	port: 6537
+	db: 0
+logger:
+  path: "/root/platform"
+  namePrefix: "log"
+  rollDays: 3
+workspace:
+  root: "/root/workspace/"

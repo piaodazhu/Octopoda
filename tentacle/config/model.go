@@ -1,9 +1,10 @@
 package config
 
 type ConfigModel struct {
-	Worker WorkerModel `mapstructure:"worker"`
-	Master MasterModel `mapstructure:"master"`
-	Logger LoggerModel `mapstructure:"logger"`
+	Worker    WorkerModel    `mapstructure:"worker"`
+	Sshinfo   SshinfoModel   `mastructure:"ssh"`
+	Master    MasterModel    `mapstructure:"master"`
+	Logger    LoggerModel    `mapstructure:"logger"`
 	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
 }
 
@@ -12,6 +13,12 @@ type WorkerModel struct {
 	Name string `mapstructure:"name"`
 	Ip   string `mapstructure:"ip"`
 	Port uint16 `mapstructure:"port"`
+}
+
+type SshinfoModel struct {
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Port     uint16 `mapstructure:"port"`
 }
 
 type MasterModel struct {

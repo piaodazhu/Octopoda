@@ -3,6 +3,10 @@ worker:
   name: "pi0"
   ip: "127.0.0.1"
   port: 23456
+ssh:
+  username: "pi"
+  password: "network123"
+  port: 22
 master:
   ip: "127.0.0.1"
   port: 3456
