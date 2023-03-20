@@ -1,9 +1,9 @@
 tentacleFace:
 	ip: "0.0.0.0"
-	port: 2345
+	port: 3456
 	token: "default"
 	checkInterval: 2
-	purgeMarktime: 60
+	purgeMarkTime: 60
 brainFace:
 	ip: "127.0.0.1"
 	port: 12345
