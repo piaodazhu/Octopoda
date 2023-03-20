@@ -1,7 +1,7 @@
 package service
 
 import (
-	"nworkerd/logger"
+	"tentacle/logger"
 	"os/exec"
 )
 

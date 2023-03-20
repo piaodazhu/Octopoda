@@ -3,8 +3,7 @@ package message
 import (
 	"encoding/binary"
 	"net"
-	"nworkerd/logger"
-	"sync/atomic"
+	"tentacle/logger"
 )
 
 // type Message struct {
@@ -31,13 +30,6 @@ const (
 	TypeModVersion
 	TypeModVersionResponse
 )
-
-var Counter int64 = 0
-
-func GetVersion() int64 {
-	atomic.AddInt64(&Counter, 1)
-	return Counter
-}
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {
 	Len := len(raw)

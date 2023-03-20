@@ -2,7 +2,7 @@ package heartbeat
 
 import (
 	"encoding/json"
-	"nworkerd/logger"
+	"tentacle/logger"
 	"time"
 )
 

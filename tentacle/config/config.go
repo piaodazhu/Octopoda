@@ -18,7 +18,7 @@ func InitConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./")
-	viper.AddConfigPath("/etc/nworkerd/")
+	viper.AddConfigPath("/etc/tentacle/")
 	viper.AddConfigPath("/root/platform/")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -30,5 +30,7 @@ func InitConfig() {
 		panic("cannot unmarshal config because " + err.Error())
 	}
 
-	fmt.Printf("%+v\n", GlobalConfig)
+	if Stdout {
+		fmt.Printf("%+v\n", GlobalConfig)
+	}
 }

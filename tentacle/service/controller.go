@@ -2,8 +2,8 @@ package service
 
 import (
 	"net"
-	"nworkerd/logger"
-	"nworkerd/message"
+	"tentacle/logger"
+	"tentacle/message"
 )
 
 func InitService() {

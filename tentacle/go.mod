@@ -1,4 +1,4 @@
-module nworkerd
+module tentacle
 
 go 1.18
 

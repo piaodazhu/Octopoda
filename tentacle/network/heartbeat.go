@@ -3,11 +3,11 @@ package network
 import (
 	"fmt"
 	"net"
-	"nworkerd/config"
-	"nworkerd/heartbeat"
-	"nworkerd/logger"
-	"nworkerd/message"
-	"nworkerd/service"
+	"tentacle/config"
+	"tentacle/heartbeat"
+	"tentacle/logger"
+	"tentacle/message"
+	"tentacle/service"
 	"strings"
 	"time"
 )

@@ -3,9 +3,9 @@ package network
 import (
 	"fmt"
 	"net"
-	"nworkerd/config"
-	"nworkerd/logger"
-	"nworkerd/service"
+	"tentacle/config"
+	"tentacle/logger"
+	"tentacle/service"
 	"strings"
 )
 

@@ -5,9 +5,8 @@ import (
 	"crypto/cipher"
 	"encoding/hex"
 	"encoding/json"
-	"nworkerd/config"
-	"nworkerd/logger"
-	"nworkerd/message"
+	"tentacle/config"
+	"tentacle/logger"
 	"time"
 )
 
@@ -65,44 +64,6 @@ func MakeNodeJoin() []byte {
 
 	buffer := make([]byte, len(serialized_info))
 	block.Encrypt(buffer, serialized_info)
-
-	encBuffer := make([]byte, hex.EncodedLen(len(buffer)))
-	hex.Encode(encBuffer, buffer)
-	return encBuffer
-}
-
-func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
-	decBuffer := make([]byte, hex.DecodedLen(len(raw)))
-	_, err := hex.Decode(decBuffer, raw)
-	if err != nil {
-		logger.Client.Print(err)
-		return NodeJoinInfo{}, err
-	}
-
-	buffer := make([]byte, len(decBuffer))
-	block.Decrypt(buffer, decBuffer)
-
-	info := NodeJoinInfo{}
-	err = json.Unmarshal(buffer, &info)
-	if err != nil {
-		logger.Client.Print(err)
-		return NodeJoinInfo{}, err
-	}
-	return info, nil
-}
-
-func MakeNodeJoinResponse() []byte {
-	nodeJoinResponse := NodeJoinResponse{
-		Ts:  time.Now().Unix(),
-		Cnt: message.GetVersion(),
-	}
-	serialized_response, err := json.Marshal(nodeJoinResponse)
-	if err != nil {
-		logger.Client.Panic(err)
-	}
-
-	buffer := make([]byte, len(serialized_response))
-	block.Encrypt(buffer, serialized_response)
 
 	encBuffer := make([]byte, hex.EncodedLen(len(buffer)))
 	hex.Encode(encBuffer, buffer)

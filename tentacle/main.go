@@ -1,11 +1,11 @@
 package main
 
 import (
-	"nworkerd/config"
-	"nworkerd/heartbeat"
-	"nworkerd/logger"
-	"nworkerd/network"
-	"nworkerd/service"
+	"tentacle/config"
+	"tentacle/heartbeat"
+	"tentacle/logger"
+	"tentacle/network"
+	"tentacle/service"
 )
 
 func main() {

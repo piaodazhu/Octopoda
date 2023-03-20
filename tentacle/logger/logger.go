@@ -3,7 +3,7 @@ package logger
 import (
 	"io"
 	"log"
-	"nworkerd/config"
+	"tentacle/config"
 	"os"
 	"strings"
 	"time"

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"nworkerd/config"
-	"nworkerd/logger"
-	"nworkerd/message"
+	"tentacle/config"
+	"tentacle/logger"
+	"tentacle/message"
 	"sync"
 	"time"
 
