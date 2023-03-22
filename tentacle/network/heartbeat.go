@@ -3,12 +3,12 @@ package network
 import (
 	"fmt"
 	"net"
+	"strings"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/message"
 	"tentacle/service"
-	"strings"
 	"time"
 )
 
@@ -31,21 +31,24 @@ func KeepAlive() {
 			} else {
 				retry = 0
 
-				err := message.SendMessage(conn, message.TypeHeartbeat, heartbeat.MakeNodeJoin())
+				err := message.SendMessage(conn, message.TypeNodeJoin, heartbeat.MakeNodeJoin())
 				if err != nil {
 					conn.Close()
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 
 				_, raw, err := message.RecvMessage(conn)
 				if err != nil {
 					conn.Close()
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 
 				joinResponse, err := heartbeat.ParseNodeJoinResponse(raw)
 				if err != nil {
 					conn.Close()
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 
@@ -53,18 +56,19 @@ func KeepAlive() {
 				if err != nil {
 					logger.Client.Print(err)
 					conn.Close()
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 			}
 		}
-		if retry >= config.GlobalConfig.Heartbeat.RetryTime {
-			logger.Client.Print("Cannot connect to master.")
-			if config.GlobalConfig.Heartbeat.AutoRestart {
-				service.Reboot()
-			} else {
-				logger.Client.Fatal("Dead but wont restart.")
-			}
+
+		logger.Client.Print("Cannot connect to master.")
+		if config.GlobalConfig.Heartbeat.AutoRestart {
+			service.Reboot()
+		} else {
+			logger.Client.Fatal("Dead but wont restart.")
 		}
+
 	}()
 }
 

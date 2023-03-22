@@ -16,7 +16,7 @@ func InitConfig() {
 	flag.Parse()
 
 	viper.SetConfigName("octopoda")
-	viper.SetConfigFile("yaml")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./")
 	viper.AddConfigPath("/etc/brain/")
 	viper.AddConfigPath("/root/platform/")

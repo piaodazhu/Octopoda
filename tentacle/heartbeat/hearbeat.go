@@ -21,10 +21,10 @@ type HeartBeatResponse struct {
 	Cnt int64 `json:"cnt"`
 }
 
-func MakeHeartbeat(version int64) []byte {
+func MakeHeartbeat(ticks int64) []byte {
 	hbInfo := HeartBeatInfo{
 		Ts:  time.Now().Unix(),
-		Cnt: version,
+		Cnt: ticks,
 	}
 
 	serialized_info, err := json.Marshal(hbInfo)
@@ -45,8 +45,8 @@ func ParseHeartbeat(raw []byte) (HeartBeatInfo, error) {
 	return info, nil
 }
 
-func MakeHeartbeatResponse(version int64) []byte {
-	return MakeHeartbeat(version)
+func MakeHeartbeatResponse(ticks int64) []byte {
+	return MakeHeartbeat(ticks)
 }
 
 func ParseHeartbeatResponse(raw []byte) (HeartBeatResponse, error) {

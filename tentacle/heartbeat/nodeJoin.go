@@ -62,8 +62,11 @@ func MakeNodeJoin() []byte {
 		return nil
 	}
 
-	buffer := make([]byte, len(serialized_info))
-	block.Encrypt(buffer, serialized_info)
+	// buffer := make([]byte, len(serialized_info))
+	// block.Encrypt(buffer, serialized_info)
+
+	// logger.Client.Print(serialized_info, buffer)
+	buffer := serialized_info
 
 	encBuffer := make([]byte, hex.EncodedLen(len(buffer)))
 	hex.Encode(encBuffer, buffer)
@@ -78,8 +81,9 @@ func ParseNodeJoinResponse(raw []byte) (NodeJoinResponse, error) {
 		return NodeJoinResponse{}, err
 	}
 
-	buffer := make([]byte, len(decBuffer))
-	block.Decrypt(buffer, decBuffer)
+	// buffer := make([]byte, len(decBuffer))
+	// block.Decrypt(buffer, decBuffer)
+	buffer := decBuffer
 
 	response := NodeJoinResponse{}
 	err = json.Unmarshal(buffer, &response)

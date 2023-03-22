@@ -3,7 +3,6 @@ package message
 import (
 	"encoding/binary"
 	"net"
-	"tentacle/logger"
 )
 
 // type Message struct {
@@ -39,10 +38,9 @@ func SendMessage(conn net.Conn, mtype int, raw []byte) error {
 	copy(Buf[4:], raw)
 
 	Offset := 0
-	for Offset < Len {
+	for Offset < Len+4 {
 		n, err := conn.Write(Buf[Offset:])
 		if err != nil {
-			logger.Client.Print(err)
 			return err
 		}
 
@@ -59,7 +57,6 @@ func RecvMessage(conn net.Conn) (int, []byte, error) {
 	for Offset < 4 {
 		n, err := conn.Read(Buf[Offset:])
 		if err != nil {
-			logger.Client.Print(err)
 			return 0, nil, err
 		}
 
@@ -73,7 +70,6 @@ func RecvMessage(conn net.Conn) (int, []byte, error) {
 	for Offset < Len {
 		n, err := conn.Read(Buf[Offset:])
 		if err != nil {
-			logger.Client.Println(err)
 			return 0, nil, err
 		}
 

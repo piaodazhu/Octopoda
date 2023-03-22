@@ -57,9 +57,11 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 		logger.Tentacle.Print(err)
 		return NodeJoinInfo{}, err
 	}
+	// logger.Tentacle.Print(raw, decBuffer)
 
-	buffer := make([]byte, len(decBuffer))
-	block.Decrypt(buffer, decBuffer)
+	// buffer := make([]byte, len(decBuffer))
+	// block.Decrypt(buffer, decBuffer)
+	buffer := decBuffer
 
 	info := NodeJoinInfo{}
 	err = json.Unmarshal(buffer, &info)
@@ -80,8 +82,9 @@ func MakeNodeJoinResponse() []byte {
 		logger.Tentacle.Panic(err)
 	}
 
-	buffer := make([]byte, len(serialized_response))
-	block.Encrypt(buffer, serialized_response)
+	// buffer := make([]byte, len(serialized_response))
+	// block.Encrypt(buffer, serialized_response)
+	buffer := serialized_response
 
 	encBuffer := make([]byte, hex.EncodedLen(len(buffer)))
 	hex.Encode(encBuffer, buffer)

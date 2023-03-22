@@ -1,7 +1,24 @@
 package main
 
-import "fmt"
+import (
+	"brain/config"
+	"brain/heartbeat"
+	"brain/logger"
+	"brain/model"
+	"brain/network"
+	"brain/ticker"
+)
 
 func main() {
-	fmt.Println("hello")
+	config.InitConfig()
+	logger.InitLogger()
+	ticker.InitTicker()
+	model.InitNodeMap()
+
+	heartbeat.InitHeartbeat()
+
+	network.InitTentacleFace()
+	network.InitBrainFace()
+
+	network.Run()
 }

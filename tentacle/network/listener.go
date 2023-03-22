@@ -23,9 +23,8 @@ func InitListener() {
 	localListener = listener
 }
 
-func Run() {
+func ListenAndServe() {
 	defer localListener.Close()
-	KeepAlive()
 	logger.Server.Println("Listening on", localListener.Addr())
 	for {
 		conn, err := localListener.Accept()

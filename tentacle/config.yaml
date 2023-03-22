@@ -17,7 +17,7 @@ logger:
   rollDays: 3
 heartbeat:
   sendInterval: 1
-  reconnectInterval: 10
+  reconnectInterval: 5
   retryTime: 6
   autoRestart: false
 workspace:

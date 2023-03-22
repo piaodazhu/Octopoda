@@ -1,7 +1,6 @@
 package message
 
 import (
-	"brain/logger"
 	"encoding/binary"
 	"net"
 )
@@ -39,10 +38,9 @@ func SendMessage(conn net.Conn, mtype int, raw []byte) error {
 	copy(Buf[4:], raw)
 
 	Offset := 0
-	for Offset < Len {
+	for Offset < Len+4 {
 		n, err := conn.Write(Buf[Offset:])
 		if err != nil {
-			logger.Tentacle.Print(err)
 			return err
 		}
 
@@ -58,8 +56,8 @@ func RecvMessage(conn net.Conn) (int, []byte, error) {
 	Offset := 0
 	for Offset < 4 {
 		n, err := conn.Read(Buf[Offset:])
+		// logger.Tentacle.Print(n, err)
 		if err != nil {
-			logger.Tentacle.Print(err)
 			return 0, nil, err
 		}
 
@@ -70,14 +68,15 @@ func RecvMessage(conn net.Conn) (int, []byte, error) {
 	Len = int(binary.LittleEndian.Uint16(Buf[2:]))
 	Buf = make([]byte, Len)
 	Offset = 0
+	// logger.Tentacle.Print(Len, mtype)
 	for Offset < Len {
 		n, err := conn.Read(Buf[Offset:])
 		if err != nil {
-			logger.Tentacle.Println(err)
 			return 0, nil, err
 		}
 
 		Offset += n
 	}
+	// logger.Tentacle.Print(Buf)
 	return mtype, Buf, nil
 }

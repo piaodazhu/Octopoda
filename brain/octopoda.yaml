@@ -1,16 +1,17 @@
 tentacleFace:
-	ip: "0.0.0.0"
-	port: 3456
-	token: "default"
-	checkInterval: 2
-	purgeMarkTime: 60
+  ip: "127.0.0.1"
+  port: 3456
+  token: "default"
+  activeTimeout: 2
+  recordTimeout: 10
 brainFace:
-	ip: "127.0.0.1"
-	port: 12345
+  ip: "127.0.0.1"
+  port: 12345
 redis:
-	ip: "127.0.0.1"
-	port: 6537
-	db: 0
+  ip: "127.0.0.1"
+  port: 6379
+  password: "redispass"
+  db: 0
 logger:
   path: "/root/platform"
   namePrefix: "log"

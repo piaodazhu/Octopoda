@@ -9,11 +9,11 @@ type ConfigModel struct {
 }
 
 type TentacleFaceModel struct {
-	Ip            int    `mapstructure:"ip"`
+	Ip            string `mapstructure:"ip"`
 	Port          uint16 `mapstructure:"port"`
 	Token         string `mapstructure:"token"`
-	CheckInterval int    `mapstructure:"checkInterval"`
-	PurgeMarkTime int    `mapstructure:"purgeMarkTime"`
+	ActiveTimeout int    `mapstructure:"activeTimeout"`
+	RecordTimeout int    `mapstructure:"recordTimeout"`
 }
 
 type BrainFaceModel struct {
@@ -22,9 +22,10 @@ type BrainFaceModel struct {
 }
 
 type RedisModel struct {
-	Ip   string `mapstructure:"ip"`
-	Port uint16 `mapstructure:"port"`
-	Db   int    `mapstructure:"db"`
+	Ip       string `mapstructure:"ip"`
+	Port     uint16 `mapstructure:"port"`
+	Password string `mapstructure:"password"`
+	Db       int    `mapstructure:"db"`
 }
 
 type LoggerModel struct {
