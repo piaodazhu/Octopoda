@@ -15,14 +15,21 @@ func HandleConn(conn net.Conn) {
 	mtype, raw, err := message.RecvMessage(conn)
 	if err != nil {
 		logger.Server.Println(err)
-		return 
+		return
 	}
 	switch mtype {
-	case message.TypeNodeState: NodeState(conn, raw)
-	case message.TypeScenarioVersion: ScenarioVersion(conn, raw)
-	case message.TypeFilePush: FilePush(conn, raw)
+	case message.TypeNodeState:
+		NodeState(conn, raw)
+	case message.TypeScenarioVersion:
+		ScenarioVersion(conn, raw)
+	case message.TypeFilePush:
+		FilePush(conn, raw)
+	case message.TypeCommandReboot:
+		RemoteReboot(conn, raw)
+	case message.TypeCommandSSH:
+		SSHPrepare(conn, raw)
 	default:
 		logger.Server.Println("unsupported protocol")
-		return 
+		return
 	}
 }

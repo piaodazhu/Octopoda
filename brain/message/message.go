@@ -28,6 +28,10 @@ const (
 
 	TypeModVersion
 	TypeModVersionResponse
+
+	TypeCommandReboot
+	TypeCommandSSH
+	TypeCommandResponse
 )
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

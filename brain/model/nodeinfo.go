@@ -89,19 +89,41 @@ func PruneDeadNode() {
 	}
 }
 
-func GetNodeInfoByName(name string) {
+func GetNodeInfoByName(name string) (*NodeModel, bool) {
 	Lock.RLock()
 	defer Lock.RUnlock()
+
+	if node, found := NodeMap[name]; found {
+		return node, true
+	}
+	return nil, false
 }
 
-func GetNodeInfoById(id int) {
+func GetNodeInfoById(id int) (*NodeModel, bool) {
 	Lock.RLock()
 	defer Lock.RUnlock()
+
+	for _, node := range NodeMap {
+		if node.Id == uint32(id) {
+			return node, true
+		}
+	}
+	return nil, false
 }
 
-func GetNodesInfoAll() {
+func GetNodesInfoAll() ([]*NodeModel, bool) {
 	Lock.RLock()
 	defer Lock.RUnlock()
+
+	if len(NodeMap) == 0 {
+		return nil, false
+	}
+	res := make([]*NodeModel, 0, len(NodeMap))
+	for _, val := range NodeMap {
+		copynode := *val
+		res = append(res, &copynode)
+	}
+	return res, true
 }
 
 func GetNodeAddress(name string) (string, bool) {

@@ -2,10 +2,11 @@ package config
 
 type ConfigModel struct {
 	Worker    WorkerModel    `mapstructure:"worker"`
-	Sshinfo   SshinfoModel   `mastructure:"ssh"`
+	Sshinfo   SshinfoModel   `mapstructure:"ssh"`
 	Master    MasterModel    `mapstructure:"master"`
 	Logger    LoggerModel    `mapstructure:"logger"`
 	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
+	Workspace WorkspaceModel `mapstructure:"workspace"`
 }
 
 type WorkerModel struct {
@@ -18,6 +19,7 @@ type WorkerModel struct {
 type SshinfoModel struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+	Ip       string `mapstructure:"ip"`
 	Port     uint16 `mapstructure:"port"`
 }
 
@@ -38,4 +40,8 @@ type HeartbeatModel struct {
 	ReconnectInterval int  `mapstructure:"reconnectInterval"`
 	RetryTime         int  `mapstructure:"retryTime"`
 	AutoRestart       bool `mapstructure:"autoRestart"`
+}
+
+type WorkspaceModel struct {
+	Root string `mapstructure:"root"`
 }

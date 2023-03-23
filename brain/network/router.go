@@ -1,19 +1,34 @@
 package network
 
-import "github.com/gin-gonic/gin"
+import (
+	"brain/api"
+
+	"github.com/gin-gonic/gin"
+)
 
 func initRouter(engine *gin.Engine) {
-	engine.GET("/node/info/", foobar)
-	engine.GET("/node/status/", foobar)
-	engine.GET("/node/apps/", foobar)
-	engine.GET("/node/log/", foobar)
+	engine.Group("/api/v1") 
+	{
+		engine.GET("/node/info", api.NodeInfo)
+		engine.GET("/node/status", api.NodeState)
+		engine.GET("/node/apps", NotImpl)
+		engine.GET("/node/log", NotImpl)
+		engine.GET("/node/reboot", api.NodeReboot)
 
-	engine.GET("/scenario/info/", foobar)
-	engine.GET("/scenario/versions/", foobar)
-	engine.GET("/scenario/log/", foobar)
+		engine.GET("/nodes/info", api.NodesInfo)
+		engine.GET("/nodes/status", api.NodesState)
 
+		engine.GET("/scenario/info", NotImpl)
+		engine.GET("/scenario/versions", NotImpl)
+		engine.GET("/scenario/log", NotImpl)
+
+		engine.POST("/file/upload", api.FileUpload)
+		engine.POST("/file/spread", api.FileSpread)
+
+		engine.GET("/sshinfo", api.SSHInfo)
+	}
 }
 
-func foobar(ctx *gin.Context) {
+func NotImpl(ctx *gin.Context) {
 	ctx.JSON(200, struct{}{})
 }

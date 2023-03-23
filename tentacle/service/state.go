@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sync"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"sync"
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -65,7 +65,6 @@ func NodeState(conn net.Conn, raw []byte) {
 }
 
 func GetCpuInfo() string {
-
 	info, _ := cpu.Info()
 	return fmt.Sprint(info[0].ModelName)
 }

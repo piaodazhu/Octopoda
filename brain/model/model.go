@@ -43,3 +43,19 @@ type ScenarioModel struct {
 	Description string
 	Versions    []*ScenarioVersionModel
 }
+
+type State struct {
+	Id        int
+	Name      string
+	Platform  string
+	CpuCores  int
+	Ip        string
+	StartTime int64
+
+	CpuLoadShort float64
+	CpuLoadLong  float64
+	MemUsed      uint64
+	MemTotal     uint64
+	DiskUsed     uint64
+	DiskTotal    uint64
+}
