@@ -33,20 +33,20 @@ func RemoteReboot(conn net.Conn, raw []byte) {
 	// }
 }
 
-type SSHInfo struct {
+type sshInfo struct {
 	Addr     string
 	Username string
 	Password string
 }
 
-func SSHPrepare(conn net.Conn, raw []byte) {
+func SSHInfo(conn net.Conn, raw []byte) {
 	// valid raw
 
 	var addr strings.Builder
 	addr.WriteString(config.GlobalConfig.Sshinfo.Ip)
 	addr.WriteByte(':')
 	addr.WriteString(strconv.Itoa(int(config.GlobalConfig.Sshinfo.Port)))
-	sshinfo := SSHInfo{
+	sshinfo := sshInfo{
 		Addr:     addr.String(),
 		Username: config.GlobalConfig.Sshinfo.Username,
 		Password: config.GlobalConfig.Sshinfo.Password,
@@ -55,6 +55,6 @@ func SSHPrepare(conn net.Conn, raw []byte) {
 	err := message.SendMessage(conn, message.TypeCommandResponse, payload)
 
 	if err != nil {
-		logger.Server.Println("SSHPrepare send error")
+		logger.Server.Println("SSHInfo send error")
 	}
 }

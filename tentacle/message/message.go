@@ -20,6 +20,9 @@ const (
 	TypeFilePush
 	TypeFilePushResponse
 
+	TypeFileTree
+	TypeFileTreeResponse
+
 	TypeNodeState
 	TypeNodeStateResponse
 

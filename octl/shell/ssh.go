@@ -1,4 +1,4 @@
-package main
+package shell
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"octl/config"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,7 +31,13 @@ type SSHTerminal struct {
 }
 
 func SSH(nodename string) {
-	url := "http://127.0.0.1:12345/sshinfo?name=" + nodename
+	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.SshInfo,
+		nodename,
+		)
 	res, err := http.Get(url)
 	if err != nil {
 		panic(err)

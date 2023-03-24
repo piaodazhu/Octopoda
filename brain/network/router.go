@@ -7,25 +7,26 @@ import (
 )
 
 func initRouter(engine *gin.Engine) {
-	engine.Group("/api/v1") 
+	group := engine.Group("/api/v1")
 	{
-		engine.GET("/node/info", api.NodeInfo)
-		engine.GET("/node/status", api.NodeState)
-		engine.GET("/node/apps", NotImpl)
-		engine.GET("/node/log", NotImpl)
-		engine.GET("/node/reboot", api.NodeReboot)
+		group.GET("/node/info", api.NodeInfo)
+		group.GET("/node/status", api.NodeState)
+		group.GET("/node/apps", NotImpl)
+		group.GET("/node/log", NotImpl)
+		group.GET("/node/reboot", api.NodeReboot)
 
-		engine.GET("/nodes/info", api.NodesInfo)
-		engine.GET("/nodes/status", api.NodesState)
+		group.GET("/nodes/info", api.NodesInfo)
+		group.GET("/nodes/status", api.NodesState)
 
-		engine.GET("/scenario/info", NotImpl)
-		engine.GET("/scenario/versions", NotImpl)
-		engine.GET("/scenario/log", NotImpl)
+		group.GET("/scenario/info", NotImpl)
+		group.GET("/scenario/versions", NotImpl)
+		group.GET("/scenario/log", NotImpl)
 
-		engine.POST("/file/upload", api.FileUpload)
-		engine.POST("/file/spread", api.FileSpread)
+		group.POST("/file/upload", api.FileUpload)
+		group.POST("/file/spread", api.FileSpread)
+		group.GET("/file/tree", api.FileTree)
 
-		engine.GET("/sshinfo", api.SSHInfo)
+		group.GET("/sshinfo", api.SSHInfo)
 	}
 }
 

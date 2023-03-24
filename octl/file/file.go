@@ -1,4 +1,4 @@
-package main
+package file
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"octl/config"
 	"os"
 	"path/filepath"
 )
@@ -30,7 +31,12 @@ func UpLoadFile(localFile string, targetPath string) {
 
 	bodyWriter.Close()
 
-	url := "http://127.0.0.1:12345/file/upload"
+	url := fmt.Sprintf("http://%s:%d/%s%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.FileUpload,
+	)
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
 		panic("post")
@@ -59,7 +65,12 @@ func SpreadFile(fileName string, sourcePath string, targetPath string, nodes []s
 	}
 	buf, _ := json.Marshal(fsParams)
 
-	url := "http://127.0.0.1:12345/file/spread"
+	url := fmt.Sprintf("http://%s:%d/%s%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.FileUpload,
+	)
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {

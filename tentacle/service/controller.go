@@ -24,10 +24,12 @@ func HandleConn(conn net.Conn) {
 		ScenarioVersion(conn, raw)
 	case message.TypeFilePush:
 		FilePush(conn, raw)
+	case message.TypeFileTree:
+		FileTree(conn, raw)
 	case message.TypeCommandReboot:
 		RemoteReboot(conn, raw)
 	case message.TypeCommandSSH:
-		SSHPrepare(conn, raw)
+		SSHInfo(conn, raw)
 	default:
 		logger.Server.Println("unsupported protocol")
 		return

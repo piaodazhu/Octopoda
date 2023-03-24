@@ -16,7 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FileInfo struct {
+type FileParams struct {
 	FileName   string
 	TargetPath string
 	FileBuf    string
@@ -36,10 +36,9 @@ func FileUpload(ctx *gin.Context) {
 	sb.WriteString(targetPath)
 
 	os.Mkdir(sb.String(), os.ModePerm)
-	
+
 	sb.WriteString(file.Filename)
 
-	
 	dst, err := os.Create(sb.String())
 	if err != nil {
 		logger.Brain.Println("FileCreate")
@@ -89,12 +88,12 @@ func FileSpread(ctx *gin.Context) {
 
 	raw, _ := io.ReadAll(f)
 	content := base64.RawStdEncoding.EncodeToString(raw)
-	finfo := FileInfo{
+	finfo := FileParams{
 		FileName:   fsParams.FileName,
 		TargetPath: fsParams.TargetPath,
 		FileBuf:    content,
 	}
-	payload,_ := json.Marshal(&finfo)
+	payload, _ := json.Marshal(&finfo)
 
 	// check target nodes
 	// spread file
@@ -133,5 +132,88 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup) {
 			return
 		}
 		logger.Tentacle.Print(rmsg.Msg)
+	}
+}
+
+func FileTree(ctx *gin.Context) {
+	name, ok := ctx.GetQuery("name")
+	if !ok {
+		ctx.Status(400)
+		return
+	}
+	subdir, _ := ctx.GetQuery("subdir")
+	raw := getFileTree(name, subdir)
+	ctx.Data(200, "application/json", raw)
+}
+
+func getFileTree(name string, subdir string) []byte {
+	var pathsb strings.Builder
+	if name == "master" {
+		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
+		pathsb.WriteString(subdir)
+		return allFiles(pathsb.String())
+	}
+	addr, ok := model.GetNodeAddress(name)
+	if !ok {
+		return []byte{}
+	}
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		logger.Tentacle.Print("FileTree Dial")
+		return []byte{}
+	}
+	defer conn.Close()
+
+	err = message.SendMessage(conn, message.TypeFileTree, []byte(subdir))
+	if err != nil {
+		logger.Tentacle.Print("FileTree")
+		return []byte{}
+	}
+	mtype, raw, err := message.RecvMessage(conn)
+	if err != nil || mtype != message.TypeFileTreeResponse {
+		logger.Tentacle.Print("FileTreeResponse")
+		return []byte{}
+	}
+	return raw
+}
+
+type FileInfo struct {
+	Name       string
+	Size       int64
+	ModifyTime string
+}
+
+func allFiles(path string) []byte {
+	if path[len(path) - 1] == '/' {
+		path = path[:len(path) - 1]
+	}
+	finfos := []FileInfo{}
+	walkDir(path, &finfos)
+	serialized, _ := json.Marshal(&finfos)
+	return serialized
+}
+
+func walkDir(path string, files *[]FileInfo) {
+	dir, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+
+	PthSep := string(os.PathSeparator)
+
+	for _, fi := range dir {
+		if fi.IsDir() {
+			walkDir(path+PthSep+fi.Name(), files)
+		} else {
+			detail, _ := fi.Info()
+			modtimestr := detail.ModTime().Format("01月02日 15:04")
+			finfo := FileInfo{
+				Name:       path + PthSep + fi.Name(),
+				Size:       detail.Size(),
+				ModifyTime: modtimestr,
+			}
+
+			*files = append(*files, finfo)
+		}
 	}
 }

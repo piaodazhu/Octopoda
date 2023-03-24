@@ -3,6 +3,7 @@ package config
 type ConfigModel struct {
 	TentacleFace TentacleFaceModel `mapstructure:"tentacleFace"`
 	BrainFace    BrainFaceModel    `mapstructure:"brainFace"`
+	Sshinfo      SshinfoModel      `mapstructure:"ssh"`
 	Redis        RedisModel        `mapstructure:"redis"`
 	Logger       LoggerModel       `mapstructure:"logger"`
 	Workspace    WorkspaceModel    `mapstructure:"workspace"`
@@ -19,6 +20,13 @@ type TentacleFaceModel struct {
 type BrainFaceModel struct {
 	Ip   string `mapstructure:"ip"`
 	Port uint16 `mapstructure:"port"`
+}
+
+type SshinfoModel struct {
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Ip       string `mapstructure:"ip"`
+	Port     uint16 `mapstructure:"port"`
 }
 
 type RedisModel struct {

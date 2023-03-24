@@ -18,3 +18,8 @@ logger:
   rollDays: 3
 workspace:
   root: "/root/workspace/"
+ssh:
+  username: "root"
+  password: "ubuntumima"
+  ip: "127.0.0.1"
+  port: 22

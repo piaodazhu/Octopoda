@@ -1,0 +1,25 @@
+server:
+  name: "master"
+  ip: 127.0.0.1
+  port: 12345
+  apiPrefix : "api/v1"
+api:  
+  nodeInfo: "/node/info"
+  nodeStatus: "/node/status"
+  nodeApps: "/node/apps"
+  nodeLog: "/node/log"
+  nodeReboot: "/node/reboot"
+
+  nodesInfo: "/nodes/info"
+  nodesStaus: "/nodes/status"
+
+  scenarioInfo: "/scenario/info"
+  scenarioVersions: "/scenario/versions"
+  scenarioLog: "/scenario/log"
+
+  fileUpload: "/file/upload"
+  fileSpread: "/file/spread"
+  fileTree: "/file/tree"
+
+  sshInfo: "/sshinfo"
+
