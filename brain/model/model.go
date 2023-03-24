@@ -6,13 +6,17 @@ const (
 	NodeStateDead
 )
 
-type NodeModel struct {
+type NodeInfo struct {
 	Id        uint32
 	Name      string
 	Addr      string
 	State     int32
 	OnlineTs  int64
 	OfflineTs int64
+}
+
+type NodeModel struct {
+	NodeInfo
 	Applist   []*AppModel
 }
 

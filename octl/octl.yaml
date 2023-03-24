@@ -9,9 +9,10 @@ api:
   nodeApps: "/node/apps"
   nodeLog: "/node/log"
   nodeReboot: "/node/reboot"
+  nodePrune: "/node/prune"
 
   nodesInfo: "/nodes/info"
-  nodesStaus: "/nodes/status"
+  nodesStatus: "/nodes/status"
 
   scenarioInfo: "/scenario/info"
   scenarioVersions: "/scenario/versions"

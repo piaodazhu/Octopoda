@@ -1,6 +1,5 @@
 package config
 
-
 type ConfigModel struct {
 	Server ServerModel `mapstructure:"server"`
 	Api    APIs        `mapstructure:"api"`
@@ -19,9 +18,10 @@ type APIs struct {
 	NodeApps   string `mapstructure:"nodeApps"`
 	NodeLog    string `mapstructure:"nodeLog"`
 	NodeReboot string `mapstructure:"nodeReboot"`
+	NodePrune string  `mapstructure:"nodePrune"`
 
 	NodesInfo  string `mapstructure:"nodesInfo"`
-	NodesStaus string `mapstructure:"nodesStaus"`
+	NodesStatus string `mapstructure:"nodesStatus"`
 
 	ScenarioInfo     string `mapstructure:"scenarioInfo"`
 	ScenarioVersions string `mapstructure:"scenarioVersions"`

@@ -21,6 +21,7 @@ func NodeInfo(ctx *gin.Context) {
 	}
 	if node, ok = model.GetNodeInfoByName(name); !ok {
 		ctx.JSON(404, struct{}{})
+		return
 	}
 	ctx.JSON(200, node)
 }
@@ -53,7 +54,7 @@ func NodeState(ctx *gin.Context) {
 }
 
 func NodesInfo(ctx *gin.Context) {
-	var nodes []*model.NodeModel
+	var nodes []*model.NodeInfo
 	var ok bool
 
 	if nodes, ok = model.GetNodesInfoAll(); !ok {
@@ -64,7 +65,7 @@ func NodesInfo(ctx *gin.Context) {
 }
 
 func NodesState(ctx *gin.Context) {
-	var nodes []*model.NodeModel
+	var nodes []*model.NodeInfo
 	var states []model.State
 	var ok bool
 
@@ -137,4 +138,9 @@ func NodeReboot(ctx *gin.Context) {
 		}
 		ctx.JSON(200, struct{}{})
 	}
+}
+
+func NodePrune(ctx *gin.Context) {
+	model.PruneDeadNode()
+	ctx.Status(200)
 }

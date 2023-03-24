@@ -14,6 +14,7 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/node/apps", NotImpl)
 		group.GET("/node/log", api.NodeLog)
 		group.GET("/node/reboot", api.NodeReboot)
+		group.GET("/node/prune", api.NodePrune)
 
 		group.GET("/nodes/info", api.NodesInfo)
 		group.GET("/nodes/status", api.NodesState)
@@ -31,5 +32,5 @@ func initRouter(engine *gin.Engine) {
 }
 
 func NotImpl(ctx *gin.Context) {
-	ctx.JSON(200, struct{}{})
+	ctx.JSON(501, struct{}{})
 }

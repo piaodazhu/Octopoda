@@ -43,10 +43,13 @@ func StoreNode(name string, ip string, port uint16) uint32 {
 	if n, found := NodeMap[name]; found {
 		node = n
 	} else {
+		info := NodeInfo{
+			Id:   uuid.New().ID(),
+			Name: name,
+		}
 		node = &NodeModel{
-			Id:      uuid.New().ID(),
-			Name:    name,
-			Applist: []*AppModel{},
+			NodeInfo: info,
+			Applist:   []*AppModel{},
 		}
 		NodeMap[name] = node
 	}
@@ -111,17 +114,17 @@ func GetNodeInfoById(id int) (*NodeModel, bool) {
 	return nil, false
 }
 
-func GetNodesInfoAll() ([]*NodeModel, bool) {
+func GetNodesInfoAll() ([]*NodeInfo, bool) {
 	Lock.RLock()
 	defer Lock.RUnlock()
 
 	if len(NodeMap) == 0 {
 		return nil, false
 	}
-	res := make([]*NodeModel, 0, len(NodeMap))
+	res := make([]*NodeInfo, 0, len(NodeMap))
 	for _, val := range NodeMap {
 		copynode := *val
-		res = append(res, &copynode)
+		res = append(res, &copynode.NodeInfo)
 	}
 	return res, true
 }
