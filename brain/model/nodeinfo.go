@@ -130,7 +130,7 @@ func GetNodeAddress(name string) (string, bool) {
 	Lock.Lock()
 	defer Lock.Unlock()
 
-	if node, found := NodeMap[name]; found {
+	if node, found := NodeMap[name]; found && node.State == NodeStateReady {
 		return node.Addr, true
 	}
 	return "", false

@@ -26,6 +26,8 @@ func HandleConn(conn net.Conn) {
 		FilePush(conn, raw)
 	case message.TypeFileTree:
 		FileTree(conn, raw)
+	case message.TypeNodeLog:
+		NodeLog(conn, raw)
 	case message.TypeCommandReboot:
 		RemoteReboot(conn, raw)
 	case message.TypeCommandSSH:

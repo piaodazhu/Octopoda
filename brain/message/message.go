@@ -32,6 +32,9 @@ const (
 	TypeModVersion
 	TypeModVersionResponse
 
+	TypeNodeLog
+	TypeNodeLogResponse
+
 	TypeCommandReboot
 	TypeCommandSSH
 	TypeCommandResponse

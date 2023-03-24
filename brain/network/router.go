@@ -12,7 +12,7 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/node/info", api.NodeInfo)
 		group.GET("/node/status", api.NodeState)
 		group.GET("/node/apps", NotImpl)
-		group.GET("/node/log", NotImpl)
+		group.GET("/node/log", api.NodeLog)
 		group.GET("/node/reboot", api.NodeReboot)
 
 		group.GET("/nodes/info", api.NodesInfo)
