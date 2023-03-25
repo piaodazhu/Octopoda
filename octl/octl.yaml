@@ -20,7 +20,11 @@ api:
 
   fileUpload: "/file/upload"
   fileSpread: "/file/spread"
+  fileDistrib: "/file/distrib"
   fileTree: "/file/tree"
+
+  runCmd: "/run/cmd"
+  runScript: "/run/script"
 
   sshInfo: "/sshinfo"
 

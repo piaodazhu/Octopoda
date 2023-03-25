@@ -1,8 +1,10 @@
 package service
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -56,5 +58,87 @@ func SSHInfo(conn net.Conn, raw []byte) {
 
 	if err != nil {
 		logger.Server.Println("SSHInfo send error")
+	}
+}
+
+type ScriptParams struct {
+	FileName   string
+	TargetPath string
+	FileBuf    string
+}
+
+func RunScript(conn net.Conn, raw []byte) {
+	sparams := ScriptParams{}
+	rmsg := RMSG{"OK"}
+	var content []byte
+	var err error
+	var scriptFile strings.Builder
+	var f *os.File
+	var output []byte
+	var payload []byte
+
+	if err := json.Unmarshal(raw, &sparams); err != nil {
+		logger.Client.Println(err)
+		rmsg.Msg = "FilePush"
+		goto errorout
+	}
+
+	content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
+	if err != nil {
+		logger.Server.Println("FileDecode")
+		rmsg.Msg = "FileDecode"
+		goto errorout
+	}
+
+	scriptFile.WriteString(config.GlobalConfig.Workspace.Root)
+	scriptFile.WriteString(sparams.TargetPath)
+
+	os.Mkdir(scriptFile.String(), os.ModePerm)
+
+	scriptFile.WriteString(sparams.FileName)
+	f, err = os.Create(scriptFile.String())
+	if err != nil {
+		logger.Server.Println("FileCreate")
+		rmsg.Msg = "FileCreate"
+		goto errorout
+	}
+	f.Write(content)
+	f.Close()
+
+	output, err = exec.Command("bash", scriptFile.String()).CombinedOutput()
+	if err != nil {
+		rmsg.Msg = err.Error()
+	} else {
+		rmsg.Msg = string(output)
+	}
+	
+errorout:
+	payload, _ = json.Marshal(&rmsg)
+	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
+	if err != nil {
+		logger.Server.Println("TypeCommandResponse send error")
+	}
+}
+
+func RunCmd(conn net.Conn, raw []byte) {
+	rmsg := RMSG{"OK"}
+	var command string
+	var err error
+	var output []byte
+	var payload []byte
+
+	command = string(raw)
+
+	output, err = exec.Command("bash", "-c", command).CombinedOutput()
+	if err != nil {
+		rmsg.Msg = err.Error()
+	} else {
+		rmsg.Msg = string(output)
+	}
+
+	payload, _ = json.Marshal(&rmsg)
+	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
+	if err != nil {
+		logger.Server.Println("TypeCommandResponse send error")
 	}
 }

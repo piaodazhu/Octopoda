@@ -25,9 +25,12 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/file/upload", api.FileUpload)
 		group.POST("/file/spread", api.FileSpread)
+		group.POST("/file/distrib", api.FileDistrib)
 		group.GET("/file/tree", api.FileTree)
 
 		group.GET("/sshinfo", api.SSHInfo)
+		group.POST("/run/script", api.RunScript)
+		group.POST("/run/cmd", api.RunCmd)
 	}
 }
 

@@ -83,3 +83,52 @@ func SpreadFile(fileName string, sourcePath string, targetPath string, nodes []s
 	}
 	fmt.Println(msg)
 }
+
+type FileDistribParams struct {
+	LocalFile  string
+	TargetPath  string
+	TargetNodes []string
+}
+
+func DistribFile(localFile string, targetPath string, nodes []string) {
+	if targetPath[len(targetPath) - 1] != '/' {
+		targetPath = targetPath + "/"
+	}
+
+	f, err := os.OpenFile(localFile, os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		panic("err")
+	}
+	defer f.Close()
+	fname := filepath.Base(localFile)
+	nodes_serialized, _ := json.Marshal(&nodes)
+
+	bodyBuffer := bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(&bodyBuffer)
+	fileWriter, _ := bodyWriter.CreateFormFile("file", fname)
+	io.Copy(fileWriter, f)
+	bodyWriter.WriteField("targetPath", targetPath)
+	bodyWriter.WriteField("targetNodes", string(nodes_serialized))
+
+	contentType := bodyWriter.FormDataContentType()
+
+	bodyWriter.Close()
+
+	url := fmt.Sprintf("http://%s:%d/%s%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.FileDistrib,
+	)
+
+	res, err := http.Post(url, contentType, &bodyBuffer)
+	if err != nil {
+		panic("post")
+	}
+	defer res.Body.Close()
+	msg, err := io.ReadAll(res.Body)
+	if err != nil {
+		panic("ReadAll")
+	}
+	fmt.Println(string(msg))
+}

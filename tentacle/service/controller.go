@@ -32,6 +32,10 @@ func HandleConn(conn net.Conn) {
 		RemoteReboot(conn, raw)
 	case message.TypeCommandSSH:
 		SSHInfo(conn, raw)
+	case message.TypeCommandRun:
+		RunCmd(conn, raw)
+	case message.TypeCommandRunScript:
+		RunScript(conn, raw)
 	default:
 		logger.Server.Println("unsupported protocol")
 		return

@@ -34,8 +34,12 @@ func main() {
 		subcmd.Upload(args[2:])
 	case "spread":
 		subcmd.Spread(args[2:])
+	case "distrib":
+		subcmd.Distrib(args[2:])
 	case "prune":
 		subcmd.Prune(args[2:])
+	case "run":
+		subcmd.Run(args[2:])
 	default:
 		fmt.Println("not support")
 	}

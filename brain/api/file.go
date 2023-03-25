@@ -29,7 +29,7 @@ type RMSG struct {
 func FileUpload(ctx *gin.Context) {
 	file, _ := ctx.FormFile("file")
 	targetPath := ctx.PostForm("targetPath")
-	rmsg := RMSG{"OK"}
+	rmsg := RMSG{}
 
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Workspace.Root)
@@ -60,10 +60,15 @@ type FileSpreadParams struct {
 	TargetNodes []string
 }
 
+type UploadResults struct {
+	Name string
+	Result string
+}
+
 func FileSpread(ctx *gin.Context) {
 	var fsParams FileSpreadParams
 	err := ctx.ShouldBind(&fsParams)
-	rmsg := RMSG{"OK"}
+	rmsg := RMSG{}
 
 	if err != nil {
 		logger.Brain.Println("FileCreate")
@@ -97,21 +102,26 @@ func FileSpread(ctx *gin.Context) {
 
 	// check target nodes
 	// spread file
+	results := make([]UploadResults, len(fsParams.TargetNodes))
 	var wg sync.WaitGroup
 
 	for i := range fsParams.TargetNodes {
 		name := fsParams.TargetNodes[i]
+		results[i].Name = name
 		if addr, exists := model.GetNodeAddress(name); exists {
 			wg.Add(1)
-			go pushFile(addr, payload, &wg)
+			go pushFile(addr, payload, &wg, &results[i].Result)
+		} else {
+			results[i].Result = "NodeNotExists"
 		}
 	}
 	wg.Wait()
-	ctx.JSON(200, rmsg)
+	ctx.JSON(200, results)
 }
 
-func pushFile(addr string, payload []byte, wg *sync.WaitGroup) {
+func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
+	*result = "OK"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -122,6 +132,7 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup) {
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeFilePushResponse {
 			logger.Tentacle.Println("TypeFilePushResponse", err)
+			*result = "NetError"
 			return
 		}
 
@@ -129,9 +140,13 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup) {
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
+			*result = "MasterError"
 			return
 		}
 		logger.Tentacle.Print(rmsg.Msg)
+		if rmsg.Msg != "OK" {
+			*result = "NodeError"
+		}
 	}
 }
 
@@ -216,4 +231,62 @@ func walkDir(path string, files *[]FileInfo) {
 			*files = append(*files, finfo)
 		}
 	}
+}
+
+
+func FileDistrib(ctx *gin.Context) {
+	file, _ := ctx.FormFile("file")
+	fileName := file.Filename
+	targetPath := ctx.PostForm("targetPath")
+	targetNodes := ctx.PostForm("targetNodes")
+	rmsg := RMSG{}
+
+	nodes := []string{}
+	err := json.Unmarshal([]byte(targetNodes), &nodes)
+	if err != nil {
+		rmsg.Msg = "ERROR: targetNodes"
+		ctx.JSON(400, rmsg)
+		return
+	}
+
+	multipart, err := file.Open()
+	if err != nil {
+		rmsg.Msg = "ERROR: Open File"
+		ctx.JSON(400, rmsg)
+		return
+	}
+	defer multipart.Close()
+
+	raw, err := io.ReadAll(multipart)
+	if err != nil {
+		rmsg.Msg = "ERROR: Read File"
+		ctx.JSON(400, rmsg)
+		return
+	}
+
+	content := base64.RawStdEncoding.EncodeToString(raw)
+	finfo := FileParams{
+		FileName:   fileName,
+		TargetPath: targetPath,
+		FileBuf:    content,
+	}
+	payload, _ := json.Marshal(&finfo)
+
+	// check target nodes
+	// spread file
+	results := make([]UploadResults, len(nodes))
+	var wg sync.WaitGroup
+
+	for i := range nodes {
+		name := nodes[i]
+		results[i].Name = name
+		if addr, exists := model.GetNodeAddress(name); exists {
+			wg.Add(1)
+			go pushFile(addr, payload, &wg, &results[i].Result)
+		} else {
+			results[i].Result = "NodeNotExists"
+		}
+	}
+	wg.Wait()
+	ctx.JSON(200, results)
 }

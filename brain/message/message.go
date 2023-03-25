@@ -37,6 +37,8 @@ const (
 
 	TypeCommandReboot
 	TypeCommandSSH
+	TypeCommandRun
+	TypeCommandRunScript
 	TypeCommandResponse
 )
 

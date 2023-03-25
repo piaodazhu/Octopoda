@@ -94,9 +94,23 @@ func Spread(arglist []string) {
 	file.SpreadFile(arglist[0], arglist[1], arglist[2], arglist[3:])
 }
 
+func Distrib(arglist []string) {
+	if len(arglist) < 3 {
+		return
+	}
+	file.DistribFile(arglist[0], arglist[1], arglist[2:])
+}
+
 func Prune(arglist []string) {
 	if len(arglist) != 0 {
 		return
 	}
 	node.NodePrune()
+}
+
+func Run(arglist []string) {
+	if len(arglist) < 2 {
+		return 
+	}
+	shell.RunTask(arglist[0], arglist[1:])
 }
