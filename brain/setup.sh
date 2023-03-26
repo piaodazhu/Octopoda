@@ -14,6 +14,7 @@ if [ ! -d "/etc/octopoda" ]; then
   echo "create folder /etc/octopoda"
 fi
 cp brain /root/octopoda/
+chmod +x /root/octopoda/brain
 echo "install binary executable file --> /root/octopoda/"
 cp brain.yaml /etc/octopoda/
 echo "install config brain.yaml --> /etc/octopoda/"

@@ -14,7 +14,6 @@ if [ ! -d "/etc/octopoda" ]; then
   echo "create folder /etc/octopoda"
 fi
 cp tentacle /root/octopoda/
-chmod +x /root/octopoda/tentacle
 echo "install binary executable file --> /root/octopoda/"
 cp tentacle.yaml /etc/octopoda/
 echo "install config tentacle.yaml --> /etc/octopoda/"

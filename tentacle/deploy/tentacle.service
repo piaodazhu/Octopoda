@@ -1,0 +1,14 @@
+[Unit]
+Description=Octopoda Tentacle Deamon from ICN Platform Project
+StartLimitIntervalSec=1
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/root/octopoda/tentacle
+ExecStop=kill -9 $(pidof tentacle)
+ExecReload=kill -9 $(pidof tentacle) && /root/octopoda/tentacle
+
+[Install]
+WantedBy=multi-user.target

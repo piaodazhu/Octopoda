@@ -1,0 +1,26 @@
+tentacle:
+  id: 0
+  name: "pi0"
+  ip: "127.0.0.1"
+  port: 23456
+ssh:
+  username: "pi"
+  password: "network123"
+  ip: "192.168.3.240"
+  port: 22
+brain:
+  ip: "127.0.0.1"
+  port: 3456
+  token: "default"
+logger:
+  path: "/root/octopoda/log/"
+  namePrefix: "log"
+  rollDays: 3
+heartbeat:
+  sendInterval: 1
+  reconnectInterval: 5
+  retryTime: 6
+  autoRestart: false
+workspace:
+  root: "/root/octopoda/workspace/"
+  

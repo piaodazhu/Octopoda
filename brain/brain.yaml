@@ -1,5 +1,5 @@
 tentacleFace:
-  ip: "127.0.0.1"
+  ip: "192.168.3.181"
   port: 3456
   token: "default"
   activeTimeout: 2
