@@ -1,9 +1,9 @@
 package config
 
 type ConfigModel struct {
-	Worker    WorkerModel    `mapstructure:"worker"`
+	Worker    WorkerModel    `mapstructure:"tentacle"`
 	Sshinfo   SshinfoModel   `mapstructure:"ssh"`
-	Master    MasterModel    `mapstructure:"master"`
+	Master    MasterModel    `mapstructure:"brain"`
 	Logger    LoggerModel    `mapstructure:"logger"`
 	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
 	Workspace WorkspaceModel `mapstructure:"workspace"`

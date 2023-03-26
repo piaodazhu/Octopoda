@@ -9,12 +9,8 @@ desciption: "hello world"
 scriptpath: "./script/"
 applications:
 - 
-name: scienario1
-desciption: "hello world"
-scriptpath: "./script/"
-applications:
-- 
- name: "icn_provider"
+  name: "icn_provider"
+  install_dir: "scienario1/provider/"
   nodes:
    - pi1
    - pi2
@@ -27,7 +23,8 @@ applications:
   purge:
    script: "purge.sh"
 - 
- name: "icn_consumer"
+  name: "icn_consumer"
+  install_dir: "scienario1/consumer/"
   nodes:
    - pi3
    - pi4

@@ -27,7 +27,9 @@ func NodeLog(conn net.Conn, raw []byte) {
 	if lparams.MaxDaysBefore <= 0 {
 		lparams.MaxDaysBefore = 0
 	}
+	
 	readLogs(&lparams)
+
 	response, _ := json.Marshal(&lparams)
 
 	err := message.SendMessage(conn, message.TypeNodeLogResponse, response)
@@ -48,11 +50,13 @@ func readLogs(params *LogParams) {
 	sb.WriteString(config.GlobalConfig.Logger.NamePrefix)
 	prefix := sb.String()
 
-	for offset < params.MaxLines && daysBefore < params.MaxDaysBefore {
+	for offset < params.MaxLines && daysBefore <= params.MaxDaysBefore {
 		fname := prefix + time.Now().AddDate(0, 0, -daysBefore).Format("_2006_01_02.log")
 		daysBefore++
 		f, err := os.Open(fname)
 		if err != nil {
+			logger.Client.Print(err)
+			logger.Client.Print(fname)
 			continue
 		}
 

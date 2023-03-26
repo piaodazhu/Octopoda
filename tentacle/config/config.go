@@ -15,11 +15,11 @@ func InitConfig() {
 	flag.BoolVar(&Stdout, "p", false, "print log to stdout, default is false")
 	flag.Parse()
 
-	viper.SetConfigName("config")
+	viper.SetConfigName("tentacle")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./")
-	viper.AddConfigPath("/etc/octopoda/tentacle/")
-	viper.AddConfigPath("/root/platform/")
+	viper.AddConfigPath("/etc/octopoda/")
+	// viper.AddConfigPath("/root/platform/")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic("cannot read config because " + err.Error())

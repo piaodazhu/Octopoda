@@ -18,6 +18,7 @@ func InitBrainFace() {
 	sb.WriteString(strconv.Itoa(int(config.GlobalConfig.BrainFace.Port)))
 	listenaddr = sb.String()
 
+	gin.SetMode(gin.ReleaseMode)
 	engine = gin.Default()
 	initRouter(engine)
 }
