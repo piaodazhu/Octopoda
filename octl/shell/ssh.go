@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"octl/config"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -37,7 +35,7 @@ func SSH(nodename string) {
 		config.GlobalConfig.Server.ApiPrefix,
 		config.GlobalConfig.Api.SshInfo,
 		nodename,
-		)
+	)
 	res, err := http.Get(url)
 	if err != nil {
 		panic(err)
@@ -87,12 +85,11 @@ func dossh(addr, user, passwd string) {
 }
 
 func (t *SSHTerminal) updateTerminalSize() {
-
 	go func() {
 		// SIGWINCH is sent to the process when the window size of the terminal has
 		// changed.
-		sigwinchCh := make(chan os.Signal, 1)
-		signal.Notify(sigwinchCh, syscall.SIGWINCH)
+		// sigwinchCh := make(chan os.Signal, 1)
+		// signal.Notify(sigwinchCh, syscall.SIGWINCH)
 
 		fd := int(os.Stdin.Fd())
 		termWidth, termHeight, err := term.GetSize(fd)
@@ -100,10 +97,12 @@ func (t *SSHTerminal) updateTerminalSize() {
 			fmt.Println(err)
 		}
 
-		for sigwinch := range sigwinchCh {
-			if sigwinch == nil {
-				return
-			}
+		// for sigwinch := range sigwinchCh {
+		for {
+			// if sigwinch == nil {
+			// 	return
+			// }
+			time.Sleep(time.Microsecond * 200)
 			currTermWidth, currTermHeight, err := term.GetSize(fd)
 
 			// Terminal size has not changed, don't do anything.
