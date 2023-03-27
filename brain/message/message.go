@@ -40,6 +40,18 @@ const (
 	TypeCommandRun
 	TypeCommandRunScript
 	TypeCommandResponse
+
+	TypeAppDeploy
+	TypeAppDeployResponse
+
+	TypeAppVersion
+	TypeAppVersionResponse
+
+	TypeAppsInfo
+	TypeAppsInfoResponse
+
+	TypeAppReset
+	TypeAppResetResponse
 )
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

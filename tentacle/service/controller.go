@@ -36,6 +36,14 @@ func HandleConn(conn net.Conn) {
 		RunCmd(conn, raw)
 	case message.TypeCommandRunScript:
 		RunScript(conn, raw)
+	case message.TypeAppDeploy:
+		AppDeploy(conn, raw)
+	case message.TypeAppVersion:
+		AppVersion(conn, raw)
+	case message.TypeAppsInfo:
+		AppsInfo(conn, raw)
+	case message.TypeAppReset:
+		AppReset(conn, raw)
 	default:
 		logger.Server.Println("unsupported protocol")
 		return

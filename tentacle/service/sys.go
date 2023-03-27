@@ -70,10 +70,10 @@ type ScriptParams struct {
 func RunScript(conn net.Conn, raw []byte) {
 	sparams := ScriptParams{}
 	rmsg := RMSG{"OK"}
-	var content []byte
+	// var content []byte
 	var err error
-	var scriptFile strings.Builder
-	var f *os.File
+	// var scriptFile strings.Builder
+	// var f *os.File
 	var output []byte
 	var payload []byte
 
@@ -83,29 +83,36 @@ func RunScript(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
-	if err != nil {
-		logger.Server.Println("FileDecode")
-		rmsg.Msg = "FileDecode"
-		goto errorout
-	}
+	// content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
+	// if err != nil {
+	// 	logger.Server.Println("FileDecode")
+	// 	rmsg.Msg = "FileDecode"
+	// 	goto errorout
+	// }
 
-	scriptFile.WriteString(config.GlobalConfig.Workspace.Root)
-	scriptFile.WriteString(sparams.TargetPath)
+	// scriptFile.WriteString(config.GlobalConfig.Workspace.Store)
+	// scriptFile.WriteString(sparams.TargetPath)
 
-	os.Mkdir(scriptFile.String(), os.ModePerm)
+	// os.Mkdir(scriptFile.String(), os.ModePerm)
 
-	scriptFile.WriteString(sparams.FileName)
-	f, err = os.Create(scriptFile.String())
-	if err != nil {
-		logger.Server.Println("FileCreate")
-		rmsg.Msg = "FileCreate"
-		goto errorout
-	}
-	f.Write(content)
-	f.Close()
+	// scriptFile.WriteString(sparams.FileName)
+	// f, err = os.Create(scriptFile.String())
+	// if err != nil {
+	// 	logger.Server.Println("FileCreate")
+	// 	rmsg.Msg = "FileCreate"
+	// 	goto errorout
+	// }
+	// f.Write(content)
+	// f.Close()
 
-	output, err = exec.Command("bash", scriptFile.String()).CombinedOutput()
+	// output, err = exec.Command("bash", scriptFile.String()).CombinedOutput()
+	// if err != nil {
+	// 	rmsg.Msg = err.Error()
+	// } else {
+	// 	rmsg.Msg = string(output)
+	// }
+
+	output, err = execScript(&sparams)
 	if err != nil {
 		rmsg.Msg = err.Error()
 	} else {
@@ -118,6 +125,37 @@ errorout:
 	if err != nil {
 		logger.Server.Println("TypeCommandResponse send error")
 	}
+}
+
+func execScript(sparams *ScriptParams) ([]byte, error) {
+	var content []byte
+	var err error
+	var scriptFile strings.Builder
+	var f *os.File
+	content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
+	if err != nil {
+		logger.Server.Println("FileDecode")
+		return nil, err
+	}
+
+	scriptFile.WriteString(config.GlobalConfig.Workspace.Store)
+	scriptFile.WriteString(sparams.TargetPath)
+
+	os.Mkdir(scriptFile.String(), os.ModePerm)
+	if scriptFile.String()[scriptFile.Len() - 1] != '/' {
+		scriptFile.WriteByte('/')
+	}
+
+	scriptFile.WriteString(sparams.FileName)
+	f, err = os.Create(scriptFile.String())
+	if err != nil {
+		logger.Server.Println("FileCreate")
+		return nil, err
+	}
+	f.Write(content)
+	f.Close()
+
+	return exec.Command("bash", scriptFile.String()).CombinedOutput()
 }
 
 func RunCmd(conn net.Conn, raw []byte) {

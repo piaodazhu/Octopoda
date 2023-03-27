@@ -43,10 +43,13 @@ func FilePush(conn net.Conn, raw []byte) {
 	}
 
 	
-	file.WriteString(config.GlobalConfig.Workspace.Root)
+	file.WriteString(config.GlobalConfig.Workspace.Store)
 	file.WriteString(fileinfo.TargetPath)
 	
 	os.Mkdir(file.String(), os.ModePerm)
+	if file.String()[file.Len() - 1] != '/' {
+		file.WriteByte('/')
+	}
 
 	file.WriteString(fileinfo.FileName)
 	f, err = os.Create(file.String())
@@ -67,7 +70,7 @@ errorout:
 
 func FileTree(conn net.Conn, raw []byte) {
 	var pathsb strings.Builder
-	pathsb.WriteString(config.GlobalConfig.Workspace.Root)
+	pathsb.WriteString(config.GlobalConfig.Workspace.Store)
 	pathsb.Write(raw)
 	res := allFiles(pathsb.String())
 	err := message.SendMessage(conn, message.TypeFileTreeResponse, res)

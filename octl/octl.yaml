@@ -6,10 +6,12 @@ server:
 api:  
   nodeInfo: "/node/info"
   nodeStatus: "/node/status"
-  nodeApps: "/node/apps"
   nodeLog: "/node/log"
   nodeReboot: "/node/reboot"
   nodePrune: "/node/prune"
+  nodeApps: "/node/apps"
+  nodeAppVersion: "/node/app/version"
+  nodeAppReset: "/node/app/version"
 
   nodesInfo: "/nodes/info"
   nodesStatus: "/nodes/status"
@@ -17,6 +19,7 @@ api:
   scenarioInfo: "/scenario/info"
   scenarioVersions: "/scenario/versions"
   scenarioLog: "/scenario/log"
+  scenarioDeploy: "/scenario/deployment"
 
   fileUpload: "/file/upload"
   fileSpread: "/file/spread"

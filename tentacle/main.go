@@ -1,6 +1,7 @@
 package main
 
 import (
+	"tentacle/app"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
@@ -11,6 +12,7 @@ import (
 func main() {
 	config.InitConfig()
 	logger.InitLogger()
+	app.InitAppModel()
 	network.InitListener()
 	heartbeat.InitHeartbeat()
 	service.InitService()
