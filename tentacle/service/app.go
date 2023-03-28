@@ -98,6 +98,8 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		rmsg.Msg = "Invalid Params"
 		goto errorout
 	}
+	dirName = adParams.Name + "@" + adParams.Scenario
+
 	// is new?
 	if ok = app.Exists(adParams.Name, adParams.Scenario); !ok {
 		if !app.Create(adParams.Name, adParams.Scenario, adParams.Description) {
@@ -105,9 +107,13 @@ func AppDeploy(conn net.Conn, raw []byte) {
 			rmsg.Msg = "Failed Create App"
 			goto errorout
 		}
+		if !app.GitCreate(dirName) {
+			logger.Client.Println("app.GitCreate")
+			rmsg.Msg = "Failed Init the Repo"
+			goto errorout
+		}
 	}
 	// run script
-	dirName = adParams.Name + "@" + adParams.Scenario
 	sparams = ScriptParams{
 		FileName: fmt.Sprintf("script_%s.sh", time.Now().Format("2006_01_02_15_04")),
 		TargetPath: dirName,

@@ -49,6 +49,7 @@ func InitAppModel() {
 		if err := json.Unmarshal(content, &nodeApps); err != nil {
 			logger.Server.Fatal("Invalid nodeapps file!")
 		}
+		// FixAll()
 	}
 }
 
@@ -97,7 +98,6 @@ func Exists(appname, scenario string) bool {
 	}
 	return false
 }
-
 
 func Create(appname, scenario, description string) bool {
 	name := appname + "@" + scenario
@@ -165,9 +165,9 @@ func Digest() []byte {
 	defer nLock.Unlock()
 	for i := range nodeApps.Apps {
 		digest.Apps = append(digest.Apps, AppDigest{
-			Name: nodeApps.Apps[i].Name, 
+			Name:        nodeApps.Apps[i].Name,
 			Discription: nodeApps.Apps[i].Discription,
-			CurVersion: nodeApps.Apps[i].Versions[nodeApps.Apps[i].VersionPtr],
+			CurVersion:  nodeApps.Apps[i].Versions[nodeApps.Apps[i].VersionPtr],
 		})
 	}
 	serialized, _ := json.Marshal(digest)
@@ -181,20 +181,97 @@ func Versions(name string) []byte {
 	serialized := []byte{}
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
-			idx = i 
+			idx = i
 			break
 		}
 	}
 	if idx > 0 {
-		serialized, _ = json.Marshal(&nodeApps.Apps[idx]) 
+		serialized, _ = json.Marshal(&nodeApps.Apps[idx])
 	}
 	return serialized
 }
 
-func Fix(appname string) {
+// --------------------------------------
+// only for experimental
+func Fix(appname string) bool {
+	// versions is in time desc order
+	versions, err := gitLogs(appname, 5)
+	if err != nil {
+		return false
+	}
 
+	nLock.Lock()
+	defer nLock.Unlock()
+	idx := -1
+	for i := range nodeApps.Apps {
+		if nodeApps.Apps[i].Name == appname {
+			idx = i
+			break
+		}
+	}
+
+	if idx < 0 {
+		return false
+	}
+
+	oldlist := nodeApps.Apps[idx].Versions
+	// Case 1: no missing commit
+	if oldlist[nodeApps.Apps[idx].VersionPtr].Hash == versions[len(versions)-1].Hash {
+		// need not fix
+		return true
+	}
+
+	// Case 2: has a missing reset
+	for i := range oldlist {
+		if oldlist[i].Hash == versions[len(versions)-1].Hash {
+			nodeApps.Apps[idx].VersionPtr = i
+			saveNoLock()
+			return true
+		}
+	}
+
+	// Case 3: has many missing commits. We can compensate at most N missing commits.
+	// versions: Actual latest N commits
+	// oldlist: Octopoda currently record
+	// if a version not exists in oldlist, we add this version to Octopoda app versions list
+	for i := 0; i < len(versions); i++ {
+		exists := false
+		for j := range oldlist {
+			if oldlist[j].Hash == versions[i].Hash {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			// all version newer than this verison is considered NEW, so add all of them
+			nodeApps.Apps[idx].Versions = append(nodeApps.Apps[idx].Versions, versions[i:]...)
+			nodeApps.Apps[idx].VersionPtr = len(nodeApps.Apps[idx].Versions) - 1
+			saveNoLock()
+			break
+		}
+	}
+	return true
 }
 
-func FixAll(appname string) {
+// not optimized. bad loop
+func FixAll() {
+	for i := range nodeApps.Apps {
+		Fix(nodeApps.Apps[i].Name)
+	}
+}
 
+func saveNoLock() {
+	var file strings.Builder
+	file.WriteString(config.GlobalConfig.Workspace.Root)
+	file.WriteString(consistFileName)
+	_, err := os.Stat(file.String())
+	if os.IsExist(err) {
+		os.Rename(file.String(), file.String()+".bk")
+	}
+	nodeApps.NodeVersion++
+	serialized, _ := json.Marshal(&nodeApps)
+	err = os.WriteFile(file.String(), serialized, os.ModePerm)
+	if err != nil {
+		logger.Server.Print("cannot WriteFile")
+	}
 }
