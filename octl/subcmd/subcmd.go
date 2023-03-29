@@ -101,6 +101,18 @@ func Distrib(arglist []string) {
 	file.DistribFile(arglist[0], arglist[1], arglist[2:])
 }
 
+func FileTree(arglist []string) {
+	if len(arglist) == 0 {
+		return
+	} else if len(arglist) == 1 {
+		file.ListAllFile(arglist[0], "")
+	} else if len(arglist) == 2 {
+		file.ListAllFile(arglist[0], arglist[1])
+	} else {
+		return
+	}
+}
+
 func Prune(arglist []string) {
 	if len(arglist) != 0 {
 		return

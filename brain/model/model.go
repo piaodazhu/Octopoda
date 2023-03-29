@@ -54,7 +54,7 @@ type State struct {
 	Platform  string
 	CpuCores  int
 	Ip        string
-	StartTime int64
+	LocalTime int64
 
 	CpuLoadShort float64
 	CpuLoadLong  float64

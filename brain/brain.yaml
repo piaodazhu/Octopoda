@@ -5,7 +5,7 @@ tentacleFace:
   activeTimeout: 2
   recordTimeout: 10
 brainFace:
-  ip: "127.0.0.1"
+  ip: "192.168.3.181"
   port: 12345
 redis:
   ip: "127.0.0.1"

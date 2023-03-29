@@ -21,7 +21,7 @@ type State struct {
 	Platform  string
 	CpuCores  int
 	Ip        string
-	StartTime int64
+	LocalTime int64
 
 	CpuLoadShort float64
 	CpuLoadLong  float64
@@ -41,7 +41,7 @@ func initNodeState() {
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),
 		Ip:        config.GlobalConfig.Worker.Ip,
-		StartTime: time.Now().Unix(),
+		LocalTime: time.Now().UnixNano(),
 
 		CpuLoadShort: 0.0,
 		CpuLoadLong:  0.0,
@@ -56,6 +56,7 @@ func initNodeState() {
 func NodeState(conn net.Conn, raw []byte) {
 	stateLock.RLock()
 	state := nodeState
+	state.LocalTime = time.Now().UnixNano()
 	stateLock.RUnlock()
 	serialized_info, _ := json.Marshal(&state)
 	err := message.SendMessage(conn, message.TypeNodeStateResponse, serialized_info)

@@ -132,3 +132,24 @@ func DistribFile(localFile string, targetPath string, nodes []string) {
 	}
 	fmt.Println(string(msg))
 }
+
+func ListAllFile(node string, subdir string) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s&subdir=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.FileTree,
+		node,
+		subdir,
+	)
+	res, err := http.Get(url)
+	if err != nil {
+		panic("Get")
+	}
+	defer res.Body.Close()
+	msg, err := io.ReadAll(res.Body)
+	if err != nil {
+		panic("ReadAll")
+	}
+	fmt.Println(string(msg))
+}

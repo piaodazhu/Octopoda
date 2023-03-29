@@ -36,6 +36,8 @@ func main() {
 		subcmd.Spread(args[2:])
 	case "distrib":
 		subcmd.Distrib(args[2:])
+	case "tree":
+		subcmd.FileTree(args[2:])
 	case "prune":
 		subcmd.Prune(args[2:])
 	case "run":

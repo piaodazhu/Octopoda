@@ -61,7 +61,7 @@ type FileSpreadParams struct {
 }
 
 type UploadResults struct {
-	Name string
+	Name   string
 	Result string
 }
 
@@ -199,11 +199,12 @@ type FileInfo struct {
 }
 
 func allFiles(path string) []byte {
-	if path[len(path) - 1] == '/' {
-		path = path[:len(path) - 1]
+	if path[len(path)-1] == '/' {
+		path = path[:len(path)-1]
 	}
 	finfos := []FileInfo{}
 	walkDir(path, &finfos)
+	hideRoot(path, &finfos)
 	serialized, _ := json.Marshal(&finfos)
 	return serialized
 }
@@ -233,6 +234,11 @@ func walkDir(path string, files *[]FileInfo) {
 	}
 }
 
+func hideRoot(root string, files *[]FileInfo) {
+	for i := range *files {
+		(*files)[i].Name = (*files)[i].Name[len(root):]
+	}
+}
 
 func FileDistrib(ctx *gin.Context) {
 	file, _ := ctx.FormFile("file")

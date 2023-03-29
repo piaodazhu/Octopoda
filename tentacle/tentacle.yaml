@@ -23,4 +23,4 @@ heartbeat:
   autoRestart: false
 workspace:
   root: "/root/octopoda/workspace/"
-  store: "/root/octopoda/workspace/FSTORE/"  
+  store: "/root/octopoda/workspace/FSTORE/"

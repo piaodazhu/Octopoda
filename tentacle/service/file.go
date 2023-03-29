@@ -91,6 +91,7 @@ func allFiles(path string) []byte {
 	}
 	finfos := []FileInfo{}
 	walkDir(path, &finfos)
+	hideRoot(path, &finfos)
 	serialized, _ := json.Marshal(&finfos)
 	return serialized
 }
@@ -117,5 +118,11 @@ func walkDir(path string, files *[]FileInfo) {
 
 			*files = append(*files, finfo)
 		}
+	}
+}
+
+func hideRoot(root string, files *[]FileInfo) {
+	for i := range (*files) {
+		(*files)[i].Name = (*files)[i].Name[len(root):]
 	}
 }

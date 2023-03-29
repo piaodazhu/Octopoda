@@ -8,6 +8,7 @@ import (
 	"sync"
 	"tentacle/config"
 	"tentacle/logger"
+	"time"
 )
 
 type Version struct {
@@ -40,7 +41,7 @@ func InitAppModel() {
 	file.WriteString(consistFileName)
 	f, err := os.Open(file.String())
 	if err != nil {
-		logger.Server.Print(err)
+		logger.Server.Panic(err)
 	} else {
 		defer f.Close()
 		content, _ := io.ReadAll(f)
@@ -49,7 +50,7 @@ func InitAppModel() {
 		if err := json.Unmarshal(content, &nodeApps); err != nil {
 			logger.Server.Fatal("Invalid nodeapps file!")
 		}
-		// FixAll()
+		go autoFixAll()
 	}
 }
 
@@ -257,6 +258,13 @@ func Fix(appname string) bool {
 func FixAll() {
 	for i := range nodeApps.Apps {
 		Fix(nodeApps.Apps[i].Name)
+	}
+}
+
+func autoFixAll() {
+	for {
+		time.Sleep(time.Second * 3)
+		FixAll()
 	}
 }
 
