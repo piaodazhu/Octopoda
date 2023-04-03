@@ -22,10 +22,14 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/nodes/info", api.NodesInfo)
 		group.GET("/nodes/status", api.NodesState)
 
-		group.GET("/scenario/info", NotImpl)
-		group.GET("/scenario/versions", NotImpl)
+		group.GET("/scenario/info", api.ScenarioInfo)
+		group.POST("/scenario/info", api.ScenarioCreate)
+		group.DELETE("/scenario/info", api.ScenarioDelete)
+		// group.GET("/scenario/version", NotImpl)
+		group.POST("/scenario/version", api.ScenarioReset)
 		group.GET("/scenario/log", NotImpl)
-		group.POST("/scenario/deployment", NotImpl)
+		group.POST("/scenario/app/prepare", api.AppPrepare)
+		group.POST("/scenario/app/deployment", api.AppDeploy)
 
 		group.POST("/file/upload", api.FileUpload)
 		group.POST("/file/spread", api.FileSpread)

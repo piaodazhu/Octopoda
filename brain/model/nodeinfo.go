@@ -10,22 +10,59 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	NodeStateReady = iota
+	NodeStateDisconn
+	NodeStateDead
+)
+
+type NodeInfo struct {
+	Id        uint32
+	Name      string
+	Addr      string
+	State     int32
+	OnlineTs  int64
+	OfflineTs int64
+}
+
+type NodeModel struct {
+	NodeInfo
+	Applist []*AppModel
+}
+
+type State struct {
+	Id        int
+	Name      string
+	Platform  string
+	CpuCores  int
+	Ip        string
+	LocalTime int64
+
+	CpuLoadShort float64
+	CpuLoadLong  float64
+	MemUsed      uint64
+	MemTotal     uint64
+	DiskUsed     uint64
+	DiskTotal    uint64
+}
+
+
 var NodeMap map[string]*NodeModel
-var Lock sync.RWMutex
+var NodesLock sync.RWMutex
 
 func InitNodeMap() {
 	NodeMap = make(map[string]*NodeModel)
 	go func() {
 		for {
 			time.Sleep(time.Second)
-			Lock.Lock()
+			NodesLock.Lock()
 			for _, node := range NodeMap {
 				if node.State == NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().Unix() {
 					// logger.Tentacle.Print("MarkDeadNode", nodename)
 					node.State = NodeStateDead
 				}
 			}
-			Lock.Unlock()
+			NodesLock.Unlock()
 		}
 	}()
 }
@@ -37,8 +74,8 @@ func StoreNode(name string, ip string, port uint16) uint32 {
 	sb.WriteByte(':')
 	sb.WriteString(strconv.Itoa(int(port)))
 
-	Lock.Lock()
-	defer Lock.Unlock()
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
 
 	if n, found := NodeMap[name]; found {
 		node = n
@@ -67,8 +104,8 @@ func UpdateNode(name string) bool {
 
 func DisconnNode(name string) bool {
 	// logger.Tentacle.Print("DisconnNode", name)
-	Lock.Lock()
-	defer Lock.Unlock()
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
 	if node, found := NodeMap[name]; found {
 		node.State = int32(NodeStateDisconn)
 		node.OfflineTs = time.Now().Unix() //
@@ -78,8 +115,8 @@ func DisconnNode(name string) bool {
 }
 
 func PruneDeadNode() {
-	Lock.RLock()
-	defer Lock.RUnlock()
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
 
 	toBePruned := []string{}
 	for name, node := range NodeMap {
@@ -93,8 +130,8 @@ func PruneDeadNode() {
 }
 
 func GetNodeInfoByName(name string) (*NodeModel, bool) {
-	Lock.RLock()
-	defer Lock.RUnlock()
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
 
 	if node, found := NodeMap[name]; found {
 		return node, true
@@ -103,8 +140,8 @@ func GetNodeInfoByName(name string) (*NodeModel, bool) {
 }
 
 func GetNodeInfoById(id int) (*NodeModel, bool) {
-	Lock.RLock()
-	defer Lock.RUnlock()
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
 
 	for _, node := range NodeMap {
 		if node.Id == uint32(id) {
@@ -115,8 +152,8 @@ func GetNodeInfoById(id int) (*NodeModel, bool) {
 }
 
 func GetNodesInfoAll() ([]*NodeInfo, bool) {
-	Lock.RLock()
-	defer Lock.RUnlock()
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
 
 	if len(NodeMap) == 0 {
 		return nil, false
@@ -130,8 +167,8 @@ func GetNodesInfoAll() ([]*NodeInfo, bool) {
 }
 
 func GetNodeAddress(name string) (string, bool) {
-	Lock.Lock()
-	defer Lock.Unlock()
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
 
 	if node, found := NodeMap[name]; found && node.State == NodeStateReady {
 		return node.Addr, true
@@ -140,8 +177,8 @@ func GetNodeAddress(name string) (string, bool) {
 }
 
 func GetNodeState(name string) (int, bool) {
-	Lock.RLock()
-	defer Lock.RUnlock()
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
 
 	if node, found := NodeMap[name]; found {
 		return int(node.State), true
@@ -150,8 +187,8 @@ func GetNodeState(name string) (int, bool) {
 }
 
 func SetNodeState(name string, state int) bool {
-	Lock.Lock()
-	defer Lock.Unlock()
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
 
 	if node, found := NodeMap[name]; found {
 		node.State = int32(state)

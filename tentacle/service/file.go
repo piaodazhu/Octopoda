@@ -3,12 +3,15 @@ package service
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"time"
 )
 
 type FileParams struct {
@@ -23,8 +26,6 @@ type RMSG struct {
 
 func FilePush(conn net.Conn, raw []byte) {
 	var file strings.Builder
-	var content []byte
-	var f *os.File
 	rmsg := RMSG{"OK"}
 
 	fileinfo := FileParams{}
@@ -35,31 +36,21 @@ func FilePush(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	content, err = base64.RawStdEncoding.DecodeString(fileinfo.FileBuf)
-	if err != nil {
-		logger.Server.Println("FileDecode")
-		rmsg.Msg = "FileDecode"
-		goto errorout
-	}
-
-	
 	file.WriteString(config.GlobalConfig.Workspace.Store)
 	file.WriteString(fileinfo.TargetPath)
-	
+
 	os.Mkdir(file.String(), os.ModePerm)
-	if file.String()[file.Len() - 1] != '/' {
+	if file.String()[file.Len()-1] != '/' {
 		file.WriteByte('/')
 	}
 
 	file.WriteString(fileinfo.FileName)
-	f, err = os.Create(file.String())
+
+	err = saveFile(fileinfo.FileBuf, file.String())
 	if err != nil {
-		logger.Server.Println("FileCreate")
-		rmsg.Msg = "FileCreate"
+		rmsg.Msg = "FileNotSave"
 		goto errorout
 	}
-	defer f.Close()
-	f.Write(content)
 errorout:
 	payload, _ := json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
@@ -86,8 +77,8 @@ type FileInfo struct {
 }
 
 func allFiles(path string) []byte {
-	if path[len(path) - 1] == '/' {
-		path = path[:len(path) - 1]
+	if path[len(path)-1] == '/' {
+		path = path[:len(path)-1]
 	}
 	finfos := []FileInfo{}
 	walkDir(path, &finfos)
@@ -122,7 +113,61 @@ func walkDir(path string, files *[]FileInfo) {
 }
 
 func hideRoot(root string, files *[]FileInfo) {
-	for i := range (*files) {
+	for i := range *files {
 		(*files)[i].Name = (*files)[i].Name[len(root):]
 	}
+}
+
+func saveFile(filebufb64, filename string) error {
+	content, err := base64.RawStdEncoding.DecodeString(filebufb64)
+	if err != nil {
+		logger.Server.Println("FileDecode")
+		return err
+	}
+	err = os.WriteFile(filename, content, os.ModePerm)
+	if err != nil {
+		logger.Server.Println("WriteFile")
+		return err
+	}
+	return nil
+}
+
+type ErrUnpack struct{}
+func (ErrUnpack) Error() string { return "ErrUnpack" }
+
+func unpackFiles(packb64 string, subdir string) error {
+	var file strings.Builder
+	// tmp tar file name
+	fname := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+
+	// make complete path and filename
+	file.WriteString(config.GlobalConfig.Workspace.Root)
+	file.WriteString(subdir)
+	path := file.String()
+	os.Mkdir(path, os.ModePerm)
+	if path[len(path)-1] != '/' {
+		file.WriteByte('/')
+	}
+	file.WriteString(fname)
+	
+	err := saveFile(packb64, file.String())
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("tar", "-xf", file.String(), "-C", path)
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+	if !cmd.ProcessState.Success() {
+		return ErrUnpack{}
+	}
+
+	os.Remove(file.String())
+	return nil
 }

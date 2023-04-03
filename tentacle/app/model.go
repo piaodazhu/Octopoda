@@ -119,6 +119,26 @@ func Create(appname, scenario, description string) bool {
 	return true
 }
 
+func Delete(appname, scenario string) bool {
+	name := appname + "@" + scenario
+	nLock.Lock()
+	defer nLock.Unlock()
+	
+	// find the target
+	idx := -1
+	for i := range nodeApps.Apps {
+		if nodeApps.Apps[i].Name == name {
+			idx = i
+			break
+		}
+	}
+	if idx > 0 {
+		nodeApps.Apps[idx], nodeApps.Apps[len(nodeApps.Apps) - 1] = nodeApps.Apps[len(nodeApps.Apps) - 1], nodeApps.Apps[idx]
+		nodeApps.Apps = nodeApps.Apps[:len(nodeApps.Apps) - 1]
+	}
+	return true
+}
+
 func Update(appname string, version Version) bool {
 	nLock.Lock()
 	defer nLock.Unlock()

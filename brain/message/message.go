@@ -35,6 +35,12 @@ const (
 	TypeNodeLog
 	TypeNodeLogResponse
 
+	TypeAppCreate
+	TypeAppCreateResponse
+
+	TypeAppDelete
+	TypeAppDeleteResponse
+
 	TypeCommandReboot
 	TypeCommandSSH
 	TypeCommandRun

@@ -41,6 +41,12 @@ const (
 	TypeCommandRunScript
 	TypeCommandResponse
 
+	TypeAppCreate
+	TypeAppCreateResponse
+
+	TypeAppDelete
+	TypeAppDeleteResponse
+
 	TypeAppDeploy
 	TypeAppDeployResponse
 

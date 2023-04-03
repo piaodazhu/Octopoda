@@ -24,8 +24,10 @@ type APIs struct {
 	NodesStatus string `mapstructure:"nodesStatus"`
 
 	ScenarioInfo     string `mapstructure:"scenarioInfo"`
-	ScenarioVersions string `mapstructure:"scenarioVersions"`
+	ScenarioVersion string `mapstructure:"scenarioVersion"`
 	ScenarioLog      string `mapstructure:"scenarioLog"`
+	ScenarioAppCreate string `mapstructure:"scenarioAppCreate"`
+	ScenarioAppDepoly      string `mapstructure:"scenarioAppDeploy"`
 
 	FileUpload  string `mapstructure:"fileUpload"`
 	FileSpread  string `mapstructure:"fileSpread"`

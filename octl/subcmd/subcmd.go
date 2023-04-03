@@ -1,14 +1,27 @@
 package subcmd
 
 import (
+	"fmt"
 	"octl/file"
 	"octl/log"
 	"octl/node"
+	"octl/scenario"
 	"octl/shell"
 )
 
 func Apply(arglist []string) {
-
+	if len(arglist) == 0 || len(arglist) > 4 {
+		return
+	}
+	if arglist[len(arglist)-2] == "-m" {
+		if len(arglist) == 3 {
+			scenario.ScenarioApply(arglist[0], "default", arglist[2])
+			return
+		} else if len(arglist) == 4 {
+			scenario.ScenarioApply(arglist[0], arglist[1], arglist[3])
+		}
+	}
+	fmt.Println(`usage: octl apply xx.yaml [target] -m "your message"`)
 }
 
 func Get(arglist []string) {
@@ -122,7 +135,7 @@ func Prune(arglist []string) {
 
 func Run(arglist []string) {
 	if len(arglist) < 2 {
-		return 
+		return
 	}
 	shell.RunTask(arglist[0], arglist[1:])
 }

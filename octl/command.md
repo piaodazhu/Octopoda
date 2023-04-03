@@ -6,36 +6,49 @@ Example of deployfile
 ```yaml
 name: scienario1
 desciption: "hello world"
-scriptpath: "./script/"
 applications:
 - 
   name: "icn_provider"
-  install_dir: "scienario1/provider/"
+  description: "provide content in ICN"
+  scriptpath: "./script1/"
+  sourcepath: "./provider/"
   nodes:
    - pi1
    - pi2
-  prepare:
-   script: "prepare.sh"
-  start:
-   script: "run.sh"
-  stop:
-   script: "stop.sh"
-  purge:
-   script: "purge.sh"
+  script:
+   - 
+     target: prepare
+     file: "prepare.sh"
+   - 
+     target: start
+     file: "start.sh"
+   - 
+     target: stop
+     file: "stop.sh"
+   - 
+     target: purge
+     file: "purge.sh"
 - 
   name: "icn_consumer"
-  install_dir: "scienario1/consumer/"
+  description: "consume content in ICN"
+  scriptpath: "./script2/"
+  sourcepath: "./consumer/"
   nodes:
    - pi3
    - pi4
-  prepare:
-   script: "prepare2.sh"
-  start:
-   script: "run2.sh"
-  stop:
-   script: "stop2.sh"
-  purge:
-   script: "purge2.sh"
+  script:
+   - 
+     target: prepare
+     file: "prepare.sh"
+   - 
+     target: start
+     file: "start.sh"
+   - 
+     target: stop
+     file: "stop.sh"
+   - 
+     target: purge
+     file: "purge.sh"
 ```
 
 ## Get infomation

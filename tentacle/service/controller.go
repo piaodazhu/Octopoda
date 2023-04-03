@@ -36,6 +36,8 @@ func HandleConn(conn net.Conn) {
 		RunCmd(conn, raw)
 	case message.TypeCommandRunScript:
 		RunScript(conn, raw)
+	case message.TypeAppCreate:
+		AppCreate(conn, raw)
 	case message.TypeAppDeploy:
 		AppDeploy(conn, raw)
 	case message.TypeAppVersion:
