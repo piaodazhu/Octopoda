@@ -57,7 +57,8 @@ func checkConfig(config *ScenarioConfigModel) error {
 	if config.Name == "" || config.Description == "" || len(config.Applications) == 0 {
 		return ErrMissingFields{}
 	}
-
+	// fmt.Printf("%+v\n", *config)
+	// os.Exit(0)
 
 	nodeset := map[string]struct{}{}
 	var err error
@@ -120,6 +121,7 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 
 		// check file exists
 		info, err := os.Stat(path + script[i].File)
+		// fmt.Println(path + script[i].File, path)
 		if err != nil || info.IsDir() {
 			return ErrInvalidScript{}
 		}

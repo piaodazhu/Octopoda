@@ -2,6 +2,7 @@ package app
 
 import (
 	"os"
+	"tentacle/config"
 	"tentacle/logger"
 	"time"
 
@@ -11,7 +12,8 @@ import (
 )
 
 // must support rollback
-func GitReset(path string, hash string, mode string) error {
+func GitReset(app string, hash string, mode string) error {
+	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		logger.Server.Print("git.PlainOpen")
@@ -45,7 +47,8 @@ func GitReset(path string, hash string, mode string) error {
 type EmptyCommitError struct{}
 
 func (e EmptyCommitError) Error() string { return "EmptyCommitError" }
-func GitCommit(path string, message string) (Version, error) {
+func GitCommit(app string, message string) (Version, error) {
+	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		logger.Server.Print("git.PlainOpen")
@@ -82,12 +85,13 @@ func GitCommit(path string, message string) (Version, error) {
 	return Version{commitTime.Unix(), hash.String(), message}, nil
 }
 
-func GitCreate(path string) bool {
+func GitCreate(app string) bool {
+	path := config.GlobalConfig.Workspace.Root + app
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		logger.Server.Print("os.Mkdir")
 		return false
 	}
-	if _, err := git.PlainInit(path, true); err != nil {
+	if _, err := git.PlainInit(path, false); err != nil {
 		logger.Server.Print("git.PlainInit")
 		return false
 	}
@@ -95,9 +99,11 @@ func GitCreate(path string) bool {
 }
 
 // for Fix and FixAll
-func gitLogs(path string, N int) ([]Version, error) {
+func gitLogs(app string, N int) ([]Version, error) {
+	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
+		logger.Server.Print(err.Error())
 		logger.Server.Print("git.PlainOpen")
 		return nil, err
 	}

@@ -41,17 +41,21 @@ func InitAppModel() {
 	file.WriteString(consistFileName)
 	f, err := os.Open(file.String())
 	if err != nil {
-		logger.Server.Panic(err)
+		// logger.Server.Panic(err)
+		nLock.Lock()
+		nodeApps.NodeVersion = 0
+		saveNoLock()
+		nLock.Unlock()
 	} else {
 		defer f.Close()
 		content, _ := io.ReadAll(f)
 		nLock.Lock()
-		defer nLock.Unlock()
 		if err := json.Unmarshal(content, &nodeApps); err != nil {
 			logger.Server.Fatal("Invalid nodeapps file!")
 		}
-		go autoFixAll()
+		nLock.Unlock()
 	}
+	go autoFixAll()
 }
 
 func Save() {
@@ -217,7 +221,7 @@ func Versions(name string) []byte {
 func Fix(appname string) bool {
 	// versions is in time desc order
 	versions, err := gitLogs(appname, 5)
-	if err != nil {
+	if err != nil || len(versions) == 0 {
 		return false
 	}
 

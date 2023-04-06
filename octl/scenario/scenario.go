@@ -34,13 +34,16 @@ func ScenarioApply(file string, target string, message string) {
 	}
 
 	switch target {
+		// ???
 	case "prepare":
 		ScenarioPrepare(&configuration, message)
+		ScenarioRun(&configuration, "prepare", message)
 	case "default":
 		ScenarioPrepare(&configuration, message)
-		ScenarioRun(&configuration, target, message)
+		ScenarioRun(&configuration, "prepare", message)
+		ScenarioRun(&configuration, "start", message)
 	case "purge":
-		ScenarioRun(&configuration, target, message)
+		// ScenarioRun(&configuration, target, message)
 		ScenarioPurge(&configuration)
 	default:
 		ScenarioRun(&configuration, target, message)
@@ -55,7 +58,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	fmt.Println(">> create scenario ", configuration.Name)
 	err = ScenarioCreate(configuration.Name, configuration.Description)
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	// for each application
@@ -64,15 +67,16 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		fmt.Println(">> create app ", app.Name)
 
 		// pack the file
-		cmd := exec.Command("tar", "-cf", tmpName, app.SourcePath)
+		cmd := exec.Command("tar", "-cf", tmpName, "-C", app.SourcePath, ".")
+		fmt.Println(cmd.String())
 		err = cmd.Run()
 		if err != nil {
 			panic("cmd.Run")
 		}
-		err = cmd.Wait()
-		if err != nil {
-			panic("cmd.Wait")
-		}
+		// err = cmd.Wait()
+		// if err != nil {
+		// 	panic(err)
+		// }
 		if !cmd.ProcessState.Success() {
 			panic("tar error")
 		}
@@ -117,12 +121,14 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		if err != nil {
 			panic("ReadAll")
 		}
+
 		fmt.Println(string(msg))
 	}
 	os.Remove(tmpName)
 }
 
 func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
+	fmt.Println("- Target: ", target)
 	// for each application
 	for i := range configuration.Applications {
 		app := configuration.Applications[i]

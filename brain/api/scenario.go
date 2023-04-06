@@ -35,7 +35,7 @@ type AppDeleteParams struct {
 
 func ScenarioDelete(ctx *gin.Context) {
 	// This is not so simple. Should delete all apps of a scenario in this function
-	name := ctx.PostForm("name")
+	name := ctx.Query("name")
 	rmsg := RMSG{"OK"}
 	if len(name) == 0 {
 		rmsg.Msg = "ERROR: Wrong Args"
@@ -108,11 +108,29 @@ func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 }
 
 func ScenarioInfo(ctx *gin.Context) {
-
+	var name string 
+	var ok bool
+	var scen *model.ScenarioInfo
+	if name, ok = ctx.GetQuery("name"); !ok {
+		ctx.JSON(404, struct{}{})
+		return
+	}
+	if scen, ok = model.GetScenarioInfoByName(name); !ok {
+		ctx.JSON(404, struct{}{})
+		return
+	}
+	ctx.JSON(200, scen)
 }
 
 func ScenariosInfo(ctx *gin.Context) {
+	var scens []*model.ScenarioDigest
+	var ok bool
 
+	if scens, ok = model.GetScenariosDigestAll(); !ok {
+		ctx.JSON(404, struct{}{})
+		return
+	}
+	ctx.JSON(200, scens)
 }
 
 func ScenarioReset(ctx *gin.Context) {

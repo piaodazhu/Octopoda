@@ -14,6 +14,7 @@ func main() {
 	logger.InitLogger()
 	ticker.InitTicker()
 	model.InitNodeMap()
+	model.InitScenarioMap()
 
 	heartbeat.InitHeartbeat()
 

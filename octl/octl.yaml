@@ -20,7 +20,7 @@ api:
   scenarioVersion: "/scenario/version"
   scenarioLog: "/scenario/log"
   scenarioAppDeploy: "/scenario/app/deployment"
-  scenarioAppCreate: "/scenario/app/create"
+  scenarioAppCreate: "/scenario/app/prepare"
 
   fileUpload: "/file/upload"
   fileSpread: "/file/spread"

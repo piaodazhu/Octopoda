@@ -156,14 +156,15 @@ func unpackFiles(packb64 string, subdir string) error {
 	}
 
 	cmd := exec.Command("tar", "-xf", file.String(), "-C", path)
-	err = cmd.Start()
+	fmt.Println(cmd.String())
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
+	// err = cmd.Wait()
+	// if err != nil {
+	// 	return err
+	// }
 	if !cmd.ProcessState.Success() {
 		return ErrUnpack{}
 	}

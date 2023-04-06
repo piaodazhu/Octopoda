@@ -35,17 +35,17 @@ const (
 	TypeNodeLog
 	TypeNodeLogResponse
 
-	TypeAppCreate
-	TypeAppCreateResponse
-
-	TypeAppDelete
-	TypeAppDeleteResponse
-
 	TypeCommandReboot
 	TypeCommandSSH
 	TypeCommandRun
 	TypeCommandRunScript
 	TypeCommandResponse
+
+	TypeAppCreate
+	TypeAppCreateResponse
+
+	TypeAppDelete
+	TypeAppDeleteResponse
 
 	TypeAppDeploy
 	TypeAppDeployResponse

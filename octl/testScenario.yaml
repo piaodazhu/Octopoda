@@ -6,55 +6,73 @@ applications:
   name: "helloPrinter"
   # scripts should be found under this path of current host
   scriptpath: "./test/hello/"
+  sourcepath: "./test/hello/"
   description: "print hello to hello.txt"
   nodes:
-    pi-24
-  prepare:
-    # it will prepare a file hello.txt and write first line `-->prepared`
-    script: "prepare.sh"
-  start:
-    # it will write second line `hello` and print `hello`
-    script: "run.sh"
-  stop:
-    # it will do nothing but print `stop`
-    script: "stop"
-  purge:
-    # it will delete the file hello.txt
-    script: "purge.sh"
+    - 'pi-24'
+  script:
+    -
+      # it will prepare a file hello.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `hello` and print `hello`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file hello.txt
+      target: purge
+      file: "purge.sh"
 -
   name: "worldPrinter"
   scriptpath: "./test/world/"
+  sourcepath: "./test/world/"
   description: "print hello to world.txt"
   nodes:
-    pi-240
-  prepare:
-    # it will prepare a file hello.txt and write first line `-->prepared`
-    script: "prepare.sh"
-  start:
-    # it will write second line `world` and print `world`
-    script: "run.sh"
-  stop:
-    # it will do nothing but print `stop`
-    script: "stop"
-  purge:
-    # it will delete the file world.txt
-    script: "purge.sh"
+    - 'pi-240'
+  script:
+    -
+      # it will prepare a file world.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `world` and print `world`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file world.txt
+      target: purge
+      file: "purge.sh"
 -
   name: "helloWorldPrinter"
   scriptpath: "./test/helloworld/"
+  sourcepath: "./test/helloworld/"
   description: "print hello to helloworld.txt"
   nodes:
-    pi-24
-    pi-240
-  prepare:
-    # it will prepare a file hello.txt and write first line `-->prepared`
-    script: "prepare.sh"
-  start:
-    # it will write second line `hello world` and print `hello world`
-    script: "run.sh"
-  stop:
-    # it will do nothing but print `stop`
-    script: "stop"
-  purge:
-    # it will delete the file helloworld.txt
-    script: "purge.sh"
+    - 'pi-24'
+    - 'pi-240'
+  script:
+    -
+      # it will prepare a file helloworld.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `helloworld` and print `helloworld`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file helloworld.txt
+      target: purge
+      file: "purge.sh"

@@ -112,13 +112,13 @@ func RunScript(conn net.Conn, raw []byte) {
 	// 	rmsg.Msg = string(output)
 	// }
 
-	output, err = execScript(&sparams)
+	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root})
 	if err != nil {
 		rmsg.Msg = err.Error()
 	} else {
 		rmsg.Msg = string(output)
 	}
-	
+
 errorout:
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
@@ -127,35 +127,43 @@ errorout:
 	}
 }
 
-func execScript(sparams *ScriptParams) ([]byte, error) {
+func execScript(sparams *ScriptParams, env []string) ([]byte, error) {
 	var content []byte
 	var err error
 	var scriptFile strings.Builder
-	var f *os.File
+	// var f *os.File
 	content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
 	if err != nil {
 		logger.Server.Println("FileDecode")
 		return nil, err
 	}
 
-	scriptFile.WriteString(config.GlobalConfig.Workspace.Store)
+	scriptFile.WriteString(config.GlobalConfig.Workspace.Root)
 	scriptFile.WriteString(sparams.TargetPath)
 
 	os.Mkdir(scriptFile.String(), os.ModePerm)
-	if scriptFile.String()[scriptFile.Len() - 1] != '/' {
+	if scriptFile.String()[scriptFile.Len()-1] != '/' {
 		scriptFile.WriteByte('/')
 	}
 
 	scriptFile.WriteString(sparams.FileName)
-	f, err = os.Create(scriptFile.String())
+	err = os.WriteFile(scriptFile.String(), content, os.ModePerm)
+	// f, err = os.Create(scriptFile.String())
 	if err != nil {
-		logger.Server.Println("FileCreate")
+		logger.Server.Println("WriteFile")
 		return nil, err
 	}
-	f.Write(content)
-	f.Close()
+	// f.Write(content)
+	// f.Close()
 
-	return exec.Command("bash", scriptFile.String()).CombinedOutput()
+	// fmt.Println(scriptFile.String())
+	cmd := exec.Command("bash", scriptFile.String())
+	cmd.Env = env
+	// fmt.Println(cmd.String(), cmd.Env)
+	ret, err := cmd.CombinedOutput()
+	os.Remove(scriptFile.String())
+
+	return ret, err
 }
 
 func RunCmd(conn net.Conn, raw []byte) {

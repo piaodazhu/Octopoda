@@ -30,6 +30,12 @@ type AppDeployParams struct {
 	Script string
 }
 
+type RDATA struct {
+	Msg string
+	Version string
+}
+type CommitResults UploadResults
+
 func AppPrepare(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
 	scenario := ctx.PostForm("scenario")
@@ -79,11 +85,11 @@ func AppPrepare(ctx *gin.Context) {
 		},
 		content,
 	}
-	payload, _ := json.Marshal(&acParams)
+	// payload, _ := json.Marshal(&acParams)
 
 	// check target nodes
 	// spread tar file
-	results := make([]UploadResults, len(nodes))
+	results := make([]CommitResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {
@@ -91,7 +97,7 @@ func AppPrepare(ctx *gin.Context) {
 		results[i].Name = name
 		if addr, exists := model.GetNodeAddress(name); exists {
 			wg.Add(1)
-			go createApp(addr, payload, &wg, &results[i].Result)
+			go createApp(addr, &acParams, &wg, &results[i].Result)
 		} else {
 			results[i].Result = "NodeNotExists"
 		}
@@ -148,11 +154,11 @@ func AppDeploy(ctx *gin.Context) {
 		},
 		content,
 	}
-	payload, _ := json.Marshal(&adParams)
+	// payload, _ := json.Marshal(&adParams)
 
 	// check target nodes
 	// run scripts
-	results := make([]UploadResults, len(nodes))
+	results := make([]CommitResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {
@@ -160,7 +166,7 @@ func AppDeploy(ctx *gin.Context) {
 		results[i].Name = name
 		if addr, exists := model.GetNodeAddress(name); exists {
 			wg.Add(1)
-			go deployApp(addr, payload, &wg, &results[i].Result)
+			go deployApp(addr, &adParams, &wg, &results[i].Result)
 		} else {
 			results[i].Result = "NodeNotExists"
 		}
@@ -169,7 +175,7 @@ func AppDeploy(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func createApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func createApp(addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "OK"
 
@@ -178,6 +184,7 @@ func createApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 	} else {
 		defer conn.Close()
 
+		payload, _ := json.Marshal(acParams)
 		message.SendMessage(conn, message.TypeAppCreate, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppCreateResponse {
@@ -186,7 +193,7 @@ func createApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg RDATA
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
@@ -194,13 +201,13 @@ func createApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 			return
 		}
 		logger.Tentacle.Print(rmsg.Msg)
-		if rmsg.Msg != "OK" {
-			*result = "NodeError"
-		}
+		*result = rmsg.Msg
+
+		// update scenario version
 	}
 }
 
-func deployApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func deployApp(addr string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "OK"
 
@@ -209,6 +216,7 @@ func deployApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 	} else {
 		defer conn.Close()
 
+		payload, _ := json.Marshal(adParams)
 		message.SendMessage(conn, message.TypeAppDeploy, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppDeployResponse {
@@ -226,5 +234,7 @@ func deployApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		}
 		logger.Tentacle.Print(rmsg.Msg)
 		*result = rmsg.Msg
+
+		// update scenario version
 	}
 }

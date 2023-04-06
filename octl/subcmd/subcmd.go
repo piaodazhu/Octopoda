@@ -19,6 +19,7 @@ func Apply(arglist []string) {
 			return
 		} else if len(arglist) == 4 {
 			scenario.ScenarioApply(arglist[0], arglist[1], arglist[3])
+			return
 		}
 	}
 	fmt.Println(`usage: octl apply xx.yaml [target] -m "your message"`)
