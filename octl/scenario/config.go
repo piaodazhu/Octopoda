@@ -164,7 +164,8 @@ func checkNodes(nodeset map[string]struct{}) bool {
 	if err != nil {
 		panic(err)
 	}
-
+	// fmt.Println(nodes)
+	// fmt.Println(nodes)
 	// put them into a set
 	nodemap := map[string]struct{}{}
 	for i := range nodes {

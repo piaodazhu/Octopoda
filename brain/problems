@@ -1,4 +1,4 @@
-- the brain has no consistency.
-- empty commit brings error.
-- scenario info haven't test
+- the brain has no durability.
+- scenario info haven't test.
+- version control.
 - ugly code.

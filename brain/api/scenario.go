@@ -28,6 +28,23 @@ func ScenarioCreate(ctx *gin.Context) {
 	ctx.JSON(200, rmsg)
 }
 
+func ScenarioUpdate(ctx *gin.Context) {
+	name := ctx.PostForm("name")
+	message := ctx.PostForm("message")
+	rmsg := RMSG{"OK"}
+	if len(name) == 0 || len(message) == 0 {
+		rmsg.Msg = "ERROR: Wrong Args"
+		ctx.JSON(400, rmsg)
+		return
+	}
+	if !model.UpdateScenario(name, message) {
+		rmsg.Msg = "ERROR: UpdateScenario"
+		ctx.JSON(404, rmsg)
+		return
+	}
+	ctx.JSON(200, rmsg)
+}
+
 type AppDeleteParams struct {
 	Name     string
 	Scenario string

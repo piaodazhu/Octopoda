@@ -31,8 +31,9 @@ type AppDeployParams struct {
 }
 
 type RDATA struct {
-	Msg string
-	Version string
+	Msg      string
+	Version  string
+	Modified bool
 }
 type CommitResults UploadResults
 
@@ -48,6 +49,12 @@ func AppPrepare(ctx *gin.Context) {
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Msg = "ERROR: Wrong Args"
 		ctx.JSON(400, rmsg)
+		return
+	}
+
+	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
+		rmsg.Msg = "ERROR: Scenario Not Exists"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
@@ -97,7 +104,7 @@ func AppPrepare(ctx *gin.Context) {
 		results[i].Name = name
 		if addr, exists := model.GetNodeAddress(name); exists {
 			wg.Add(1)
-			go createApp(addr, &acParams, &wg, &results[i].Result)
+			go createApp(name, addr, &acParams, &wg, &results[i].Result)
 		} else {
 			results[i].Result = "NodeNotExists"
 		}
@@ -118,6 +125,12 @@ func AppDeploy(ctx *gin.Context) {
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Msg = "ERROR: Wrong Args"
 		ctx.JSON(400, rmsg)
+		return
+	}
+
+	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
+		rmsg.Msg = "ERROR: Scenario Not Exists"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
@@ -147,10 +160,10 @@ func AppDeploy(ctx *gin.Context) {
 	content := base64.RawStdEncoding.EncodeToString(raw)
 	adParams := AppDeployParams{
 		AppBasic{
-			Name: appName,
-			Scenario: scenario,
+			Name:        appName,
+			Scenario:    scenario,
 			Description: description,
-			Message: messages,
+			Message:     messages,
 		},
 		content,
 	}
@@ -166,7 +179,7 @@ func AppDeploy(ctx *gin.Context) {
 		results[i].Name = name
 		if addr, exists := model.GetNodeAddress(name); exists {
 			wg.Add(1)
-			go deployApp(addr, &adParams, &wg, &results[i].Result)
+			go deployApp(name, addr, &adParams, &wg, &results[i].Result)
 		} else {
 			results[i].Result = "NodeNotExists"
 		}
@@ -175,7 +188,7 @@ func AppDeploy(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func createApp(addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
+func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "OK"
 
@@ -204,10 +217,16 @@ func createApp(addr string, acParams *AppCreateParams, wg *sync.WaitGroup, resul
 		*result = rmsg.Msg
 
 		// update scenario version
+		success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, node, rmsg.Version, rmsg.Modified)
+		if success {
+			logger.Tentacle.Print("Success: AddScenNodeApp")
+		} else {
+			logger.Tentacle.Print("Failed: AddScenNodeApp")
+		}
 	}
 }
 
-func deployApp(addr string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
+func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "OK"
 
@@ -225,7 +244,7 @@ func deployApp(addr string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg RDATA
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
@@ -236,5 +255,11 @@ func deployApp(addr string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 		*result = rmsg.Msg
 
 		// update scenario version
+		success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, node, rmsg.Version, rmsg.Modified)
+		if success {
+			logger.Tentacle.Print("Success: AddScenNodeApp")
+		} else {
+			logger.Tentacle.Print("Failed: AddScenNodeApp")
+		}
 	}
 }

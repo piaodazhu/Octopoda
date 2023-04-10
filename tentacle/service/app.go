@@ -21,8 +21,9 @@ import (
 // commit app [name] [message]
 
 type RDATA struct {
-	Msg     string
-	Version string
+	Msg      string
+	Version  string
+	Modified bool
 }
 
 func AppVersion(conn net.Conn, raw []byte) {
@@ -48,6 +49,7 @@ type AppResetParams struct {
 func AppReset(conn net.Conn, raw []byte) {
 	arParams := &AppResetParams{}
 	rmsg := RDATA{}
+	rmsg.Modified = false
 	var payload []byte
 	var longhash string
 	var ok bool
@@ -73,6 +75,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	}
 	rmsg.Msg = "OK"
 	rmsg.Version = longhash
+	rmsg.Modified = true
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
@@ -102,6 +105,7 @@ type AppDeployParams struct {
 func AppCreate(conn net.Conn, raw []byte) {
 	acParams := &AppCreateParams{}
 	rmsg := RDATA{}
+	rmsg.Modified = false
 	var output, payload []byte
 	var ok bool
 	var appName string
@@ -141,7 +145,12 @@ func AppCreate(conn net.Conn, raw []byte) {
 	version, err = app.GitCommit(appName, acParams.Message)
 	if err != nil {
 		logger.Client.Println("app.GitCommit")
-		rmsg.Msg = err.Error()
+		if _, ok := err.(app.EmptyCommitError); ok {
+			rmsg.Msg = "OK: No Change"
+			rmsg.Version = app.CurVersion(appName).Hash
+		} else {
+			rmsg.Msg = err.Error()
+		}
 		goto errorout
 	}
 
@@ -153,6 +162,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	}
 	rmsg.Msg = "OK"
 	rmsg.Version = version.Hash
+	rmsg.Modified = true
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
@@ -165,6 +175,7 @@ errorout:
 func AppDeploy(conn net.Conn, raw []byte) {
 	adParams := &AppDeployParams{}
 	rmsg := RDATA{}
+	rmsg.Modified = false
 	var output, payload []byte
 	var ok bool
 	var sparams ScriptParams
@@ -198,7 +209,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		TargetPath: "scripts/",
 		FileBuf:    adParams.Script,
 	}
-	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT="+config.GlobalConfig.Workspace.Root+appName})
+	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root + appName})
 	if err != nil {
 		logger.Client.Println("execScript")
 		rmsg.Msg = err.Error()
@@ -209,8 +220,13 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	// commit
 	version, err = app.GitCommit(appName, adParams.Message)
 	if err != nil {
-		logger.Client.Println("app.GitCommit")
-		rmsg.Msg = err.Error()
+		if _, ok := err.(app.EmptyCommitError); ok {
+			rmsg.Msg = "OK: No Change"
+			rmsg.Version = app.CurVersion(appName).Hash
+		} else {
+			rmsg.Msg = err.Error()
+			logger.Client.Println("app.GitCommit")
+		}
 		goto errorout
 	}
 
@@ -222,6 +238,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	}
 	rmsg.Msg = "OK"
 	rmsg.Version = version.Hash
+	rmsg.Modified = true
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
@@ -259,11 +276,11 @@ func AppDelete(conn net.Conn, raw []byte) {
 			goto errorout
 		}
 	}
-	os.Remove(config.GlobalConfig.Workspace.Root + subdirName)
+	os.RemoveAll(config.GlobalConfig.Workspace.Root + subdirName)
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppDeployResponse, payload)
+	err = message.SendMessage(conn, message.TypeAppDeleteResponse, payload)
 	if err != nil {
 		logger.Server.Println("AppDelete send error")
 	}

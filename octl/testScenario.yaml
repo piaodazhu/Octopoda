@@ -27,6 +27,10 @@ applications:
       # it will delete the file hello.txt
       target: purge
       file: "purge.sh"
+    -
+      # it will delete the file hello.txt
+      target: date
+      file: "date.sh"
 -
   name: "worldPrinter"
   scriptpath: "./test/world/"
@@ -76,3 +80,7 @@ applications:
       # it will delete the file helloworld.txt
       target: purge
       file: "purge.sh"
+    -
+      # it will delete the file hello.txt
+      target: date
+      file: "date.sh"

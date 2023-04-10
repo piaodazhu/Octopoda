@@ -77,6 +77,7 @@ func GitCommit(app string, message string) (Version, error) {
 			Name: "Octopoda",
 			When: commitTime,
 		},
+		AllowEmptyCommits: true,
 	})
 	if err != nil {
 		logger.Server.Print("wt.Commit")

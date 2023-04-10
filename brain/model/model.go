@@ -1,8 +1,12 @@
 package model
 
 import (
+	"brain/logger"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -12,11 +16,12 @@ var ScenLock sync.RWMutex
 
 // Scenario: a set of applications
 type ScenarioModel struct {
-	Id          uint32
-	Name        string
-	Description string
-	Versions    []*ScenarioVersionModel
-	newlevelbuf []*AppModel
+	Id            uint32
+	Name          string
+	Description   string
+	Versions      []*ScenarioVersionModel
+	newversionbuf []*AppModel
+	modified      bool
 }
 
 // ScenarioVersion: a snapshot of a scenario
@@ -36,7 +41,7 @@ type AppModel struct {
 
 // NodeApp: a application instence on the node
 type NodeAppModel struct {
-	Name     string
+	Name    string
 	Version string
 	// Versions []*AppVersionModel
 }
@@ -95,15 +100,44 @@ func AddScenario(name, description string) bool {
 		return false
 	} else {
 		scen = &ScenarioModel{
-			Id:          uuid.New().ID(),
-			Name:        name,
-			Description: description,
-			Versions:    []*ScenarioVersionModel{},
-			newlevelbuf: []*AppModel{},
+			Id:            uuid.New().ID(),
+			Name:          name,
+			Description:   description,
+			Versions:      []*ScenarioVersionModel{},
+			newversionbuf: []*AppModel{},
+			modified:      false,
 		}
 		ScenarioMap[name] = scen
 	}
 	return true
+}
+
+func UpdateScenario(name, message string) bool {
+	ScenLock.Lock()
+	defer ScenLock.Unlock()
+
+	var scen *ScenarioModel
+	var found bool
+	if scen, found = ScenarioMap[name]; !found {
+		return false
+	} else {
+		if scen.modified {
+			versionhash := sha1.Sum([]byte(message + time.Now().String()))
+			scen.Versions = append(scen.Versions, &ScenarioVersionModel{
+				AppVersionModel: AppVersionModel{
+					Version:   hex.EncodeToString(versionhash[:]),
+					Message:   message,
+					Timestamp: time.Now().Unix(),
+				},
+				Apps: scen.newversionbuf,
+			})
+			// triger save?
+		}
+		scen.newversionbuf = nil
+		scen.modified = false
+		logger.Brain.Println("Len of v = ", len(scen.Versions))
+		return true
+	}
 }
 
 func DelScenario(name string) {
@@ -167,6 +201,10 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 	defer ScenLock.RUnlock()
 
 	if scen, found := ScenarioMap[name]; found {
+		// init but empty
+		if len(scen.Versions) == 0 {
+			return nil, true
+		}
 		res := &ScenarioInfo{
 			ScenarioDigest: ScenarioDigest{
 				Name:        scen.Name,
@@ -198,25 +236,55 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 // }
 
 // func endAddScenApp(scenario string) {
-	
-// }
-
-// func AddScenApp(scenario, app, node string, version string) bool {
-// 	// ScenLock.RLock()
-// 	// defer ScenLock.RUnlock()
-
-// 	// var scen *ScenarioModel
-// 	// var ok bool
-
-// 	// if scen, ok = ScenarioMap[scenario]; !ok {
-// 	// 	return false
-// 	// }
-// 	// scen.newlevelbuf = append(scen.newlevelbuf, &AppModel{
-// 	// 	Name: app,
-// 	// 	NodeApp: []*NodeAppModel{},
-// 	// })
 
 // }
+
+// each time: add one (node, version) pair to the app
+func AddScenNodeApp(scenario, app, description, node, version string, modified bool) bool {
+	ScenLock.RLock()
+	defer ScenLock.RUnlock()
+
+	var scen *ScenarioModel
+	var ok bool
+
+	if scen, ok = ScenarioMap[scenario]; !ok {
+		return false
+	}
+	for _, application := range scen.newversionbuf {
+		if application.Name == app {
+			for _, worknode := range application.NodeApp {
+				if worknode.Name == node {
+					logger.Brain.Println("NodeApp Cover");
+					worknode.Version = version
+					return true
+				}
+			}
+			// build a new node app
+			application.NodeApp = append(application.NodeApp, &NodeAppModel{
+				Name:    node,
+				Version: version,
+			})
+			if modified {
+				scen.modified = true
+			}
+			return true
+		}
+	}
+	// build a new application
+	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
+		Name: app,
+		Description: description,
+	})
+	scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp = append(scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp, &NodeAppModel{
+		Name: node,
+		Version: version,
+	})
+	if modified {
+		scen.modified = true
+	}
+
+	return true
+}
 
 // func DelScenApp() {
 

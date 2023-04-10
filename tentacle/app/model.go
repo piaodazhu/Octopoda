@@ -127,7 +127,6 @@ func Delete(appname, scenario string) bool {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
-	
 	// find the target
 	idx := -1
 	for i := range nodeApps.Apps {
@@ -136,7 +135,7 @@ func Delete(appname, scenario string) bool {
 			break
 		}
 	}
-	if idx > 0 {
+	if idx >= 0 {
 		nodeApps.Apps[idx], nodeApps.Apps[len(nodeApps.Apps) - 1] = nodeApps.Apps[len(nodeApps.Apps) - 1], nodeApps.Apps[idx]
 		nodeApps.Apps = nodeApps.Apps[:len(nodeApps.Apps) - 1]
 	}
@@ -214,6 +213,17 @@ func Versions(name string) []byte {
 		serialized, _ = json.Marshal(&nodeApps.Apps[idx])
 	}
 	return serialized
+}
+
+func CurVersion(name string) Version {
+	nLock.Lock()
+	defer nLock.Unlock()
+	for i := range nodeApps.Apps {
+		if nodeApps.Apps[i].Name == name {
+			return nodeApps.Apps[i].Versions[nodeApps.Apps[i].VersionPtr]
+		}
+	}
+	return Version{}
 }
 
 // --------------------------------------

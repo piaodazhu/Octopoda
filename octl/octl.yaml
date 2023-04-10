@@ -17,6 +17,7 @@ api:
   nodesStatus: "/nodes/status"
 
   scenarioInfo: "/scenario/info"
+  scenarioUpdate: "/scenario/update"
   scenarioVersion: "/scenario/version"
   scenarioLog: "/scenario/log"
   scenarioAppDeploy: "/scenario/app/deployment"

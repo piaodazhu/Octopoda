@@ -55,7 +55,6 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	tmpName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
 	
 	// create this scenario
-	fmt.Println(">> create scenario ", configuration.Name)
 	err = ScenarioCreate(configuration.Name, configuration.Description)
 	if err != nil {
 		// panic(err)
@@ -125,6 +124,11 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		fmt.Println(string(msg))
 	}
 	os.Remove(tmpName)
+	// update this scenario
+	err = ScenarioUpdate(configuration.Name, message)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
@@ -196,6 +200,11 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		}
 		fmt.Println(string(msg))
 	}
+	// update this scenario
+	err := ScenarioUpdate(configuration.Name, message)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func ScenarioPurge(configuration *ScenarioConfigModel) {
@@ -241,6 +250,10 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 
 		bodyWriter.WriteField("targetNodes", string(nodes_serialized))
 
+		// pesudo field
+		bodyWriter.WriteField("description", "PURGED")
+		bodyWriter.WriteField("message", "PURGED")
+
 		contentType := bodyWriter.FormDataContentType()
 
 		f.Close()
@@ -277,6 +290,7 @@ type ErrDupScenario struct{}
 func (ErrDupScenario) Error() string { return "ErrDupScenario" }
 
 func ScenarioCreate(name, description string) error {
+	fmt.Println(">> create scenario", name)
 	url := fmt.Sprintf("http://%s:%d/%s%s",
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
@@ -302,7 +316,34 @@ func ScenarioCreate(name, description string) error {
 	return nil
 }
 
+func ScenarioUpdate(name, message string) error {
+	fmt.Println(">> update scenario", name)
+	url := fmt.Sprintf("http://%s:%d/%s%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.ScenarioUpdate,
+	)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.WriteField("name", name)
+	writer.WriteField("message", message)
+	writer.Close()
+
+	res, err := http.Post(url, writer.FormDataContentType(), body)
+	if err != nil {
+		return err 
+	}
+	defer res.Body.Close()
+
+	msg, _ := io.ReadAll(res.Body)
+	fmt.Println(string(msg))
+	return nil
+}
+
 func ScenarioDelete(name string) error {
+	fmt.Println(">> delete scenario", name)
 	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
