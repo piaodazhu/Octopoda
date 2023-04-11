@@ -37,11 +37,16 @@ func Get(arglist []string) {
 			return
 		}
 		node.NodeInfo(arglist[1])
-	case "scienarios":
-	case "scienario":
+	case "scenarios":
+		if len(arglist) != 1 {
+			return
+		}
+		scenario.ScenariosInfo()
+	case "scenario":
 		if len(arglist) != 2 {
 			return
 		}
+		scenario.ScenarioInfo(arglist[1])
 	}
 }
 

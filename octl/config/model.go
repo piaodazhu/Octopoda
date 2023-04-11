@@ -30,6 +30,8 @@ type APIs struct {
 	ScenarioAppCreate string `mapstructure:"scenarioAppCreate"`
 	ScenarioAppDepoly      string `mapstructure:"scenarioAppDeploy"`
 
+	ScenariosInfo     string `mapstructure:"scenariosInfo"`
+
 	FileUpload  string `mapstructure:"fileUpload"`
 	FileSpread  string `mapstructure:"fileSpread"`
 	FileDistrib string `mapstructure:"fileDistrib"`

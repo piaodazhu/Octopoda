@@ -23,6 +23,8 @@ api:
   scenarioAppDeploy: "/scenario/app/deployment"
   scenarioAppCreate: "/scenario/app/prepare"
 
+  scenariosInfo: "/scenarios/info"
+
   fileUpload: "/file/upload"
   fileSpread: "/file/spread"
   fileDistrib: "/file/distrib"

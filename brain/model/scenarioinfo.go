@@ -132,12 +132,35 @@ func UpdateScenario(name, message string) bool {
 				Apps: scen.newversionbuf,
 			})
 			// triger save?
+
+			scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
+			scen.modified = false
 		}
-		scen.newversionbuf = nil
-		scen.modified = false
+		// scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
+		// scen.modified = false
 		logger.Brain.Println("Len of v = ", len(scen.Versions))
 		return true
 	}
+}
+
+func cloneLayer(prototype []*AppModel) []*AppModel {
+	res := []*AppModel{}
+	for _, app := range prototype {
+		nodeapps := []*NodeAppModel{}
+		for _, nodeapp := range app.NodeApp {
+			nodeapps = append(nodeapps, &NodeAppModel{
+				Name: nodeapp.Name,
+				Version: nodeapp.Version,
+			})
+		}
+		res = append(res, &AppModel{
+			Id: app.Id,
+			Name: app.Name,
+			Description: app.Description,
+			NodeApp: nodeapps,
+		})
+	}
+	return res
 }
 
 func DelScenario(name string) {
@@ -163,6 +186,10 @@ func GetNodeApps(name string) []NodeAppItem {
 	if !found {
 		return list
 	}
+	if len(scen.Versions) == 0 {
+		logger.Brain.Println("GetNodeApps")
+		return nil
+	}
 	for _, app := range scen.Versions[len(scen.Versions)-1].Apps {
 		for _, node := range app.NodeApp {
 			list = append(list, NodeAppItem{
@@ -176,14 +203,14 @@ func GetNodeApps(name string) []NodeAppItem {
 	return list
 }
 
-func GetScenariosDigestAll() ([]*ScenarioDigest, bool) {
+func GetScenariosDigestAll() ([]ScenarioDigest, bool) {
 	ScenLock.RLock()
 	defer ScenLock.RUnlock()
 
 	if len(ScenarioMap) == 0 {
 		return nil, false
 	}
-	res := make([]*ScenarioDigest, len(ScenarioMap))
+	res := make([]ScenarioDigest, len(ScenarioMap))
 	idx := 0
 	for _, val := range ScenarioMap {
 		res[idx].Name = val.Name
@@ -254,12 +281,15 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 		if application.Name == app {
 			for _, worknode := range application.NodeApp {
 				if worknode.Name == node {
-					logger.Brain.Println("NodeApp Cover");
 					worknode.Version = version
+					if modified {
+						scen.modified = true
+					}
 					return true
 				}
 			}
 			// build a new node app
+			logger.Brain.Println("NodeApp Not Cover");
 			application.NodeApp = append(application.NodeApp, &NodeAppModel{
 				Name:    node,
 				Version: version,
@@ -271,6 +301,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 		}
 	}
 	// build a new application
+	logger.Brain.Println("Application Not Cover");
 	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
 		Name: app,
 		Description: description,

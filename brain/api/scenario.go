@@ -60,6 +60,13 @@ func ScenarioDelete(ctx *gin.Context) {
 		return
 	}
 
+	// must exists
+	if _, exists := model.GetScenarioInfoByName(name); !exists {
+		rmsg.Msg = "ERROR: Scenario Not Exists"
+		ctx.JSON(404, rmsg)
+		return
+	}
+
 	// delete all app in nodes
 	dlist := model.GetNodeApps(name)
 
@@ -140,7 +147,7 @@ func ScenarioInfo(ctx *gin.Context) {
 }
 
 func ScenariosInfo(ctx *gin.Context) {
-	var scens []*model.ScenarioDigest
+	var scens []model.ScenarioDigest
 	var ok bool
 
 	if scens, ok = model.GetScenariosDigestAll(); !ok {
@@ -149,6 +156,12 @@ func ScenariosInfo(ctx *gin.Context) {
 	}
 	ctx.JSON(200, scens)
 }
+
+
+func ScenarioVersion(ctx *gin.Context) {
+	
+}
+
 
 func ScenarioReset(ctx *gin.Context) {
 
