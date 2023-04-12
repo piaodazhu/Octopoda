@@ -60,7 +60,7 @@ type FileSpreadParams struct {
 	TargetNodes []string
 }
 
-type UploadResults struct {
+type BasicNodeResults struct {
 	Name   string
 	Result string
 }
@@ -102,7 +102,7 @@ func FileSpread(ctx *gin.Context) {
 
 	// check target nodes
 	// spread file
-	results := make([]UploadResults, len(fsParams.TargetNodes))
+	results := make([]BasicNodeResults, len(fsParams.TargetNodes))
 	var wg sync.WaitGroup
 
 	for i := range fsParams.TargetNodes {
@@ -280,7 +280,7 @@ func FileDistrib(ctx *gin.Context) {
 
 	// check target nodes
 	// spread file
-	results := make([]UploadResults, len(nodes))
+	results := make([]BasicNodeResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {

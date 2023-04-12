@@ -35,7 +35,7 @@ type RDATA struct {
 	Version  string
 	Modified bool
 }
-type CommitResults UploadResults
+type CommitResults BasicNodeResults
 
 func AppPrepare(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
@@ -251,7 +251,6 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
 		*result = rmsg.Msg
 
 		// update scenario version

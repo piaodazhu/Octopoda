@@ -100,7 +100,7 @@ func RunScript(ctx *gin.Context) {
 		return
 	}
 
-	results := make([]UploadResults, len(nodes))
+	results := make([]BasicNodeResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {
@@ -136,7 +136,7 @@ func RunCmd(ctx *gin.Context) {
 		return
 	}
 
-	results := make([]UploadResults, len(nodes))
+	results := make([]BasicNodeResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {

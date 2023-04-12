@@ -1,10 +1,10 @@
-## Deploy scienario*
+## Deploy scenario*
 ```sh
 octl apply <deployfile> <target:prepare,start,stop,purge>
 ```
 Example of deployfile
 ```yaml
-name: scienario1
+name: scenario1
 desciption: "hello world"
 applications:
 - 
@@ -56,8 +56,8 @@ applications:
 octl get nodes
 octl status nodes
 octl get node <name>
-octl get scienarios
-octl get scienario <name>
+octl get scenarios
+octl get scenario <name>
 ```
 Example of output
 ```sh
@@ -93,22 +93,22 @@ applications:
 ```sh
 octl log master
 octl log node <name>
-octl log scienario <name>
+octl log scenario <name>
 ```
 
 ## Get versions
 ```sh
 octl version nodes
 octl version node <name>
-octl version scienarios
-octl version scienario <name>
+octl version scenarios
+octl version scenario <name>
 ```
 
 ## Switch the versions*
 ```sh
 octl reset nodes <name1,name2,...> <version> message <message>
 octl reset node <name> <version> message <message>
-octl reset scienario <name> <version> message <message>
+octl reset scenario <name> <version> message <message>
 ```
 Example of batch switching verisons of kernel module `nip.ko`.
 ```sh

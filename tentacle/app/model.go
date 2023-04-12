@@ -22,7 +22,6 @@ type App struct {
 	Discription string
 
 	Versions   []Version
-	VersionPtr int
 }
 
 type NodeApps struct {
@@ -76,11 +75,12 @@ func Save() {
 	}
 }
 
-func ConvertHash(appname, shorthash string) (string, bool) {
+func ConvertHash(appname, scenario, shorthash string) (string, bool) {
+	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	for i := range nodeApps.Apps {
-		if nodeApps.Apps[i].Name == appname {
+		if nodeApps.Apps[i].Name == name {
 			for j := range nodeApps.Apps[i].Versions {
 				if nodeApps.Apps[i].Versions[j].Hash[:len(shorthash)] == shorthash {
 					return nodeApps.Apps[i].Versions[j].Hash, true
@@ -118,7 +118,6 @@ func Create(appname, scenario, description string) bool {
 		Name:        name,
 		Discription: description,
 		Versions:    nil,
-		VersionPtr:  0,
 	})
 	return true
 }
@@ -142,29 +141,31 @@ func Delete(appname, scenario string) bool {
 	return true
 }
 
-func Update(appname string, version Version) bool {
+func Update(appname, scenario string, version Version) bool {
+	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	// update must be existed
 	for i := range nodeApps.Apps {
-		if nodeApps.Apps[i].Name == appname {
+		if nodeApps.Apps[i].Name == name {
 			nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, version)
-			nodeApps.Apps[i].VersionPtr = len(nodeApps.Apps[i].Versions) - 1
 			return true
 		}
 	}
 	return false
 }
 
-func Reset(appname, versionhash string) bool {
+func Reset(appname, scenario, versionhash string) bool {
+	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	// reset must be existed
 	for i := range nodeApps.Apps {
-		if nodeApps.Apps[i].Name == appname {
+		if nodeApps.Apps[i].Name == name {
 			for j := range nodeApps.Apps[i].Versions {
 				if nodeApps.Apps[i].Versions[j].Hash[:len(versionhash)] == versionhash {
-					nodeApps.Apps[i].VersionPtr = j
+					// nodeApps.Apps[i].VersionPtr = j
+					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, nodeApps.Apps[i].Versions[j])
 					return true
 				}
 			}
@@ -191,14 +192,15 @@ func Digest() []byte {
 		digest.Apps = append(digest.Apps, AppDigest{
 			Name:        nodeApps.Apps[i].Name,
 			Discription: nodeApps.Apps[i].Discription,
-			CurVersion:  nodeApps.Apps[i].Versions[nodeApps.Apps[i].VersionPtr],
+			CurVersion:  nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1],
 		})
 	}
 	serialized, _ := json.Marshal(digest)
 	return serialized
 }
 
-func Versions(name string) []byte {
+func Versions(appname, scenario string) []byte {
+	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	idx := -1
@@ -215,12 +217,13 @@ func Versions(name string) []byte {
 	return serialized
 }
 
-func CurVersion(name string) Version {
+func CurVersion(appname, scenario string) Version {
+	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
-			return nodeApps.Apps[i].Versions[nodeApps.Apps[i].VersionPtr]
+			return nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1]
 		}
 	}
 	return Version{}
@@ -228,9 +231,9 @@ func CurVersion(name string) Version {
 
 // --------------------------------------
 // only for experimental
-func Fix(appname string) bool {
+func Fix(fullname string) bool {
 	// versions is in time desc order
-	versions, err := gitLogs(appname, 5)
+	versions, err := gitLogs(fullname, 5)
 	if err != nil || len(versions) == 0 {
 		return false
 	}
@@ -239,7 +242,7 @@ func Fix(appname string) bool {
 	defer nLock.Unlock()
 	idx := -1
 	for i := range nodeApps.Apps {
-		if nodeApps.Apps[i].Name == appname {
+		if nodeApps.Apps[i].Name == fullname {
 			idx = i
 			break
 		}
@@ -251,7 +254,7 @@ func Fix(appname string) bool {
 
 	oldlist := nodeApps.Apps[idx].Versions
 	// Case 1: no missing commit
-	if oldlist[nodeApps.Apps[idx].VersionPtr].Hash == versions[len(versions)-1].Hash {
+	if oldlist[len(oldlist)-1].Hash == versions[len(versions)-1].Hash {
 		// need not fix
 		return true
 	}
@@ -259,7 +262,7 @@ func Fix(appname string) bool {
 	// Case 2: has a missing reset
 	for i := range oldlist {
 		if oldlist[i].Hash == versions[len(versions)-1].Hash {
-			nodeApps.Apps[idx].VersionPtr = i
+			nodeApps.Apps[idx].Versions = append(nodeApps.Apps[idx].Versions, versions[len(versions)-1])
 			saveNoLock()
 			return true
 		}
@@ -280,7 +283,6 @@ func Fix(appname string) bool {
 		if !exists {
 			// all version newer than this verison is considered NEW, so add all of them
 			nodeApps.Apps[idx].Versions = append(nodeApps.Apps[idx].Versions, versions[i:]...)
-			nodeApps.Apps[idx].VersionPtr = len(nodeApps.Apps[idx].Versions) - 1
 			saveNoLock()
 			break
 		}

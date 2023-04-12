@@ -26,7 +26,7 @@ type ScenarioModel struct {
 
 // ScenarioVersion: a snapshot of a scenario
 type ScenarioVersionModel struct {
-	AppVersionModel
+	BasicVersionModel
 	Apps []*AppModel
 }
 
@@ -43,11 +43,11 @@ type AppModel struct {
 type NodeAppModel struct {
 	Name    string
 	Version string
-	// Versions []*AppVersionModel
+	// Versions []*BasicVersionModel
 }
 
 // appversion: a snapshot of a NodeApp
-type AppVersionModel struct {
+type BasicVersionModel struct {
 	Version   string
 	Message   string
 	Timestamp int64
@@ -124,7 +124,7 @@ func UpdateScenario(name, message string) bool {
 		if scen.modified {
 			versionhash := sha1.Sum([]byte(message + time.Now().String()))
 			scen.Versions = append(scen.Versions, &ScenarioVersionModel{
-				AppVersionModel: AppVersionModel{
+				BasicVersionModel: BasicVersionModel{
 					Version:   hex.EncodeToString(versionhash[:]),
 					Message:   message,
 					Timestamp: time.Now().Unix(),
@@ -149,15 +149,15 @@ func cloneLayer(prototype []*AppModel) []*AppModel {
 		nodeapps := []*NodeAppModel{}
 		for _, nodeapp := range app.NodeApp {
 			nodeapps = append(nodeapps, &NodeAppModel{
-				Name: nodeapp.Name,
+				Name:    nodeapp.Name,
 				Version: nodeapp.Version,
 			})
 		}
 		res = append(res, &AppModel{
-			Id: app.Id,
-			Name: app.Name,
+			Id:          app.Id,
+			Name:        app.Name,
 			Description: app.Description,
-			NodeApp: nodeapps,
+			NodeApp:     nodeapps,
 		})
 	}
 	return res
@@ -174,9 +174,10 @@ type NodeAppItem struct {
 	AppName  string
 	ScenName string
 	NodeName string
+	Version  string
 }
 
-func GetNodeApps(name string) []NodeAppItem {
+func GetNodeApps(name string, version string) []NodeAppItem {
 	ScenLock.Lock()
 	defer ScenLock.Unlock()
 
@@ -187,15 +188,37 @@ func GetNodeApps(name string) []NodeAppItem {
 		return list
 	}
 	if len(scen.Versions) == 0 {
-		logger.Brain.Println("GetNodeApps")
-		return nil
+		logger.Brain.Println("GetNodeApps Empty Scenario")
+		return list
 	}
-	for _, app := range scen.Versions[len(scen.Versions)-1].Apps {
+
+	// find the version index of the scenario
+	idx := -1
+	if version == "" {
+		// default: get latest version
+		idx = len(scen.Versions) - 1
+	} else {
+		// for given version
+		for i, v := range scen.Versions {
+			if version == v.Version {
+				idx = i
+			}
+		}
+
+	}
+	// if not found
+	if idx < 0 {
+		logger.Brain.Println("GetNodeApps Invalid Version")
+		return list
+	}
+
+	for _, app := range scen.Versions[idx].Apps {
 		for _, node := range app.NodeApp {
 			list = append(list, NodeAppItem{
 				AppName:  app.Name,
 				ScenName: scen.Name,
 				NodeName: node.Name,
+				Version:  node.Version,
 			})
 		}
 
@@ -258,13 +281,18 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 	return nil, false
 }
 
-// func startAddScenApp(scenario string) {
+func GetScenarioVersionByName(name string) []BasicVersionModel {
+	ScenLock.RLock()
+	defer ScenLock.RUnlock()
 
-// }
-
-// func endAddScenApp(scenario string) {
-
-// }
+	versions := []BasicVersionModel{}
+	if scen, found := ScenarioMap[name]; found {
+		for _, v := range scen.Versions {
+			versions = append(versions, v.BasicVersionModel)
+		}
+	}
+	return versions
+}
 
 // each time: add one (node, version) pair to the app
 func AddScenNodeApp(scenario, app, description, node, version string, modified bool) bool {
@@ -289,7 +317,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 				}
 			}
 			// build a new node app
-			logger.Brain.Println("NodeApp Not Cover");
+			logger.Brain.Println("NodeApp Not Cover")
 			application.NodeApp = append(application.NodeApp, &NodeAppModel{
 				Name:    node,
 				Version: version,
@@ -301,13 +329,13 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 		}
 	}
 	// build a new application
-	logger.Brain.Println("Application Not Cover");
+	logger.Brain.Println("Application Not Cover")
 	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
-		Name: app,
+		Name:        app,
 		Description: description,
 	})
 	scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp = append(scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp, &NodeAppModel{
-		Name: node,
+		Name:    node,
 		Version: version,
 	})
 	if modified {
@@ -317,12 +345,35 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 	return true
 }
 
-// func DelScenApp() {
+func ResetScenario(scenario, version string) bool {
+	ScenLock.RLock()
+	defer ScenLock.RUnlock()
 
-// }
+	var scen *ScenarioModel
+	var ok bool
 
-func ResetScenario() {
+	if scen, ok = ScenarioMap[scenario]; !ok {
+		return false
+	}
 
+	// find the history version index
+	idx := -1
+	for i := range scen.Versions {
+		if version == scen.Versions[i].Version {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		return false
+	}
+
+	// found. Is ok to only append the reference of this version?	
+	scen.Versions = append(scen.Versions, scen.Versions[idx])
+	// update newversionbuf
+	scen.newversionbuf = cloneLayer(scen.Versions[idx].Apps)
+	scen.modified = false
+	return true
 }
 
 func ResetNodeApp() {

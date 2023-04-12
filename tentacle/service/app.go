@@ -26,62 +26,10 @@ type RDATA struct {
 	Modified bool
 }
 
-func AppVersion(conn net.Conn, raw []byte) {
-	err := message.SendMessage(conn, message.TypeAppVersionResponse, app.Versions(string(raw)))
-	if err != nil {
-		logger.Server.Println("AppVersion send error")
-	}
-}
-
 func AppsInfo(conn net.Conn, raw []byte) {
 	err := message.SendMessage(conn, message.TypeAppsInfoResponse, app.Digest())
 	if err != nil {
 		logger.Server.Println("AppsInfo send error")
-	}
-}
-
-type AppResetParams struct {
-	Name string
-	Hash string
-	Mode string
-}
-
-func AppReset(conn net.Conn, raw []byte) {
-	arParams := &AppResetParams{}
-	rmsg := RDATA{}
-	rmsg.Modified = false
-	var payload []byte
-	var longhash string
-	var ok bool
-
-	err := json.Unmarshal(raw, arParams)
-	if err != nil {
-		logger.Client.Println(err)
-		rmsg.Msg = "Invalid Params"
-		goto errorout
-	}
-	if longhash, ok = app.ConvertHash(arParams.Name, arParams.Hash); !ok {
-		rmsg.Msg = "No app or version"
-		goto errorout
-	}
-
-	if err = app.GitReset(arParams.Name, longhash, arParams.Mode); err != nil {
-		rmsg.Msg = "Failed to GitRevert: " + err.Error()
-		goto errorout
-	}
-	if ok = app.Reset(arParams.Name, arParams.Hash); !ok {
-		rmsg.Msg = "Failed to Revert: " + err.Error()
-		goto errorout
-	}
-	rmsg.Msg = "OK"
-	rmsg.Version = longhash
-	rmsg.Modified = true
-	app.Save()
-errorout:
-	payload, _ = json.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppResetResponse, payload)
-	if err != nil {
-		logger.Server.Println("AppReset send error")
 	}
 }
 
@@ -108,7 +56,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	rmsg.Modified = false
 	var output, payload []byte
 	var ok bool
-	var appName string
+	var fullname string
 	var version app.Version
 
 	err := json.Unmarshal(raw, acParams)
@@ -117,7 +65,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 		rmsg.Msg = "Invalid Params"
 		goto errorout
 	}
-	appName = acParams.Name + "@" + acParams.Scenario
+	fullname = acParams.Name + "@" + acParams.Scenario
 
 	// is exists?
 	if ok = app.Exists(acParams.Name, acParams.Scenario); !ok {
@@ -126,14 +74,14 @@ func AppCreate(conn net.Conn, raw []byte) {
 			rmsg.Msg = "Failed Create App"
 			goto errorout
 		}
-		if !app.GitCreate(appName) {
+		if !app.GitCreate(fullname) {
 			logger.Client.Println("app.GitCreate")
 			rmsg.Msg = "Failed Init the Repo"
 			goto errorout
 		}
 	}
 	// unpack files
-	err = unpackFiles(acParams.FilePack, appName)
+	err = unpackFiles(acParams.FilePack, fullname)
 	if err != nil {
 		logger.Client.Println("unpack Files")
 		rmsg.Msg = err.Error()
@@ -142,12 +90,12 @@ func AppCreate(conn net.Conn, raw []byte) {
 		rmsg.Msg = string(output)
 	}
 	// commit
-	version, err = app.GitCommit(appName, acParams.Message)
+	version, err = app.GitCommit(fullname, acParams.Message)
 	if err != nil {
 		logger.Client.Println("app.GitCommit")
 		if _, ok := err.(app.EmptyCommitError); ok {
 			rmsg.Msg = "OK: No Change"
-			rmsg.Version = app.CurVersion(appName).Hash
+			rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
 		} else {
 			rmsg.Msg = err.Error()
 		}
@@ -155,7 +103,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	}
 
 	// update nodeApps
-	ok = app.Update(appName, version)
+	ok = app.Update(acParams.Name, acParams.Scenario, version)
 	if !ok {
 		logger.Client.Println("app.Update")
 		rmsg.Msg = "Faild to update app version"
@@ -179,7 +127,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	var output, payload []byte
 	var ok bool
 	var sparams ScriptParams
-	var appName string
+	var fullname string
 	var version app.Version
 
 	err := json.Unmarshal(raw, adParams)
@@ -188,7 +136,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		rmsg.Msg = "Invalid Params"
 		goto errorout
 	}
-	appName = adParams.Name + "@" + adParams.Scenario
+	fullname = adParams.Name + "@" + adParams.Scenario
 
 	// is new?
 	if ok = app.Exists(adParams.Name, adParams.Scenario); !ok {
@@ -197,7 +145,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 			rmsg.Msg = "Failed Create App"
 			goto errorout
 		}
-		if !app.GitCreate(appName) {
+		if !app.GitCreate(fullname) {
 			logger.Client.Println("app.GitCreate")
 			rmsg.Msg = "Failed Init the Repo"
 			goto errorout
@@ -209,7 +157,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		TargetPath: "scripts/",
 		FileBuf:    adParams.Script,
 	}
-	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root + appName})
+	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root + fullname})
 	if err != nil {
 		logger.Client.Println("execScript")
 		rmsg.Msg = err.Error()
@@ -218,11 +166,11 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		rmsg.Msg = string(output)
 	}
 	// commit
-	version, err = app.GitCommit(appName, adParams.Message)
+	version, err = app.GitCommit(fullname, adParams.Message)
 	if err != nil {
 		if _, ok := err.(app.EmptyCommitError); ok {
 			rmsg.Msg = "OK: No Change"
-			rmsg.Version = app.CurVersion(appName).Hash
+			rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
 		} else {
 			rmsg.Msg = err.Error()
 			logger.Client.Println("app.GitCommit")
@@ -231,7 +179,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	}
 
 	// update nodeApps
-	ok = app.Update(appName, version)
+	ok = app.Update(adParams.Name, adParams.Scenario, version)
 	if !ok {
 		logger.Client.Println("app.Update")
 		rmsg.Msg = "Faild to update app version"
