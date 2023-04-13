@@ -13,24 +13,26 @@ type ServerModel struct {
 }
 
 type APIs struct {
-	NodeInfo   string `mapstructure:"nodeInfo"`
-	NodeStatus string `mapstructure:"nodeStatus"`
-	NodeApps   string `mapstructure:"nodeApps"`
-	NodeLog    string `mapstructure:"nodeLog"`
-	NodeReboot string `mapstructure:"nodeReboot"`
-	NodePrune  string `mapstructure:"nodePrune"`
+	NodeInfo       string `mapstructure:"nodeInfo"`
+	NodeStatus     string `mapstructure:"nodeStatus"`
+	NodeLog        string `mapstructure:"nodeLog"`
+	NodeReboot     string `mapstructure:"nodeReboot"`
+	NodePrune      string `mapstructure:"nodePrune"`
+	NodeApps       string `mapstructure:"nodeApps"`
+	NodeAppVersion string `mapstructure:"nodeAppVersion"`
+	NodeAppReset   string `mapstructure:"nodeAppReset"`
 
 	NodesInfo   string `mapstructure:"nodesInfo"`
 	NodesStatus string `mapstructure:"nodesStatus"`
 
-	ScenarioInfo     string `mapstructure:"scenarioInfo"`
-	ScenarioVersion string `mapstructure:"scenarioVersion"`
-	ScenarioUpdate string `mapstructure:"scenarioUpdate"`
-	ScenarioLog      string `mapstructure:"scenarioLog"`
+	ScenarioInfo      string `mapstructure:"scenarioInfo"`
+	ScenarioVersion   string `mapstructure:"scenarioVersion"`
+	ScenarioUpdate    string `mapstructure:"scenarioUpdate"`
+	ScenarioLog       string `mapstructure:"scenarioLog"`
 	ScenarioAppCreate string `mapstructure:"scenarioAppCreate"`
-	ScenarioAppDepoly      string `mapstructure:"scenarioAppDeploy"`
+	ScenarioAppDepoly string `mapstructure:"scenarioAppDeploy"`
 
-	ScenariosInfo     string `mapstructure:"scenariosInfo"`
+	ScenariosInfo string `mapstructure:"scenariosInfo"`
 
 	FileUpload  string `mapstructure:"fileUpload"`
 	FileSpread  string `mapstructure:"fileSpread"`

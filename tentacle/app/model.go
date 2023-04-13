@@ -21,7 +21,7 @@ type App struct {
 	Name        string
 	Discription string
 
-	Versions   []Version
+	Versions []Version
 }
 
 type NodeApps struct {
@@ -29,7 +29,7 @@ type NodeApps struct {
 	Apps        []App
 }
 
-const consistFileName = "nodeapps.json"
+const diskFileName = "nodeapps.json"
 
 var nodeApps NodeApps
 var nLock sync.Mutex
@@ -37,7 +37,7 @@ var nLock sync.Mutex
 func InitAppModel() {
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
-	file.WriteString(consistFileName)
+	file.WriteString(diskFileName)
 	f, err := os.Open(file.String())
 	if err != nil {
 		// logger.Server.Panic(err)
@@ -60,7 +60,7 @@ func InitAppModel() {
 func Save() {
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
-	file.WriteString(consistFileName)
+	file.WriteString(diskFileName)
 	_, err := os.Stat(file.String())
 	if os.IsExist(err) {
 		os.Rename(file.String(), file.String()+".bk")
@@ -135,8 +135,8 @@ func Delete(appname, scenario string) bool {
 		}
 	}
 	if idx >= 0 {
-		nodeApps.Apps[idx], nodeApps.Apps[len(nodeApps.Apps) - 1] = nodeApps.Apps[len(nodeApps.Apps) - 1], nodeApps.Apps[idx]
-		nodeApps.Apps = nodeApps.Apps[:len(nodeApps.Apps) - 1]
+		nodeApps.Apps[idx], nodeApps.Apps[len(nodeApps.Apps)-1] = nodeApps.Apps[len(nodeApps.Apps)-1], nodeApps.Apps[idx]
+		nodeApps.Apps = nodeApps.Apps[:len(nodeApps.Apps)-1]
 	}
 	return true
 }
@@ -149,13 +149,14 @@ func Update(appname, scenario string, version Version) bool {
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
 			nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, version)
+			// logger.Server.Println("update version", version.Hash[:4], ", then:\n", nodeApps.Apps[i].Versions)
 			return true
 		}
 	}
 	return false
 }
 
-func Reset(appname, scenario, versionhash string) bool {
+func Reset(appname, scenario, versionhash, message string) bool {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
@@ -165,7 +166,11 @@ func Reset(appname, scenario, versionhash string) bool {
 			for j := range nodeApps.Apps[i].Versions {
 				if nodeApps.Apps[i].Versions[j].Hash[:len(versionhash)] == versionhash {
 					// nodeApps.Apps[i].VersionPtr = j
-					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, nodeApps.Apps[i].Versions[j])
+					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, Version{
+						Time: time.Now().Unix(),
+						Hash: nodeApps.Apps[i].Versions[j].Hash,
+						Msg:  message,
+					})
 					return true
 				}
 			}
@@ -211,7 +216,8 @@ func Versions(appname, scenario string) []byte {
 			break
 		}
 	}
-	if idx > 0 {
+
+	if idx >= 0 {
 		serialized, _ = json.Marshal(&nodeApps.Apps[idx])
 	}
 	return serialized
@@ -223,6 +229,10 @@ func CurVersion(appname, scenario string) Version {
 	defer nLock.Unlock()
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
+			if len(nodeApps.Apps[i].Versions) == 0 {
+				logger.Client.Println("CurVersion")
+				return Version{}
+			}
 			return nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1]
 		}
 	}
@@ -237,6 +247,9 @@ func Fix(fullname string) bool {
 	if err != nil || len(versions) == 0 {
 		return false
 	}
+	// fmt.Println("\nFix Start--")
+	// fmt.Println("Disks:")
+	// fmt.Println(versions)
 
 	nLock.Lock()
 	defer nLock.Unlock()
@@ -253,12 +266,18 @@ func Fix(fullname string) bool {
 	}
 
 	oldlist := nodeApps.Apps[idx].Versions
+
+	// fmt.Println("Mems:")
+	// fmt.Println(oldlist)
+
+	// fmt.Println(">>case1")
 	// Case 1: no missing commit
 	if oldlist[len(oldlist)-1].Hash == versions[len(versions)-1].Hash {
 		// need not fix
 		return true
 	}
 
+	// fmt.Println(">>case2")
 	// Case 2: has a missing reset
 	for i := range oldlist {
 		if oldlist[i].Hash == versions[len(versions)-1].Hash {
@@ -268,6 +287,7 @@ func Fix(fullname string) bool {
 		}
 	}
 
+	// fmt.Println(">>case3")
 	// Case 3: has many missing commits. We can compensate at most N missing commits.
 	// versions: Actual latest N commits
 	// oldlist: Octopoda currently record
@@ -307,7 +327,7 @@ func autoFixAll() {
 func saveNoLock() {
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
-	file.WriteString(consistFileName)
+	file.WriteString(diskFileName)
 	_, err := os.Stat(file.String())
 	if os.IsExist(err) {
 		os.Rename(file.String(), file.String()+".bk")

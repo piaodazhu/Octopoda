@@ -130,5 +130,13 @@ func gitLogs(app string, N int) ([]Version, error) {
 			Msg: cmt.Message,
 		})
 	}
+	
+	// reverse logs: commit time asc
+	i, j := 0, len(v) - 1
+	for i < j {
+		v[i], v[j] = v[j], v[i]
+		i++
+		j--
+	}
 	return v, nil
 }

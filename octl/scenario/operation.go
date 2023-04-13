@@ -36,10 +36,10 @@ func ScenarioApply(file string, target string, message string) {
 	switch target {
 		// ???
 	case "prepare":
-		ScenarioPrepare(&configuration, message)
+		ScenarioPrepare(&configuration, "(Prepare) "+message)
 		ScenarioRun(&configuration, "prepare", message)
 	case "default":
-		ScenarioPrepare(&configuration, message)
+		ScenarioPrepare(&configuration, "(Prepare) "+message)
 		ScenarioRun(&configuration, "prepare", message)
 		ScenarioRun(&configuration, "start", message)
 	case "purge":

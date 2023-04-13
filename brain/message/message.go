@@ -58,6 +58,9 @@ const (
 
 	TypeAppReset
 	TypeAppResetResponse
+
+	TypeAppLatestVersion
+	TypeAppLatestVersionResponse
 )
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

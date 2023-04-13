@@ -14,6 +14,8 @@ import (
 var ScenarioMap map[string]*ScenarioModel
 var ScenLock sync.RWMutex
 
+const diskFileName = "scenarios.json"
+
 // Scenario: a set of applications
 type ScenarioModel struct {
 	Id            uint32
@@ -74,26 +76,10 @@ type AppInfo struct {
 	NodeApps    []string
 }
 
-func InitScenarioMap() {
-	ScenarioMap = make(map[string]*ScenarioModel)
-	// go func() {
-	// 	for {
-	// 		time.Sleep(time.Second)
-	// 		ScenLock.Lock()
-	// 		for _, scenario := range ScenarioMap {
-	// 			// if node.State == NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().Unix() {
-	// 			// 	// logger.Tentacle.Print("MarkDeadNode", nodename)
-	// 			// 	node.State = NodeStateDead
-	// 			// }
-	// 		}
-	// 		ScenLock.Unlock()
-	// 	}
-	// }()
-}
-
 func AddScenario(name, description string) bool {
 	ScenLock.Lock()
 	defer ScenLock.Unlock()
+	defer saveNoLock()
 
 	var scen *ScenarioModel
 	if _, found := ScenarioMap[name]; found {
@@ -115,6 +101,7 @@ func AddScenario(name, description string) bool {
 func UpdateScenario(name, message string) bool {
 	ScenLock.Lock()
 	defer ScenLock.Unlock()
+	defer saveNoLock()
 
 	var scen *ScenarioModel
 	var found bool
@@ -166,6 +153,7 @@ func cloneLayer(prototype []*AppModel) []*AppModel {
 func DelScenario(name string) {
 	ScenLock.Lock()
 	defer ScenLock.Unlock()
+	defer saveNoLock()
 
 	delete(ScenarioMap, name)
 }
@@ -178,8 +166,8 @@ type NodeAppItem struct {
 }
 
 func GetNodeApps(name string, version string) []NodeAppItem {
-	ScenLock.Lock()
-	defer ScenLock.Unlock()
+	ScenLock.RLock()
+	defer ScenLock.RUnlock()
 
 	list := []NodeAppItem{}
 	var scen *ScenarioModel
@@ -296,8 +284,8 @@ func GetScenarioVersionByName(name string) []BasicVersionModel {
 
 // each time: add one (node, version) pair to the app
 func AddScenNodeApp(scenario, app, description, node, version string, modified bool) bool {
-	ScenLock.RLock()
-	defer ScenLock.RUnlock()
+	ScenLock.Lock()
+	defer ScenLock.Unlock()
 
 	var scen *ScenarioModel
 	var ok bool
@@ -345,9 +333,10 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 	return true
 }
 
-func ResetScenario(scenario, version string) bool {
-	ScenLock.RLock()
-	defer ScenLock.RUnlock()
+func ResetScenario(scenario, version, message string) bool {
+	ScenLock.Lock()
+	defer ScenLock.Unlock()
+	defer saveNoLock()
 
 	var scen *ScenarioModel
 	var ok bool
@@ -368,22 +357,19 @@ func ResetScenario(scenario, version string) bool {
 		return false
 	}
 
-	// found. Is ok to only append the reference of this version?	
-	scen.Versions = append(scen.Versions, scen.Versions[idx])
+	// found. Is ok to only append the reference of this version's apps?
+	scen.Versions = append(scen.Versions, &ScenarioVersionModel{
+		BasicVersionModel: BasicVersionModel{
+			Version:   version,
+			Message:   message,
+			Timestamp: time.Now().Unix(),
+		},
+		Apps: scen.Versions[idx].Apps,
+	})
+
 	// update newversionbuf
 	scen.newversionbuf = cloneLayer(scen.Versions[idx].Apps)
 	scen.modified = false
 	return true
 }
 
-func ResetNodeApp() {
-
-}
-
-func SaveScenario() {
-
-}
-
-func LoadScenario() {
-
-}

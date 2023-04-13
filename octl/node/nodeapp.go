@@ -1,4 +1,4 @@
-package scenario
+package node
 
 import (
 	"bytes"
@@ -9,72 +9,58 @@ import (
 	"octl/config"
 )
 
-func ScenariosInfo() {
+func NodeAppsInfo(node string) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.NodeApps,
+		node,
+	)
+	res, err := http.Get(url)
+	if err != nil {
+		panic("Get")
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+
+	fmt.Println(string(raw))
+}
+
+func NodeAppInfo(node, app, scenario string) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s&app=%s&scenario=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.NodeAppVersion,
+		node,
+		app,
+		scenario,
+	)
+	res, err := http.Get(url)
+	if err != nil {
+		panic("Get")
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+
+	fmt.Println(string(raw))
+}
+
+func NodeAppReset(node, app, scenario, version, message string) {
 	url := fmt.Sprintf("http://%s:%d/%s%s",
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
 		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.ScenariosInfo,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		panic("Get")
-	}
-	defer res.Body.Close()
-	raw, _ := io.ReadAll(res.Body)
-
-	fmt.Println(string(raw))
-}
-
-func ScenarioInfo(name string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioInfo,
-		name,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		panic("Get")
-	}
-	defer res.Body.Close()
-	raw, _ := io.ReadAll(res.Body)
-
-	fmt.Println(string(raw))
-}
-
-func ScenarioVersion(name string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioVersion,
-		name,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		panic("Get")
-	}
-	defer res.Body.Close()
-	raw, _ := io.ReadAll(res.Body)
-
-	fmt.Println(string(raw))
-}
-
-func ScenarioReset(name string, version string, message string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioVersion,
-		name,
+		config.GlobalConfig.Api.NodeAppVersion,
 	)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	contentType := writer.FormDataContentType()
-	writer.WriteField("name", name)
+	writer.WriteField("name", node)
+	writer.WriteField("app", app)
+	writer.WriteField("scenario", scenario)
 	writer.WriteField("version", version)
 	writer.WriteField("message", message)
 	writer.Close()

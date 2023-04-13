@@ -76,14 +76,15 @@ func NodeAppVersion(ctx *gin.Context) {
 }
 
 func NodeAppReset(ctx *gin.Context) {
-	var name, app, scen, version, addr string
+	var name, app, scen, version, msg, addr string
 	var ok bool
 
-	name = ctx.Query("name")
-	app = ctx.Query("app")
-	scen = ctx.Query("scenario")
-	version = ctx.Query("version")
-	if len(name) == 0 || len(app) == 0 || len(scen) == 0 || len(version) == 0 {
+	name = ctx.PostForm("name")
+	app = ctx.PostForm("app")
+	scen = ctx.PostForm("scenario")
+	version = ctx.PostForm("version")
+	msg = ctx.PostForm("message")
+	if len(name) == 0 || len(app) == 0 || len(scen) == 0 || len(version) == 0 || len(msg) == 0 {
 		ctx.JSON(400, struct{}{})
 		return
 	}
@@ -100,15 +101,16 @@ func NodeAppReset(ctx *gin.Context) {
 
 		arParams := &AppResetParams{
 			AppBasic: AppBasic{
-				Name: app,
+				Name:     app,
 				Scenario: scen,
+				Message:  msg,
 			},
 			VersionHash: version,
 		}
 		payload, _ := json.Marshal(arParams)
-		message.SendMessage(conn, message.TypeAppVersion, payload)
+		message.SendMessage(conn, message.TypeAppReset, payload)
 		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppVersionResponse {
+		if err != nil || mtype != message.TypeAppResetResponse {
 			logger.Tentacle.Println("NodeAppReset", err)
 			ctx.JSON(500, struct{}{})
 			return
@@ -129,12 +131,15 @@ func NodeAppReset(ctx *gin.Context) {
 
 		// update scenario version
 		success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, rmsg.Version, rmsg.Modified)
-		if success {
-			logger.Tentacle.Print("Success: AddScenNodeApp")
-			ctx.JSON(200, rmsg)
-		} else {
+		if !success {
 			logger.Tentacle.Print("Failed: AddScenNodeApp")
 			ctx.JSON(500, struct{}{})
 		}
+		success = model.UpdateScenario(scen, msg)
+		if !success {
+			logger.Tentacle.Print("Failed: UpdateScenario")
+			ctx.JSON(500, struct{}{})
+		}
+		ctx.JSON(200, rmsg)
 	}
 }

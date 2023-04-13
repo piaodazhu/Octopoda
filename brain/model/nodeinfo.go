@@ -27,7 +27,7 @@ type NodeInfo struct {
 
 type NodeModel struct {
 	NodeInfo
-	Applist []*AppModel
+	// Applist []*AppModel
 }
 
 type State struct {
@@ -86,7 +86,7 @@ func StoreNode(name string, ip string, port uint16) uint32 {
 		}
 		node = &NodeModel{
 			NodeInfo: info,
-			Applist:   []*AppModel{},
+			// Applist:   []*AppModel{},
 		}
 		NodeMap[name] = node
 	}

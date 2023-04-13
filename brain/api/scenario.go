@@ -177,8 +177,9 @@ type AppResetParams struct {
 func ScenarioReset(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	prefix := ctx.PostForm("version")
+	message := ctx.PostForm("message")
 	rmsg := RMSG{"OK"}
-	if len(name) == 0 || len(prefix) < 2 || len(prefix) > 40 {
+	if len(name) == 0 || len(message) == 0 || len(prefix) < 2 || len(prefix) > 40 {
 		rmsg.Msg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
 		ctx.JSON(400, rmsg)
 		return
@@ -231,6 +232,7 @@ func ScenarioReset(ctx *gin.Context) {
 			AppBasic: AppBasic{
 				Name: rlist[i].AppName,
 				Scenario: rlist[i].ScenName,
+				Message: message,
 			},
 			VersionHash: rlist[i].Version,
 			Mode: "undef",
@@ -254,7 +256,7 @@ func ScenarioReset(ctx *gin.Context) {
 	wg.Wait()
 
 	// finally reset this scenario locallly
-	model.ResetScenario(name, version)
+	model.ResetScenario(name, version, message)
 	ctx.JSON(200, results)
 }
 
@@ -282,7 +284,6 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
 		*result = rmsg.Msg
 	}
 }

@@ -8,14 +8,28 @@ import (
 	"tentacle/message"
 )
 
-func ScenarioVersion(conn net.Conn, raw []byte) {
-
-}
-
-func AppVersion(conn net.Conn, raw []byte) {
+func AppLatestVersion(conn net.Conn, raw []byte) {
 	aParams := AppBasic{}
 	err := json.Unmarshal(raw, &aParams)
-	var payload []byte
+	var payload []byte  
+	if err != nil {
+		logger.Client.Println(err)
+		payload = []byte{}
+	} else {
+		v := app.CurVersion(aParams.Name, aParams.Scenario)
+		payload, _ = json.Marshal(&v)
+	}
+	
+	err = message.SendMessage(conn, message.TypeAppVersionResponse, payload)
+	if err != nil {
+		logger.Server.Println("AppLatestVersion send error")
+	}
+}
+
+func AppVersions(conn net.Conn, raw []byte) {
+	aParams := AppBasic{}
+	err := json.Unmarshal(raw, &aParams)
+	var payload []byte  
 	if err != nil {
 		logger.Client.Println(err)
 		payload = []byte{}
@@ -57,7 +71,7 @@ func AppReset(conn net.Conn, raw []byte) {
 		rmsg.Msg = "Failed to GitRevert: " + err.Error()
 		goto errorout
 	}
-	if ok = app.Reset(arParams.Name, arParams.Scenario, arParams.VersionHash); !ok {
+	if ok = app.Reset(arParams.Name, arParams.Scenario, arParams.VersionHash, arParams.Message); !ok {
 		rmsg.Msg = "Failed to Revert: " + err.Error()
 		goto errorout
 	}
@@ -67,6 +81,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
+	logger.Client.Println(rmsg)
 	err = message.SendMessage(conn, message.TypeAppResetResponse, payload)
 	if err != nil {
 		logger.Server.Println("AppReset send error")

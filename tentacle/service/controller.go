@@ -21,7 +21,7 @@ func HandleConn(conn net.Conn) {
 	case message.TypeNodeState:
 		NodeState(conn, raw)
 	case message.TypeScenarioVersion:
-		ScenarioVersion(conn, raw)
+		// ScenarioVersion(conn, raw)
 	case message.TypeFilePush:
 		FilePush(conn, raw)
 	case message.TypeFileTree:
@@ -36,7 +36,7 @@ func HandleConn(conn net.Conn) {
 		RunCmd(conn, raw)
 	case message.TypeCommandRunScript:
 		RunScript(conn, raw)
-		
+
 	case message.TypeAppCreate:
 		AppCreate(conn, raw)
 	case message.TypeAppDelete:
@@ -44,11 +44,13 @@ func HandleConn(conn net.Conn) {
 	case message.TypeAppDeploy:
 		AppDeploy(conn, raw)
 	case message.TypeAppVersion:
-		AppVersion(conn, raw)
+		AppVersions(conn, raw)
 	case message.TypeAppsInfo:
 		AppsInfo(conn, raw)
 	case message.TypeAppReset:
 		AppReset(conn, raw)
+	case message.TypeAppLatestVersion:
+		AppLatestVersion(conn, raw)
 	default:
 		logger.Server.Println("unsupported protocol")
 		return

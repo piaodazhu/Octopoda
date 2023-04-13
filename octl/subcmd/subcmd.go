@@ -7,6 +7,7 @@ import (
 	"octl/node"
 	"octl/scenario"
 	"octl/shell"
+	"strings"
 )
 
 func Apply(arglist []string) {
@@ -21,6 +22,9 @@ func Apply(arglist []string) {
 			scenario.ScenarioApply(arglist[0], arglist[1], arglist[3])
 			return
 		}
+	} else if arglist[1] == "purge" {
+		scenario.ScenarioApply(arglist[0], arglist[1], "")
+		return 
 	}
 	fmt.Println(`usage: octl apply xx.yaml [target] -m "your message"`)
 }
@@ -47,6 +51,21 @@ func Get(arglist []string) {
 			return
 		}
 		scenario.ScenarioInfo(arglist[1])
+	case "nodeapps":
+		if len(arglist) != 2 {
+			return
+		}
+		node.NodeAppsInfo(arglist[1])
+	case "nodeapp":
+		if len(arglist) != 3 {
+			return
+		}
+		nodeapp := arglist[2]
+		appscen := strings.Split(nodeapp, "@")
+		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
+			node.NodeAppInfo(arglist[1], appscen[0], appscen[1])
+			return
+		}
 	}
 }
 
@@ -85,11 +104,52 @@ func Log(arglist []string) {
 }
 
 func Version(arglist []string) {
-
+	if len(arglist) < 2 {
+		return
+	}
+	if arglist[0] == "scenario" && len(arglist) == 2 {
+		scenario.ScenarioVersion(arglist[1])
+	} else if arglist[0] == "nodeapp" && len(arglist) == 3 {
+		nodeapp := arglist[2]
+		appscen := strings.Split(nodeapp, "@")
+		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
+			node.NodeAppInfo(arglist[1], appscen[0], appscen[1])
+			return
+		}
+	}
 }
 
 func Reset(arglist []string) {
+	var message, version string 
+	if len(arglist) < 6 {
+		goto printusage
+	}
+	
+	if arglist[len(arglist) - 2] == "-m" {
+		message = arglist[len(arglist) - 1]
+	} else {
+		goto printusage
+	}
 
+	if arglist[len(arglist) - 4] == "-v" {
+		version = arglist[len(arglist) - 3]
+	} else {
+		goto printusage
+	}
+
+	if arglist[0] == "scenario" && len(arglist) == 6 {
+		scenario.ScenarioReset(arglist[1], version, message)
+		return
+	} else if arglist[0] == "nodeapp" && len(arglist) == 7 {
+		nodeapp := arglist[2]
+		appscen := strings.Split(nodeapp, "@")
+		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
+			node.NodeAppReset(arglist[1], appscen[0], appscen[1], version, message)
+			return
+		}
+	}
+printusage:
+	fmt.Println("Usage: octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>")
 }
 
 func Shell(arglist []string) {
