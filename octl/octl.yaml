@@ -19,7 +19,7 @@ api:
   scenarioInfo: "/scenario/info"
   scenarioUpdate: "/scenario/update"
   scenarioVersion: "/scenario/version"
-  scenarioLog: "/scenario/log"
+  scenarioFix: "/scenario/fix"
   scenarioAppDeploy: "/scenario/app/deployment"
   scenarioAppCreate: "/scenario/app/prepare"
 

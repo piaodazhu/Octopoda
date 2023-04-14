@@ -9,18 +9,26 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
+var FirstFixed chan struct{}
+
 func InitScenarioMap() {
+	FirstFixed = make(chan struct{}, 1)
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
 	file.WriteString(diskFileName)
 	f, err := os.Open(file.String())
 	if err != nil {
+		logger.Brain.Printf("Scenario file not found. New...")
 		ScenLock.Lock()
 		ScenarioMap = make(map[string]*ScenarioModel)
 		ScenLock.Unlock()
+		// new storage need not fix
+		FirstFixed <- struct{}{}
 	} else {
+		logger.Brain.Printf("Scenario file found. Loading...")
 		defer f.Close()
 		content, _ := io.ReadAll(f)
 		ScenLock.Lock()
@@ -29,11 +37,7 @@ func InitScenarioMap() {
 		}
 		ScenLock.Unlock()
 
-		for name := range ScenarioMap {
-			if err := ManualFix(name); err != nil {
-				logger.Brain.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
-			}
-		}
+		go AutoFix()
 	}
 }
 
@@ -53,21 +57,34 @@ type Version struct {
 
 // Define some error type
 type ErrorScenarioNotFound struct{}
+
 func (ErrorScenarioNotFound) Error() string { return "ErrorScenarioNotFound" }
+
 type ErrorScenarioDirty struct{}
+
 func (ErrorScenarioDirty) Error() string { return "ErrorScenarioDirty" }
+
 type ErrorNodeOffline struct{}
+
 func (ErrorNodeOffline) Error() string { return "ErrorNodeOffline" }
+
 type ErrorNodeDisconnect struct{}
+
 func (ErrorNodeDisconnect) Error() string { return "ErrorNodeDisconnect" }
+
 type ErrorNodeAppError struct{}
+
 func (ErrorNodeAppError) Error() string { return "ErrorNodeAppError" }
+
 type ErrorAddScenNodeApp struct{}
+
 func (ErrorAddScenNodeApp) Error() string { return "ErrorAddScenNodeApp" }
+
 type ErrorUpdateScenario struct{}
+
 func (ErrorUpdateScenario) Error() string { return "ErrorUpdateScenario" }
 
-func ManualFix(name string) error {
+func Fix(name string) error {
 	var scen *ScenarioModel
 	var found bool
 
@@ -132,12 +149,47 @@ func ManualFix(name string) error {
 			}
 		}
 	}
-	if !UpdateScenario(name, "Manual Fix") {
+	if !UpdateScenario(name, "System Data Fix") {
 		return ErrorUpdateScenario{}
 	}
 	return nil
 }
 
+func AutoFix() {
+	// 3s to wait active nodes connect to brain
+	time.Sleep(10 * time.Second)
+
+	for name := range ScenarioMap {
+		if err := Fix(name); err != nil {
+			logger.Brain.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+		}
+	}
+	// first roll fix done. Then http request can be accepted
+	logger.Brain.Println("First Fix Done")
+	FirstFixed <- struct{}{}
+
+	for {
+		namelist := []string{}
+		ScenLock.RLock()
+		for name := range ScenarioMap {
+			namelist = append(namelist, name)
+		}
+		ScenLock.RUnlock()
+
+		for _, name := range namelist {
+			// each 30s, check a scenario
+			time.Sleep(30 * time.Second)
+
+			// fix failed is allowed. Because scenarios are dynamically changing.
+			if err := Fix(name); err != nil {
+				logger.Brain.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+			}
+		}
+
+		// sleep 1min then start next roll fix
+		time.Sleep(60 * time.Second)
+	}
+}
 
 func saveNoLock() {
 	var file strings.Builder

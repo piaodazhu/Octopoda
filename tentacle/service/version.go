@@ -20,7 +20,7 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 		payload, _ = json.Marshal(&v)
 	}
 	
-	err = message.SendMessage(conn, message.TypeAppVersionResponse, payload)
+	err = message.SendMessage(conn, message.TypeAppLatestVersionResponse, payload)
 	if err != nil {
 		logger.Server.Println("AppLatestVersion send error")
 	}

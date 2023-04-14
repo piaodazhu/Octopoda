@@ -24,6 +24,8 @@ func main() {
 		subcmd.Status(args[2:])
 	case "log":
 		subcmd.Log(args[2:])
+	case "fix":
+		subcmd.Fix(args[2:])
 	case "version":
 		subcmd.Version(args[2:])
 	case "reset":

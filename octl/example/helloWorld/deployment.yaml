@@ -1,0 +1,86 @@
+# a simple example
+name: helloWorld
+description: "a scenario to print hello world"
+applications:
+-
+  name: "helloPrinter"
+  # scripts should be found under this path of current host
+  scriptpath: "./example/helloWorld/hello/scripts/"
+  sourcepath: "./example/helloWorld/hello/src/"
+  description: "print hello to hello.txt"
+  nodes:
+    - 'pi-24'
+  script:
+    -
+      # it will prepare a file hello.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `hello` and print `hello`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file hello.txt
+      target: purge
+      file: "purge.sh"
+    -
+      # it will delete the file hello.txt
+      target: date
+      file: "date.sh"
+-
+  name: "worldPrinter"
+  scriptpath: "./example/helloWorld/world/scripts/"
+  sourcepath: "./example/helloWorld/world/src/"
+  description: "print hello to world.txt"
+  nodes:
+    - 'pi-240'
+  script:
+    -
+      # it will prepare a file world.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `world` and print `world`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file world.txt
+      target: purge
+      file: "purge.sh"
+-
+  name: "helloWorldPrinter"
+  scriptpath: "./example/helloWorld/helloworld/scripts/"
+  sourcepath: "./example/helloWorld/helloworld/src/"
+  description: "print hello to helloworld.txt"
+  nodes:
+    - 'pi-24'
+    - 'pi-240'
+  script:
+    -
+      # it will prepare a file helloworld.txt and write first line `-->prepared`
+      target: prepare
+      file: "prepare.sh"
+    -
+      target: start
+      # it will write second line `helloworld` and print `helloworld`
+      file: "run.sh"
+    -
+      # it will do nothing but print `stop`
+      target: stop
+      file: "stop.sh"
+    -
+      # it will delete the file helloworld.txt
+      target: purge
+      file: "purge.sh"
+    -
+      # it will delete the file hello.txt
+      target: date
+      file: "date.sh"

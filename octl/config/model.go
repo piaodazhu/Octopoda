@@ -28,7 +28,7 @@ type APIs struct {
 	ScenarioInfo      string `mapstructure:"scenarioInfo"`
 	ScenarioVersion   string `mapstructure:"scenarioVersion"`
 	ScenarioUpdate    string `mapstructure:"scenarioUpdate"`
-	ScenarioLog       string `mapstructure:"scenarioLog"`
+	ScenarioFix       string `mapstructure:"scenarioFix"`
 	ScenarioAppCreate string `mapstructure:"scenarioAppCreate"`
 	ScenarioAppDepoly string `mapstructure:"scenarioAppDeploy"`
 

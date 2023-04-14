@@ -125,7 +125,7 @@ func UpdateScenario(name, message string) bool {
 		}
 		// scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
 		// scen.modified = false
-		logger.Brain.Println("Len of v = ", len(scen.Versions))
+		// logger.Brain.Println("Len of v = ", len(scen.Versions))
 		return true
 	}
 }
@@ -317,7 +317,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 		}
 	}
 	// build a new application
-	logger.Brain.Println("Application Not Cover")
+	logger.Brain.Printf("Application <%s> Not Cover. New...", app)
 	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
 		Name:        app,
 		Description: description,

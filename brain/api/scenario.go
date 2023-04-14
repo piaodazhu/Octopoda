@@ -287,3 +287,21 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		*result = rmsg.Msg
 	}
 }
+
+func ScenarioFix(ctx *gin.Context) {
+	var name string
+	var ok bool
+	var rmsg RMSG
+	rmsg.Msg = "OK"
+
+	if name, ok = ctx.GetQuery("name"); !ok {
+		ctx.JSON(404, struct{}{})
+		return
+	}
+	err := model.Fix(name)
+	if err != nil {
+		rmsg.Msg = err.Error()
+		ctx.JSON(400, rmsg)
+	}
+	ctx.JSON(200, rmsg)
+}

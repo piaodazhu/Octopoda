@@ -84,6 +84,18 @@ func Status(arglist []string) {
 	}
 }
 
+func Fix(arglist []string) {
+	if len(arglist) != 2 {
+		return
+	}
+	if arglist[0] == "scenario" {
+		scenario.ScenarioFix(arglist[1])
+	} else if arglist[0] == "node" {
+		// node.NodeAppsFix(arglist[1])
+		fmt.Println("not support node fix")
+	}
+}
+
 func Log(arglist []string) {
 	if len(arglist) == 0 {
 		return
@@ -96,10 +108,9 @@ func Log(arglist []string) {
 			return
 		}
 		log.NodeLog(arglist[1], arglist[2:])
-	case "scenario":
+	// case "scenario":
 
-	default:
-
+	// default:
 	}
 }
 
