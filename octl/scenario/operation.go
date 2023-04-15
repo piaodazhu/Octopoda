@@ -37,6 +37,7 @@ func ScenarioApply(file string, target string, message string) {
 		// ???
 	case "prepare":
 		ScenarioPrepare(&configuration, "(Prepare) "+message)
+		// time.Sleep(time.Minute)
 		ScenarioRun(&configuration, "prepare", message)
 	case "default":
 		ScenarioPrepare(&configuration, "(Prepare) "+message)
@@ -111,15 +112,18 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			config.GlobalConfig.Api.ScenarioAppCreate,
 		)
 
-		res, err := http.Post(url, contentType, &bodyBuffer)
+		client := http.Client{Timeout: 0}
+		res, err := client.Post(url, contentType, &bodyBuffer)
 		if err != nil {
 			panic("post")
 		}
+		// time.Sleep(time.Minute * 5)
 		defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
 		if err != nil {
 			panic("ReadAll")
 		}
+		fmt.Println(">> create app done")
 
 		fmt.Println(string(msg))
 	}

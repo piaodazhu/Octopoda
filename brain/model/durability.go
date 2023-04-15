@@ -101,14 +101,16 @@ func Fix(name string) error {
 	}
 
 	curNodeApps := []NodeAppItem{}
-	for _, app := range scen.Versions[len(scen.Versions)-1].Apps {
-		for _, nodeapp := range app.NodeApp {
-			curNodeApps = append(curNodeApps, NodeAppItem{
-				AppName:  app.Name,
-				ScenName: scen.Name,
-				NodeName: nodeapp.Name,
-				Version:  nodeapp.Version,
-			})
+	if len(scen.Versions) > 0 {
+		for _, app := range scen.Versions[len(scen.Versions)-1].Apps {
+			for _, nodeapp := range app.NodeApp {
+				curNodeApps = append(curNodeApps, NodeAppItem{
+					AppName:  app.Name,
+					ScenName: scen.Name,
+					NodeName: nodeapp.Name,
+					Version:  nodeapp.Version,
+				})
+			}
 		}
 	}
 	ScenLock.RUnlock()

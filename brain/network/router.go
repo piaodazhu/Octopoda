@@ -29,9 +29,9 @@ func initRouter(engine *gin.Engine) {
 
 		group.GET("/scenario/version", api.ScenarioVersion)
 		group.POST("/scenario/version", api.ScenarioReset)
-		
+
 		group.GET("/scenario/fix", api.ScenarioFix)
-		
+
 		group.GET("/scenarios/info", api.ScenariosInfo)
 
 		group.POST("/scenario/app/prepare", api.AppPrepare)

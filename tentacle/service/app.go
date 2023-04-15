@@ -58,6 +58,8 @@ func AppCreate(conn net.Conn, raw []byte) {
 	var ok bool
 	var fullname string
 	var version app.Version
+	// os.WriteFile("./dump", raw, os.ModePerm)
+	// logger.Client.Println(len(raw))
 
 	err := json.Unmarshal(raw, acParams)
 	if err != nil {
@@ -157,7 +159,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		TargetPath: "scripts/",
 		FileBuf:    adParams.Script,
 	}
-	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root + fullname})
+	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root + fullname)
 	if err != nil {
 		logger.Client.Println("execScript")
 		rmsg.Msg = err.Error()

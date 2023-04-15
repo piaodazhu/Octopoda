@@ -110,6 +110,7 @@ func AppPrepare(ctx *gin.Context) {
 		}
 	}
 	wg.Wait()
+	logger.Brain.Println(results)
 	ctx.JSON(200, results)
 }
 
@@ -213,7 +214,7 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
+		logger.Tentacle.Print(rmsg)
 		*result = rmsg.Msg
 
 		// update scenario version

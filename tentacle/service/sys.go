@@ -83,7 +83,7 @@ func RunScript(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	output, err = execScript(&sparams, []string{"OCTOPODA_ROOT=" + config.GlobalConfig.Workspace.Root})
+	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root)
 	if err != nil {
 		rmsg.Msg = err.Error()
 	} else {
@@ -98,7 +98,7 @@ errorout:
 	}
 }
 
-func execScript(sparams *ScriptParams, env []string) ([]byte, error) {
+func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	var content []byte
 	var err error
 	var scriptFile strings.Builder
@@ -119,19 +119,19 @@ func execScript(sparams *ScriptParams, env []string) ([]byte, error) {
 
 	scriptFile.WriteString(sparams.FileName)
 	err = os.WriteFile(scriptFile.String(), content, os.ModePerm)
-	// f, err = os.Create(scriptFile.String())
 	if err != nil {
 		logger.Server.Println("WriteFile")
 		return nil, err
 	}
-	// f.Write(content)
-	// f.Close()
 
-	// fmt.Println(scriptFile.String())
+	// fbuf, _ := os.ReadFile(scriptFile.String())
+	// logger.Client.Println(string(fbuf))
+
 	cmd := exec.Command("bash", scriptFile.String())
-	cmd.Env = env
-	// fmt.Println(cmd.String(), cmd.Env)
+	cmd.Dir = dir
+
 	ret, err := cmd.CombinedOutput()
+	logger.Client.Println("EXEC OUTPUT:\n", string(ret))
 	os.Remove(scriptFile.String())
 
 	return ret, err

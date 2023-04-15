@@ -226,9 +226,11 @@ func GetScenariosDigestAll() ([]ScenarioDigest, bool) {
 	for _, val := range ScenarioMap {
 		res[idx].Name = val.Name
 		res[idx].Description = val.Description
-		res[idx].Timestamp = val.Versions[len(val.Versions)-1].Timestamp
-		res[idx].Version = val.Versions[len(val.Versions)-1].Version
-		res[idx].Message = val.Versions[len(val.Versions)-1].Message
+		if len(val.Versions) != 0 {
+			res[idx].Timestamp = val.Versions[len(val.Versions)-1].Timestamp
+			res[idx].Version = val.Versions[len(val.Versions)-1].Version
+			res[idx].Message = val.Versions[len(val.Versions)-1].Message
+		}
 		idx++
 	}
 	return res, true
