@@ -1,2 +1,4 @@
 - ugly code.
-- 504 Gateway Timeout for long request.
+- taskid wont be delete.
+- deploy script has no sync seq.
+- script can record output.

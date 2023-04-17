@@ -33,5 +33,7 @@ api:
   runCmd: "/run/cmd"
   runScript: "/run/script"
 
+  taskState: "/taskstate"
+
   sshInfo: "/sshinfo"
 

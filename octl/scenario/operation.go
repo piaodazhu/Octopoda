@@ -36,18 +36,18 @@ func ScenarioApply(file string, target string, message string) {
 	switch target {
 		// ???
 	case "prepare":
-		ScenarioPrepare(&configuration, "(Prepare) "+message)
+		ScenarioPrepare(&configuration, "(Prepare-1) "+message)
 		// time.Sleep(time.Minute)
-		ScenarioRun(&configuration, "prepare", message)
+		ScenarioRun(&configuration, "prepare", "(Prepare-2) "+message)
 	case "default":
-		ScenarioPrepare(&configuration, "(Prepare) "+message)
-		ScenarioRun(&configuration, "prepare", message)
-		ScenarioRun(&configuration, "start", message)
+		ScenarioPrepare(&configuration, "(Prepare-1) "+message)
+		ScenarioRun(&configuration, "prepare", "(Prepare-2) "+message)
+		ScenarioRun(&configuration, "start", "(Deploy) "+message)
 	case "purge":
 		// ScenarioRun(&configuration, target, message)
 		ScenarioPurge(&configuration)
 	default:
-		ScenarioRun(&configuration, target, message)
+		ScenarioRun(&configuration, target, "(Deploy) "+message)
 	}
 }
 
@@ -117,15 +117,23 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		if err != nil {
 			panic("post")
 		}
-		// time.Sleep(time.Minute * 5)
-		defer res.Body.Close()
+		// defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
+		res.Body.Close()
 		if err != nil {
 			panic("ReadAll")
 		}
-		fmt.Println(">> create app done")
 
-		fmt.Println(string(msg))
+		if res.StatusCode != 202 {
+			fmt.Println("Request submit error: ", string(msg))
+			return
+		}
+		results, err := waitTask(string(msg))
+		if err != nil {
+			fmt.Println("Task processing error: ", err.Error())
+			return
+		}
+		fmt.Println(results)
 	}
 	os.Remove(tmpName)
 	// update this scenario
@@ -150,7 +158,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			}
 		}
 		if len(fname) == 0 {
-			fmt.Println("invalid target")
+			// fmt.Println("invalid target")
 			continue 
 		}
 
@@ -197,12 +205,22 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		if err != nil {
 			panic("post")
 		}
-		defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
+		res.Body.Close()
 		if err != nil {
 			panic("ReadAll")
 		}
-		fmt.Println(string(msg))
+
+		if res.StatusCode != 202 {
+			fmt.Println("Request submit error: ", string(msg))
+			return
+		}
+		results, err := waitTask(string(msg))
+		if err != nil {
+			fmt.Println("Task processing error: ", err.Error())
+			return
+		}
+		fmt.Println(results)
 	}
 	// update this scenario
 	err := ScenarioUpdate(configuration.Name, message)
@@ -275,12 +293,22 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		if err != nil {
 			panic("post")
 		}
-		defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
+		res.Body.Close()
 		if err != nil {
 			panic("ReadAll")
 		}
-		fmt.Println(string(msg))
+
+		if res.StatusCode != 202 {
+			fmt.Println("Request submit error: ", string(msg))
+			return
+		}
+		results, err := waitTask(string(msg))
+		if err != nil {
+			fmt.Println("Task processing error: ", err.Error())
+			return
+		}
+		fmt.Println(results)
 	}
 
 	// purge this scenario
@@ -369,4 +397,44 @@ func ScenarioDelete(name string) error {
 	msg, _ := io.ReadAll(res.Body)
 	fmt.Println(string(msg))
 	return nil
+}
+
+type ErrWaitTask struct {
+	status int
+	message string
+}
+func (e ErrWaitTask) Error() string { return fmt.Sprintf("[%d] %s\n", e.status, e.message) }
+func waitTask(taskid string) (string, error) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?taskid=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.TaskState,
+		taskid,
+	)
+	fmt.Print("PROCESSING...")
+	time.Sleep(time.Millisecond * 100)
+	for {
+		res, err := http.Get(url)
+		if err != nil {
+			return "", err
+		}
+		
+		msg, err := io.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			return "", err
+		}
+		
+		if res.StatusCode == 200 {
+			fmt.Println("DONE")
+			return string(msg), nil
+		} else if res.StatusCode == 202 {
+			fmt.Print(".")
+			time.Sleep(time.Second * 1)
+		} else {
+			fmt.Println("FAILED")
+			return "", ErrWaitTask{res.StatusCode, string(msg)}
+		}
+	}
 }

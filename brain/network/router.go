@@ -45,6 +45,8 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/sshinfo", api.SSHInfo)
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
+
+		group.GET("/taskstate", api.TaskState)
 	}
 }
 

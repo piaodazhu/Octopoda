@@ -4,6 +4,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/rdb"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -72,9 +73,9 @@ func AppPrepare(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
-	defer multipart.Close()
 
 	raw, err := io.ReadAll(multipart)
+	multipart.Close()
 	if err != nil {
 		rmsg.Msg = "ERROR: Read File"
 		ctx.JSON(400, rmsg)
@@ -83,35 +84,47 @@ func AppPrepare(ctx *gin.Context) {
 
 	content := base64.RawStdEncoding.EncodeToString(raw)
 
-	acParams := AppCreateParams{
-		AppBasic{
-			Name:        appName,
-			Scenario:    scenario,
-			Description: description,
-			Message:     messages,
-		},
-		content,
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Brain.Print("TaskNew")
 	}
-	// payload, _ := json.Marshal(&acParams)
+	ctx.String(202, taskid)
 
-	// check target nodes
-	// spread tar file
-	results := make([]CommitResults, len(nodes))
-	var wg sync.WaitGroup
-
-	for i := range nodes {
-		name := nodes[i]
-		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go createApp(name, addr, &acParams, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
+	// async processing
+	go func() {
+		acParams := AppCreateParams{
+			AppBasic{
+				Name:        appName,
+				Scenario:    scenario,
+				Description: description,
+				Message:     messages,
+			},
+			content,
 		}
-	}
-	wg.Wait()
-	logger.Brain.Println(results)
-	ctx.JSON(200, results)
+		// payload, _ := json.Marshal(&acParams)
+
+		// check target nodes
+		// spread tar file
+		results := make([]CommitResults, len(nodes))
+		var wg sync.WaitGroup
+
+		for i := range nodes {
+			name := nodes[i]
+			results[i].Name = name
+			if addr, exists := model.GetNodeAddress(name); exists {
+				wg.Add(1)
+				go createApp(name, addr, &acParams, &wg, &results[i].Result)
+			} else {
+				results[i].Result = "NodeNotExists"
+			}
+		}
+		wg.Wait()
+		logger.Brain.Println(results)
+		if !rdb.TaskMarkDone(taskid, results, 3600) {
+			logger.Brain.Print("TaskMarkDone")
+		}
+	}()
 }
 
 func AppDeploy(ctx *gin.Context) {
@@ -159,34 +172,49 @@ func AppDeploy(ctx *gin.Context) {
 	}
 
 	content := base64.RawStdEncoding.EncodeToString(raw)
-	adParams := AppDeployParams{
-		AppBasic{
-			Name:        appName,
-			Scenario:    scenario,
-			Description: description,
-			Message:     messages,
-		},
-		content,
+
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Brain.Print("TaskNew")
 	}
-	// payload, _ := json.Marshal(&adParams)
+	ctx.String(202, taskid)
 
-	// check target nodes
-	// run scripts
-	results := make([]CommitResults, len(nodes))
-	var wg sync.WaitGroup
+	// async processing
+	go func() {
 
-	for i := range nodes {
-		name := nodes[i]
-		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go deployApp(name, addr, &adParams, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
+		adParams := AppDeployParams{
+			AppBasic{
+				Name:        appName,
+				Scenario:    scenario,
+				Description: description,
+				Message:     messages,
+			},
+			content,
 		}
-	}
-	wg.Wait()
-	ctx.JSON(200, results)
+		// payload, _ := json.Marshal(&adParams)
+
+		// check target nodes
+		// run scripts
+		results := make([]CommitResults, len(nodes))
+		var wg sync.WaitGroup
+
+		for i := range nodes {
+			name := nodes[i]
+			results[i].Name = name
+			if addr, exists := model.GetNodeAddress(name); exists {
+				wg.Add(1)
+				go deployApp(name, addr, &adParams, &wg, &results[i].Result)
+			} else {
+				results[i].Result = "NodeNotExists"
+			}
+		}
+		wg.Wait()
+		logger.Brain.Println(results)
+		if !rdb.TaskMarkDone(taskid, results, 3600) {
+			logger.Brain.Print("TaskMarkDone Error")
+		}
+	}()
 }
 
 func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {

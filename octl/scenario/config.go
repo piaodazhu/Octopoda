@@ -128,8 +128,9 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 	}
 
 	// check mustImpl
-	for _, impl := range mustImpl {
+	for script, impl := range mustImpl {
 		if !impl {
+			fmt.Println("script", script, "not found")
 			return ErrMissingScript{}
 		}
 	}

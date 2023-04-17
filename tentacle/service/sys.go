@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -130,11 +131,17 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	cmd := exec.Command("bash", scriptFile.String())
 	cmd.Dir = dir
 
-	ret, err := cmd.CombinedOutput()
-	logger.Client.Println("EXEC OUTPUT:\n", string(ret))
+	err = cmd.Run()
+	if err != nil {
+		logger.Server.Println("Run cmd")
+		return nil, err
+	}
+
+	tmp := fmt.Sprint("exit code:", cmd.ProcessState.ExitCode())
+	logger.Client.Println(tmp)
 	os.Remove(scriptFile.String())
 
-	return ret, err
+	return []byte(tmp), nil
 }
 
 func RunCmd(conn net.Conn, raw []byte) {

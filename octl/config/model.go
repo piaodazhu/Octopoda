@@ -42,5 +42,7 @@ type APIs struct {
 	RunCmd    string `mapstructure:"runCmd"`
 	RunScript string `mapstructure:"runScript"`
 
+	TaskState string `mapstructure:"taskState"`
+
 	SshInfo string `mapstructure:"sshInfo"`
 }
