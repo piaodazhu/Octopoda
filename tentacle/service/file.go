@@ -20,19 +20,17 @@ type FileParams struct {
 	FileBuf    string
 }
 
-type RMSG struct {
-	Msg string
-}
-
 func FilePush(conn net.Conn, raw []byte) {
 	var file strings.Builder
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	fileinfo := FileParams{}
 	err := json.Unmarshal(raw, &fileinfo)
 	if err != nil {
 		logger.Server.Println("FilePush")
-		rmsg.Msg = "FilePush"
+		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
 
@@ -48,7 +46,7 @@ func FilePush(conn net.Conn, raw []byte) {
 
 	err = saveFile(fileinfo.FileBuf, file.String())
 	if err != nil {
-		rmsg.Msg = "FileNotSave"
+		rmsg.Rmsg = "FileNotSave"
 		goto errorout
 	}
 errorout:

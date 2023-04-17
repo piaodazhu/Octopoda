@@ -13,24 +13,32 @@ import (
 func NodeAppsInfo(ctx *gin.Context) {
 	var name, addr string
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
+
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Lack node name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	if addr, ok = model.GetNodeAddress(name); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Invalid node"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Can't connect node"
+		ctx.JSON(404, rmsg)
 	} else {
 		defer conn.Close()
 		message.SendMessage(conn, message.TypeAppsInfo, []byte{})
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppsInfoResponse {
 			logger.Tentacle.Println("NodeAppsInfo", err)
-			ctx.JSON(404, struct{}{})
+			rmsg.Rmsg = "Node error"
+			ctx.JSON(404, rmsg)
 			return
 		}
 		ctx.Data(200, "application/json", raw)
@@ -40,22 +48,28 @@ func NodeAppsInfo(ctx *gin.Context) {
 func NodeAppVersion(ctx *gin.Context) {
 	var name, app, scen, addr string
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	name = ctx.Query("name")
 	app = ctx.Query("app")
 	scen = ctx.Query("scenario")
 	if len(name) == 0 || len(app) == 0 || len(scen) == 0 {
-		ctx.JSON(400, struct{}{})
+		rmsg.Rmsg = "ERROR: Wrong Args"
+		ctx.JSON(400, rmsg)
 		return
 	}
 
 	if addr, ok = model.GetNodeAddress(name); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Invalid node"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Can't connect node"
+		ctx.JSON(404, rmsg)
 	} else {
 		defer conn.Close()
 
@@ -68,7 +82,8 @@ func NodeAppVersion(ctx *gin.Context) {
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppVersionResponse {
 			logger.Tentacle.Println("NodeAppVersion", err)
-			ctx.JSON(404, struct{}{})
+			rmsg.Rmsg = "Node error"
+			ctx.JSON(404, rmsg)
 			return
 		}
 		ctx.Data(200, "application/json", raw)
@@ -78,6 +93,9 @@ func NodeAppVersion(ctx *gin.Context) {
 func NodeAppReset(ctx *gin.Context) {
 	var name, app, scen, version, msg, addr string
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	name = ctx.PostForm("name")
 	app = ctx.PostForm("app")
@@ -85,17 +103,20 @@ func NodeAppReset(ctx *gin.Context) {
 	version = ctx.PostForm("version")
 	msg = ctx.PostForm("message")
 	if len(name) == 0 || len(app) == 0 || len(scen) == 0 || len(version) == 0 || len(msg) == 0 {
-		ctx.JSON(400, struct{}{})
+		rmsg.Rmsg = "ERROR: Wrong Args"
+		ctx.JSON(400, rmsg)
 		return
 	}
 
 	if addr, ok = model.GetNodeAddress(name); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Invalid node"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Can't connect node"
+		ctx.JSON(404, rmsg)
 	} else {
 		defer conn.Close()
 
@@ -112,34 +133,38 @@ func NodeAppReset(ctx *gin.Context) {
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppResetResponse {
 			logger.Tentacle.Println("NodeAppReset", err)
-			ctx.JSON(500, struct{}{})
-			return
-		}
-
-		var rmsg RDATA
-		err = json.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Tentacle.Println("NodeAppReset Unmarshal", err)
-			ctx.JSON(500, struct{}{})
-			return
-		}
-		if rmsg.Msg != "OK" {
-			logger.Tentacle.Println("NodeAppReset MSG", err)
+			rmsg.Rmsg = "Node error"
 			ctx.JSON(404, rmsg)
 			return
 		}
 
+		var result message.Result
+		err = json.Unmarshal(raw, &result)
+		if err != nil {
+			logger.Tentacle.Println("NodeAppReset Unmarshal", err)
+			rmsg.Rmsg = "NodeApp Result:" + err.Error()
+			ctx.JSON(500, rmsg)
+			return
+		}
+		if result.Rmsg != "OK" {
+			logger.Tentacle.Println("NodeAppReset", err)
+			ctx.JSON(404, result)
+			return
+		}
+
 		// update scenario version
-		success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, rmsg.Version, rmsg.Modified)
+		success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, result.Version, result.Modified)
 		if !success {
 			logger.Tentacle.Print("Failed: AddScenNodeApp")
-			ctx.JSON(500, struct{}{})
+			rmsg.Rmsg = "AddScenNodeApp"
+			ctx.JSON(500, rmsg)
 		}
 		success = model.UpdateScenario(scen, msg)
 		if !success {
 			logger.Tentacle.Print("Failed: UpdateScenario")
-			ctx.JSON(500, struct{}{})
+			rmsg.Rmsg = "UpdateScenario"
+			ctx.JSON(500, rmsg)
 		}
-		ctx.JSON(200, rmsg)
+		ctx.JSON(200, result)
 	}
 }

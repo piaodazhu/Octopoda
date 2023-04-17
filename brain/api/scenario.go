@@ -14,14 +14,16 @@ import (
 func ScenarioCreate(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	description := ctx.PostForm("description")
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	if len(name) == 0 || len(description) == 0 {
-		rmsg.Msg = "ERROR: Wrong Args"
+		rmsg.Rmsg = "ERROR: Wrong Args"
 		ctx.JSON(400, rmsg)
 		return
 	}
 	if !model.AddScenario(name, description) {
-		rmsg.Msg = "ERROR: Scenario Exists"
+		rmsg.Rmsg = "ERROR: Scenario Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -30,15 +32,17 @@ func ScenarioCreate(ctx *gin.Context) {
 
 func ScenarioUpdate(ctx *gin.Context) {
 	name := ctx.PostForm("name")
-	message := ctx.PostForm("message")
-	rmsg := RMSG{"OK"}
-	if len(name) == 0 || len(message) == 0 {
-		rmsg.Msg = "ERROR: Wrong Args"
+	msg := ctx.PostForm("message")
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
+	if len(name) == 0 || len(msg) == 0 {
+		rmsg.Rmsg = "Lack scenario name or message"
 		ctx.JSON(400, rmsg)
 		return
 	}
-	if !model.UpdateScenario(name, message) {
-		rmsg.Msg = "ERROR: UpdateScenario"
+	if !model.UpdateScenario(name, msg) {
+		rmsg.Rmsg = "ERROR: UpdateScenario"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -53,16 +57,18 @@ type AppDeleteParams struct {
 func ScenarioDelete(ctx *gin.Context) {
 	// This is not so simple. Should delete all apps of a scenario in this function
 	name := ctx.Query("name")
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	if len(name) == 0 {
-		rmsg.Msg = "ERROR: Wrong Args"
+		rmsg.Rmsg = "Lack scenario name"
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
-		rmsg.Msg = "ERROR: Scenario Not Exists"
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -102,7 +108,7 @@ func ScenarioDelete(ctx *gin.Context) {
 
 func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -117,15 +123,17 @@ func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("Unmarshal", err)
 			*result = "MasterError"
 			return
 		}
-		if rmsg.Msg != "OK" {
-			*result = "NodeError"
+		if rmsg.Rmsg != "OK" {
+			*result = "NodeError:" + rmsg.Rmsg
+		} else {
+			*result = "OK"
 		}
 	}
 }
@@ -134,12 +142,17 @@ func ScenarioInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
 	var scen *model.ScenarioInfo
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Lack scenario name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	if scen, ok = model.GetScenarioInfoByName(name); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Error: GetScenarioInfoByName"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	ctx.JSON(200, scen)
@@ -148,9 +161,13 @@ func ScenarioInfo(ctx *gin.Context) {
 func ScenariosInfo(ctx *gin.Context) {
 	var scens []model.ScenarioDigest
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if scens, ok = model.GetScenariosDigestAll(); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Error: GetScenarioInfoByName"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	ctx.JSON(200, scens)
@@ -160,8 +177,13 @@ func ScenarioVersion(ctx *gin.Context) {
 	var versions []model.BasicVersionModel
 	var name string
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
+
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Lack Name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	versions = model.GetScenarioVersionByName(name)
@@ -177,17 +199,20 @@ type AppResetParams struct {
 func ScenarioReset(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	prefix := ctx.PostForm("version")
-	message := ctx.PostForm("message")
-	rmsg := RMSG{"OK"}
-	if len(name) == 0 || len(message) == 0 || len(prefix) < 2 || len(prefix) > 40 {
-		rmsg.Msg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
+	msg := ctx.PostForm("message")
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
+
+	if len(name) == 0 || len(msg) == 0 || len(prefix) < 2 || len(prefix) > 40 {
+		rmsg.Rmsg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
-		rmsg.Msg = "ERROR: Scenario Not Exists"
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -208,12 +233,12 @@ func ScenarioReset(ctx *gin.Context) {
 		}
 	}
 	if len(version) == 0 {
-		rmsg.Msg = "ERROR: Version Not Exists"
+		rmsg.Rmsg = "ERROR: Version Not Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
 	if ambiguity {
-		rmsg.Msg = "ERROR: Version Ambiguity"
+		rmsg.Rmsg = "ERROR: Version Ambiguity"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -230,12 +255,12 @@ func ScenarioReset(ctx *gin.Context) {
 		//payload
 		arg := &AppResetParams{
 			AppBasic: AppBasic{
-				Name: rlist[i].AppName,
+				Name:     rlist[i].AppName,
 				Scenario: rlist[i].ScenName,
-				Message: message,
+				Message:  msg,
 			},
 			VersionHash: rlist[i].Version,
-			Mode: "undef",
+			Mode:        "undef",
 		}
 		payload, _ := json.Marshal(arg)
 
@@ -256,13 +281,13 @@ func ScenarioReset(ctx *gin.Context) {
 	wg.Wait()
 
 	// finally reset this scenario locallly
-	model.ResetScenario(name, version, message)
+	model.ResetScenario(name, version, msg)
 	ctx.JSON(200, results)
 }
 
 func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -277,30 +302,32 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 			return
 		}
 
-		var rmsg RDATA
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("Unmarshal", err)
 			*result = "MasterError"
 			return
 		}
-		*result = rmsg.Msg
+		*result = rmsg.Rmsg
 	}
 }
 
 func ScenarioFix(ctx *gin.Context) {
 	var name string
 	var ok bool
-	var rmsg RMSG
-	rmsg.Msg = "OK"
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Lack scenario name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	err := model.Fix(name)
 	if err != nil {
-		rmsg.Msg = err.Error()
+		rmsg.Rmsg = "Fix:" + err.Error()
 		ctx.JSON(400, rmsg)
 	}
 	ctx.JSON(200, rmsg)

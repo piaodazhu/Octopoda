@@ -50,7 +50,9 @@ type AppResetParams struct {
 
 func AppReset(conn net.Conn, raw []byte) {
 	arParams := &AppResetParams{}
-	rmsg := RDATA{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	rmsg.Modified = false
 	var payload []byte
 	var longhash, fullname string
@@ -59,23 +61,23 @@ func AppReset(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, arParams)
 	if err != nil {
 		logger.Client.Println(err)
-		rmsg.Msg = "Invalid Params"
+		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
 	if longhash, ok = app.ConvertHash(arParams.Name, arParams.Scenario, arParams.VersionHash); !ok {
-		rmsg.Msg = "No app or version"
+		rmsg.Rmsg = "No app or version"
 		goto errorout
 	}
 	fullname = arParams.Name + "@" + arParams.Scenario
 	if err = app.GitReset(fullname, longhash, arParams.Mode); err != nil {
-		rmsg.Msg = "Failed to GitRevert: " + err.Error()
+		rmsg.Rmsg = "Failed to GitRevert: " + err.Error()
 		goto errorout
 	}
 	if ok = app.Reset(arParams.Name, arParams.Scenario, arParams.VersionHash, arParams.Message); !ok {
-		rmsg.Msg = "Failed to Revert: " + err.Error()
+		rmsg.Rmsg = "Failed to Revert: " + err.Error()
 		goto errorout
 	}
-	rmsg.Msg = "OK"
+	rmsg.Rmsg = "OK"
 	rmsg.Version = longhash
 	rmsg.Modified = true
 	app.Save()

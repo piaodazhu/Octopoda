@@ -3,12 +3,13 @@ package service
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
@@ -70,7 +71,9 @@ type ScriptParams struct {
 
 func RunScript(conn net.Conn, raw []byte) {
 	sparams := ScriptParams{}
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	// var content []byte
 	var err error
 	// var scriptFile strings.Builder
@@ -80,15 +83,15 @@ func RunScript(conn net.Conn, raw []byte) {
 
 	if err := json.Unmarshal(raw, &sparams); err != nil {
 		logger.Client.Println(err)
-		rmsg.Msg = "FilePush"
+		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
 
 	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root)
 	if err != nil {
-		rmsg.Msg = err.Error()
+		rmsg.Rmsg = err.Error()
 	} else {
-		rmsg.Msg = string(output)
+		rmsg.Rmsg = string(output)
 	}
 
 errorout:
@@ -124,28 +127,42 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 		logger.Server.Println("WriteFile")
 		return nil, err
 	}
+	outputFile := scriptFile.String() + ".output"
+	output, _ := os.Create(outputFile)
 
 	// fbuf, _ := os.ReadFile(scriptFile.String())
 	// logger.Client.Println(string(fbuf))
 
 	cmd := exec.Command("bash", scriptFile.String())
 	cmd.Dir = dir
+	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(sparams.TargetPath, sparams.FileName, outputFile)...)
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Server.Println("Run cmd")
+		logger.Server.Println("Run cmd", err)
 		return nil, err
 	}
 
-	tmp := fmt.Sprint("exit code:", cmd.ProcessState.ExitCode())
-	logger.Client.Println(tmp)
-	os.Remove(scriptFile.String())
+	// read output
+	// result := []byte{}
+	result, err := io.ReadAll(output)
+	if err != nil {
+		logger.Client.Println(err)
+	}
+	output.Close()
 
-	return []byte(tmp), nil
+	// logger.Client.Println("exit code:", cmd.ProcessState.ExitCode())
+
+	os.Remove(scriptFile.String())
+	os.Remove(outputFile)
+
+	return result, nil
 }
 
 func RunCmd(conn net.Conn, raw []byte) {
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	var command string
 	var err error
 	var output []byte
@@ -155,9 +172,9 @@ func RunCmd(conn net.Conn, raw []byte) {
 
 	output, err = exec.Command("bash", "-c", command).CombinedOutput()
 	if err != nil {
-		rmsg.Msg = err.Error()
+		rmsg.Rmsg = err.Error()
 	} else {
-		rmsg.Msg = string(output)
+		rmsg.Output = string(output)
 	}
 
 	payload, _ = json.Marshal(&rmsg)

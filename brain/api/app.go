@@ -31,11 +31,6 @@ type AppDeployParams struct {
 	Script string
 }
 
-type RDATA struct {
-	Msg      string
-	Version  string
-	Modified bool
-}
 type CommitResults BasicNodeResults
 
 func AppPrepare(ctx *gin.Context) {
@@ -45,16 +40,18 @@ func AppPrepare(ctx *gin.Context) {
 	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	files, err := ctx.FormFile("files")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
-		rmsg.Msg = "ERROR: Wrong Args"
+		rmsg.Rmsg = "ERROR: Wrong Args"
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
-		rmsg.Msg = "ERROR: Scenario Not Exists"
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -62,14 +59,14 @@ func AppPrepare(ctx *gin.Context) {
 	nodes := []string{}
 	err = json.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Msg = "ERROR: targetNodes"
+		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	multipart, err := files.Open()
 	if err != nil {
-		rmsg.Msg = "ERROR: Open File"
+		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -77,7 +74,7 @@ func AppPrepare(ctx *gin.Context) {
 	raw, err := io.ReadAll(multipart)
 	multipart.Close()
 	if err != nil {
-		rmsg.Msg = "ERROR: Read File"
+		rmsg.Rmsg = "ReadAll:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -120,7 +117,7 @@ func AppPrepare(ctx *gin.Context) {
 			}
 		}
 		wg.Wait()
-		logger.Brain.Println(results)
+		// logger.Brain.Println(results)
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
 			logger.Brain.Print("TaskMarkDone")
 		}
@@ -134,16 +131,18 @@ func AppDeploy(ctx *gin.Context) {
 	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	file, err := ctx.FormFile("script")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
-		rmsg.Msg = "ERROR: Wrong Args"
+		rmsg.Rmsg = "ERROR: Wrong Args"
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
-		rmsg.Msg = "ERROR: Scenario Not Exists"
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
 		ctx.JSON(404, rmsg)
 		return
 	}
@@ -151,14 +150,14 @@ func AppDeploy(ctx *gin.Context) {
 	nodes := []string{}
 	err = json.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Msg = "ERROR: targetNodes"
+		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	multipart, err := file.Open()
 	if err != nil {
-		rmsg.Msg = "ERROR: Open File"
+		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -166,7 +165,7 @@ func AppDeploy(ctx *gin.Context) {
 
 	raw, err := io.ReadAll(multipart)
 	if err != nil {
-		rmsg.Msg = "ERROR: Read File"
+		rmsg.Rmsg = "ReadAll:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -210,7 +209,7 @@ func AppDeploy(ctx *gin.Context) {
 			}
 		}
 		wg.Wait()
-		logger.Brain.Println(results)
+		// logger.Brain.Println(results)
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
 			logger.Brain.Print("TaskMarkDone Error")
 		}
@@ -219,7 +218,7 @@ func AppDeploy(ctx *gin.Context) {
 
 func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -235,15 +234,15 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 			return
 		}
 
-		var rmsg RDATA
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg)
-		*result = rmsg.Msg
+		logger.Tentacle.Print(rmsg.Rmsg)
+		*result = rmsg.Rmsg
 
 		// update scenario version
 		success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, node, rmsg.Version, rmsg.Modified)
@@ -251,13 +250,14 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 			logger.Tentacle.Print("Success: AddScenNodeApp")
 		} else {
 			logger.Tentacle.Print("Failed: AddScenNodeApp")
+			*result = "Failed: AddScenNodeApp"
 		}
 	}
 }
 
 func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -273,14 +273,14 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 			return
 		}
 
-		var rmsg RDATA
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		*result = rmsg.Msg
+		*result = string(rmsg.Output)
 
 		// update scenario version
 		success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, node, rmsg.Version, rmsg.Modified)
@@ -288,6 +288,7 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 			logger.Tentacle.Print("Success: AddScenNodeApp")
 		} else {
 			logger.Tentacle.Print("Failed: AddScenNodeApp")
+			*result = "Failed: AddScenNodeApp"
 		}
 	}
 }

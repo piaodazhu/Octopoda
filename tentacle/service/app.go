@@ -12,20 +12,6 @@ import (
 	"time"
 )
 
-// show apps
-// show versions [name]
-// reset version [name] [version]
-//
-// exists app [name]
-// create app [name] [scenario] [description]
-// commit app [name] [message]
-
-type RDATA struct {
-	Msg      string
-	Version  string
-	Modified bool
-}
-
 func AppsInfo(conn net.Conn, raw []byte) {
 	err := message.SendMessage(conn, message.TypeAppsInfoResponse, app.Digest())
 	if err != nil {
@@ -52,9 +38,11 @@ type AppDeployParams struct {
 
 func AppCreate(conn net.Conn, raw []byte) {
 	acParams := &AppCreateParams{}
-	rmsg := RDATA{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	rmsg.Modified = false
-	var output, payload []byte
+	var payload []byte
 	var ok bool
 	var fullname string
 	var version app.Version
@@ -64,7 +52,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, acParams)
 	if err != nil {
 		logger.Client.Println(err)
-		rmsg.Msg = "Invalid Params"
+		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
 	fullname = acParams.Name + "@" + acParams.Scenario
@@ -73,12 +61,12 @@ func AppCreate(conn net.Conn, raw []byte) {
 	if ok = app.Exists(acParams.Name, acParams.Scenario); !ok {
 		if !app.Create(acParams.Name, acParams.Scenario, acParams.Description) {
 			logger.Client.Println("app.Create")
-			rmsg.Msg = "Failed Create App"
+			rmsg.Rmsg = "Failed Create App"
 			goto errorout
 		}
 		if !app.GitCreate(fullname) {
 			logger.Client.Println("app.GitCreate")
-			rmsg.Msg = "Failed Init the Repo"
+			rmsg.Rmsg = "Failed Init the Repo"
 			goto errorout
 		}
 	}
@@ -86,20 +74,18 @@ func AppCreate(conn net.Conn, raw []byte) {
 	err = unpackFiles(acParams.FilePack, fullname)
 	if err != nil {
 		logger.Client.Println("unpack Files")
-		rmsg.Msg = err.Error()
+		rmsg.Rmsg = err.Error()
 		goto errorout
-	} else {
-		rmsg.Msg = string(output)
 	}
 	// commit
 	version, err = app.GitCommit(fullname, acParams.Message)
 	if err != nil {
 		logger.Client.Println("app.GitCommit")
 		if _, ok := err.(app.EmptyCommitError); ok {
-			rmsg.Msg = "OK: No Change"
+			rmsg.Rmsg = "OK: No Change"
 			rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
 		} else {
-			rmsg.Msg = err.Error()
+			rmsg.Rmsg = err.Error()
 		}
 		goto errorout
 	}
@@ -108,9 +94,9 @@ func AppCreate(conn net.Conn, raw []byte) {
 	ok = app.Update(acParams.Name, acParams.Scenario, version)
 	if !ok {
 		logger.Client.Println("app.Update")
-		rmsg.Msg = "Faild to update app version"
+		rmsg.Rmsg = "Faild to update app version"
 	}
-	rmsg.Msg = "OK"
+	rmsg.Rmsg = "OK"
 	rmsg.Version = version.Hash
 	rmsg.Modified = true
 	app.Save()
@@ -124,7 +110,9 @@ errorout:
 
 func AppDeploy(conn net.Conn, raw []byte) {
 	adParams := &AppDeployParams{}
-	rmsg := RDATA{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	rmsg.Modified = false
 	var output, payload []byte
 	var ok bool
@@ -135,7 +123,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, adParams)
 	if err != nil {
 		logger.Client.Println(err)
-		rmsg.Msg = "Invalid Params"
+		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
 	fullname = adParams.Name + "@" + adParams.Scenario
@@ -144,12 +132,12 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	if ok = app.Exists(adParams.Name, adParams.Scenario); !ok {
 		if !app.Create(adParams.Name, adParams.Scenario, adParams.Description) {
 			logger.Client.Println("app.Create")
-			rmsg.Msg = "Failed Create App"
+			rmsg.Rmsg = "Failed Create App"
 			goto errorout
 		}
 		if !app.GitCreate(fullname) {
 			logger.Client.Println("app.GitCreate")
-			rmsg.Msg = "Failed Init the Repo"
+			rmsg.Rmsg = "Failed Init the Repo"
 			goto errorout
 		}
 	}
@@ -162,19 +150,19 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root + fullname)
 	if err != nil {
 		logger.Client.Println("execScript")
-		rmsg.Msg = err.Error()
+		rmsg.Rmsg = err.Error()
 		goto errorout
 	} else {
-		rmsg.Msg = string(output)
+		rmsg.Output = string(output)
 	}
 	// commit
 	version, err = app.GitCommit(fullname, adParams.Message)
 	if err != nil {
 		if _, ok := err.(app.EmptyCommitError); ok {
-			rmsg.Msg = "OK: No Change"
+			rmsg.Rmsg = "OK: No Change"
 			rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
 		} else {
-			rmsg.Msg = err.Error()
+			rmsg.Rmsg = err.Error()
 			logger.Client.Println("app.GitCommit")
 		}
 		goto errorout
@@ -184,9 +172,9 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	ok = app.Update(adParams.Name, adParams.Scenario, version)
 	if !ok {
 		logger.Client.Println("app.Update")
-		rmsg.Msg = "Faild to update app version"
+		rmsg.Rmsg = "Faild to update app version"
 	}
-	rmsg.Msg = "OK"
+
 	rmsg.Version = version.Hash
 	rmsg.Modified = true
 	app.Save()
@@ -205,7 +193,9 @@ type AppDeleteParams struct {
 
 func AppDelete(conn net.Conn, raw []byte) {
 	adParams := &AppDeleteParams{}
-	rmsg := RMSG{"OK"}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	var payload []byte
 	var ok bool
 	var subdirName string
@@ -213,7 +203,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, adParams)
 	if err != nil {
 		logger.Client.Println(err)
-		rmsg.Msg = "Invalid Params"
+		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
 	subdirName = adParams.Name + "@" + adParams.Scenario
@@ -222,7 +212,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	if ok = app.Exists(adParams.Name, adParams.Scenario); ok {
 		if !app.Delete(adParams.Name, adParams.Scenario) {
 			logger.Client.Println("app.Delete")
-			rmsg.Msg = "Failed Delete App"
+			rmsg.Rmsg = "Failed Delete App"
 			goto errorout
 		}
 	}

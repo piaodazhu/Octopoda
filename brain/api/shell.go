@@ -24,8 +24,12 @@ type sshInfo struct {
 func SSHInfo(ctx *gin.Context) {
 	var name, addr string
 	var ok bool
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Lack node name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 	if name == "master" {
@@ -38,19 +42,22 @@ func SSHInfo(ctx *gin.Context) {
 		return
 	}
 	if addr, ok = model.GetNodeAddress(name); !ok {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Invalid node name"
+		ctx.JSON(404, rmsg)
 		return
 	}
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
-		ctx.JSON(404, struct{}{})
+		rmsg.Rmsg = "Can't connect node"
+		ctx.JSON(404, rmsg)
 	} else {
 		defer conn.Close()
 		message.SendMessage(conn, message.TypeCommandSSH, []byte{})
 		mtype, payload, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Tentacle.Println("NodeReboot", err)
-			ctx.JSON(404, struct{}{})
+			logger.Tentacle.Println("Node Error: ", err)
+			rmsg.Rmsg = "Node Error:" + err.Error()
+			ctx.JSON(404, rmsg)
 			return
 		}
 		ctx.Data(200, "application/json", payload)
@@ -66,18 +73,20 @@ type ScriptParams struct {
 func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if script.Size == 0 || len(targetNodes) == 0 {
 		logger.Brain.Println("RunScript Args Error")
-		rmsg.Msg = "ERORR: arguments"
+		rmsg.Rmsg = "ERORR: arguments"
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	f, err := script.Open()
 	if err != nil {
-		rmsg.Msg = "ERORR: Open Script"
+		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -95,7 +104,7 @@ func RunScript(ctx *gin.Context) {
 	nodes := []string{}
 	err = json.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Msg = "ERROR: targetNodes"
+		rmsg.Rmsg = "ERROR: targetNodes"
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -120,18 +129,20 @@ func RunScript(ctx *gin.Context) {
 func RunCmd(ctx *gin.Context) {
 	cmd := ctx.PostForm("command")
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if len(cmd) == 0 || len(targetNodes) == 0 {
 		logger.Brain.Println("RunCmd Args Error")
-		rmsg.Msg = "ERORR: arguments"
+		rmsg.Rmsg = "ERORR: arguments"
 		ctx.JSON(400, rmsg)
 		return
 	}
 	nodes := []string{}
 	err := json.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Msg = "ERROR: targetNodes"
+		rmsg.Rmsg = "Unmarshal:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -155,7 +166,7 @@ func RunCmd(ctx *gin.Context) {
 
 func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -170,21 +181,21 @@ func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
-		*result = rmsg.Msg
+		logger.Tentacle.Print(rmsg.Rmsg)
+		*result = rmsg.Output
 	}
 }
 
 func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -199,14 +210,14 @@ func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
-		*result = rmsg.Msg
+		logger.Tentacle.Print(rmsg.Rmsg)
+		*result = rmsg.Output
 	}
 }

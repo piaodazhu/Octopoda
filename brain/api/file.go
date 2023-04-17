@@ -22,14 +22,12 @@ type FileParams struct {
 	FileBuf    string
 }
 
-type RMSG struct {
-	Msg string
-}
-
 func FileUpload(ctx *gin.Context) {
 	file, _ := ctx.FormFile("file")
 	targetPath := ctx.PostForm("targetPath")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Workspace.Root)
@@ -42,7 +40,7 @@ func FileUpload(ctx *gin.Context) {
 	dst, err := os.Create(sb.String())
 	if err != nil {
 		logger.Brain.Println("FileCreate")
-		rmsg.Msg = "FileCreate"
+		rmsg.Rmsg = "FileCreate:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
 	}
@@ -68,11 +66,13 @@ type BasicNodeResults struct {
 func FileSpread(ctx *gin.Context) {
 	var fsParams FileSpreadParams
 	err := ctx.ShouldBind(&fsParams)
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	if err != nil {
 		logger.Brain.Println("FileCreate")
-		rmsg.Msg = "FileCreate"
+		rmsg.Rmsg = "FileCreate:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
 	}
@@ -85,7 +85,7 @@ func FileSpread(ctx *gin.Context) {
 	f, err := os.OpenFile(localFile.String(), os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		logger.Brain.Println("OpenFile")
-		rmsg.Msg = "OpenFile"
+		rmsg.Rmsg = "OpenFile:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
 	}
@@ -121,7 +121,7 @@ func FileSpread(ctx *gin.Context) {
 
 func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
-	*result = "OK"
+	*result = "UnknownError"
 
 	if conn, err := net.Dial("tcp", addr); err != nil {
 		return
@@ -136,16 +136,18 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 			return
 		}
 
-		var rmsg RMSG
+		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Tentacle.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Msg)
-		if rmsg.Msg != "OK" {
+		logger.Tentacle.Print(rmsg.Rmsg)
+		if rmsg.Rmsg != "OK" {
 			*result = "NodeError"
+		} else {
+			*result = "OK"
 		}
 	}
 }
@@ -245,19 +247,21 @@ func FileDistrib(ctx *gin.Context) {
 	fileName := file.Filename
 	targetPath := ctx.PostForm("targetPath")
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := RMSG{}
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 
 	nodes := []string{}
 	err := json.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Msg = "ERROR: targetNodes"
+		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
 
 	multipart, err := file.Open()
 	if err != nil {
-		rmsg.Msg = "ERROR: Open File"
+		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -265,7 +269,7 @@ func FileDistrib(ctx *gin.Context) {
 
 	raw, err := io.ReadAll(multipart)
 	if err != nil {
-		rmsg.Msg = "ERROR: Read File"
+		rmsg.Rmsg = "ReadAll:" + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
