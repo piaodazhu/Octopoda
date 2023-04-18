@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+
+	"github.com/hokaccha/go-prettyjson"
 )
 
 func ScenariosInfo() {
@@ -23,7 +25,8 @@ func ScenariosInfo() {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func ScenarioInfo(name string) {
@@ -41,7 +44,8 @@ func ScenarioInfo(name string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func ScenarioFix(name string) {
@@ -59,9 +63,9 @@ func ScenarioFix(name string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
-
 
 func ScenarioVersion(name string) {
 	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
@@ -78,7 +82,8 @@ func ScenarioVersion(name string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func ScenarioReset(name string, version string, message string) {
@@ -105,5 +110,6 @@ func ScenarioReset(name string, version string, message string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }

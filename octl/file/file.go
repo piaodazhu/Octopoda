@@ -10,6 +10,8 @@ import (
 	"octl/config"
 	"os"
 	"path/filepath"
+
+	"github.com/hokaccha/go-prettyjson"
 )
 
 func UpLoadFile(localFile string, targetPath string) {
@@ -46,7 +48,8 @@ func UpLoadFile(localFile string, targetPath string) {
 	if err != nil {
 		panic("ReadAll")
 	}
-	fmt.Println(msg)
+	s, _ := prettyjson.Format(msg)
+	fmt.Println(string(s))
 }
 
 type FileSpreadParams struct {
@@ -81,17 +84,18 @@ func SpreadFile(fileName string, sourcePath string, targetPath string, nodes []s
 	if err != nil {
 		panic("ReadAll")
 	}
-	fmt.Println(msg)
+	s, _ := prettyjson.Format(msg)
+	fmt.Println(string(s))
 }
 
 type FileDistribParams struct {
-	LocalFile  string
+	LocalFile   string
 	TargetPath  string
 	TargetNodes []string
 }
 
 func DistribFile(localFile string, targetPath string, nodes []string) {
-	if targetPath[len(targetPath) - 1] != '/' {
+	if targetPath[len(targetPath)-1] != '/' {
 		targetPath = targetPath + "/"
 	}
 
@@ -130,7 +134,8 @@ func DistribFile(localFile string, targetPath string, nodes []string) {
 	if err != nil {
 		panic("ReadAll")
 	}
-	fmt.Println(string(msg))
+	s, _ := prettyjson.Format(msg)
+	fmt.Println(string(s))
 }
 
 func ListAllFile(node string, subdir string) {
@@ -151,5 +156,6 @@ func ListAllFile(node string, subdir string) {
 	if err != nil {
 		panic("ReadAll")
 	}
-	fmt.Println(string(msg))
+	s, _ := prettyjson.Format(msg)
+	fmt.Println(string(s))
 }

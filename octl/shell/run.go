@@ -10,6 +10,8 @@ import (
 	"octl/config"
 	"os"
 	"path/filepath"
+
+	"github.com/hokaccha/go-prettyjson"
 )
 
 func RunTask(task string, nodes []string) {
@@ -32,7 +34,7 @@ func RunTask(task string, nodes []string) {
 func runScript(task string, nodes []string) {
 	f, err := os.OpenFile(task, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		fmt.Println(task," is not a script")
+		fmt.Println(task, " is not a script")
 		return
 	}
 	defer f.Close()
@@ -58,8 +60,9 @@ func runScript(task string, nodes []string) {
 	}
 	defer res.Body.Close()
 
-	msg, _ := io.ReadAll(res.Body)
-	fmt.Println(string(msg))
+	raw, _ := io.ReadAll(res.Body)
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func runCmd(task string, nodes []string) {
@@ -83,6 +86,7 @@ func runCmd(task string, nodes []string) {
 	}
 	defer res.Body.Close()
 
-	msg, _ := io.ReadAll(res.Body)
-	fmt.Println(string(msg))
+	raw, _ := io.ReadAll(res.Body)
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }

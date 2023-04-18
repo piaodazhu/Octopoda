@@ -26,7 +26,8 @@ type ApplicationConfigModel struct {
 
 type ScriptConfigModel struct {
 	Target string `yaml:"target"`
-	File string `yaml:"file"`
+	File   string `yaml:"file"`
+	Order  int    `yaml:"order"`
 }
 
 type ErrInvalidNode struct{}
@@ -101,9 +102,9 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 	}
 	mustImpl := map[string]bool{
 		"prepare": false,
-		"start": false,
-		"stop": false,
-		"purge": false,
+		"start":   false,
+		"stop":    false,
+		"purge":   false,
 	}
 	seen := map[string]struct{}{}
 	for i := range script {
@@ -116,7 +117,7 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 
 		// check mustImpl
 		if _, found := mustImpl[target]; found {
-			mustImpl[target] = true 
+			mustImpl[target] = true
 		}
 
 		// check file exists

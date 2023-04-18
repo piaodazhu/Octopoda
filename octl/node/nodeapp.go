@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+
+	"github.com/hokaccha/go-prettyjson"
 )
 
 func NodeAppsInfo(node string) {
@@ -24,7 +26,8 @@ func NodeAppsInfo(node string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func NodeAppInfo(node, app, scenario string) {
@@ -44,7 +47,8 @@ func NodeAppInfo(node, app, scenario string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func NodeAppReset(node, app, scenario, version, message string) {
@@ -72,5 +76,6 @@ func NodeAppReset(node, app, scenario, version, message string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }

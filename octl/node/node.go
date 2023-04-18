@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
+
+	"github.com/hokaccha/go-prettyjson"
 )
 
 func NodeInfo(name string) {
@@ -22,7 +24,8 @@ func NodeInfo(name string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func NodesInfo() {
@@ -39,7 +42,8 @@ func NodesInfo() {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Println(string(raw))
+	s, _ := prettyjson.Format(raw)
+	fmt.Println(string(s))
 }
 
 func NodePrune() {
