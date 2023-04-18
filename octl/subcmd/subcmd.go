@@ -12,7 +12,7 @@ import (
 
 func Apply(arglist []string) {
 	if len(arglist) == 0 || len(arglist) > 4 {
-		return
+		goto usage
 	}
 	if arglist[len(arglist)-2] == "-m" {
 		if len(arglist) == 3 {
@@ -24,69 +24,77 @@ func Apply(arglist []string) {
 		}
 	} else if arglist[1] == "purge" {
 		scenario.ScenarioApply(arglist[0], arglist[1], "")
-		return 
+		return
 	}
-	fmt.Println(`usage: octl apply xx.yaml [target] -m "your message"`)
+usage:
+	PrintUsage("apply")
 }
 
 func Get(arglist []string) {
 	if len(arglist) == 0 {
-		return
+		goto usage
 	}
 	switch arglist[0] {
 	case "nodes":
 		node.NodesInfo()
 	case "node":
 		if len(arglist) != 2 {
-			return
+			goto usage
 		}
 		node.NodeInfo(arglist[1])
 	case "scenarios":
 		if len(arglist) != 1 {
-			return
+			goto usage
 		}
 		scenario.ScenariosInfo()
 	case "scenario":
 		if len(arglist) != 2 {
-			return
+			goto usage
 		}
 		scenario.ScenarioInfo(arglist[1])
 	case "nodeapps":
 		if len(arglist) != 2 {
-			return
+			goto usage
 		}
 		node.NodeAppsInfo(arglist[1])
 	case "nodeapp":
 		if len(arglist) != 3 {
-			return
+			goto usage
 		}
 		nodeapp := arglist[2]
 		appscen := strings.Split(nodeapp, "@")
 		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
 			node.NodeAppInfo(arglist[1], appscen[0], appscen[1])
-			return
+		} else {
+			goto usage
 		}
 	}
+	return
+usage:
+	PrintUsage("get")
 }
 
 func Status(arglist []string) {
 	if len(arglist) == 0 {
-		return
+		goto usage
 	}
 	switch arglist[0] {
 	case "nodes":
 		node.NodesStatus()
 	case "node":
 		if len(arglist) != 2 {
-			return
+			goto usage
 		}
 		node.NodeStatus(arglist[1])
 	}
+	return
+usage:
+	PrintUsage("status")
 }
 
 func Fix(arglist []string) {
 	if len(arglist) != 2 {
-		return
+		goto usage
 	}
 	if arglist[0] == "scenario" {
 		scenario.ScenarioFix(arglist[1])
@@ -94,29 +102,35 @@ func Fix(arglist []string) {
 		// node.NodeAppsFix(arglist[1])
 		fmt.Println("not support node fix")
 	}
+	return
+usage:
+	PrintUsage("fix")
 }
 
 func Log(arglist []string) {
 	if len(arglist) == 0 {
-		return
+		goto usage
 	}
 	switch arglist[0] {
 	case "master":
 		log.NodeLog(arglist[0], arglist[1:])
 	case "node":
 		if len(arglist) == 1 {
-			return
+			goto usage
 		}
 		log.NodeLog(arglist[1], arglist[2:])
-	// case "scenario":
+		// case "scenario":
 
-	// default:
+		// default:
 	}
+	return
+usage:
+	PrintUsage("log")
 }
 
 func Version(arglist []string) {
 	if len(arglist) < 2 {
-		return
+		goto usage
 	}
 	if arglist[0] == "scenario" && len(arglist) == 2 {
 		scenario.ScenarioVersion(arglist[1])
@@ -125,94 +139,120 @@ func Version(arglist []string) {
 		appscen := strings.Split(nodeapp, "@")
 		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
 			node.NodeAppInfo(arglist[1], appscen[0], appscen[1])
-			return
+		} else {
+			goto usage
 		}
 	}
+	return
+usage:
+	PrintUsage("version")
 }
 
 func Reset(arglist []string) {
-	var message, version string 
+	var message, version string
 	if len(arglist) < 6 {
-		goto printusage
-	}
-	
-	if arglist[len(arglist) - 2] == "-m" {
-		message = arglist[len(arglist) - 1]
-	} else {
-		goto printusage
+		goto usage
 	}
 
-	if arglist[len(arglist) - 4] == "-v" {
-		version = arglist[len(arglist) - 3]
+	if arglist[len(arglist)-2] == "-m" {
+		message = arglist[len(arglist)-1]
 	} else {
-		goto printusage
+		goto usage
+	}
+
+	if arglist[len(arglist)-4] == "-v" {
+		version = arglist[len(arglist)-3]
+	} else {
+		goto usage
 	}
 
 	if arglist[0] == "scenario" && len(arglist) == 6 {
 		scenario.ScenarioReset(arglist[1], version, message)
-		return
 	} else if arglist[0] == "nodeapp" && len(arglist) == 7 {
 		nodeapp := arglist[2]
 		appscen := strings.Split(nodeapp, "@")
 		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
 			node.NodeAppReset(arglist[1], appscen[0], appscen[1], version, message)
-			return
+		} else {
+			goto usage
 		}
 	}
-printusage:
-	fmt.Println("Usage: octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>")
+	return
+usage:
+	PrintUsage("reset")
 }
 
 func Shell(arglist []string) {
 	if len(arglist) != 1 {
-		return
+		goto usage
 	}
 	shell.SSH(arglist[0])
+	return
+usage:
+	PrintUsage("shell")
 }
 
 func Upload(arglist []string) {
 	if len(arglist) != 2 {
-		return
+		goto usage
 	}
 	file.UpLoadFile(arglist[0], arglist[1])
+	return
+usage:
+	PrintUsage("upload")
 }
 
 func Spread(arglist []string) {
 	if len(arglist) < 4 {
-		return
+		goto usage
 	}
 	file.SpreadFile(arglist[0], arglist[1], arglist[2], arglist[3:])
+	return
+usage:
+	PrintUsage("spread")
 }
 
 func Distrib(arglist []string) {
 	if len(arglist) < 3 {
-		return
+		goto usage
 	}
 	file.DistribFile(arglist[0], arglist[1], arglist[2:])
+	return
+usage:
+	PrintUsage("distrib")
 }
 
 func FileTree(arglist []string) {
 	if len(arglist) == 0 {
-		return
+		goto usage
 	} else if len(arglist) == 1 {
 		file.ListAllFile(arglist[0], "")
 	} else if len(arglist) == 2 {
 		file.ListAllFile(arglist[0], arglist[1])
 	} else {
-		return
+		goto usage
 	}
+	return
+usage:
+	PrintUsage("tree")
 }
 
 func Prune(arglist []string) {
 	if len(arglist) != 0 {
-		return
+		goto usage
 	}
 	node.NodePrune()
+	return
+usage:
+	PrintUsage("prune")
 }
 
 func Run(arglist []string) {
 	if len(arglist) < 2 {
-		return
+		goto usage
 	}
 	shell.RunTask(arglist[0], arglist[1:])
+	return
+usage:
+	PrintUsage("run")
 }

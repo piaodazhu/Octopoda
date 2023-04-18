@@ -10,7 +10,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) == 1 {
-		fmt.Println("hello world")
+		fmt.Println("Octopoda Controlling Tool. ©2023-2023 Z. Luo. All Rights Reserved.")
 		return
 	}
 	config.InitConfig()
@@ -44,7 +44,9 @@ func main() {
 		subcmd.Prune(args[2:])
 	case "run":
 		subcmd.Run(args[2:])
+	case "help":
+		subcmd.PrintUsages()
 	default:
-		fmt.Println("not support")
+		fmt.Println("sub command not support")
 	}
 }
