@@ -43,5 +43,6 @@ type LoggerModel struct {
 }
 
 type WorkspaceModel struct {
-	Root string `mapstructure:"root"`
+	Root  string `mapstructure:"root"`
+	Store string `mapstructure:"store"`
 }

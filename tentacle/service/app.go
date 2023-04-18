@@ -71,7 +71,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 		}
 	}
 	// unpack files
-	err = unpackFiles(acParams.FilePack, fullname)
+	err = unpackFiles(acParams.FilePack, config.GlobalConfig.Workspace.Root + fullname)
 	if err != nil {
 		logger.Client.Println("unpack Files")
 		rmsg.Rmsg = err.Error()

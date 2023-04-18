@@ -18,6 +18,7 @@ logger:
   rollDays: 3
 workspace:
   root: "/root/workspace/"
+  store: "/root/workspace/FSTORE/"
 ssh:
   username: "root"
   password: "ubuntumima"

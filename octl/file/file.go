@@ -9,22 +9,40 @@ import (
 	"net/http"
 	"octl/config"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/hokaccha/go-prettyjson"
 )
 
-func UpLoadFile(localFile string, targetPath string) {
-	f, err := os.OpenFile(localFile, os.O_RDONLY, os.ModePerm)
+func UpLoadFile(localFileOrDir string, targetPath string) {
+	if targetPath == "." {
+		targetPath = ""
+	} else if targetPath[len(targetPath)-1] != '/' {
+		targetPath = targetPath + "/"
+	}
+
+	if localFileOrDir[len(localFileOrDir)-1] == '/' {
+		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
+	}
+
+	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+	err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	if err != nil {
+		panic("cmd.Run")
+	}
+	defer os.Remove(tarName)
+
+	f, err := os.OpenFile(tarName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic("err")
 	}
 	defer f.Close()
-	fname := filepath.Base(localFile)
 
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
-	fileWriter, _ := bodyWriter.CreateFormFile("file", fname)
+	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", tarName)
 	io.Copy(fileWriter, f)
 
 	bodyWriter.WriteField("targetPath", targetPath)
@@ -55,15 +73,15 @@ func UpLoadFile(localFile string, targetPath string) {
 type FileSpreadParams struct {
 	SourcePath  string
 	TargetPath  string
-	FileName    string
+	FileOrDir   string
 	TargetNodes []string
 }
 
-func SpreadFile(fileName string, sourcePath string, targetPath string, nodes []string) {
+func SpreadFile(FileOrDir string, sourcePath string, targetPath string, nodes []string) {
 	fsParams := &FileSpreadParams{
 		SourcePath:  sourcePath,
 		TargetPath:  targetPath,
-		FileName:    fileName,
+		FileOrDir:   FileOrDir,
 		TargetNodes: nodes,
 	}
 	buf, _ := json.Marshal(fsParams)
@@ -94,22 +112,35 @@ type FileDistribParams struct {
 	TargetNodes []string
 }
 
-func DistribFile(localFile string, targetPath string, nodes []string) {
-	if targetPath[len(targetPath)-1] != '/' {
+func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
+	if targetPath == "." {
+		targetPath = ""
+	} else if targetPath[len(targetPath)-1] != '/' {
 		targetPath = targetPath + "/"
 	}
 
-	f, err := os.OpenFile(localFile, os.O_RDONLY, os.ModePerm)
+	if localFileOrDir[len(localFileOrDir)-1] == '/' {
+		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
+	}
+
+	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+	err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	if err != nil {
+		panic("cmd.Run")
+	}
+	defer os.Remove(tarName)
+
+	f, err := os.OpenFile(tarName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic("err")
 	}
 	defer f.Close()
-	fname := filepath.Base(localFile)
+
 	nodes_serialized, _ := json.Marshal(&nodes)
 
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
-	fileWriter, _ := bodyWriter.CreateFormFile("file", fname)
+	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", tarName)
 	io.Copy(fileWriter, f)
 	bodyWriter.WriteField("targetPath", targetPath)
 	bodyWriter.WriteField("targetNodes", string(nodes_serialized))

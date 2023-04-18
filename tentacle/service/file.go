@@ -15,7 +15,7 @@ import (
 )
 
 type FileParams struct {
-	FileName   string
+	TarName   string
 	TargetPath string
 	FileBuf    string
 }
@@ -37,18 +37,24 @@ func FilePush(conn net.Conn, raw []byte) {
 	file.WriteString(config.GlobalConfig.Workspace.Store)
 	file.WriteString(fileinfo.TargetPath)
 
-	os.Mkdir(file.String(), os.ModePerm)
-	if file.String()[file.Len()-1] != '/' {
-		file.WriteByte('/')
-	}
-
-	file.WriteString(fileinfo.FileName)
-
-	err = saveFile(fileinfo.FileBuf, file.String())
+	err = unpackFiles(fileinfo.FileBuf, file.String())
 	if err != nil {
-		rmsg.Rmsg = "FileNotSave"
+		rmsg.Rmsg = "unpack Files"
 		goto errorout
 	}
+
+	// os.Mkdir(file.String(), os.ModePerm)
+	// if file.String()[file.Len()-1] != '/' {
+	// 	file.WriteByte('/')
+	// }
+
+	// file.WriteString(fileinfo.TarName)
+
+	// err = saveFile(fileinfo.FileBuf, file.String())
+	// if err != nil {
+	// 	rmsg.Rmsg = "FileNotSave"
+	// 	goto errorout
+	// }
 errorout:
 	payload, _ := json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
@@ -124,7 +130,7 @@ func saveFile(filebufb64, filename string) error {
 	}
 	err = os.WriteFile(filename, content, os.ModePerm)
 	if err != nil {
-		logger.Server.Println("WriteFile")
+		logger.Server.Println("WriteFile:", filename)
 		return err
 	}
 	return nil
@@ -133,14 +139,14 @@ func saveFile(filebufb64, filename string) error {
 type ErrUnpack struct{}
 func (ErrUnpack) Error() string { return "ErrUnpack" }
 
-func unpackFiles(packb64 string, subdir string) error {
+func unpackFiles(packb64 string, dir string) error {
 	var file strings.Builder
 	// tmp tar file name
 	fname := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
 
 	// make complete path and filename
-	file.WriteString(config.GlobalConfig.Workspace.Root)
-	file.WriteString(subdir)
+	// file.WriteString(config.GlobalConfig.Workspace.Root)
+	file.WriteString(dir)
 	path := file.String()
 	os.Mkdir(path, os.ModePerm)
 	if path[len(path)-1] != '/' {

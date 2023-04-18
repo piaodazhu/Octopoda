@@ -7,36 +7,40 @@ import (
 	"brain/model"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type FileParams struct {
-	FileName   string
+	TarName    string
 	TargetPath string
 	FileBuf    string
 }
 
 func FileUpload(ctx *gin.Context) {
-	file, _ := ctx.FormFile("file")
+	tarfile, _ := ctx.FormFile("tarfile")
 	targetPath := ctx.PostForm("targetPath")
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
 
 	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Workspace.Root)
+	sb.WriteString(config.GlobalConfig.Workspace.Store)
 	sb.WriteString(targetPath)
 
-	os.Mkdir(sb.String(), os.ModePerm)
+	path := sb.String()
+	os.Mkdir(path, os.ModePerm)
 
-	sb.WriteString(file.Filename)
-
+	sb.WriteString(tarfile.Filename)
 	dst, err := os.Create(sb.String())
 	if err != nil {
 		logger.Brain.Println("FileCreate")
@@ -44,17 +48,29 @@ func FileUpload(ctx *gin.Context) {
 		ctx.JSON(403, rmsg)
 		return
 	}
-	defer dst.Close()
 
-	src, _ := file.Open()
+	src, _ := tarfile.Open()
+
 	io.Copy(dst, src)
+	dst.Close()
+	src.Close()
+
+	err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
+	os.Remove(sb.String())
+	if err != nil {
+		logger.Brain.Println("UnpackFile")
+		rmsg.Rmsg = "UnpackFile:" + err.Error()
+		ctx.JSON(403, rmsg)
+		return
+	}
+
 	ctx.JSON(200, rmsg)
 }
 
 type FileSpreadParams struct {
 	SourcePath  string
 	TargetPath  string
-	FileName    string
+	FileOrDir   string
 	TargetNodes []string
 }
 
@@ -63,6 +79,7 @@ type BasicNodeResults struct {
 	Result string
 }
 
+// need fix
 func FileSpread(ctx *gin.Context) {
 	var fsParams FileSpreadParams
 	err := ctx.ShouldBind(&fsParams)
@@ -78,23 +95,37 @@ func FileSpread(ctx *gin.Context) {
 	}
 
 	// check file
-	var localFile strings.Builder
-	localFile.WriteString(config.GlobalConfig.Workspace.Root)
-	localFile.WriteString(fsParams.SourcePath)
-	localFile.WriteString(fsParams.FileName)
-	f, err := os.OpenFile(localFile.String(), os.O_RDONLY, os.ModePerm)
+	var sb strings.Builder
+	sb.WriteString(config.GlobalConfig.Workspace.Root)
+	sb.WriteString(fsParams.SourcePath)
+	sb.WriteString(fsParams.FileOrDir)
+	fname := sb.String()
+	if fname[len(fname)-1] == '/' {
+		fname = fname[:len(fname)-1]
+	}
+	_, err = os.Stat(fname)
 	if err != nil {
-		logger.Brain.Println("OpenFile")
-		rmsg.Rmsg = "OpenFile:" + err.Error()
+		logger.Brain.Println("FileOrDir Not Found")
+		rmsg.Rmsg = "FileOrDir Not Found:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
 	}
-	defer f.Close()
 
-	raw, _ := io.ReadAll(f)
+	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+	err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+	if err != nil {
+		logger.Brain.Println("PackFile")
+		rmsg.Rmsg = "PackFile:" + err.Error()
+		ctx.JSON(500, rmsg)
+		return
+	}
+
+	raw, _ := os.ReadFile(tarName)
+	os.Remove(tarName)
+
 	content := base64.RawStdEncoding.EncodeToString(raw)
 	finfo := FileParams{
-		FileName:   fsParams.FileName,
+		TarName:    tarName,
 		TargetPath: fsParams.TargetPath,
 		FileBuf:    content,
 	}
@@ -166,7 +197,7 @@ func FileTree(ctx *gin.Context) {
 func getFileTree(name string, subdir string) []byte {
 	var pathsb strings.Builder
 	if name == "master" {
-		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
+		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
 		pathsb.WriteString(subdir)
 		return allFiles(pathsb.String())
 	}
@@ -243,8 +274,8 @@ func hideRoot(root string, files *[]FileInfo) {
 }
 
 func FileDistrib(ctx *gin.Context) {
-	file, _ := ctx.FormFile("file")
-	fileName := file.Filename
+	tarfile, _ := ctx.FormFile("tarfile")
+	tarName := tarfile.Filename
 	targetPath := ctx.PostForm("targetPath")
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := message.Result{
@@ -259,7 +290,7 @@ func FileDistrib(ctx *gin.Context) {
 		return
 	}
 
-	multipart, err := file.Open()
+	multipart, err := tarfile.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -276,7 +307,7 @@ func FileDistrib(ctx *gin.Context) {
 
 	content := base64.RawStdEncoding.EncodeToString(raw)
 	finfo := FileParams{
-		FileName:   fileName,
+		TarName:    tarName,
 		TargetPath: targetPath,
 		FileBuf:    content,
 	}
