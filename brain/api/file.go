@@ -5,6 +5,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/rdb"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -55,20 +56,34 @@ func FileUpload(ctx *gin.Context) {
 	dst.Close()
 	src.Close()
 
-	err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
-	os.Remove(sb.String())
-	if err != nil {
-		logger.Brain.Println("UnpackFile")
-		rmsg.Rmsg = "UnpackFile:" + err.Error()
-		ctx.JSON(403, rmsg)
-		return
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Brain.Print("TaskNew")
 	}
+	ctx.String(202, taskid)
 
-	ctx.JSON(200, rmsg)
+	go func() {
+		err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
+		os.Remove(sb.String())
+		if err != nil {
+			logger.Brain.Println("UnpackFile")
+			rmsg.Rmsg = "UnpackFile:" + err.Error()
+			// ctx.JSON(403, rmsg)
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Brain.Print("TaskMarkFailed Error")
+			}
+			return
+		}
+
+		// ctx.JSON(200, rmsg)
+		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
+			logger.Brain.Print("TaskMarkDone Error")
+		}
+	}()
 }
 
 type FileSpreadParams struct {
-	SourcePath  string
 	TargetPath  string
 	FileOrDir   string
 	TargetNodes []string
@@ -93,16 +108,20 @@ func FileSpread(ctx *gin.Context) {
 		ctx.JSON(403, rmsg)
 		return
 	}
+	logger.Brain.Println(fsParams)
 
 	// check file
+	if fsParams.FileOrDir == "/" {
+		fsParams.FileOrDir = "."
+	} else if fsParams.FileOrDir[len(fsParams.FileOrDir)-1] == '/' {
+		fsParams.FileOrDir = fsParams.FileOrDir[:len(fsParams.FileOrDir)-1]
+	}
+
 	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Workspace.Root)
-	sb.WriteString(fsParams.SourcePath)
+	sb.WriteString(config.GlobalConfig.Workspace.Store)
 	sb.WriteString(fsParams.FileOrDir)
 	fname := sb.String()
-	if fname[len(fname)-1] == '/' {
-		fname = fname[:len(fname)-1]
-	}
+	
 	_, err = os.Stat(fname)
 	if err != nil {
 		logger.Brain.Println("FileOrDir Not Found")
@@ -111,43 +130,56 @@ func FileSpread(ctx *gin.Context) {
 		return
 	}
 
-	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
-	err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
-	if err != nil {
-		logger.Brain.Println("PackFile")
-		rmsg.Rmsg = "PackFile:" + err.Error()
-		ctx.JSON(500, rmsg)
-		return
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Brain.Print("TaskNew")
 	}
+	ctx.String(202, taskid)
 
-	raw, _ := os.ReadFile(tarName)
-	os.Remove(tarName)
-
-	content := base64.RawStdEncoding.EncodeToString(raw)
-	finfo := FileParams{
-		TarName:    tarName,
-		TargetPath: fsParams.TargetPath,
-		FileBuf:    content,
-	}
-	payload, _ := json.Marshal(&finfo)
-
-	// check target nodes
-	// spread file
-	results := make([]BasicNodeResults, len(fsParams.TargetNodes))
-	var wg sync.WaitGroup
-
-	for i := range fsParams.TargetNodes {
-		name := fsParams.TargetNodes[i]
-		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go pushFile(addr, payload, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
+	go func() {
+		tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+		err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+		if err != nil {
+			logger.Brain.Println("PackFile")
+			rmsg.Rmsg = "PackFile:" + err.Error()
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Brain.Print("TaskMarkFailed Error")
+			}
+			return
 		}
-	}
-	wg.Wait()
-	ctx.JSON(200, results)
+
+		raw, _ := os.ReadFile(tarName)
+		os.Remove(tarName)
+
+		content := base64.RawStdEncoding.EncodeToString(raw)
+		finfo := FileParams{
+			TarName:    tarName,
+			TargetPath: fsParams.TargetPath,
+			FileBuf:    content,
+		}
+		payload, _ := json.Marshal(&finfo)
+
+		// check target nodes
+		// spread file
+		results := make([]BasicNodeResults, len(fsParams.TargetNodes))
+		var wg sync.WaitGroup
+
+		for i := range fsParams.TargetNodes {
+			name := fsParams.TargetNodes[i]
+			results[i].Name = name
+			if addr, exists := model.GetNodeAddress(name); exists {
+				wg.Add(1)
+				go pushFile(addr, payload, &wg, &results[i].Result)
+			} else {
+				results[i].Result = "NodeNotExists"
+			}
+		}
+		wg.Wait()
+		if !rdb.TaskMarkDone(taskid, results, 3600) {
+			logger.Brain.Print("TaskMarkDone Error")
+		}
+	}()
 }
 
 func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
@@ -305,29 +337,40 @@ func FileDistrib(ctx *gin.Context) {
 		return
 	}
 
-	content := base64.RawStdEncoding.EncodeToString(raw)
-	finfo := FileParams{
-		TarName:    tarName,
-		TargetPath: targetPath,
-		FileBuf:    content,
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Brain.Print("TaskNew")
 	}
-	payload, _ := json.Marshal(&finfo)
+	ctx.String(202, taskid)
 
-	// check target nodes
-	// spread file
-	results := make([]BasicNodeResults, len(nodes))
-	var wg sync.WaitGroup
-
-	for i := range nodes {
-		name := nodes[i]
-		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go pushFile(addr, payload, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
+	go func() {
+		content := base64.RawStdEncoding.EncodeToString(raw)
+		finfo := FileParams{
+			TarName:    tarName,
+			TargetPath: targetPath,
+			FileBuf:    content,
 		}
-	}
-	wg.Wait()
-	ctx.JSON(200, results)
+		payload, _ := json.Marshal(&finfo)
+
+		// check target nodes
+		// spread file
+		results := make([]BasicNodeResults, len(nodes))
+		var wg sync.WaitGroup
+
+		for i := range nodes {
+			name := nodes[i]
+			results[i].Name = name
+			if addr, exists := model.GetNodeAddress(name); exists {
+				wg.Add(1)
+				go pushFile(addr, payload, &wg, &results[i].Result)
+			} else {
+				results[i].Result = "NodeNotExists"
+			}
+		}
+		wg.Wait()
+		if !rdb.TaskMarkDone(taskid, results, 3600) {
+			logger.Brain.Print("TaskMarkDone Error")
+		}
+	}()
 }

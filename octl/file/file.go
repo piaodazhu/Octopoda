@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/task"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -61,25 +62,34 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	if err != nil {
 		panic("post")
 	}
-	defer res.Body.Close()
+
 	msg, err := io.ReadAll(res.Body)
+	res.Body.Close()
 	if err != nil {
 		panic("ReadAll")
 	}
-	s, _ := prettyjson.Format(msg)
+
+	if res.StatusCode != 202 {
+		fmt.Println("Request submit error: ", string(msg))
+		return
+	}
+	results, err := task.WaitTask("UPLOADING...", string(msg))
+	if err != nil {
+		fmt.Println("Task processing error: ", err.Error())
+		return
+	}
+	s, _ := prettyjson.Format([]byte(results))
 	fmt.Println(string(s))
 }
 
 type FileSpreadParams struct {
-	SourcePath  string
 	TargetPath  string
 	FileOrDir   string
 	TargetNodes []string
 }
 
-func SpreadFile(FileOrDir string, sourcePath string, targetPath string, nodes []string) {
+func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 	fsParams := &FileSpreadParams{
-		SourcePath:  sourcePath,
 		TargetPath:  targetPath,
 		FileOrDir:   FileOrDir,
 		TargetNodes: nodes,
@@ -90,19 +100,29 @@ func SpreadFile(FileOrDir string, sourcePath string, targetPath string, nodes []
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
 		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.FileUpload,
+		config.GlobalConfig.Api.FileSpread,
 	)
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
 		panic("Post")
 	}
-	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
+	res.Body.Close()
 	if err != nil {
 		panic("ReadAll")
 	}
-	s, _ := prettyjson.Format(msg)
+
+	if res.StatusCode != 202 {
+		fmt.Println("Request submit error: ", string(msg))
+		return
+	}
+	results, err := task.WaitTask("SPREADING...", string(msg))
+	if err != nil {
+		fmt.Println("Task processing error: ", err.Error())
+		return
+	}
+	s, _ := prettyjson.Format([]byte(results))
 	fmt.Println(string(s))
 }
 
@@ -160,12 +180,22 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	if err != nil {
 		panic("post")
 	}
-	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
+	res.Body.Close()
 	if err != nil {
 		panic("ReadAll")
 	}
-	s, _ := prettyjson.Format(msg)
+
+	if res.StatusCode != 202 {
+		fmt.Println("Request submit error: ", string(msg))
+		return
+	}
+	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
+	if err != nil {
+		fmt.Println("Task processing error: ", err.Error())
+		return
+	}
+	s, _ := prettyjson.Format([]byte(results))
 	fmt.Println(string(s))
 }
 

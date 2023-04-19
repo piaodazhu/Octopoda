@@ -8,13 +8,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/task"
 	"os"
 	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/hokaccha/go-prettyjson"
 	"gopkg.in/yaml.v3"
 )
@@ -131,7 +131,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			fmt.Println("Request submit error: ", string(msg))
 			return
 		}
-		results, err := waitTask(string(msg))
+		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
 			fmt.Println("Task processing error: ", err.Error())
 			return
@@ -255,7 +255,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			fmt.Println("Request submit error: ", string(msg))
 			return
 		}
-		results, err := waitTask(string(msg))
+		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
 			fmt.Println("Task processing error: ", err.Error())
 			return
@@ -373,7 +373,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 			fmt.Println("Request submit error: ", string(msg))
 			return
 		}
-		results, err := waitTask(string(msg))
+		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
 			fmt.Println("Task processing error: ", err.Error())
 			return
@@ -473,50 +473,4 @@ func ScenarioDelete(name string) error {
 	fmt.Println(string(s))
 
 	return nil
-}
-
-type ErrWaitTask struct {
-	status  int
-	message string
-}
-
-func (e ErrWaitTask) Error() string { return fmt.Sprintf("[%d] %s\n", e.status, e.message) }
-func waitTask(taskid string) (string, error) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?taskid=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
-		config.GlobalConfig.Api.TaskState,
-		taskid,
-	)
-	// fmt.Fprintf(os.Stdout, "PROCESSING  ")
-	s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
-	s.Prefix = "PROCESSING... "
-	s.Start()
-	defer s.Stop()
-
-	time.Sleep(time.Millisecond * 100)
-	for {
-		res, err := http.Get(url)
-		if err != nil {
-			return "", err
-		}
-
-		msg, err := io.ReadAll(res.Body)
-		res.Body.Close()
-		if err != nil {
-			return "", err
-		}
-
-		if res.StatusCode == 200 {
-			fmt.Println("  [DONE]")
-			return string(msg), nil
-		} else if res.StatusCode == 202 {
-			fmt.Print(".")
-			time.Sleep(time.Second * 1)
-		} else {
-			fmt.Println("  [FAILED]")
-			return "", ErrWaitTask{res.StatusCode, string(msg)}
-		}
-	}
 }

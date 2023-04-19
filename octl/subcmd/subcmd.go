@@ -203,10 +203,10 @@ usage:
 }
 
 func Spread(arglist []string) {
-	if len(arglist) < 4 {
+	if len(arglist) < 3 {
 		goto usage
 	}
-	file.SpreadFile(arglist[0], arglist[1], arglist[2], arglist[3:])
+	file.SpreadFile(arglist[0], arglist[1], arglist[2:])
 	return
 usage:
 	PrintUsage("spread")

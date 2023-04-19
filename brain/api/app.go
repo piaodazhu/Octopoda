@@ -79,8 +79,6 @@ func AppPrepare(ctx *gin.Context) {
 		return
 	}
 
-	content := base64.RawStdEncoding.EncodeToString(raw)
-
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
@@ -90,6 +88,7 @@ func AppPrepare(ctx *gin.Context) {
 
 	// async processing
 	go func() {
+		content := base64.RawStdEncoding.EncodeToString(raw)
 		acParams := AppCreateParams{
 			AppBasic{
 				Name:        appName,
@@ -170,8 +169,6 @@ func AppDeploy(ctx *gin.Context) {
 		return
 	}
 
-	content := base64.RawStdEncoding.EncodeToString(raw)
-
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
@@ -181,7 +178,7 @@ func AppDeploy(ctx *gin.Context) {
 
 	// async processing
 	go func() {
-
+		content := base64.RawStdEncoding.EncodeToString(raw)
 		adParams := AppDeployParams{
 			AppBasic{
 				Name:        appName,

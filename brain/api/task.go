@@ -24,6 +24,10 @@ func TaskState(ctx *gin.Context) {
 		rdb.TaskDelete(taskid)
 		ctx.Data(200, "application/json", []byte(result))
 		return
+	case rdb.TaskFailed:
+		rdb.TaskDelete(taskid)
+		ctx.Data(204, "application/json", []byte(result))
+		return
 	case rdb.TaskProcessing:
 		rmsg.Rmsg = "TaskProcessing"
 		rcode = 202

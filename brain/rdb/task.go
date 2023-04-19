@@ -13,6 +13,7 @@ import (
 
 const (
 	TaskFinished = iota
+	TaskFailed
 	TaskProcessing
 	TaskNotFound
 	TaskDbError
@@ -37,6 +38,18 @@ func TaskNew(taskid string, timeout_second int) bool {
 }
 
 func TaskMarkDone(taskid string, result interface{}, timeout_second int) bool {
+	res_serialized, _ := json.Marshal(result)
+	value := fmt.Sprintf("%d%s", TaskFinished, string(res_serialized))
+	return taskMark(taskid, value, timeout_second)
+}
+
+func TaskMarkFailed(taskid string, result interface{}, timeout_second int) bool {
+	res_serialized, _ := json.Marshal(result)
+	value := fmt.Sprintf("%d%s", TaskFailed, string(res_serialized))
+	return taskMark(taskid, value, timeout_second)
+}
+
+func taskMark(taskid string, value string, timeout_second int) bool {
 	// get remaining ttl
 	rem := rdb.TTL(context.TODO(), "taskid:"+taskid).Val().Nanoseconds()
 	timeout := time.Second*time.Duration(timeout_second)
@@ -50,8 +63,6 @@ func TaskMarkDone(taskid string, result interface{}, timeout_second int) bool {
 		timeout = time.Duration(rem)
 	} 
 	
-	res_serialized, _ := json.Marshal(result)
-	value := fmt.Sprintf("%d%s", TaskFinished, string(res_serialized))
 	err := rdb.Set(context.TODO(), "taskid:"+taskid, value, timeout).Err()
 	if err != nil {
 		logger.Brain.Println(err)
@@ -59,6 +70,7 @@ func TaskMarkDone(taskid string, result interface{}, timeout_second int) bool {
 	}
 	return true
 }
+
 
 func TaskDelete(taskid string) bool {
 	err := rdb.Del(context.TODO(), "taskid:"+taskid).Err()
