@@ -15,7 +15,7 @@ import (
 )
 
 type FileParams struct {
-	TarName   string
+	TarName    string
 	TargetPath string
 	FileBuf    string
 }
@@ -33,7 +33,7 @@ func FilePush(conn net.Conn, raw []byte) {
 		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
-
+	// logger.Server.Println(fileinfo)
 	file.WriteString(config.GlobalConfig.Workspace.Store)
 	file.WriteString(fileinfo.TargetPath)
 
@@ -123,20 +123,48 @@ func hideRoot(root string, files *[]FileInfo) {
 }
 
 func saveFile(filebufb64, filename string) error {
-	content, err := base64.RawStdEncoding.DecodeString(filebufb64)
+	Offset := 0
+	Len := len(filebufb64)
+	ChunkSize := 4096 * 3
+	f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_APPEND, os.ModePerm)
 	if err != nil {
-		logger.Server.Println("FileDecode")
+		logger.Server.Println("OpenFile:", filename)
 		return err
 	}
-	err = os.WriteFile(filename, content, os.ModePerm)
-	if err != nil {
-		logger.Server.Println("WriteFile:", filename)
-		return err
+	defer f.Close()
+
+	for Offset < Len {
+		end := Offset + ChunkSize
+		if Offset+ChunkSize > Len {
+			end = Len
+		}
+		content, err := base64.RawStdEncoding.DecodeString(filebufb64[Offset:end])
+		if err != nil {
+			logger.Server.Println("FileDecode:", err.Error())
+			return err
+		}
+		_, err = f.Write(content)
+		if err != nil {
+			logger.Server.Println("Write:", err.Error())
+			return err
+		}
+		Offset += ChunkSize
 	}
+	// content, err := base64.RawStdEncoding.DecodeString(filebufb64)
+	// if err != nil {
+	// 	logger.Server.Println("FileDecode")
+	// 	return err
+	// }
+	// err = os.WriteFile(filename, content, os.ModePerm)
+	// if err != nil {
+	// 	logger.Server.Println("WriteFile:", filename)
+	// 	return err
+	// }
 	return nil
 }
 
 type ErrUnpack struct{}
+
 func (ErrUnpack) Error() string { return "ErrUnpack" }
 
 func unpackFiles(packb64 string, dir string) error {
@@ -153,7 +181,7 @@ func unpackFiles(packb64 string, dir string) error {
 		file.WriteByte('/')
 	}
 	file.WriteString(fname)
-	
+
 	err := saveFile(packb64, file.String())
 	if err != nil {
 		return err

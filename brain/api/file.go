@@ -108,13 +108,21 @@ func FileSpread(ctx *gin.Context) {
 		ctx.JSON(403, rmsg)
 		return
 	}
-	logger.Brain.Println(fsParams)
 
 	// check file
 	if fsParams.FileOrDir == "/" {
 		fsParams.FileOrDir = "."
 	} else if fsParams.FileOrDir[len(fsParams.FileOrDir)-1] == '/' {
 		fsParams.FileOrDir = fsParams.FileOrDir[:len(fsParams.FileOrDir)-1]
+	}
+
+	if fsParams.TargetPath == "/" || fsParams.TargetPath == "./" {
+		fsParams.TargetPath = ""
+	} else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
+		logger.Brain.Println("Invalid targetPath")
+		rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
+		ctx.JSON(400, rmsg)
+		return
 	}
 
 	var sb strings.Builder
