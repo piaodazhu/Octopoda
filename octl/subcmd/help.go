@@ -4,10 +4,10 @@ import "fmt"
 
 var usageInfo = map[string]string{
 	"apply":   `octl apply xx.yaml [target] -m "your message"`,
-	"get":     `octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]"`,
+	"get":     `octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]`,
 	"status":  `octl status [nodes|node <node>]`,
 	"fix":     `octl fix scenario <scen>`,
-	"log":     `octl log [master|node <node>] l<maxline> d<maxday>`,
+	"log":     `octl log [master|node <node>] [l<maxline>] [d<maxday>]`,
 	"version": `octl version [scenario <scen>|nodeapp <node> <app>@<scen>]`,
 	"reset":   `octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>`,
 	"shell":   `octl shell <node>`,
