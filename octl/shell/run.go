@@ -8,10 +8,9 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/output"
 	"os"
 	"path/filepath"
-
-	"github.com/hokaccha/go-prettyjson"
 )
 
 func RunTask(task string, nodes []string) {
@@ -61,8 +60,7 @@ func runScript(task string, nodes []string) {
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
-	s, _ := prettyjson.Format(raw)
-	fmt.Println(string(s))
+	output.PrintJSON(raw)
 }
 
 func runCmd(task string, nodes []string) {
@@ -87,6 +85,5 @@ func runCmd(task string, nodes []string) {
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
-	s, _ := prettyjson.Format(raw)
-	fmt.Println(string(s))
+	output.PrintJSON(raw)
 }

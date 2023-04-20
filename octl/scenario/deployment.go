@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/output"
 	"octl/task"
 	"os"
 	"os/exec"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hokaccha/go-prettyjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -136,8 +136,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			fmt.Println("Task processing error: ", err.Error())
 			return
 		}
-		s, _ := prettyjson.Format([]byte(results))
-		fmt.Println(string(s))
+		output.PrintJSON(results)
 	}
 	os.Remove(tmpName)
 	// update this scenario
@@ -260,8 +259,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			fmt.Println("Task processing error: ", err.Error())
 			return
 		}
-		s, _ := prettyjson.Format([]byte(results))
-		fmt.Println(string(s))
+		output.PrintJSON(results)
 	}
 
 	// update this scenario
@@ -378,8 +376,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 			fmt.Println("Task processing error: ", err.Error())
 			return
 		}
-		s, _ := prettyjson.Format([]byte(results))
-		fmt.Println(string(s))
+		output.PrintJSON(results)
 	}
 
 	// purge this scenario
@@ -442,8 +439,7 @@ func ScenarioUpdate(name, message string) error {
 	defer res.Body.Close()
 
 	msg, _ := io.ReadAll(res.Body)
-	s, _ := prettyjson.Format([]byte(msg))
-	fmt.Println(string(s))
+	output.PrintJSON(msg)
 
 	return nil
 }
@@ -469,8 +465,7 @@ func ScenarioDelete(name string) error {
 	defer res.Body.Close()
 
 	msg, _ := io.ReadAll(res.Body)
-	s, _ := prettyjson.Format([]byte(msg))
-	fmt.Println(string(s))
+	output.PrintJSON(msg)
 
 	return nil
 }

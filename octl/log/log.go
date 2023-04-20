@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
+	"octl/output"
 	"strconv"
 )
 
@@ -50,5 +51,6 @@ func NodeLog(name string, params []string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	fmt.Print(string(raw))
+	// fmt.Print(string(raw))
+	output.PrintJSON(raw)
 }

@@ -8,13 +8,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/output"
 	"octl/task"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-
-	"github.com/hokaccha/go-prettyjson"
 )
 
 func UpLoadFile(localFileOrDir string, targetPath string) {
@@ -78,8 +77,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 		fmt.Println("Task processing error: ", err.Error())
 		return
 	}
-	s, _ := prettyjson.Format([]byte(results))
-	fmt.Println(string(s))
+	output.PrintJSON(results)
 }
 
 type FileSpreadParams struct {
@@ -122,8 +120,7 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 		fmt.Println("Task processing error: ", err.Error())
 		return
 	}
-	s, _ := prettyjson.Format([]byte(results))
-	fmt.Println(string(s))
+	output.PrintJSON(results)
 }
 
 type FileDistribParams struct {
@@ -195,8 +192,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 		fmt.Println("Task processing error: ", err.Error())
 		return
 	}
-	s, _ := prettyjson.Format([]byte(results))
-	fmt.Println(string(s))
+	output.PrintJSON(results)
 }
 
 func ListAllFile(node string, subdir string) {
@@ -217,6 +213,5 @@ func ListAllFile(node string, subdir string) {
 	if err != nil {
 		panic("ReadAll")
 	}
-	s, _ := prettyjson.Format(msg)
-	fmt.Println(string(s))
+	output.PrintJSON(msg)
 }

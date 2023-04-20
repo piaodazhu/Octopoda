@@ -6,10 +6,11 @@ type ConfigModel struct {
 }
 
 type ServerModel struct {
-	Name      string `mapstructure:"name"`
-	Ip        string `mapstructure:"ip"`
-	Port      uint16 `mapstructure:"port"`
-	ApiPrefix string `mapstructure:"apiPrefix"`
+	Name         string `mapstructure:"name"`
+	Ip           string `mapstructure:"ip"`
+	Port         uint16 `mapstructure:"port"`
+	OutputPretty bool   `mapstructure:"outputPretty"`
+	ApiPrefix    string `mapstructure:"apiPrefix"`
 }
 
 type APIs struct {
