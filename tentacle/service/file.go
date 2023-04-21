@@ -125,7 +125,7 @@ func hideRoot(root string, files *[]FileInfo) {
 func saveFile(filebufb64, filename string) error {
 	Offset := 0
 	Len := len(filebufb64)
-	ChunkSize := 4096 * 3
+	ChunkSize := 4096 * 4
 	f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_APPEND, os.ModePerm)
 	if err != nil {
 		logger.Server.Println("OpenFile:", filename)

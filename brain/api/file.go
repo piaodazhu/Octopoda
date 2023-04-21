@@ -353,7 +353,8 @@ func FileDistrib(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		content := base64.RawStdEncoding.EncodeToString(raw)
+		content := b64Encode(raw)
+		// content := base64.RawStdEncoding.EncodeToString(raw)
 		finfo := FileParams{
 			TarName:    tarName,
 			TargetPath: targetPath,
@@ -381,4 +382,23 @@ func FileDistrib(ctx *gin.Context) {
 			logger.Brain.Print("TaskMarkDone Error")
 		}
 	}()
+}
+
+
+func b64Encode(raw []byte) string {
+	var buffer strings.Builder
+	Offset := 0
+	Len := len(raw)
+	ChunkSize := 4096 * 3
+
+	buffer.Grow(base64.RawStdEncoding.EncodedLen(Len))
+	for Offset < Len {
+		end := Offset + ChunkSize
+		if Offset + ChunkSize > Len {
+			end = Len 
+		}
+		buffer.WriteString(base64.RawStdEncoding.EncodeToString(raw[Offset:end]))
+		Offset += ChunkSize
+	}
+	return buffer.String()
 }

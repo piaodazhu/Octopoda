@@ -29,10 +29,11 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 
 	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
 	err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	defer os.Remove(tarName)
+	
 	if err != nil {
 		panic("cmd.Run")
 	}
-	defer os.Remove(tarName)
 
 	f, err := os.OpenFile(tarName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
