@@ -11,11 +11,11 @@ import (
 	"octl/output"
 	"octl/task"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,7 +55,7 @@ func ScenarioApply(file string, target string, message string) {
 
 func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	var err error
-	tmpName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 
 	// create this scenario
 	err = ScenarioCreate(configuration.Name, configuration.Description)
@@ -70,22 +70,27 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		fmt.Println(">> create", info)
 
 		// pack the file
-		cmd := exec.Command("tar", "-cf", tmpName, "-C", app.SourcePath, ".")
-		// fmt.Println(cmd.String())
-		err = cmd.Run()
+		// cmd := exec.Command("tar", "-cf", tmpName, "-C", app.SourcePath, ".")
+		// // fmt.Println(cmd.String())
+		// err = cmd.Run()
+		// if err != nil {
+		// 	panic("cmd.Run")
+		// }
+
+		err = archiver.Archive([]string{app.SourcePath}, packName)
 		if err != nil {
-			panic("cmd.Run")
+			panic("Archive")
 		}
 		// err = cmd.Wait()
 		// if err != nil {
 		// 	panic(err)
 		// }
-		if !cmd.ProcessState.Success() {
-			panic("tar error")
-		}
+		// if !cmd.ProcessState.Success() {
+		// 	panic("tar error")
+		// }
 
 		// distrib the files
-		f, err := os.OpenFile(tmpName, os.O_RDONLY, os.ModePerm)
+		f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 		if err != nil {
 			panic("err")
 		}
@@ -94,7 +99,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 
 		bodyBuffer := bytes.Buffer{}
 		bodyWriter := multipart.NewWriter(&bodyBuffer)
-		fileWriter, _ := bodyWriter.CreateFormFile("files", tmpName)
+		fileWriter, _ := bodyWriter.CreateFormFile("files", packName)
 		io.Copy(fileWriter, f)
 		bodyWriter.WriteField("appName", app.Name)
 		bodyWriter.WriteField("scenario", configuration.Name)
@@ -138,7 +143,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		}
 		output.PrintJSON(results)
 	}
-	os.Remove(tmpName)
+	os.Remove(packName)
 	// update this scenario
 	err = ScenarioUpdate(configuration.Name, message)
 	if err != nil {

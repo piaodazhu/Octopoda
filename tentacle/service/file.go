@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"strings"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
 	"time"
+
+	"github.com/mholt/archiver/v3"
 )
 
 type FileParams struct {
-	TarName    string
+	PackName   string
 	TargetPath string
 	FileBuf    string
 }
@@ -126,7 +127,7 @@ func saveFile(filebufb64, filename string) error {
 	Offset := 0
 	Len := len(filebufb64)
 	ChunkSize := 4096 * 4
-	f, err := os.OpenFile(filename, os.O_WRONLY | os.O_CREATE | os.O_APPEND, os.ModePerm)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		logger.Server.Println("OpenFile:", filename)
 		return err
@@ -170,7 +171,7 @@ func (ErrUnpack) Error() string { return "ErrUnpack" }
 func unpackFiles(packb64 string, dir string) error {
 	var file strings.Builder
 	// tmp tar file name
-	fname := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
+	fname := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 
 	// make complete path and filename
 	// file.WriteString(config.GlobalConfig.Workspace.Root)
@@ -187,16 +188,21 @@ func unpackFiles(packb64 string, dir string) error {
 		return err
 	}
 
-	cmd := exec.Command("tar", "-xf", file.String(), "-C", path)
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-	// err = cmd.Wait()
+	// cmd := exec.Command("tar", "-xf", file.String(), "-C", path)
+	// err = cmd.Run()
 	// if err != nil {
 	// 	return err
 	// }
-	if !cmd.ProcessState.Success() {
+	// // err = cmd.Wait()
+	// // if err != nil {
+	// // 	return err
+	// // }
+	// if !cmd.ProcessState.Success() {
+	// 	return ErrUnpack{}
+	// }
+
+	err = archiver.Unarchive(file.String(), path)
+	if err != nil {
 		return ErrUnpack{}
 	}
 

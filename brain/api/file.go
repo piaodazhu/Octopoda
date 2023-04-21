@@ -12,17 +12,16 @@ import (
 	"io"
 	"net"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mholt/archiver/v3"
 )
 
 type FileParams struct {
-	TarName    string
+	PackName   string
 	TargetPath string
 	FileBuf    string
 }
@@ -64,17 +63,29 @@ func FileUpload(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
-		os.Remove(sb.String())
+		// err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
+		// os.Remove(sb.String())
+		// if err != nil {
+		// 	logger.Brain.Println("UnpackFile")
+		// 	rmsg.Rmsg = "UnpackFile:" + err.Error()
+		// 	// ctx.JSON(403, rmsg)
+		// 	if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+		// 		logger.Brain.Print("TaskMarkFailed Error")
+		// 	}
+		// 	return
+		// }
+
+		err = archiver.Unarchive(sb.String(), path)
 		if err != nil {
-			logger.Brain.Println("UnpackFile")
-			rmsg.Rmsg = "UnpackFile:" + err.Error()
+			logger.Brain.Println("Unarchive")
+			rmsg.Rmsg = "Unarchive:" + err.Error()
 			// ctx.JSON(403, rmsg)
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
 				logger.Brain.Print("TaskMarkFailed Error")
 			}
 			return
 		}
+		os.Remove(sb.String())
 
 		// ctx.JSON(200, rmsg)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
@@ -129,7 +140,7 @@ func FileSpread(ctx *gin.Context) {
 	sb.WriteString(config.GlobalConfig.Workspace.Store)
 	sb.WriteString(fsParams.FileOrDir)
 	fname := sb.String()
-	
+
 	_, err = os.Stat(fname)
 	if err != nil {
 		logger.Brain.Println("FileOrDir Not Found")
@@ -146,23 +157,24 @@ func FileSpread(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
-		err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+		// err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+		err = archiver.Archive([]string{fname}, packName)
 		if err != nil {
-			logger.Brain.Println("PackFile")
-			rmsg.Rmsg = "PackFile:" + err.Error()
+			logger.Brain.Println("Archive")
+			rmsg.Rmsg = "Archive:" + err.Error()
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
 				logger.Brain.Print("TaskMarkFailed Error")
 			}
 			return
 		}
 
-		raw, _ := os.ReadFile(tarName)
-		os.Remove(tarName)
+		raw, _ := os.ReadFile(packName)
+		os.Remove(packName)
 
 		content := base64.RawStdEncoding.EncodeToString(raw)
 		finfo := FileParams{
-			TarName:    tarName,
+			PackName:   packName,
 			TargetPath: fsParams.TargetPath,
 			FileBuf:    content,
 		}
@@ -314,8 +326,8 @@ func hideRoot(root string, files *[]FileInfo) {
 }
 
 func FileDistrib(ctx *gin.Context) {
-	tarfile, _ := ctx.FormFile("tarfile")
-	tarName := tarfile.Filename
+	packfiles, _ := ctx.FormFile("packfiles")
+	packName := packfiles.Filename
 	targetPath := ctx.PostForm("targetPath")
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := message.Result{
@@ -330,7 +342,7 @@ func FileDistrib(ctx *gin.Context) {
 		return
 	}
 
-	multipart, err := tarfile.Open()
+	multipart, err := packfiles.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -356,7 +368,7 @@ func FileDistrib(ctx *gin.Context) {
 		content := b64Encode(raw)
 		// content := base64.RawStdEncoding.EncodeToString(raw)
 		finfo := FileParams{
-			TarName:    tarName,
+			PackName:   packName,
 			TargetPath: targetPath,
 			FileBuf:    content,
 		}
@@ -384,7 +396,6 @@ func FileDistrib(ctx *gin.Context) {
 	}()
 }
 
-
 func b64Encode(raw []byte) string {
 	var buffer strings.Builder
 	Offset := 0
@@ -394,8 +405,8 @@ func b64Encode(raw []byte) string {
 	buffer.Grow(base64.RawStdEncoding.EncodedLen(Len))
 	for Offset < Len {
 		end := Offset + ChunkSize
-		if Offset + ChunkSize > Len {
-			end = Len 
+		if Offset+ChunkSize > Len {
+			end = Len
 		}
 		buffer.WriteString(base64.RawStdEncoding.EncodeToString(raw[Offset:end]))
 		Offset += ChunkSize

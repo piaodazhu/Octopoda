@@ -11,9 +11,9 @@ import (
 	"octl/output"
 	"octl/task"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"time"
+
+	"github.com/mholt/archiver"
 )
 
 func UpLoadFile(localFileOrDir string, targetPath string) {
@@ -27,15 +27,19 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
 	}
 
-	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
-	err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
-	defer os.Remove(tarName)
-	
-	if err != nil {
-		panic("cmd.Run")
-	}
+	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+	// err := exec.Command("tar", "-cf", packName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 
-	f, err := os.OpenFile(tarName, os.O_RDONLY, os.ModePerm)
+	// if err != nil {
+	// 	panic("cmd.Run")
+	// }
+	err := archiver.Archive([]string{localFileOrDir}, packName)
+	if err != nil {
+		panic("Archive")
+	}
+	defer os.Remove(packName)
+
+	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic("err")
 	}
@@ -43,7 +47,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
-	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", tarName)
+	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", packName)
 	io.Copy(fileWriter, f)
 
 	bodyWriter.WriteField("targetPath", targetPath)
@@ -141,14 +145,18 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
 	}
 
-	tarName := fmt.Sprintf("%d.tar", time.Now().Nanosecond())
-	err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	// if err != nil {
+	// 	panic("cmd.Run")
+	// }
+	err := archiver.Archive([]string{localFileOrDir}, packName)
 	if err != nil {
-		panic("cmd.Run")
+		panic("Archive")
 	}
-	defer os.Remove(tarName)
+	defer os.Remove(packName)
 
-	f, err := os.OpenFile(tarName, os.O_RDONLY, os.ModePerm)
+	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic("err")
 	}
@@ -158,7 +166,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
-	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", tarName)
+	fileWriter, _ := bodyWriter.CreateFormFile("packfiles", packName)
 	io.Copy(fileWriter, f)
 	bodyWriter.WriteField("targetPath", targetPath)
 	bodyWriter.WriteField("targetNodes", string(nodes_serialized))
