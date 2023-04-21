@@ -1,25 +1,25 @@
 package service
 
 import (
-	"encoding/json"
 	"net"
 	"tentacle/app"
+	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
 )
 
 func AppLatestVersion(conn net.Conn, raw []byte) {
 	aParams := AppBasic{}
-	err := json.Unmarshal(raw, &aParams)
-	var payload []byte  
+	err := config.Jsoner.Unmarshal(raw, &aParams)
+	var payload []byte
 	if err != nil {
 		logger.Exceptions.Println(err)
 		payload = []byte{}
 	} else {
 		v := app.CurVersion(aParams.Name, aParams.Scenario)
-		payload, _ = json.Marshal(&v)
+		payload, _ = config.Jsoner.Marshal(&v)
 	}
-	
+
 	err = message.SendMessage(conn, message.TypeAppLatestVersionResponse, payload)
 	if err != nil {
 		logger.Comm.Println("AppLatestVersion send error")
@@ -28,8 +28,8 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 
 func AppVersions(conn net.Conn, raw []byte) {
 	aParams := AppBasic{}
-	err := json.Unmarshal(raw, &aParams)
-	var payload []byte  
+	err := config.Jsoner.Unmarshal(raw, &aParams)
+	var payload []byte
 	if err != nil {
 		logger.Exceptions.Println(err)
 		payload = []byte{}
@@ -58,7 +58,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	var longhash, fullname string
 	var ok bool
 
-	err := json.Unmarshal(raw, arParams)
+	err := config.Jsoner.Unmarshal(raw, arParams)
 	if err != nil {
 		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
@@ -82,7 +82,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	rmsg.Modified = true
 	app.Save()
 errorout:
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppResetResponse, payload)
 	if err != nil {
 		logger.Comm.Println("AppReset send error")

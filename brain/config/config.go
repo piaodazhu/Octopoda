@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -30,7 +29,13 @@ func InitConfig() {
 		panic("cannot unmarshal config because " + err.Error())
 	}
 
-	if Stdout {
-		fmt.Printf("%+v\n", GlobalConfig)
+	// if Stdout {
+	// 	fmt.Printf("%+v\n", GlobalConfig)
+	// }
+
+	if GlobalConfig.JsonFast {
+		setFastJsoner()
+	} else {
+		setStdJsoner()
 	}
 }

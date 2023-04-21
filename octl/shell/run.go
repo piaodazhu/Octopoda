@@ -2,7 +2,6 @@ package shell
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -45,7 +44,7 @@ func runScript(task string, nodes []string) {
 		config.GlobalConfig.Server.ApiPrefix,
 		config.GlobalConfig.Api.RunScript,
 	)
-	nodes_serialized, _ := json.Marshal(&nodes)
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.WriteField("targetNodes", string(nodes_serialized))
@@ -70,7 +69,7 @@ func runCmd(task string, nodes []string) {
 		config.GlobalConfig.Server.ApiPrefix,
 		config.GlobalConfig.Api.RunCmd,
 	)
-	nodes_serialized, _ := json.Marshal(&nodes)
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)

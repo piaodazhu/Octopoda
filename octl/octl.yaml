@@ -2,8 +2,9 @@ server:
   name: "master"
   ip: 192.168.3.181
   port: 12345
-  outputPretty: true
   apiPrefix : "api/v1"
+  jsonFast: true
+  outputPretty: true
 api:  
   nodeInfo: "/node/info"
   nodeStatus: "/node/status"

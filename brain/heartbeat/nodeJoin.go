@@ -7,7 +7,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/hex"
-	"encoding/json"
 	"time"
 )
 
@@ -64,7 +63,7 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 	buffer := decBuffer
 
 	info := NodeJoinInfo{}
-	err = json.Unmarshal(buffer, &info)
+	err = config.Jsoner.Unmarshal(buffer, &info)
 	if err != nil {
 		logger.Network.Print(err)
 		return NodeJoinInfo{}, err
@@ -77,7 +76,7 @@ func MakeNodeJoinResponse() []byte {
 		Ts:  time.Now().Unix(),
 		Cnt: ticker.GetTick(),
 	}
-	serialized_response, err := json.Marshal(nodeJoinResponse)
+	serialized_response, err := config.Jsoner.Marshal(nodeJoinResponse)
 	if err != nil {
 		logger.Exceptions.Panic(err)
 	}

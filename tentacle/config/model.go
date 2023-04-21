@@ -7,6 +7,7 @@ type ConfigModel struct {
 	Logger    LoggerModel    `mapstructure:"logger"`
 	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
 	Workspace WorkspaceModel `mapstructure:"workspace"`
+	JsonFast  bool           `mapstructure:"jsonFast"`
 }
 
 type WorkerModel struct {

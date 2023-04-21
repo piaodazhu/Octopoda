@@ -1,8 +1,8 @@
 package heartbeat
 
 import (
+	"brain/config"
 	"brain/logger"
-	"encoding/json"
 	"time"
 )
 
@@ -27,7 +27,7 @@ func MakeHeartbeat(ticks int64) []byte {
 		Cnt: ticks,
 	}
 
-	serialized_info, err := json.Marshal(hbInfo)
+	serialized_info, err := config.Jsoner.Marshal(hbInfo)
 	if err != nil {
 		logger.Exceptions.Panic(err)
 	}
@@ -37,7 +37,7 @@ func MakeHeartbeat(ticks int64) []byte {
 
 func ParseHeartbeat(raw []byte) (HeartBeatInfo, error) {
 	info := HeartBeatInfo{}
-	err := json.Unmarshal(raw, &info)
+	err := config.Jsoner.Unmarshal(raw, &info)
 	if err != nil {
 		logger.Network.Print(err)
 		return info, nil

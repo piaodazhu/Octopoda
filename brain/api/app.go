@@ -1,12 +1,12 @@
 package api
 
 import (
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
 	"brain/rdb"
 	"encoding/base64"
-	"encoding/json"
 	"io"
 	"net"
 	"sync"
@@ -57,7 +57,7 @@ func AppPrepare(ctx *gin.Context) {
 	}
 
 	nodes := []string{}
-	err = json.Unmarshal([]byte(targetNodes), &nodes)
+	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -98,7 +98,7 @@ func AppPrepare(ctx *gin.Context) {
 			},
 			content,
 		}
-		// payload, _ := json.Marshal(&acParams)
+		// payload, _ := config.Jsoner.Marshal(&acParams)
 
 		// check target nodes
 		// spread tar file
@@ -147,7 +147,7 @@ func AppDeploy(ctx *gin.Context) {
 	}
 
 	nodes := []string{}
-	err = json.Unmarshal([]byte(targetNodes), &nodes)
+	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -188,7 +188,7 @@ func AppDeploy(ctx *gin.Context) {
 			},
 			content,
 		}
-		// payload, _ := json.Marshal(&adParams)
+		// payload, _ := config.Jsoner.Marshal(&adParams)
 
 		// check target nodes
 		// run scripts
@@ -222,7 +222,7 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 	} else {
 		defer conn.Close()
 
-		payload, _ := json.Marshal(acParams)
+		payload, _ := config.Jsoner.Marshal(acParams)
 		message.SendMessage(conn, message.TypeAppCreate, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppCreateResponse {
@@ -232,7 +232,7 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
@@ -261,7 +261,7 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 	} else {
 		defer conn.Close()
 
-		payload, _ := json.Marshal(adParams)
+		payload, _ := config.Jsoner.Marshal(adParams)
 		message.SendMessage(conn, message.TypeAppDeploy, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppDeployResponse {
@@ -271,7 +271,7 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"

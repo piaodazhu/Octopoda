@@ -5,7 +5,6 @@ import (
 	"brain/message"
 	"brain/model"
 	"bufio"
-	"encoding/json"
 	"net"
 	"os"
 	"strconv"
@@ -115,7 +114,7 @@ func readLogsRemote(name string, params *LogParams) bool {
 		return false
 	} else {
 		defer conn.Close()
-		query, _ := json.Marshal(params)
+		query, _ := config.Jsoner.Marshal(params)
 		err := message.SendMessage(conn, message.TypeNodeLog, query)
 		if err != nil {
 			return false
@@ -125,7 +124,7 @@ func readLogsRemote(name string, params *LogParams) bool {
 		if err != nil || mtype != message.TypeNodeLogResponse {
 			return false
 		}
-		err = json.Unmarshal(answer, params)
+		err = config.Jsoner.Unmarshal(answer, params)
 		return err == nil
 	}
 }

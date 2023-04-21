@@ -7,7 +7,6 @@ import (
 	"brain/model"
 	"brain/rdb"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -179,7 +178,7 @@ func FileSpread(ctx *gin.Context) {
 			TargetPath: fsParams.TargetPath,
 			FileBuf:    content,
 		}
-		payload, _ := json.Marshal(&finfo)
+		payload, _ := config.Jsoner.Marshal(&finfo)
 
 		// check target nodes
 		// spread file
@@ -221,7 +220,7 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
@@ -291,7 +290,7 @@ func allFiles(path string) []byte {
 	finfos := []FileInfo{}
 	walkDir(path, &finfos)
 	hideRoot(path, &finfos)
-	serialized, _ := json.Marshal(&finfos)
+	serialized, _ := config.Jsoner.Marshal(&finfos)
 	return serialized
 }
 
@@ -336,7 +335,7 @@ func FileDistrib(ctx *gin.Context) {
 	}
 
 	nodes := []string{}
-	err := json.Unmarshal([]byte(targetNodes), &nodes)
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -373,7 +372,7 @@ func FileDistrib(ctx *gin.Context) {
 			TargetPath: targetPath,
 			FileBuf:    content,
 		}
-		payload, _ := json.Marshal(&finfo)
+		payload, _ := config.Jsoner.Marshal(&finfo)
 
 		// check target nodes
 		// spread file

@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -28,7 +27,7 @@ func FilePush(conn net.Conn, raw []byte) {
 	}
 
 	fileinfo := FileParams{}
-	err := json.Unmarshal(raw, &fileinfo)
+	err := config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
 		logger.Exceptions.Println("FilePush")
 		rmsg.Rmsg = "FilePush"
@@ -57,7 +56,7 @@ func FilePush(conn net.Conn, raw []byte) {
 	// 	goto errorout
 	// }
 errorout:
-	payload, _ := json.Marshal(&rmsg)
+	payload, _ := config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
 	if err != nil {
 		logger.Comm.Println("FilePush send error")
@@ -88,7 +87,7 @@ func allFiles(path string) []byte {
 	finfos := []FileInfo{}
 	walkDir(path, &finfos)
 	hideRoot(path, &finfos)
-	serialized, _ := json.Marshal(&finfos)
+	serialized, _ := config.Jsoner.Marshal(&finfos)
 	return serialized
 }
 

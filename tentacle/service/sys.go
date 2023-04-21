@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"io"
 	"net"
 	"os"
@@ -55,7 +54,7 @@ func SSHInfo(conn net.Conn, raw []byte) {
 		Username: config.GlobalConfig.Sshinfo.Username,
 		Password: config.GlobalConfig.Sshinfo.Password,
 	}
-	payload, _ := json.Marshal(&sshinfo)
+	payload, _ := config.Jsoner.Marshal(&sshinfo)
 	err := message.SendMessage(conn, message.TypeCommandResponse, payload)
 
 	if err != nil {
@@ -81,7 +80,7 @@ func RunScript(conn net.Conn, raw []byte) {
 	var output []byte
 	var payload []byte
 
-	if err := json.Unmarshal(raw, &sparams); err != nil {
+	if err := config.Jsoner.Unmarshal(raw, &sparams); err != nil {
 		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "FilePush"
 		goto errorout
@@ -95,7 +94,7 @@ func RunScript(conn net.Conn, raw []byte) {
 	}
 
 errorout:
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
 	if err != nil {
 		logger.Comm.Println("TypeCommandResponse send error")
@@ -177,7 +176,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 		rmsg.Output = string(output)
 	}
 
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
 	if err != nil {
 		logger.Comm.Println("TypeCommandResponse send error")

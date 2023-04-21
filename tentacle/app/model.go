@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -49,7 +48,7 @@ func InitAppModel() {
 		defer f.Close()
 		content, _ := io.ReadAll(f)
 		nLock.Lock()
-		if err := json.Unmarshal(content, &nodeApps); err != nil {
+		if err := config.Jsoner.Unmarshal(content, &nodeApps); err != nil {
 			logger.Exceptions.Fatal("Invalid nodeapps file!")
 		}
 		nLock.Unlock()
@@ -68,7 +67,7 @@ func Save() {
 	nodeApps.NodeVersion++
 	nLock.Lock()
 	defer nLock.Unlock()
-	serialized, _ := json.Marshal(&nodeApps)
+	serialized, _ := config.Jsoner.Marshal(&nodeApps)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
 		logger.Exceptions.Print("cannot WriteFile")
@@ -200,7 +199,7 @@ func Digest() []byte {
 			CurVersion:  nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1],
 		})
 	}
-	serialized, _ := json.Marshal(digest)
+	serialized, _ := config.Jsoner.Marshal(digest)
 	return serialized
 }
 
@@ -218,7 +217,7 @@ func Versions(appname, scenario string) []byte {
 	}
 
 	if idx >= 0 {
-		serialized, _ = json.Marshal(&nodeApps.Apps[idx])
+		serialized, _ = config.Jsoner.Marshal(&nodeApps.Apps[idx])
 	}
 	return serialized
 }
@@ -333,7 +332,7 @@ func saveNoLock() {
 		os.Rename(file.String(), file.String()+".bk")
 	}
 	nodeApps.NodeVersion++
-	serialized, _ := json.Marshal(&nodeApps)
+	serialized, _ := config.Jsoner.Marshal(&nodeApps)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
 		logger.Exceptions.Print("cannot WriteFile")

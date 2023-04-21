@@ -6,7 +6,6 @@ import (
 	"brain/message"
 	"brain/model"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -99,10 +98,10 @@ func RunScript(ctx *gin.Context) {
 		TargetPath: "scripts/",
 		FileBuf:    content,
 	}
-	payload, _ := json.Marshal(&sparams)
+	payload, _ := config.Jsoner.Marshal(&sparams)
 
 	nodes := []string{}
-	err = json.Unmarshal([]byte(targetNodes), &nodes)
+	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "ERROR: targetNodes"
 		ctx.JSON(400, rmsg)
@@ -140,7 +139,7 @@ func RunCmd(ctx *gin.Context) {
 		return
 	}
 	nodes := []string{}
-	err := json.Unmarshal([]byte(targetNodes), &nodes)
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "Unmarshal:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -182,7 +181,7 @@ func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
@@ -211,7 +210,7 @@ func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"

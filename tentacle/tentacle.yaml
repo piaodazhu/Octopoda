@@ -24,3 +24,4 @@ heartbeat:
 workspace:
   root: "/root/octopoda/workspace/"
   store: "/root/octopoda/workspace/FSTORE/"
+jsonFast: true

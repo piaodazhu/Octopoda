@@ -7,6 +7,7 @@ type ConfigModel struct {
 	Redis        RedisModel        `mapstructure:"redis"`
 	Logger       LoggerModel       `mapstructure:"logger"`
 	Workspace    WorkspaceModel    `mapstructure:"workspace"`
+	JsonFast     bool              `mapstructure:"jsonFast"`
 }
 
 type TentacleFaceModel struct {

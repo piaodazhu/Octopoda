@@ -2,7 +2,6 @@ package scenario
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -95,7 +94,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			panic("err")
 		}
 
-		nodes_serialized, _ := json.Marshal(&app.Nodes)
+		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
 
 		bodyBuffer := bytes.Buffer{}
 		bodyWriter := multipart.NewWriter(&bodyBuffer)
@@ -191,7 +190,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			panic("err")
 		}
 
-		nodes_serialized, _ := json.Marshal(&app.Nodes)
+		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
 
 		bodyBuffer := bytes.Buffer{}
 		bodyWriter := multipart.NewWriter(&bodyBuffer)
@@ -308,7 +307,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 			panic("err")
 		}
 
-		nodes_serialized, _ := json.Marshal(&app.Nodes)
+		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
 
 		bodyBuffer := bytes.Buffer{}
 		bodyWriter := multipart.NewWriter(&bodyBuffer)

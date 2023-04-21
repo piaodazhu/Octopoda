@@ -4,7 +4,6 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/message"
-	"encoding/json"
 	"io"
 	"net"
 	"os"
@@ -32,7 +31,7 @@ func InitScenarioMap() {
 		defer f.Close()
 		content, _ := io.ReadAll(f)
 		ScenLock.Lock()
-		if err := json.Unmarshal(content, &ScenarioMap); err != nil {
+		if err := config.Jsoner.Unmarshal(content, &ScenarioMap); err != nil {
 			logger.Exceptions.Fatal("Invalid scenarios file!")
 		}
 		ScenLock.Unlock()
@@ -129,7 +128,7 @@ func Fix(name string) error {
 					Scenario: curNodeApps[i].ScenName,
 				}
 
-				payload, _ := json.Marshal(&aParams)
+				payload, _ := config.Jsoner.Marshal(&aParams)
 				message.SendMessage(conn, message.TypeAppLatestVersion, payload)
 				mtype, raw, err := message.RecvMessage(conn)
 				if err != nil || mtype != message.TypeAppLatestVersionResponse {
@@ -137,7 +136,7 @@ func Fix(name string) error {
 				}
 
 				var latest Version
-				err = json.Unmarshal(raw, &latest)
+				err = config.Jsoner.Unmarshal(raw, &latest)
 				if err != nil || len(latest.Hash) == 0 {
 					return ErrorNodeAppError{}
 				}
@@ -201,7 +200,7 @@ func saveNoLock() {
 	if os.IsExist(err) {
 		os.Rename(file.String(), file.String()+".bk")
 	}
-	serialized, _ := json.Marshal(&ScenarioMap)
+	serialized, _ := config.Jsoner.Marshal(&ScenarioMap)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
 		logger.Exceptions.Print("cannot WriteFile")

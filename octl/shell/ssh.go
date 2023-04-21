@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -47,7 +46,7 @@ func SSH(nodename string) {
 	defer res.Body.Close()
 
 	sshinfo := SSHInfo{}
-	err = json.Unmarshal(buf, &sshinfo)
+	err = config.Jsoner.Unmarshal(buf, &sshinfo)
 	if err != nil {
 		panic(err)
 	}

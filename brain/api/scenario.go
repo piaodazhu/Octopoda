@@ -1,10 +1,10 @@
 package api
 
 import (
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"encoding/json"
 	"net"
 	"sync"
 
@@ -83,7 +83,7 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	for i := range dlist {
 		//payload
-		payload, _ := json.Marshal(&AppDeleteParams{dlist[i].AppName, dlist[i].ScenName})
+		payload, _ := config.Jsoner.Marshal(&AppDeleteParams{dlist[i].AppName, dlist[i].ScenName})
 
 		// item name
 		item := dlist[i].NodeName + ":" + dlist[i].AppName + "@" + dlist[i].ScenName
@@ -124,7 +124,7 @@ func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("Unmarshal", err)
 			*result = "MasterError"
@@ -262,7 +262,7 @@ func ScenarioReset(ctx *gin.Context) {
 			VersionHash: rlist[i].Version,
 			Mode:        "undef",
 		}
-		payload, _ := json.Marshal(arg)
+		payload, _ := config.Jsoner.Marshal(arg)
 
 		// item name
 		item := rlist[i].NodeName + ":" + rlist[i].AppName + "@" + rlist[i].ScenName
@@ -303,7 +303,7 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		}
 
 		var rmsg message.Result
-		err = json.Unmarshal(raw, &rmsg)
+		err = config.Jsoner.Unmarshal(raw, &rmsg)
 		if err != nil {
 			logger.Exceptions.Println("Unmarshal", err)
 			*result = "MasterError"

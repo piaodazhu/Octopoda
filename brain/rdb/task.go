@@ -1,9 +1,9 @@
 package rdb
 
 import (
+	"brain/config"
 	"brain/logger"
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -38,13 +38,13 @@ func TaskNew(taskid string, timeout_second int) bool {
 }
 
 func TaskMarkDone(taskid string, result interface{}, timeout_second int) bool {
-	res_serialized, _ := json.Marshal(result)
+	res_serialized, _ := config.Jsoner.Marshal(result)
 	value := fmt.Sprintf("%d%s", TaskFinished, string(res_serialized))
 	return taskMark(taskid, value, timeout_second)
 }
 
 func TaskMarkFailed(taskid string, result interface{}, timeout_second int) bool {
-	res_serialized, _ := json.Marshal(result)
+	res_serialized, _ := config.Jsoner.Marshal(result)
 	value := fmt.Sprintf("%d%s", TaskFailed, string(res_serialized))
 	return taskMark(taskid, value, timeout_second)
 }
@@ -52,7 +52,7 @@ func TaskMarkFailed(taskid string, result interface{}, timeout_second int) bool 
 func taskMark(taskid string, value string, timeout_second int) bool {
 	// get remaining ttl
 	rem := rdb.TTL(context.TODO(), "taskid:"+taskid).Val().Nanoseconds()
-	timeout := time.Second*time.Duration(timeout_second)
+	timeout := time.Second * time.Duration(timeout_second)
 
 	// if rem == -2, the key is not exists, return false
 	// if rem > timeout_second, we keep the finished task record as it was originally set
@@ -61,8 +61,8 @@ func taskMark(taskid string, value string, timeout_second int) bool {
 		return false
 	} else if rem > int64(time.Second*time.Duration(timeout_second)) {
 		timeout = time.Duration(rem)
-	} 
-	
+	}
+
 	err := rdb.Set(context.TODO(), "taskid:"+taskid, value, timeout).Err()
 	if err != nil {
 		logger.Exceptions.Println(err)
@@ -70,7 +70,6 @@ func taskMark(taskid string, value string, timeout_second int) bool {
 	}
 	return true
 }
-
 
 func TaskDelete(taskid string) bool {
 	err := rdb.Del(context.TODO(), "taskid:"+taskid).Err()
@@ -89,6 +88,6 @@ func TaskQuery(taskid string) (int, string) {
 		logger.Exceptions.Println(err)
 		return TaskDbError, ""
 	}
-	
+
 	return int(value[0] - '0'), value[1:]
 }

@@ -4,7 +4,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/hex"
-	"encoding/json"
 	"tentacle/config"
 	"tentacle/logger"
 	"time"
@@ -56,7 +55,7 @@ func MakeNodeJoin() []byte {
 		Port: config.GlobalConfig.Worker.Port,
 		Ts:   time.Now().Unix(),
 	}
-	serialized_info, err := json.Marshal(nodeJoinInfo)
+	serialized_info, err := config.Jsoner.Marshal(nodeJoinInfo)
 	if err != nil {
 		logger.Exceptions.Panic(err)
 		return nil
@@ -86,7 +85,7 @@ func ParseNodeJoinResponse(raw []byte) (NodeJoinResponse, error) {
 	buffer := decBuffer
 
 	response := NodeJoinResponse{}
-	err = json.Unmarshal(buffer, &response)
+	err = config.Jsoner.Unmarshal(buffer, &response)
 	if err != nil {
 		logger.Exceptions.Print(err)
 		return NodeJoinResponse{}, err

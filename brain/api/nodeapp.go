@@ -1,13 +1,13 @@
 package api
 
 import (
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
 	"net"
 
 	"github.com/gin-gonic/gin"
-	"github.com/goccy/go-json"
 )
 
 func NodeAppsInfo(ctx *gin.Context) {
@@ -77,7 +77,7 @@ func NodeAppVersion(ctx *gin.Context) {
 			Name:     app,
 			Scenario: scen,
 		}
-		payload, _ := json.Marshal(aParams)
+		payload, _ := config.Jsoner.Marshal(aParams)
 		message.SendMessage(conn, message.TypeAppVersion, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppVersionResponse {
@@ -128,7 +128,7 @@ func NodeAppReset(ctx *gin.Context) {
 			},
 			VersionHash: version,
 		}
-		payload, _ := json.Marshal(arParams)
+		payload, _ := config.Jsoner.Marshal(arParams)
 		message.SendMessage(conn, message.TypeAppReset, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppResetResponse {
@@ -139,7 +139,7 @@ func NodeAppReset(ctx *gin.Context) {
 		}
 
 		var result message.Result
-		err = json.Unmarshal(raw, &result)
+		err = config.Jsoner.Unmarshal(raw, &result)
 		if err != nil {
 			logger.Exceptions.Println("NodeAppReset Unmarshal", err)
 			rmsg.Rmsg = "NodeApp Result:" + err.Error()

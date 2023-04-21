@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"sync"
@@ -58,7 +57,7 @@ func NodeStatus(conn net.Conn, raw []byte) {
 	state := nodeStatus
 	state.LocalTime = time.Now().UnixNano()
 	stateLock.RUnlock()
-	serialized_info, _ := json.Marshal(&state)
+	serialized_info, _ := config.Jsoner.Marshal(&state)
 	err := message.SendMessage(conn, message.TypeNodeStatusResponse, serialized_info)
 	if err != nil {
 		logger.Comm.Println("NodeStatus service error")

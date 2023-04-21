@@ -2,7 +2,6 @@ package service
 
 import (
 	"bufio"
-	"encoding/json"
 	"net"
 	"os"
 	"strings"
@@ -20,17 +19,17 @@ type LogParams struct {
 
 func NodeLog(conn net.Conn, raw []byte) {
 	lparams := LogParams{}
-	json.Unmarshal(raw, &lparams)
+	config.Jsoner.Unmarshal(raw, &lparams)
 	if lparams.MaxLines <= 0 {
 		lparams.MaxLines = 30
 	}
 	if lparams.MaxDaysBefore <= 0 {
 		lparams.MaxDaysBefore = 0
 	}
-	
+
 	readLogs(&lparams)
 
-	response, _ := json.Marshal(&lparams)
+	response, _ := config.Jsoner.Marshal(&lparams)
 
 	err := message.SendMessage(conn, message.TypeNodeLogResponse, response)
 	if err != nil {
@@ -73,10 +72,10 @@ func readLogs(params *LogParams) {
 			cnt++
 		}
 		f.Close()
-		if offset + cnt > params.MaxLines {
+		if offset+cnt > params.MaxLines {
 			cnt = params.MaxLines - offset
 		}
-		logbuf = logbuf[len(logbuf) - cnt:]
+		logbuf = logbuf[len(logbuf)-cnt:]
 
 		params.Logs = append(logbuf, params.Logs...)
 		offset += cnt

@@ -19,4 +19,10 @@ func InitConfig() {
 	if err != nil {
 		panic("cannot unmarshal config because " + err.Error())
 	}
+
+	if GlobalConfig.Server.JsonFast {
+		setFastJsoner()
+	} else {
+		setStdJsoner()
+	}
 }

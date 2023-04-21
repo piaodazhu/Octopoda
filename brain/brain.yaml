@@ -4,6 +4,7 @@ tentacleFace:
   token: "default"
   activeTimeout: 2
   recordTimeout: 10
+  jsonFast: true
 brainFace:
   ip: "192.168.3.181"
   port: 12345

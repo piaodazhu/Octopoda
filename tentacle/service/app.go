@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -49,7 +48,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	// os.WriteFile("./dump", raw, os.ModePerm)
 	// logger.Client.Println(len(raw))
 
-	err := json.Unmarshal(raw, acParams)
+	err := config.Jsoner.Unmarshal(raw, acParams)
 	if err != nil {
 		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
@@ -71,7 +70,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 		}
 	}
 	// unpack files
-	err = unpackFiles(acParams.FilePack, config.GlobalConfig.Workspace.Root + fullname)
+	err = unpackFiles(acParams.FilePack, config.GlobalConfig.Workspace.Root+fullname)
 	if err != nil {
 		logger.Exceptions.Println("unpack Files")
 		rmsg.Rmsg = err.Error()
@@ -101,7 +100,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	rmsg.Modified = true
 	app.Save()
 errorout:
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppCreateResponse, payload)
 	if err != nil {
 		logger.Comm.Println("AppCreate send error")
@@ -120,7 +119,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	var fullname string
 	var version app.Version
 
-	err := json.Unmarshal(raw, adParams)
+	err := config.Jsoner.Unmarshal(raw, adParams)
 	if err != nil {
 		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
@@ -147,7 +146,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		TargetPath: "scripts/",
 		FileBuf:    adParams.Script,
 	}
-	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root + fullname)
+	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname)
 	if err != nil {
 		logger.Exceptions.Println("execScript")
 		rmsg.Rmsg = err.Error()
@@ -179,7 +178,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	rmsg.Modified = true
 	app.Save()
 errorout:
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppDeployResponse, payload)
 	if err != nil {
 		logger.Comm.Println("AppDeploy send error")
@@ -200,7 +199,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	var ok bool
 	var subdirName string
 
-	err := json.Unmarshal(raw, adParams)
+	err := config.Jsoner.Unmarshal(raw, adParams)
 	if err != nil {
 		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
@@ -219,7 +218,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	os.RemoveAll(config.GlobalConfig.Workspace.Root + subdirName)
 	app.Save()
 errorout:
-	payload, _ = json.Marshal(&rmsg)
+	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppDeleteResponse, payload)
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")

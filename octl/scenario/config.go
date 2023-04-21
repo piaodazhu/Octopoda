@@ -1,7 +1,6 @@
 package scenario
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -162,7 +161,7 @@ func checkNodes(nodeset map[string]struct{}) bool {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	nodes := []NodeInfo{}
-	err = json.Unmarshal(raw, &nodes)
+	err = config.Jsoner.Unmarshal(raw, &nodes)
 	if err != nil {
 		panic(err)
 	}

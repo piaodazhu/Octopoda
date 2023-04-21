@@ -9,8 +9,9 @@ type ServerModel struct {
 	Name         string `mapstructure:"name"`
 	Ip           string `mapstructure:"ip"`
 	Port         uint16 `mapstructure:"port"`
-	OutputPretty bool   `mapstructure:"outputPretty"`
 	ApiPrefix    string `mapstructure:"apiPrefix"`
+	OutputPretty bool   `mapstructure:"outputPretty"`
+	JsonFast     bool   `mapstructure:"jsonFast"`
 }
 
 type APIs struct {

@@ -1,10 +1,10 @@
 package api
 
 import (
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"encoding/json"
 	"net"
 	"sync"
 
@@ -103,7 +103,7 @@ func getNodeState(addr string, channel chan<- model.State, wg *sync.WaitGroup) {
 		}
 
 		var state model.State
-		err = json.Unmarshal(raw, &state)
+		err = config.Jsoner.Unmarshal(raw, &state)
 		if err != nil {
 			logger.Exceptions.Println("UnmarshalNodeState", err)
 			return
@@ -111,7 +111,6 @@ func getNodeState(addr string, channel chan<- model.State, wg *sync.WaitGroup) {
 		channel <- state
 	}
 }
-
 
 func NodeReboot(ctx *gin.Context) {
 	var name, addr string

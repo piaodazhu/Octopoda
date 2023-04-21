@@ -2,7 +2,6 @@ package file
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -98,7 +97,7 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 		FileOrDir:   FileOrDir,
 		TargetNodes: nodes,
 	}
-	buf, _ := json.Marshal(fsParams)
+	buf, _ := config.Jsoner.Marshal(fsParams)
 
 	url := fmt.Sprintf("http://%s:%d/%s%s",
 		config.GlobalConfig.Server.Ip,
@@ -164,7 +163,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	}
 	defer f.Close()
 
-	nodes_serialized, _ := json.Marshal(&nodes)
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
