@@ -2,6 +2,8 @@ package network
 
 import (
 	"brain/api"
+	"brain/logger"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +11,9 @@ import (
 func initRouter(engine *gin.Engine) {
 	group := engine.Group("/api/v1")
 	{
+		group.GET("/taskstate", api.TaskState)
+
+		group.Use(OctopodaLogger())
 		group.GET("/node/info", api.NodeInfo)
 		group.GET("/node/status", api.NodeState)
 		group.GET("/node/log", api.NodeLog)
@@ -46,10 +51,27 @@ func initRouter(engine *gin.Engine) {
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
 
-		group.GET("/taskstate", api.TaskState)
 	}
 }
 
 func NotImpl(ctx *gin.Context) {
 	ctx.JSON(501, struct{}{})
+}
+
+func OctopodaLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+		c.Next()
+		latency := time.Since(start)
+		if latency > time.Minute {
+			latency = latency.Truncate(time.Second)
+		}
+		logger.Request.Printf("[HTTP]| %3d | %13v | %-7s %#v\n",
+			c.Writer.Status(),
+			latency,
+			c.Request.Method,
+			path,
+		)
+	}
 }

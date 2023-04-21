@@ -16,10 +16,10 @@ import (
 )
 
 func Reboot() {
-	logger.Client.Println("Reboot.")
+	logger.SysInfo.Println("Reboot.")
 	_, err := exec.Command("reboot").CombinedOutput()
 	if err != nil {
-		logger.Client.Fatal(err)
+		logger.Exceptions.Fatal(err)
 	}
 }
 
@@ -27,10 +27,10 @@ func RemoteReboot(conn net.Conn, raw []byte) {
 	// valid raw
 	err := message.SendMessage(conn, message.TypeCommandResponse, []byte{})
 	if err != nil {
-		logger.Server.Println("Reboot send error")
+		logger.Comm.Println("Reboot send error")
 	}
 
-	logger.Client.Println("Reboot.")
+	logger.SysInfo.Println("Reboot.")
 	// _, err = exec.Command("reboot").CombinedOutput()
 	// if err != nil {
 	// 	logger.Client.Fatal(err)
@@ -59,7 +59,7 @@ func SSHInfo(conn net.Conn, raw []byte) {
 	err := message.SendMessage(conn, message.TypeCommandResponse, payload)
 
 	if err != nil {
-		logger.Server.Println("SSHInfo send error")
+		logger.Comm.Println("SSHInfo send error")
 	}
 }
 
@@ -82,7 +82,7 @@ func RunScript(conn net.Conn, raw []byte) {
 	var payload []byte
 
 	if err := json.Unmarshal(raw, &sparams); err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
@@ -98,7 +98,7 @@ errorout:
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
 	if err != nil {
-		logger.Server.Println("TypeCommandResponse send error")
+		logger.Comm.Println("TypeCommandResponse send error")
 	}
 }
 
@@ -109,7 +109,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	// var f *os.File
 	content, err = base64.RawStdEncoding.DecodeString(sparams.FileBuf)
 	if err != nil {
-		logger.Server.Println("FileDecode")
+		logger.Exceptions.Println("FileDecode")
 		return nil, err
 	}
 
@@ -124,7 +124,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	scriptFile.WriteString(sparams.FileName)
 	err = os.WriteFile(scriptFile.String(), content, os.ModePerm)
 	if err != nil {
-		logger.Server.Println("WriteFile")
+		logger.Exceptions.Println("WriteFile")
 		return nil, err
 	}
 	outputFile := scriptFile.String() + ".output"
@@ -139,7 +139,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Server.Println("Run cmd", err)
+		logger.Exceptions.Println("Run cmd", err)
 		return nil, err
 	}
 
@@ -147,7 +147,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	// result := []byte{}
 	result, err := io.ReadAll(output)
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 	}
 	output.Close()
 
@@ -180,6 +180,6 @@ func RunCmd(conn net.Conn, raw []byte) {
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
 	if err != nil {
-		logger.Server.Println("TypeCommandResponse send error")
+		logger.Comm.Println("TypeCommandResponse send error")
 	}
 }

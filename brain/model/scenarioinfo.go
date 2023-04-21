@@ -176,7 +176,7 @@ func GetNodeApps(name string, version string) []NodeAppItem {
 		return list
 	}
 	if len(scen.Versions) == 0 {
-		logger.Brain.Println("GetNodeApps Empty Scenario")
+		logger.Exceptions.Println("GetNodeApps Empty Scenario")
 		return list
 	}
 
@@ -196,7 +196,7 @@ func GetNodeApps(name string, version string) []NodeAppItem {
 	}
 	// if not found
 	if idx < 0 {
-		logger.Brain.Println("GetNodeApps Invalid Version")
+		logger.Exceptions.Println("GetNodeApps Invalid Version")
 		return list
 	}
 
@@ -307,7 +307,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 				}
 			}
 			// build a new node app
-			logger.Brain.Println("NodeApp Not Cover")
+			logger.SysInfo.Println("NodeApp Not Cover")
 			application.NodeApp = append(application.NodeApp, &NodeAppModel{
 				Name:    node,
 				Version: version,
@@ -319,7 +319,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 		}
 	}
 	// build a new application
-	logger.Brain.Printf("Application <%s> Not Cover. New...", app)
+	logger.SysInfo.Printf("Application <%s> Not Cover. New...", app)
 	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
 		Name:        app,
 		Description: description,

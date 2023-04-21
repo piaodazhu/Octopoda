@@ -31,7 +31,7 @@ func TaskNew(taskid string, timeout_second int) bool {
 	}
 	err := rdb.Set(context.TODO(), "taskid:"+taskid, TaskProcessing, time.Second*time.Duration(timeout_second)).Err()
 	if err != nil {
-		logger.Brain.Println(err)
+		logger.Exceptions.Println(err)
 		return false
 	}
 	return true
@@ -65,7 +65,7 @@ func taskMark(taskid string, value string, timeout_second int) bool {
 	
 	err := rdb.Set(context.TODO(), "taskid:"+taskid, value, timeout).Err()
 	if err != nil {
-		logger.Brain.Println(err)
+		logger.Exceptions.Println(err)
 		return false
 	}
 	return true
@@ -75,7 +75,7 @@ func taskMark(taskid string, value string, timeout_second int) bool {
 func TaskDelete(taskid string) bool {
 	err := rdb.Del(context.TODO(), "taskid:"+taskid).Err()
 	if err != nil {
-		logger.Brain.Println(err)
+		logger.Exceptions.Println(err)
 		return false
 	}
 	return true
@@ -86,7 +86,7 @@ func TaskQuery(taskid string) (int, string) {
 	if err == redis.Nil {
 		return TaskNotFound, ""
 	} else if err != nil || len(value) == 0 {
-		logger.Brain.Println(err)
+		logger.Exceptions.Println(err)
 		return TaskDbError, ""
 	}
 	

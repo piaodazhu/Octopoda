@@ -23,7 +23,7 @@ func InitTentacleFace() {
 	sb.WriteString(fmt.Sprint(config.GlobalConfig.TentacleFace.Port))
 	listener, err := net.Listen("tcp", sb.String())
 	if err != nil {
-		logger.Tentacle.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 	tentacleListener = listener
 }
@@ -33,7 +33,7 @@ func ListenNodeJoin() {
 		for {
 			conn, err := tentacleListener.Accept()
 			if err != nil {
-				logger.Tentacle.Print(err)
+				logger.Network.Print(err)
 				continue
 			}
 			go ProcessNodeJoin(conn)
@@ -44,28 +44,28 @@ func ListenNodeJoin() {
 func ProcessNodeJoin(conn net.Conn) {
 	mtype, msg, err := message.RecvMessage(conn)
 	if err != nil || mtype != message.TypeNodeJoin {
-		logger.Tentacle.Print(err, message.TypeNodeJoin)
+		logger.Comm.Print(err, message.TypeNodeJoin)
 		conn.Close()
 		return
 	}
 	joinRequest, err := heartbeat.ParseNodeJoin(msg)
 	if err != nil {
-		logger.Tentacle.Print(err)
+		logger.Network.Print(err)
 		conn.Close()
 		return
 	}
 	if !checkTimestamp(joinRequest.Ts) {
-		logger.Tentacle.Print("Invalid TimeStamp")
+		logger.Network.Print("Invalid TimeStamp")
 		conn.Close()
 		return
 	}
 
 	id := model.StoreNode(joinRequest.Name, joinRequest.IP, joinRequest.Port)
-	logger.Tentacle.Printf("New node join, name=%s, id=%d\n", joinRequest.Name, id)
+	logger.Network.Printf("New node join, name=%s, id=%d\n", joinRequest.Name, id)
 
 	err = message.SendMessage(conn, message.TypeNodeJoinResponse, heartbeat.MakeNodeJoinResponse())
 	if err != nil {
-		logger.Tentacle.Print(err)
+		logger.Network.Print(err)
 		conn.Close()
 		return
 	}
@@ -120,14 +120,14 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 
 		hb, err = heartbeat.ParseHeartbeat(msg)
 		if err != nil || !checkTimestamp(hb.Ts) {
-			logger.Tentacle.Print(err)
+			logger.Network.Print(err)
 			health = false
 			goto reportstate
 		}
 
 		err = message.SendMessage(conn, message.TypeHeartbeatResponse, heartbeat.MakeHeartbeatResponse(ticker.GetTick()))
 		if err != nil || !checkTimestamp(hb.Ts) {
-			logger.Tentacle.Print(err)
+			logger.Network.Print(err)
 			health = false
 			goto reportstate
 		}

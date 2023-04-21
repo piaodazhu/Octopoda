@@ -118,7 +118,7 @@ func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		message.SendMessage(conn, message.TypeAppDelete, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppDeleteResponse {
-			logger.Tentacle.Println("TypeAppDeleteResponse", err)
+			logger.Comm.Println("TypeAppDeleteResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -126,7 +126,7 @@ func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("Unmarshal", err)
+			logger.Exceptions.Println("Unmarshal", err)
 			*result = "MasterError"
 			return
 		}
@@ -297,7 +297,7 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		message.SendMessage(conn, message.TypeAppReset, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppResetResponse {
-			logger.Tentacle.Println("TypeAppResetResponse", err)
+			logger.Comm.Println("TypeAppResetResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -305,7 +305,7 @@ func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("Unmarshal", err)
+			logger.Exceptions.Println("Unmarshal", err)
 			*result = "MasterError"
 			return
 		}

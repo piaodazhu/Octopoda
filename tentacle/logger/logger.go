@@ -10,10 +10,21 @@ import (
 	"time"
 )
 
-var Client *log.Logger
-var Server *log.Logger
+var Request	*log.Logger
+var Comm	*log.Logger
+var Network 	*log.Logger
+var Exceptions 	*log.Logger
+var SysInfo 	*log.Logger
+
 var wg sync.WaitGroup
+
 func InitLogger() {
+	Request	   = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
+	Comm 	   = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
+	Network    = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
+	Exceptions = log.New(nil, "[Exceptions]", log.LstdFlags|log.Lshortfile)
+	SysInfo    = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
+
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Logger.Path)
 	sb.WriteByte('/')
@@ -25,7 +36,7 @@ func InitLogger() {
 }
 
 func logController(prefix string) {
-	lastday := time.Now().AddDate(0,0,-1).Day()
+	lastday := time.Now().AddDate(0, 0, -1).Day()
 	var lastf *os.File
 	once := true
 
@@ -34,7 +45,6 @@ func logController(prefix string) {
 			time.Sleep(time.Second)
 		} else {
 			lastday = time.Now().Day()
-
 
 			filename := prefix + time.Now().Format("_2006_01_02.log")
 
@@ -49,12 +59,14 @@ func logController(prefix string) {
 			} else {
 				writer = io.MultiWriter(f)
 			}
+			
+			Request.SetOutput(writer)
+			Comm.SetOutput(writer)
+			Network.SetOutput(writer)
+			Exceptions.SetOutput(writer)
+			SysInfo.SetOutput(writer)
 
-			Client = log.New(writer, "[Client]", log.LstdFlags|log.Lshortfile)
-			Client.Print("Client Logger Started.")
-
-			Server = log.New(writer, "[Server]", log.LstdFlags|log.Lshortfile)
-			Server.Print("Client Logger Started.")
+			SysInfo.Println("Logger Updated")
 
 			lastf.Close()
 			lastf = f

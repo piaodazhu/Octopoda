@@ -33,7 +33,8 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	// if err != nil {
 	// 	panic("cmd.Run")
 	// }
-	err := archiver.Archive([]string{localFileOrDir}, packName)
+	archiver.DefaultZip.OverwriteExisting = true
+	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
 	if err != nil {
 		panic("Archive")
 	}
@@ -150,7 +151,8 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	// if err != nil {
 	// 	panic("cmd.Run")
 	// }
-	err := archiver.Archive([]string{localFileOrDir}, packName)
+	archiver.DefaultZip.OverwriteExisting = true
+	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
 	if err != nil {
 		panic("Archive")
 	}

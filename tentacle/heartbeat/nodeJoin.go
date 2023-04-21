@@ -44,7 +44,7 @@ func InitHeartbeat() {
 	key := tokenToKey(config.GlobalConfig.Master.Token, 16)
 	blk, err := aes.NewCipher(key)
 	if err != nil {
-		logger.Client.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 	block = blk
 }
@@ -58,7 +58,7 @@ func MakeNodeJoin() []byte {
 	}
 	serialized_info, err := json.Marshal(nodeJoinInfo)
 	if err != nil {
-		logger.Client.Panic(err)
+		logger.Exceptions.Panic(err)
 		return nil
 	}
 
@@ -77,7 +77,7 @@ func ParseNodeJoinResponse(raw []byte) (NodeJoinResponse, error) {
 	decBuffer := make([]byte, hex.DecodedLen(len(raw)))
 	_, err := hex.Decode(decBuffer, raw)
 	if err != nil {
-		logger.Client.Print(err)
+		logger.Exceptions.Print(err)
 		return NodeJoinResponse{}, err
 	}
 
@@ -88,7 +88,7 @@ func ParseNodeJoinResponse(raw []byte) (NodeJoinResponse, error) {
 	response := NodeJoinResponse{}
 	err = json.Unmarshal(buffer, &response)
 	if err != nil {
-		logger.Client.Print(err)
+		logger.Exceptions.Print(err)
 		return NodeJoinResponse{}, err
 	}
 	return response, nil

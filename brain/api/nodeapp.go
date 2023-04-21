@@ -36,7 +36,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 		message.SendMessage(conn, message.TypeAppsInfo, []byte{})
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppsInfoResponse {
-			logger.Tentacle.Println("NodeAppsInfo", err)
+			logger.Comm.Println("NodeAppsInfo", err)
 			rmsg.Rmsg = "Node error"
 			ctx.JSON(404, rmsg)
 			return
@@ -81,7 +81,7 @@ func NodeAppVersion(ctx *gin.Context) {
 		message.SendMessage(conn, message.TypeAppVersion, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppVersionResponse {
-			logger.Tentacle.Println("NodeAppVersion", err)
+			logger.Comm.Println("NodeAppVersion", err)
 			rmsg.Rmsg = "Node error"
 			ctx.JSON(404, rmsg)
 			return
@@ -132,7 +132,7 @@ func NodeAppReset(ctx *gin.Context) {
 		message.SendMessage(conn, message.TypeAppReset, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppResetResponse {
-			logger.Tentacle.Println("NodeAppReset", err)
+			logger.Comm.Println("NodeAppReset", err)
 			rmsg.Rmsg = "Node error"
 			ctx.JSON(404, rmsg)
 			return
@@ -141,13 +141,13 @@ func NodeAppReset(ctx *gin.Context) {
 		var result message.Result
 		err = json.Unmarshal(raw, &result)
 		if err != nil {
-			logger.Tentacle.Println("NodeAppReset Unmarshal", err)
+			logger.Exceptions.Println("NodeAppReset Unmarshal", err)
 			rmsg.Rmsg = "NodeApp Result:" + err.Error()
 			ctx.JSON(500, rmsg)
 			return
 		}
 		if result.Rmsg != "OK" {
-			logger.Tentacle.Println("NodeAppReset", err)
+			logger.Exceptions.Println("NodeAppReset", err)
 			ctx.JSON(404, result)
 			return
 		}
@@ -155,13 +155,13 @@ func NodeAppReset(ctx *gin.Context) {
 		// update scenario version
 		success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, result.Version, result.Modified)
 		if !success {
-			logger.Tentacle.Print("Failed: AddScenNodeApp")
+			logger.Exceptions.Print("Failed: AddScenNodeApp")
 			rmsg.Rmsg = "AddScenNodeApp"
 			ctx.JSON(500, rmsg)
 		}
 		success = model.UpdateScenario(scen, msg)
 		if !success {
-			logger.Tentacle.Print("Failed: UpdateScenario")
+			logger.Exceptions.Print("Failed: UpdateScenario")
 			rmsg.Rmsg = "UpdateScenario"
 			ctx.JSON(500, rmsg)
 		}

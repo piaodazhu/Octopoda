@@ -77,7 +77,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		// 	panic("cmd.Run")
 		// }
 
-		err = archiver.Archive([]string{app.SourcePath}, packName)
+		err = archiver.DefaultZip.Archive([]string{app.SourcePath}, packName)
 		if err != nil {
 			panic("Archive")
 		}

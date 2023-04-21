@@ -13,7 +13,7 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, &aParams)
 	var payload []byte  
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		payload = []byte{}
 	} else {
 		v := app.CurVersion(aParams.Name, aParams.Scenario)
@@ -22,7 +22,7 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 	
 	err = message.SendMessage(conn, message.TypeAppLatestVersionResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppLatestVersion send error")
+		logger.Comm.Println("AppLatestVersion send error")
 	}
 }
 
@@ -31,14 +31,14 @@ func AppVersions(conn net.Conn, raw []byte) {
 	err := json.Unmarshal(raw, &aParams)
 	var payload []byte  
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		payload = []byte{}
 	} else {
 		payload = app.Versions(aParams.Name, aParams.Scenario)
 	}
 	err = message.SendMessage(conn, message.TypeAppVersionResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppVersion send error")
+		logger.Comm.Println("AppVersion send error")
 	}
 }
 
@@ -60,7 +60,7 @@ func AppReset(conn net.Conn, raw []byte) {
 
 	err := json.Unmarshal(raw, arParams)
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
@@ -83,9 +83,8 @@ func AppReset(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = json.Marshal(&rmsg)
-	logger.Client.Println(rmsg)
 	err = message.SendMessage(conn, message.TypeAppResetResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppReset send error")
+		logger.Comm.Println("AppReset send error")
 	}
 }

@@ -7,21 +7,23 @@ import (
 )
 
 func InitService() {
-	initNodeState()
+	initNodeStatus()
 }
 
 func HandleConn(conn net.Conn) {
 	defer conn.Close()
 	mtype, raw, err := message.RecvMessage(conn)
 	if err != nil {
-		logger.Server.Println(err)
+		logger.Comm.Println(err)
 		return
 	}
+	if mtype != message.TypeAppLatestVersion {
+		logger.Comm.Print(">> Receive Command: ", message.MsgTypeString[mtype])
+	}
+	
 	switch mtype {
-	case message.TypeNodeState:
-		NodeState(conn, raw)
-	case message.TypeScenarioVersion:
-		// ScenarioVersion(conn, raw)
+	case message.TypeNodeStatus:
+		NodeStatus(conn, raw)
 	case message.TypeFilePush:
 		FilePush(conn, raw)
 	case message.TypeFileTree:
@@ -52,7 +54,7 @@ func HandleConn(conn net.Conn) {
 	case message.TypeAppLatestVersion:
 		AppLatestVersion(conn, raw)
 	default:
-		logger.Server.Println("unsupported protocol")
+		logger.Comm.Println("unsupported protocol")
 		return
 	}
 }

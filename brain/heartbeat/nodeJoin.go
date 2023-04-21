@@ -45,7 +45,7 @@ func InitHeartbeat() {
 	key := tokenToKey(config.GlobalConfig.TentacleFace.Token, 16)
 	blk, err := aes.NewCipher(key)
 	if err != nil {
-		logger.Tentacle.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 	block = blk
 }
@@ -54,7 +54,7 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 	decBuffer := make([]byte, hex.DecodedLen(len(raw)))
 	_, err := hex.Decode(decBuffer, raw)
 	if err != nil {
-		logger.Tentacle.Print(err)
+		logger.Network.Print(err)
 		return NodeJoinInfo{}, err
 	}
 	// logger.Tentacle.Print(raw, decBuffer)
@@ -66,7 +66,7 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 	info := NodeJoinInfo{}
 	err = json.Unmarshal(buffer, &info)
 	if err != nil {
-		logger.Tentacle.Print(err)
+		logger.Network.Print(err)
 		return NodeJoinInfo{}, err
 	}
 	return info, nil
@@ -79,7 +79,7 @@ func MakeNodeJoinResponse() []byte {
 	}
 	serialized_response, err := json.Marshal(nodeJoinResponse)
 	if err != nil {
-		logger.Tentacle.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 
 	// buffer := make([]byte, len(serialized_response))

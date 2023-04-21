@@ -15,7 +15,7 @@ import (
 func AppsInfo(conn net.Conn, raw []byte) {
 	err := message.SendMessage(conn, message.TypeAppsInfoResponse, app.Digest())
 	if err != nil {
-		logger.Server.Println("AppsInfo send error")
+		logger.Comm.Println("AppsInfo send error")
 	}
 }
 
@@ -51,7 +51,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 
 	err := json.Unmarshal(raw, acParams)
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
@@ -60,12 +60,12 @@ func AppCreate(conn net.Conn, raw []byte) {
 	// is exists?
 	if ok = app.Exists(acParams.Name, acParams.Scenario); !ok {
 		if !app.Create(acParams.Name, acParams.Scenario, acParams.Description) {
-			logger.Client.Println("app.Create")
+			logger.Exceptions.Println("app.Create")
 			rmsg.Rmsg = "Failed Create App"
 			goto errorout
 		}
 		if !app.GitCreate(fullname) {
-			logger.Client.Println("app.GitCreate")
+			logger.Exceptions.Println("app.GitCreate")
 			rmsg.Rmsg = "Failed Init the Repo"
 			goto errorout
 		}
@@ -73,14 +73,14 @@ func AppCreate(conn net.Conn, raw []byte) {
 	// unpack files
 	err = unpackFiles(acParams.FilePack, config.GlobalConfig.Workspace.Root + fullname)
 	if err != nil {
-		logger.Client.Println("unpack Files")
+		logger.Exceptions.Println("unpack Files")
 		rmsg.Rmsg = err.Error()
 		goto errorout
 	}
 	// commit
 	version, err = app.GitCommit(fullname, acParams.Message)
 	if err != nil {
-		logger.Client.Println("app.GitCommit")
+		logger.Exceptions.Println("app.GitCommit")
 		if _, ok := err.(app.EmptyCommitError); ok {
 			rmsg.Rmsg = "OK: No Change"
 			rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
@@ -93,7 +93,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	// update nodeApps
 	ok = app.Update(acParams.Name, acParams.Scenario, version)
 	if !ok {
-		logger.Client.Println("app.Update")
+		logger.Exceptions.Println("app.Update")
 		rmsg.Rmsg = "Faild to update app version"
 	}
 	rmsg.Rmsg = "OK"
@@ -104,7 +104,7 @@ errorout:
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppCreateResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppCreate send error")
+		logger.Comm.Println("AppCreate send error")
 	}
 }
 
@@ -122,7 +122,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 
 	err := json.Unmarshal(raw, adParams)
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
@@ -131,12 +131,12 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	// is new?
 	if ok = app.Exists(adParams.Name, adParams.Scenario); !ok {
 		if !app.Create(adParams.Name, adParams.Scenario, adParams.Description) {
-			logger.Client.Println("app.Create")
+			logger.Exceptions.Println("app.Create")
 			rmsg.Rmsg = "Failed Create App"
 			goto errorout
 		}
 		if !app.GitCreate(fullname) {
-			logger.Client.Println("app.GitCreate")
+			logger.Exceptions.Println("app.GitCreate")
 			rmsg.Rmsg = "Failed Init the Repo"
 			goto errorout
 		}
@@ -149,7 +149,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	}
 	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root + fullname)
 	if err != nil {
-		logger.Client.Println("execScript")
+		logger.Exceptions.Println("execScript")
 		rmsg.Rmsg = err.Error()
 		goto errorout
 	} else {
@@ -163,7 +163,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 			rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
 		} else {
 			rmsg.Rmsg = err.Error()
-			logger.Client.Println("app.GitCommit")
+			logger.Exceptions.Println("app.GitCommit")
 		}
 		goto errorout
 	}
@@ -171,7 +171,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	// update nodeApps
 	ok = app.Update(adParams.Name, adParams.Scenario, version)
 	if !ok {
-		logger.Client.Println("app.Update")
+		logger.Exceptions.Println("app.Update")
 		rmsg.Rmsg = "Faild to update app version"
 	}
 
@@ -182,7 +182,7 @@ errorout:
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppDeployResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppDeploy send error")
+		logger.Comm.Println("AppDeploy send error")
 	}
 }
 
@@ -202,7 +202,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 
 	err := json.Unmarshal(raw, adParams)
 	if err != nil {
-		logger.Client.Println(err)
+		logger.Exceptions.Println(err)
 		rmsg.Rmsg = "Invalid Params"
 		goto errorout
 	}
@@ -211,7 +211,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	// is new?
 	if ok = app.Exists(adParams.Name, adParams.Scenario); ok {
 		if !app.Delete(adParams.Name, adParams.Scenario) {
-			logger.Client.Println("app.Delete")
+			logger.Exceptions.Println("app.Delete")
 			rmsg.Rmsg = "Failed Delete App"
 			goto errorout
 		}
@@ -222,6 +222,6 @@ errorout:
 	payload, _ = json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeAppDeleteResponse, payload)
 	if err != nil {
-		logger.Server.Println("AppDelete send error")
+		logger.Comm.Println("AppDelete send error")
 	}
 }

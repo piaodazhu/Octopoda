@@ -1,21 +1,30 @@
 package logger
 
 import (
-	"brain/config"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"sync"
+	"brain/config"
 	"time"
 )
 
-var Tentacle *log.Logger
-var Brain *log.Logger
+var Request	*log.Logger
+var Comm	*log.Logger
+var Network 	*log.Logger
+var Exceptions 	*log.Logger
+var SysInfo 	*log.Logger
 
 var wg sync.WaitGroup
 
 func InitLogger() {
+	Request	   = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
+	Comm 	   = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
+	Network    = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
+	Exceptions = log.New(nil, "[Exceptions]", log.LstdFlags|log.Lshortfile)
+	SysInfo    = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
+
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Logger.Path)
 	sb.WriteByte('/')
@@ -50,12 +59,14 @@ func logController(prefix string) {
 			} else {
 				writer = io.MultiWriter(f)
 			}
+			
+			Request.SetOutput(writer)
+			Comm.SetOutput(writer)
+			Network.SetOutput(writer)
+			Exceptions.SetOutput(writer)
+			SysInfo.SetOutput(writer)
 
-			Tentacle = log.New(writer, "[Tentacle]", log.LstdFlags|log.Lshortfile)
-			Tentacle.Print("Tentacle Logger Started.")
-
-			Brain = log.New(writer, "[Brain]", log.LstdFlags|log.Lshortfile)
-			Brain.Print("Tentacle Logger Started.")
+			SysInfo.Println("Logger Updated")
 
 			lastf.Close()
 			lastf = f

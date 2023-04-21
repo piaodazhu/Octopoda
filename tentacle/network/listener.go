@@ -18,18 +18,18 @@ func InitListener() {
 	sb.WriteString(fmt.Sprint(config.GlobalConfig.Worker.Port))
 	listener, err := net.Listen("tcp", sb.String())
 	if err != nil {
-		logger.Server.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 	localListener = listener
 }
 
 func ListenAndServe() {
 	defer localListener.Close()
-	logger.Server.Println("Listening on", localListener.Addr())
+	logger.SysInfo.Println("Listening on", localListener.Addr())
 	for {
 		conn, err := localListener.Accept()
 		if err != nil {
-			logger.Client.Println(err)
+			logger.Exceptions.Println(err)
 		}
 		go service.HandleConn(conn)
 	}

@@ -30,7 +30,7 @@ func FilePush(conn net.Conn, raw []byte) {
 	fileinfo := FileParams{}
 	err := json.Unmarshal(raw, &fileinfo)
 	if err != nil {
-		logger.Server.Println("FilePush")
+		logger.Exceptions.Println("FilePush")
 		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
@@ -60,7 +60,7 @@ errorout:
 	payload, _ := json.Marshal(&rmsg)
 	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
 	if err != nil {
-		logger.Server.Println("FilePush send error")
+		logger.Comm.Println("FilePush send error")
 	}
 }
 
@@ -71,7 +71,7 @@ func FileTree(conn net.Conn, raw []byte) {
 	res := allFiles(pathsb.String())
 	err := message.SendMessage(conn, message.TypeFileTreeResponse, res)
 	if err != nil {
-		logger.Server.Println("FileTree send error")
+		logger.Comm.Println("FileTree send error")
 	}
 }
 
@@ -129,7 +129,7 @@ func saveFile(filebufb64, filename string) error {
 	ChunkSize := 4096 * 4
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
-		logger.Server.Println("OpenFile:", filename)
+		logger.Exceptions.Println("OpenFile:", filename)
 		return err
 	}
 	defer f.Close()
@@ -141,12 +141,12 @@ func saveFile(filebufb64, filename string) error {
 		}
 		content, err := base64.RawStdEncoding.DecodeString(filebufb64[Offset:end])
 		if err != nil {
-			logger.Server.Println("FileDecode:", err.Error())
+			logger.Exceptions.Println("FileDecode:", err.Error())
 			return err
 		}
 		_, err = f.Write(content)
 		if err != nil {
-			logger.Server.Println("Write:", err.Error())
+			logger.Exceptions.Println("Write:", err.Error())
 			return err
 		}
 		Offset += ChunkSize
@@ -200,9 +200,10 @@ func unpackFiles(packb64 string, dir string) error {
 	// if !cmd.ProcessState.Success() {
 	// 	return ErrUnpack{}
 	// }
-
-	err = archiver.Unarchive(file.String(), path)
+	archiver.DefaultZip.OverwriteExisting = true
+	err = archiver.DefaultZip.Unarchive(file.String(), path)
 	if err != nil {
+		logger.Exceptions.Print(err)
 		return ErrUnpack{}
 	}
 

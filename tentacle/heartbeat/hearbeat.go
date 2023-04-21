@@ -29,7 +29,7 @@ func MakeHeartbeat(ticks int64) []byte {
 
 	serialized_info, err := json.Marshal(hbInfo)
 	if err != nil {
-		logger.Client.Panic(err)
+		logger.Exceptions.Panic(err)
 	}
 
 	return serialized_info
@@ -39,7 +39,7 @@ func ParseHeartbeat(raw []byte) (HeartBeatInfo, error) {
 	info := HeartBeatInfo{}
 	err := json.Unmarshal(raw, &info)
 	if err != nil {
-		logger.Client.Print(err)
+		logger.Exceptions.Print(err)
 		return info, nil
 	}
 	return info, nil

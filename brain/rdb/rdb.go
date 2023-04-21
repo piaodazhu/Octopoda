@@ -24,6 +24,6 @@ func InitRedis() {
 	})
 
 	if rdb.Ping(context.TODO()).Err() != nil {
-		logger.Tentacle.Panic("Cannot connect to redis")
+		logger.Exceptions.Panic("Cannot connect to redis")
 	}
 }

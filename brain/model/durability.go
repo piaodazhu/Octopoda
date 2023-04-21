@@ -21,19 +21,19 @@ func InitScenarioMap() {
 	file.WriteString(diskFileName)
 	f, err := os.Open(file.String())
 	if err != nil {
-		logger.Brain.Printf("Scenario file not found. New...")
+		logger.SysInfo.Printf("Scenario file not found. New...")
 		ScenLock.Lock()
 		ScenarioMap = make(map[string]*ScenarioModel)
 		ScenLock.Unlock()
 		// new storage need not fix
 		FirstFixed <- struct{}{}
 	} else {
-		logger.Brain.Printf("Scenario file found. Loading...")
+		logger.SysInfo.Printf("Scenario file found. Loading...")
 		defer f.Close()
 		content, _ := io.ReadAll(f)
 		ScenLock.Lock()
 		if err := json.Unmarshal(content, &ScenarioMap); err != nil {
-			logger.Brain.Fatal("Invalid scenarios file!")
+			logger.Exceptions.Fatal("Invalid scenarios file!")
 		}
 		ScenLock.Unlock()
 
@@ -163,11 +163,11 @@ func AutoFix() {
 
 	for name := range ScenarioMap {
 		if err := Fix(name); err != nil {
-			logger.Brain.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+			logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
 		}
 	}
 	// first roll fix done. Then http request can be accepted
-	logger.Brain.Println("First Fix Done")
+	logger.SysInfo.Println("First Fix Done")
 	FirstFixed <- struct{}{}
 
 	for {
@@ -184,7 +184,7 @@ func AutoFix() {
 
 			// fix failed is allowed. Because scenarios are dynamically changing.
 			if err := Fix(name); err != nil {
-				logger.Brain.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+				logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
 			}
 		}
 
@@ -204,6 +204,6 @@ func saveNoLock() {
 	serialized, _ := json.Marshal(&ScenarioMap)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
-		logger.Brain.Print("cannot WriteFile")
+		logger.Exceptions.Print("cannot WriteFile")
 	}
 }

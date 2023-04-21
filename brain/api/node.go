@@ -42,10 +42,10 @@ func NodeState(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 	} else {
 		defer conn.Close()
-		message.SendMessage(conn, message.TypeNodeState, []byte{})
+		message.SendMessage(conn, message.TypeNodeStatus, []byte{})
 		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeNodeStateResponse {
-			logger.Tentacle.Println("NodeState", err)
+		if err != nil || mtype != message.TypeNodeStatusResponse {
+			logger.Comm.Println("NodeState", err)
 			ctx.JSON(404, struct{}{})
 			return
 		}
@@ -95,17 +95,17 @@ func getNodeState(addr string, channel chan<- model.State, wg *sync.WaitGroup) {
 	} else {
 		defer conn.Close()
 
-		message.SendMessage(conn, message.TypeNodeState, []byte{})
+		message.SendMessage(conn, message.TypeNodeStatus, []byte{})
 		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeNodeStateResponse {
-			logger.Tentacle.Println("getNodeState", err)
+		if err != nil || mtype != message.TypeNodeStatusResponse {
+			logger.Comm.Println("getNodeState", err)
 			return
 		}
 
 		var state model.State
 		err = json.Unmarshal(raw, &state)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			return
 		}
 		channel <- state
@@ -132,7 +132,7 @@ func NodeReboot(ctx *gin.Context) {
 		message.SendMessage(conn, message.TypeCommandReboot, []byte{})
 		mtype, _, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Tentacle.Println("NodeReboot", err)
+			logger.Comm.Println("NodeReboot", err)
 			ctx.JSON(404, struct{}{})
 			return
 		}

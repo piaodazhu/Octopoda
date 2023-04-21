@@ -15,7 +15,7 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-type State struct {
+type Status struct {
 	Id        int
 	Name      string
 	Platform  string
@@ -31,11 +31,11 @@ type State struct {
 	DiskTotal    uint64
 }
 
-var nodeState State
+var nodeStatus Status
 var stateLock sync.RWMutex
 
-func initNodeState() {
-	nodeState = State{
+func initNodeStatus() {
+	nodeStatus = Status{
 		Id:        config.GlobalConfig.Worker.Id,
 		Name:      config.GlobalConfig.Worker.Name,
 		Platform:  GetCpuInfo(),
@@ -50,18 +50,18 @@ func initNodeState() {
 		DiskUsed:     GetDiskUsed(),
 		DiskTotal:    GetDiskTotal(),
 	}
-	go maintainInfo()
+	go maintainStatus()
 }
 
-func NodeState(conn net.Conn, raw []byte) {
+func NodeStatus(conn net.Conn, raw []byte) {
 	stateLock.RLock()
-	state := nodeState
+	state := nodeStatus
 	state.LocalTime = time.Now().UnixNano()
 	stateLock.RUnlock()
 	serialized_info, _ := json.Marshal(&state)
-	err := message.SendMessage(conn, message.TypeNodeStateResponse, serialized_info)
+	err := message.SendMessage(conn, message.TypeNodeStatusResponse, serialized_info)
 	if err != nil {
-		logger.Server.Println("NodeState service error")
+		logger.Comm.Println("NodeStatus service error")
 	}
 }
 
@@ -103,8 +103,8 @@ func GetDiskUsed() uint64 {
 	return diskInfo.Used
 }
 
-func maintainInfo() {
-	logger.Server.Println("maintainInfo start")
+func maintainStatus() {
+	logger.SysInfo.Println("maintainStatus start")
 	CpuLoadLen := 10
 	CpuLoadBuf := make([]float64, CpuLoadLen)
 	CpuLoadPtr := 0
@@ -128,16 +128,16 @@ func maintainInfo() {
 
 		stateLock.Lock()
 
-		nodeState.CpuLoadShort = load
-		nodeState.CpuLoadLong = avr_load
-		nodeState.MemTotal = mem_total
-		nodeState.MemUsed = mem_used
-		nodeState.DiskTotal = disk_total
-		nodeState.DiskUsed = disk_used
+		nodeStatus.CpuLoadShort = load
+		nodeStatus.CpuLoadLong = avr_load
+		nodeStatus.MemTotal = mem_total
+		nodeStatus.MemUsed = mem_used
+		nodeStatus.DiskTotal = disk_total
+		nodeStatus.DiskUsed = disk_used
 
 		stateLock.Unlock()
 
-		// logger.Server.Println(nodeState)
+		// logger.Server.Println(nodeStatus)
 
 		time.Sleep(time.Second)
 	}

@@ -34,7 +34,7 @@ func NodeLog(conn net.Conn, raw []byte) {
 
 	err := message.SendMessage(conn, message.TypeNodeLogResponse, response)
 	if err != nil {
-		logger.Client.Print("NodeLog")
+		logger.Comm.Print("NodeLog")
 	}
 }
 
@@ -55,8 +55,7 @@ func readLogs(params *LogParams) {
 		daysBefore++
 		f, err := os.Open(fname)
 		if err != nil {
-			logger.Client.Print(err)
-			logger.Client.Print(fname)
+			logger.Exceptions.Print(fname, err)
 			continue
 		}
 

@@ -23,14 +23,8 @@ const (
 	TypeFileTree
 	TypeFileTreeResponse
 
-	TypeNodeState
-	TypeNodeStateResponse
-
-	TypeScenarioVersion
-	TypeScenarioVersionResponse
-
-	TypeModVersion
-	TypeModVersionResponse
+	TypeNodeStatus
+	TypeNodeStatusResponse
 
 	TypeNodeLog
 	TypeNodeLogResponse
@@ -62,6 +56,52 @@ const (
 	TypeAppLatestVersion
 	TypeAppLatestVersionResponse
 )
+
+var MsgTypeString map[int]string = map[int]string {
+	TypeNodeJoin: "NodeJoin",
+	TypeNodeJoinResponse: "NodeJoinResponse",
+	TypeHeartbeat: "Heartbeat",
+	TypeHeartbeatResponse: "HeartbeatResponse",
+
+	TypeFilePush: "FilePush",
+	TypeFilePushResponse: "FilePushResponse",
+
+	TypeFileTree: "FileTree",
+	TypeFileTreeResponse: "FileTreeResponse",
+
+	TypeNodeStatus: "NodeState",
+	TypeNodeStatusResponse: "NodeStateResponse",
+
+	TypeNodeLog: "NodeLog",
+	TypeNodeLogResponse: "NodeLogResponse",
+	
+	TypeCommandReboot: "CommandReboot",
+	TypeCommandSSH: "CommandSSH",
+	TypeCommandRun: "CommandRun",
+	TypeCommandRunScript: "CommandRunScript",
+	TypeCommandResponse: "CommandResponse",
+
+	TypeAppCreate: "AppCreate",
+	TypeAppCreateResponse: "AppCreateResponse",
+
+	TypeAppDelete: "AppDelete",
+	TypeAppDeleteResponse: "AppDeleteResponse",
+
+	TypeAppDeploy: "AppDeploy",
+	TypeAppDeployResponse: "AppDeployResponse",
+
+	TypeAppVersion: "AppVersion",
+	TypeAppVersionResponse: "AppVersionResponse",
+
+	TypeAppsInfo: "AppsInfo",
+	TypeAppsInfoResponse: "AppsInfoResponse",
+
+	TypeAppReset: "AppReset",
+	TypeAppResetResponse: "AppResetResponse",
+
+	TypeAppLatestVersion: "AppLatestVersion",
+	TypeAppLatestVersionResponse: "AppLatestVersionResponse",
+}
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {
 	Len := len(raw)

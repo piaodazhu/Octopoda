@@ -16,7 +16,7 @@ func GitReset(app string, hash string, mode string) error {
 	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
-		logger.Server.Print("git.PlainOpen")
+		logger.Exceptions.Print("git.PlainOpen")
 		return err
 	}
 	// record current hash for back up
@@ -25,7 +25,7 @@ func GitReset(app string, hash string, mode string) error {
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		logger.Server.Print("repo.Worktree")
+		logger.Exceptions.Print("repo.Worktree")
 		return err
 	}
 
@@ -51,23 +51,23 @@ func GitCommit(app string, message string) (Version, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
-		logger.Server.Print("git.PlainOpen")
+		logger.Exceptions.Print("git.PlainOpen")
 		return Version{}, err
 	}
 	wt, err := repo.Worktree()
 	if err != nil {
-		logger.Server.Print("repo.Worktree")
+		logger.Exceptions.Print("repo.Worktree")
 		return Version{}, err
 	}
 
 	wt.Add("./")
 	state, err := wt.Status()
 	if err != nil {
-		logger.Server.Print("wt.Status")
+		logger.Exceptions.Print("wt.Status")
 		return Version{}, err
 	}
 	if state.IsClean() {
-		logger.Server.Print("state.IsClean")
+		// logger.Exceptions.Print("state.IsClean")
 		return Version{}, EmptyCommitError{}
 	}
 
@@ -80,7 +80,7 @@ func GitCommit(app string, message string) (Version, error) {
 		AllowEmptyCommits: true,
 	})
 	if err != nil {
-		logger.Server.Print("wt.Commit")
+		logger.Exceptions.Print("wt.Commit")
 		return Version{}, err
 	}
 	return Version{commitTime.Unix(), hash.String(), message}, nil
@@ -89,11 +89,11 @@ func GitCommit(app string, message string) (Version, error) {
 func GitCreate(app string) bool {
 	path := config.GlobalConfig.Workspace.Root + app
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
-		logger.Server.Print("os.Mkdir")
+		logger.Exceptions.Print("os.Mkdir")
 		return false
 	}
 	if _, err := git.PlainInit(path, false); err != nil {
-		logger.Server.Print("git.PlainInit")
+		logger.Exceptions.Print("git.PlainInit")
 		return false
 	}
 	return true
@@ -104,8 +104,7 @@ func gitLogs(app string, N int) ([]Version, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
-		logger.Server.Print(err.Error())
-		logger.Server.Print("git.PlainOpen")
+		logger.Exceptions.Print("git.PlainOpen:", err.Error())
 		return nil, err
 	}
 	
@@ -113,7 +112,7 @@ func gitLogs(app string, N int) ([]Version, error) {
 		All: true,
 	})
 	if err != nil {
-		logger.Server.Print("repo.Log")
+		logger.Exceptions.Print("repo.Log")
 		return nil, err
 	}
 	defer iter.Close()

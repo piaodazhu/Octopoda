@@ -43,7 +43,7 @@ func FileUpload(ctx *gin.Context) {
 	sb.WriteString(tarfile.Filename)
 	dst, err := os.Create(sb.String())
 	if err != nil {
-		logger.Brain.Println("FileCreate")
+		logger.Exceptions.Println("FileCreate")
 		rmsg.Rmsg = "FileCreate:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
@@ -58,7 +58,7 @@ func FileUpload(ctx *gin.Context) {
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
-		logger.Brain.Print("TaskNew")
+		logger.Exceptions.Print("TaskNew")
 	}
 	ctx.String(202, taskid)
 
@@ -74,14 +74,14 @@ func FileUpload(ctx *gin.Context) {
 		// 	}
 		// 	return
 		// }
-
-		err = archiver.Unarchive(sb.String(), path)
+		archiver.DefaultZip.OverwriteExisting = true
+		err = archiver.DefaultZip.Unarchive(sb.String(), path)
 		if err != nil {
-			logger.Brain.Println("Unarchive")
+			logger.Exceptions.Println("Unarchive")
 			rmsg.Rmsg = "Unarchive:" + err.Error()
 			// ctx.JSON(403, rmsg)
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Brain.Print("TaskMarkFailed Error")
+				logger.Exceptions.Print("TaskMarkFailed Error")
 			}
 			return
 		}
@@ -89,7 +89,7 @@ func FileUpload(ctx *gin.Context) {
 
 		// ctx.JSON(200, rmsg)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
-			logger.Brain.Print("TaskMarkDone Error")
+			logger.Exceptions.Print("TaskMarkDone Error")
 		}
 	}()
 }
@@ -114,7 +114,7 @@ func FileSpread(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		logger.Brain.Println("FileCreate")
+		logger.Exceptions.Println("FileCreate")
 		rmsg.Rmsg = "FileCreate:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
@@ -130,7 +130,7 @@ func FileSpread(ctx *gin.Context) {
 	if fsParams.TargetPath == "/" || fsParams.TargetPath == "./" {
 		fsParams.TargetPath = ""
 	} else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
-		logger.Brain.Println("Invalid targetPath")
+		logger.Exceptions.Println("Invalid targetPath")
 		rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
 		ctx.JSON(400, rmsg)
 		return
@@ -143,7 +143,7 @@ func FileSpread(ctx *gin.Context) {
 
 	_, err = os.Stat(fname)
 	if err != nil {
-		logger.Brain.Println("FileOrDir Not Found")
+		logger.Exceptions.Println("FileOrDir Not Found")
 		rmsg.Rmsg = "FileOrDir Not Found:" + err.Error()
 		ctx.JSON(403, rmsg)
 		return
@@ -152,19 +152,20 @@ func FileSpread(ctx *gin.Context) {
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
-		logger.Brain.Print("TaskNew")
+		logger.Exceptions.Print("TaskNew")
 	}
 	ctx.String(202, taskid)
 
 	go func() {
 		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 		// err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
-		err = archiver.Archive([]string{fname}, packName)
+		archiver.DefaultZip.OverwriteExisting = true
+		err = archiver.DefaultZip.Archive([]string{fname}, packName)
 		if err != nil {
-			logger.Brain.Println("Archive")
+			logger.Exceptions.Println("Archive")
 			rmsg.Rmsg = "Archive:" + err.Error()
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Brain.Print("TaskMarkFailed Error")
+				logger.Exceptions.Print("TaskMarkFailed Error")
 			}
 			return
 		}
@@ -197,7 +198,7 @@ func FileSpread(ctx *gin.Context) {
 		}
 		wg.Wait()
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Brain.Print("TaskMarkDone Error")
+			logger.Exceptions.Print("TaskMarkDone Error")
 		}
 	}()
 }
@@ -214,7 +215,7 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		message.SendMessage(conn, message.TypeFilePush, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeFilePushResponse {
-			logger.Tentacle.Println("TypeFilePushResponse", err)
+			logger.Comm.Println("TypeFilePushResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -222,13 +223,13 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Rmsg)
 		if rmsg.Rmsg != "OK" {
-			*result = "NodeError"
+			logger.Exceptions.Print(rmsg.Rmsg)
+			*result = rmsg.Rmsg
 		} else {
 			*result = "OK"
 		}
@@ -259,19 +260,19 @@ func getFileTree(name string, subdir string) []byte {
 	}
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		logger.Tentacle.Print("FileTree Dial")
+		logger.Network.Print("FileTree Dial")
 		return []byte{}
 	}
 	defer conn.Close()
 
 	err = message.SendMessage(conn, message.TypeFileTree, []byte(subdir))
 	if err != nil {
-		logger.Tentacle.Print("FileTree")
+		logger.Comm.Print("FileTree")
 		return []byte{}
 	}
 	mtype, raw, err := message.RecvMessage(conn)
 	if err != nil || mtype != message.TypeFileTreeResponse {
-		logger.Tentacle.Print("FileTreeResponse")
+		logger.Comm.Print("FileTreeResponse")
 		return []byte{}
 	}
 	return raw
@@ -360,7 +361,7 @@ func FileDistrib(ctx *gin.Context) {
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
-		logger.Brain.Print("TaskNew")
+		logger.Exceptions.Print("TaskNew")
 	}
 	ctx.String(202, taskid)
 
@@ -391,7 +392,7 @@ func FileDistrib(ctx *gin.Context) {
 		}
 		wg.Wait()
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Brain.Print("TaskMarkDone Error")
+			logger.Exceptions.Print("TaskMarkDone Error")
 		}
 	}()
 }

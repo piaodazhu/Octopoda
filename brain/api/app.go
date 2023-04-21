@@ -82,7 +82,7 @@ func AppPrepare(ctx *gin.Context) {
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
-		logger.Brain.Print("TaskNew")
+		logger.Exceptions.Print("TaskNew")
 	}
 	ctx.String(202, taskid)
 
@@ -118,7 +118,7 @@ func AppPrepare(ctx *gin.Context) {
 		wg.Wait()
 		// logger.Brain.Println(results)
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Brain.Print("TaskMarkDone")
+			logger.Exceptions.Print("TaskMarkDone")
 		}
 	}()
 }
@@ -172,7 +172,7 @@ func AppDeploy(ctx *gin.Context) {
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
-		logger.Brain.Print("TaskNew")
+		logger.Exceptions.Print("TaskNew")
 	}
 	ctx.String(202, taskid)
 
@@ -208,7 +208,7 @@ func AppDeploy(ctx *gin.Context) {
 		wg.Wait()
 		// logger.Brain.Println(results)
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Brain.Print("TaskMarkDone Error")
+			logger.Exceptions.Print("TaskMarkDone Error")
 		}
 	}()
 }
@@ -226,7 +226,7 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 		message.SendMessage(conn, message.TypeAppCreate, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppCreateResponse {
-			logger.Tentacle.Println("TypeAppCreateResponse", err)
+			logger.Comm.Println("TypeAppCreateResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -234,19 +234,19 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Rmsg)
+		// logger.Tentacle.Print(rmsg.Rmsg)
 		*result = rmsg.Rmsg
 
 		// update scenario version
 		success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, node, rmsg.Version, rmsg.Modified)
 		if success {
-			logger.Tentacle.Print("Success: AddScenNodeApp")
+			logger.Request.Print("Success: AddScenNodeApp")
 		} else {
-			logger.Tentacle.Print("Failed: AddScenNodeApp")
+			logger.Exceptions.Print("Failed: AddScenNodeApp")
 			*result = "Failed: AddScenNodeApp"
 		}
 	}
@@ -265,7 +265,7 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 		message.SendMessage(conn, message.TypeAppDeploy, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeAppDeployResponse {
-			logger.Tentacle.Println("TypeAppDeployResponse", err)
+			logger.Comm.Println("TypeAppDeployResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -273,7 +273,7 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
@@ -282,9 +282,9 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 		// update scenario version
 		success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, node, rmsg.Version, rmsg.Modified)
 		if success {
-			logger.Tentacle.Print("Success: AddScenNodeApp")
+			logger.Request.Print("Success: AddScenNodeApp")
 		} else {
-			logger.Tentacle.Print("Failed: AddScenNodeApp")
+			logger.Exceptions.Print("Failed: AddScenNodeApp")
 			*result = "Failed: AddScenNodeApp"
 		}
 	}

@@ -55,7 +55,7 @@ func SSHInfo(ctx *gin.Context) {
 		message.SendMessage(conn, message.TypeCommandSSH, []byte{})
 		mtype, payload, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Tentacle.Println("Node Error: ", err)
+			logger.Comm.Println("Node Error: ", err)
 			rmsg.Rmsg = "Node Error:" + err.Error()
 			ctx.JSON(404, rmsg)
 			return
@@ -78,7 +78,7 @@ func RunScript(ctx *gin.Context) {
 	}
 
 	if script.Size == 0 || len(targetNodes) == 0 {
-		logger.Brain.Println("RunScript Args Error")
+		logger.Request.Println("RunScript Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
 		ctx.JSON(400, rmsg)
 		return
@@ -134,7 +134,7 @@ func RunCmd(ctx *gin.Context) {
 	}
 
 	if len(cmd) == 0 || len(targetNodes) == 0 {
-		logger.Brain.Println("RunCmd Args Error")
+		logger.Request.Println("RunCmd Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
 		ctx.JSON(400, rmsg)
 		return
@@ -176,7 +176,7 @@ func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 		message.SendMessage(conn, message.TypeCommandRun, []byte(cmd))
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Tentacle.Println("TypeCommandResponse", err)
+			logger.Comm.Println("TypeCommandResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -184,11 +184,11 @@ func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Rmsg)
+		// logger.SysInfo.Print(rmsg.Rmsg)
 		*result = rmsg.Output
 	}
 }
@@ -205,7 +205,7 @@ func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		message.SendMessage(conn, message.TypeCommandRunScript, payload)
 		mtype, raw, err := message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Tentacle.Println("TypeCommandResponse", err)
+			logger.Comm.Println("TypeCommandResponse", err)
 			*result = "NetError"
 			return
 		}
@@ -213,11 +213,11 @@ func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 		var rmsg message.Result
 		err = json.Unmarshal(raw, &rmsg)
 		if err != nil {
-			logger.Tentacle.Println("UnmarshalNodeState", err)
+			logger.Exceptions.Println("UnmarshalNodeState", err)
 			*result = "MasterError"
 			return
 		}
-		logger.Tentacle.Print(rmsg.Rmsg)
+		// logger.SysInfo.Print(rmsg.Rmsg)
 		*result = rmsg.Output
 	}
 }

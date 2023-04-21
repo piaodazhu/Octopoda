@@ -50,7 +50,7 @@ func InitAppModel() {
 		content, _ := io.ReadAll(f)
 		nLock.Lock()
 		if err := json.Unmarshal(content, &nodeApps); err != nil {
-			logger.Server.Fatal("Invalid nodeapps file!")
+			logger.Exceptions.Fatal("Invalid nodeapps file!")
 		}
 		nLock.Unlock()
 	}
@@ -71,7 +71,7 @@ func Save() {
 	serialized, _ := json.Marshal(&nodeApps)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
-		logger.Server.Print("cannot WriteFile")
+		logger.Exceptions.Print("cannot WriteFile")
 	}
 }
 
@@ -230,7 +230,7 @@ func CurVersion(appname, scenario string) Version {
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
 			if len(nodeApps.Apps[i].Versions) == 0 {
-				logger.Client.Println("CurVersion")
+				logger.Exceptions.Println("CurVersion is NULL")
 				return Version{}
 			}
 			return nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1]
@@ -336,6 +336,6 @@ func saveNoLock() {
 	serialized, _ := json.Marshal(&nodeApps)
 	err = os.WriteFile(file.String(), serialized, os.ModePerm)
 	if err != nil {
-		logger.Server.Print("cannot WriteFile")
+		logger.Exceptions.Print("cannot WriteFile")
 	}
 }

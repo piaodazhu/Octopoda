@@ -24,7 +24,7 @@ func KeepAlive() {
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := net.Dial("tcp", sb.String())
 			if err != nil {
-				logger.Client.Print("Cannot connect to master. retry =", retry, err)
+				logger.Network.Print("Cannot connect to master. retry =", retry, err)
 
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				retry++
@@ -54,7 +54,7 @@ func KeepAlive() {
 
 				err = LoopHeartbeat(conn, joinResponse.Cnt)
 				if err != nil {
-					logger.Client.Print(err)
+					logger.Network.Print(err)
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
@@ -62,11 +62,11 @@ func KeepAlive() {
 			}
 		}
 
-		logger.Client.Print("Cannot connect to master.")
+		logger.Network.Print("Cannot connect to master.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
 			service.Reboot()
 		} else {
-			logger.Client.Fatal("Dead but wont restart.")
+			logger.Exceptions.Fatal("Dead but wont restart.")
 		}
 
 	}()

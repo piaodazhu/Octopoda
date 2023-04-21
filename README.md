@@ -256,6 +256,8 @@ With this subcmd we can get a version list of a given scenario, or a given app o
 
 Current Octopoda only support version list so `branch` is not supported. However, as a tool for scenario deployment, version list is enough in most case. Complex version control should occur primarily in the development phase.
 
+`.gitignore` is supported.
+
 ### RESET
 
 > `usage: octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>`
@@ -266,6 +268,7 @@ The argument `version` need us to specify the prefix of the version hash code, w
 
 Note that `reset` will not really let the version list back to a history version, but actually like `revert`. If we set `A->B->C` to `A`, the version list will become `A->B->C->A`, not `A`. And we won't lost version `C`.
 
+Hot reset is not supported in current Octopoda. Therefore, stop the running scenario service before the reset, the start the running service after the reset.
 
 ### FIX
 
