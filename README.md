@@ -1,19 +1,20 @@
-![Octopoda](img/logo.gif)
+![Octopoda](assets/logo.gif)
 # Octopoda
 
 🐙 **Octopoda** is a lightweight multi-nodes scenario management platform. It's not a lightweight K8S. It is originally designed for managing Lab101's ICN application scenarios (Obviously it can do more than that), which require the execution of commands on the node at the lower level of the system, such as inserting a kernel driver module. **Note that it not safe enough to deploy Octopoda in unfamiliar network environment.**
 
 Features of Octopoda:
 1. Simple topology.
-2. Robust & auto retry & auto reboot.
-3. Nodes status monitoring.
-4. Customized, automated scenario deployment.
-5. Scenario/Application version control.
-6. Scenario/Application durability.
-7. Centralized file management and distribution.
-8. Centralized scripts execution.
-9. Log management.
-10. Fast SSH login.
+2. Out-of-box.
+3. Robust & auto retry & auto reboot.
+4. Nodes status monitoring.
+5. Customized, automated scenario deployment.
+6. Scenario/Application version control.
+7. Scenario/Application durability.
+8. Centralized file management and distribution.
+9. Centralized scripts execution.
+10. Log management.
+11. Fast SSH login.
 
 # Concepts
 
