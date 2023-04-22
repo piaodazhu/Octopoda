@@ -3,15 +3,19 @@ package network
 import (
 	"brain/api"
 	"brain/logger"
+	"brain/message"
+	"brain/model"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func initRouter(engine *gin.Engine) {
+	engine.Use(BusyBlocker())
 	group := engine.Group("/api/v1")
 	{
 		group.GET("/taskstate", api.TaskState)
+		group.OPTIONS("/")
 
 		group.Use(OctopodaLogger())
 		group.GET("/node/info", api.NodeInfo)
@@ -75,3 +79,16 @@ func OctopodaLogger() gin.HandlerFunc {
 		)
 	}
 }
+
+func BusyBlocker() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !model.CheckReady() {			
+			c.AbortWithStatusJSON(503, message.Result{
+				Rcode: -1,
+				Rmsg: "Server Busy",
+			})
+		}
+		c.Next()
+	}
+}
+

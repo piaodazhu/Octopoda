@@ -1,4 +1,18 @@
 #!/bin/sh
+if [ ! -f "brain" ]; then
+  echo "brain not found."
+  exit 1
+fi
+if [ ! -f "brain.yaml" ]; then
+  echo "brain.yaml not found."
+  exit 1
+fi
+if [ ! -f "brain.service" ]; then
+  echo "brain.service not found."
+  exit 1
+fi
+
+
 if [ ! -d "/root/octopoda/workspace" ]; then
   mkdir -p /root/octopoda/workspace
   echo "create folder /root/octopoda/workspace"

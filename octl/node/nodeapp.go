@@ -20,7 +20,7 @@ func NodeAppsInfo(node string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -40,7 +40,7 @@ func NodeAppInfo(node, app, scenario string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -68,7 +68,7 @@ func NodeAppReset(node, app, scenario, version, message string) {
 
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
-		panic("Post")
+		output.PrintFatal("Post")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)

@@ -21,12 +21,12 @@ import (
 func ScenarioApply(file string, target string, message string) {
 	buf, err := os.ReadFile(file)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 	var configuration ScenarioConfigModel
 	err = yaml.Unmarshal(buf, &configuration)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 
 	err = checkConfig(&configuration)
@@ -59,7 +59,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	// create this scenario
 	err = ScenarioCreate(configuration.Name, configuration.Description)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 
 	// for each application
@@ -73,25 +73,25 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		// // fmt.Println(cmd.String())
 		// err = cmd.Run()
 		// if err != nil {
-		// 	panic("cmd.Run")
+		// 	output.PrintFatal("cmd.Run")
 		// }
 
 		err = archiver.DefaultZip.Archive([]string{app.SourcePath}, packName)
 		if err != nil {
-			panic("Archive")
+			output.PrintFatal("Archive")
 		}
 		// err = cmd.Wait()
 		// if err != nil {
-		// 	panic(err)
+		// 	output.PrintFatal(err)
 		// }
 		// if !cmd.ProcessState.Success() {
-		// 	panic("tar error")
+		// 	output.PrintFatal("tar error")
 		// }
 
 		// distrib the files
 		f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			panic("err")
+			output.PrintFatal("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -122,13 +122,13 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		client := http.Client{Timeout: 0}
 		res, err := client.Post(url, contentType, &bodyBuffer)
 		if err != nil {
-			panic("post")
+			output.PrintFatal("post")
 		}
 		// defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			panic("ReadAll")
+			output.PrintFatal("ReadAll")
 		}
 
 		if res.StatusCode != 202 {
@@ -187,7 +187,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		// load the script
 		f, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			panic("err")
+			output.PrintFatal("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -220,7 +220,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 
 		req, err := http.NewRequest("POST", url, &bodyBuffer)
 		if err != nil {
-			panic("NewRequest")
+			output.PrintFatal("NewRequest")
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -245,13 +245,13 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		fmt.Println(">> deploy", orlist[i].info)
 		res, err := http.DefaultClient.Do(orlist[i].req)
 		if err != nil {
-			panic("DoRequest")
+			output.PrintFatal("DoRequest")
 		}
 
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			panic("ReadAll")
+			output.PrintFatal("ReadAll")
 		}
 
 		if res.StatusCode != 202 {
@@ -304,7 +304,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		// load the script
 		f, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			panic("err")
+			output.PrintFatal("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -337,7 +337,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 
 		req, err := http.NewRequest("POST", url, &bodyBuffer)
 		if err != nil {
-			panic("NewRequest")
+			output.PrintFatal("NewRequest")
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -362,13 +362,13 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		fmt.Println(">> delete", orlist[i].info)
 		res, err := http.DefaultClient.Do(orlist[i].req)
 		if err != nil {
-			panic("DoRequest")
+			output.PrintFatal("DoRequest")
 		}
 
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			panic("ReadAll")
+			output.PrintFatal("ReadAll")
 		}
 
 		if res.StatusCode != 202 {

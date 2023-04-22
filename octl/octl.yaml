@@ -1,10 +1,10 @@
 server:
   name: "master"
-  ip: 192.168.3.181
+  ip: 192.168.1.1
   port: 12345
   apiPrefix : "api/v1"
-  jsonFast: true
-  outputPretty: true
+jsonFast: true
+outputPretty: true
 api:  
   nodeInfo: "/node/info"
   nodeStatus: "/node/status"
@@ -38,4 +38,3 @@ api:
   taskState: "/taskstate"
 
   sshInfo: "/sshinfo"
-

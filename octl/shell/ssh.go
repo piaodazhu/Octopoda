@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"octl/config"
+	"octl/output"
 	"os"
 	"time"
 
@@ -37,18 +38,18 @@ func SSH(nodename string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 	defer res.Body.Close()
 
 	sshinfo := SSHInfo{}
 	err = config.Jsoner.Unmarshal(buf, &sshinfo)
 	if err != nil {
-		panic(err)
+		output.PrintFatal(err.Error())
 	}
 	dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
 }

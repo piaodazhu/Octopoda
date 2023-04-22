@@ -1,27 +1,27 @@
 tentacleFace:
-  ip: "192.168.3.181"
+  ip: "192.168.1.1"
   port: 3456
   token: "default"
   activeTimeout: 2
   recordTimeout: 10
-  jsonFast: true
 brainFace:
-  ip: "192.168.3.181"
+  ip: "192.168.1.1"
   port: 12345
 redis:
   ip: "127.0.0.1"
   port: 6379
-  password: "redispass"
+  password: "password"
   db: 0
 logger:
-  path: "/root/platform"
+  path: "/root/octopoda/log"
   namePrefix: "log"
   rollDays: 3
 workspace:
-  root: "/root/workspace/"
-  store: "/root/workspace/FSTORE/"
+  root: "/root/octopoda/workspace/"
+  store: "/root/octopoda/FSTORE/"
 ssh:
-  username: "root"
-  password: "ubuntumima"
+  username: "username"
+  password: "password"
   ip: "127.0.0.1"
-  port: 22
+  port: 1
+jsonFast: true

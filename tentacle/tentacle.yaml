@@ -4,10 +4,10 @@ tentacle:
   ip: "127.0.0.1"
   port: 23456
 ssh:
-  username: "pi"
-  password: "network123"
-  ip: "192.168.3.240"
-  port: 22
+  username: "username"
+  password: "password"
+  ip: "192.168.1.1"
+  port: 1
 brain:
   ip: "127.0.0.1"
   port: 3456
@@ -23,5 +23,5 @@ heartbeat:
   autoRestart: false
 workspace:
   root: "/root/octopoda/workspace/"
-  store: "/root/octopoda/workspace/FSTORE/"
+  store: "/root/octopoda/FSTORE/"
 jsonFast: true

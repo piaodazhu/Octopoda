@@ -30,18 +30,18 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	// err := exec.Command("tar", "-cf", packName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 
 	// if err != nil {
-	// 	panic("cmd.Run")
+	// 	output.PrintFatal("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
 	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
 	if err != nil {
-		panic("Archive")
+		output.PrintFatal("Archive")
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		panic("err")
+		output.PrintFatal("err")
 	}
 	defer f.Close()
 
@@ -64,13 +64,13 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	)
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		panic("post")
+		output.PrintFatal("post")
 	}
 
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		panic("ReadAll")
+		output.PrintFatal("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
@@ -108,12 +108,12 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
-		panic("Post")
+		output.PrintFatal("Post")
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		panic("ReadAll")
+		output.PrintFatal("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
@@ -148,18 +148,18 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 	// if err != nil {
-	// 	panic("cmd.Run")
+	// 	output.PrintFatal("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
 	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
 	if err != nil {
-		panic("Archive")
+		output.PrintFatal("Archive")
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		panic("err")
+		output.PrintFatal("err")
 	}
 	defer f.Close()
 
@@ -185,12 +185,12 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		panic("post")
+		output.PrintFatal("post")
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		panic("ReadAll")
+		output.PrintFatal("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
@@ -216,12 +216,12 @@ func ListAllFile(node string, subdir string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
 	if err != nil {
-		panic("ReadAll")
+		output.PrintFatal("ReadAll")
 	}
 	output.PrintJSON(msg)
 }

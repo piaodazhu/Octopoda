@@ -8,13 +8,18 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
-var FirstFixed chan struct{}
+var Busy int32
+
+func SetBusy()         { atomic.StoreInt32(&Busy, 0) }
+func SetReady()        { atomic.StoreInt32(&Busy, 1) }
+func CheckReady() bool { return atomic.LoadInt32(&Busy) == 1 }
 
 func InitScenarioMap() {
-	FirstFixed = make(chan struct{}, 1)
+	SetBusy()
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
 	file.WriteString(diskFileName)
@@ -25,7 +30,7 @@ func InitScenarioMap() {
 		ScenarioMap = make(map[string]*ScenarioModel)
 		ScenLock.Unlock()
 		// new storage need not fix
-		FirstFixed <- struct{}{}
+		SetReady()
 	} else {
 		logger.SysInfo.Printf("Scenario file found. Loading...")
 		defer f.Close()
@@ -157,7 +162,7 @@ func Fix(name string) error {
 }
 
 func AutoFix() {
-	// 3s to wait active nodes connect to brain
+	// 10s to wait active nodes connect to brain
 	time.Sleep(10 * time.Second)
 
 	for name := range ScenarioMap {
@@ -166,8 +171,7 @@ func AutoFix() {
 		}
 	}
 	// first roll fix done. Then http request can be accepted
-	logger.SysInfo.Println("First Fix Done")
-	FirstFixed <- struct{}{}
+	SetReady()
 
 	for {
 		namelist := []string{}

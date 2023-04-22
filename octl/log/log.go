@@ -46,7 +46,7 @@ func NodeLog(name string, params []string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)

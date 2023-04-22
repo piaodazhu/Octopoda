@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"octl/config"
 
+	"os"
+
 	"github.com/hokaccha/go-prettyjson"
 )
 
 func PrintJSON(message interface{}) {
-	if config.GlobalConfig.Server.OutputPretty {
+	if config.GlobalConfig.OutputPretty {
 		switch msg := message.(type) {
 		case string:
 			s, _ := prettyjson.Format([]byte(msg))
@@ -17,7 +19,7 @@ func PrintJSON(message interface{}) {
 			s, _ := prettyjson.Format(msg)
 			fmt.Println(string(s))
 		default:
-			panic("unsupported message type")
+			PrintFatal("unsupported message type")
 		}
 	} else {
 		switch msg := message.(type) {
@@ -26,7 +28,12 @@ func PrintJSON(message interface{}) {
 		case []byte:
 			fmt.Println(string(msg))
 		default:
-			panic("unsupported message type")
+			PrintFatal("unsupported message type")
 		}
 	}
+}
+
+func PrintFatal(message string) {
+	fmt.Printf("\033[1;31;40mFatal Error: %s\033[0m\n", message)
+	os.Exit(1)
 }

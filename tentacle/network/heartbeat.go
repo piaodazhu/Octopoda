@@ -24,7 +24,7 @@ func KeepAlive() {
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := net.Dial("tcp", sb.String())
 			if err != nil {
-				logger.Network.Print("Cannot connect to master. retry =", retry, err)
+				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
 
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				retry++

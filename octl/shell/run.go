@@ -54,7 +54,7 @@ func runScript(task string, nodes []string) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		panic("Post")
+		output.PrintFatal("Post")
 	}
 	defer res.Body.Close()
 
@@ -79,7 +79,7 @@ func runCmd(task string, nodes []string) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		panic("Post")
+		output.PrintFatal("Post")
 	}
 	defer res.Body.Close()
 

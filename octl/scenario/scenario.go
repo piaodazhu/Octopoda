@@ -19,7 +19,7 @@ func ScenariosInfo() {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -37,7 +37,7 @@ func ScenarioInfo(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -55,7 +55,7 @@ func ScenarioFix(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -73,7 +73,7 @@ func ScenarioVersion(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -100,7 +100,7 @@ func ScenarioReset(name string, version string, message string) {
 
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
-		panic("Post")
+		output.PrintFatal("Post")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)

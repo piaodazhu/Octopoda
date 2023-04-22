@@ -18,7 +18,7 @@ func NodeInfo(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -35,7 +35,7 @@ func NodesInfo() {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -52,7 +52,7 @@ func NodePrune() {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		panic("Get")
+		output.PrintFatal("Get")
 	}
 	res.Body.Close()
 }

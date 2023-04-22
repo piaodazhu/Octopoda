@@ -1,6 +1,8 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 var GlobalConfig ConfigModel
 
@@ -20,7 +22,7 @@ func InitConfig() {
 		panic("cannot unmarshal config because " + err.Error())
 	}
 
-	if GlobalConfig.Server.JsonFast {
+	if GlobalConfig.JsonFast {
 		setFastJsoner()
 	} else {
 		setStdJsoner()

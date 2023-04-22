@@ -3,6 +3,8 @@ package config
 type ConfigModel struct {
 	Server ServerModel `mapstructure:"server"`
 	Api    APIs        `mapstructure:"api"`
+	OutputPretty bool   `mapstructure:"outputPretty"`
+	JsonFast     bool   `mapstructure:"jsonFast"`
 }
 
 type ServerModel struct {
@@ -10,8 +12,6 @@ type ServerModel struct {
 	Ip           string `mapstructure:"ip"`
 	Port         uint16 `mapstructure:"port"`
 	ApiPrefix    string `mapstructure:"apiPrefix"`
-	OutputPretty bool   `mapstructure:"outputPretty"`
-	JsonFast     bool   `mapstructure:"jsonFast"`
 }
 
 type APIs struct {

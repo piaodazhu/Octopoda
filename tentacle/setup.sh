@@ -1,4 +1,18 @@
 #!/bin/sh
+if [ ! -f "tentacle" ]; then
+  echo "tentacle not found."
+  exit 1
+fi
+if [ ! -f "tentacle.yaml" ]; then
+  echo "tentacle.yaml not found."
+  exit 1
+fi
+if [ ! -f "tentacle.service" ]; then
+  echo "tentacle.service not found."
+  exit 1
+fi
+
+
 if [ ! -d "/root/octopoda/workspace" ]; then
   mkdir -p /root/octopoda/workspace
   echo "create folder /root/octopoda/workspace"
