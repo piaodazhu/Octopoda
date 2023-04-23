@@ -8,9 +8,9 @@ if [ -f "/etc/systemd/system/tentacle.service" ]; then
   echo "remove file /etc/systemd/system/tentacle.service"
 fi
 
-if [ -d "/root/octopoda" ]; then
-  rm -rf /root/octopoda
-  echo "remove folder /root/octopoda"
+if [ -d "/root/octopoda/tentacle/bin" ]; then
+  rm -rf /root/octopoda/tentacle/bin
+  echo "remove folder /root/octopoda/tentacle/bin"
 fi
 
 if [ -d "/etc/octopoda" ]; then

@@ -12,24 +12,18 @@ if [ ! -f "tentacle.service" ]; then
   exit 1
 fi
 
-
-if [ ! -d "/root/octopoda/workspace" ]; then
-  mkdir -p /root/octopoda/workspace
-  echo "create folder /root/octopoda/workspace"
-fi
-
-if [ ! -d "/root/octopoda/log" ]; then
-  mkdir -p /root/octopoda/log
-  echo "create folder /root/octopoda/log"
+if [ ! -d "/root/octopoda/tentacle/bin" ]; then
+  mkdir -p /root/octopoda/tentacle/bin
+  echo "create folder /root/octopoda/tentacle/bin"
 fi
 
 if [ ! -d "/etc/octopoda" ]; then
   mkdir -p /etc/octopoda
   echo "create folder /etc/octopoda"
 fi
-cp tentacle /root/octopoda/
-chmod +x /root/octopoda/tentacle
-echo "install binary executable file --> /root/octopoda/"
+cp tentacle /root/octopoda/tentacle/bin
+chmod +x /root/octopoda/tentacle/bin/tentacle
+echo "install binary executable file --> /root/octopoda/tentacle/bin/"
 cp tentacle.yaml /etc/octopoda/
 echo "install config tentacle.yaml --> /etc/octopoda/"
 

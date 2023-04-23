@@ -8,9 +8,9 @@ if [ -f "/etc/systemd/system/brain.service" ]; then
   echo "remove file /etc/systemd/system/brain.service"
 fi
 
-if [ -d "/root/octopoda" ]; then
-  rm -rf /root/octopoda
-  echo "remove folder /root/octopoda"
+if [ -d "/root/octopoda/brain/bin" ]; then
+  rm -rf /root/octopoda/brain/bin
+  echo "remove folder /root/octopoda/brain/bin"
 fi
 
 if [ -d "/etc/octopoda" ]; then

@@ -12,24 +12,18 @@ if [ ! -f "brain.service" ]; then
   exit 1
 fi
 
-
-if [ ! -d "/root/octopoda/workspace" ]; then
-  mkdir -p /root/octopoda/workspace
-  echo "create folder /root/octopoda/workspace"
-fi
-
-if [ ! -d "/root/octopoda/log" ]; then
-  mkdir -p /root/octopoda/log
-  echo "create folder /root/octopoda/log"
+if [ ! -d "/root/octopoda/brain/bin" ]; then
+  mkdir -p /root/octopoda/brain/bin
+  echo "create folder /root/octopoda/brain/bin"
 fi
 
 if [ ! -d "/etc/octopoda" ]; then
   mkdir -p /etc/octopoda
   echo "create folder /etc/octopoda"
 fi
-cp brain /root/octopoda/
-chmod +x /root/octopoda/brain
-echo "install binary executable file --> /root/octopoda/"
+cp brain /root/octopoda/brain/bin
+chmod +x /root/octopoda/brain/bin/brain
+echo "install binary executable file --> /root/octopoda/brain/bin/"
 cp brain.yaml /etc/octopoda/
 echo "install config brain.yaml --> /etc/octopoda/"
 
