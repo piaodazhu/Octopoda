@@ -186,26 +186,16 @@ func unpackFiles(packb64 string, dir string) error {
 	if err != nil {
 		return err
 	}
+	
+	logger.SysInfo.Print("want save: ",file.String(), path)
 
-	// cmd := exec.Command("tar", "-xf", file.String(), "-C", path)
-	// err = cmd.Run()
-	// if err != nil {
-	// 	return err
-	// }
-	// // err = cmd.Wait()
-	// // if err != nil {
-	// // 	return err
-	// // }
-	// if !cmd.ProcessState.Success() {
-	// 	return ErrUnpack{}
-	// }
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Unarchive(file.String(), path)
 	if err != nil {
 		logger.Exceptions.Print(err)
 		return ErrUnpack{}
 	}
-
+	
 	os.Remove(file.String())
 	return nil
 }

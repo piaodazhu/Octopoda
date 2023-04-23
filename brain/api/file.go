@@ -156,6 +156,10 @@ func FileSpread(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
+		if fname[len(fname) - 1] == '/' {
+			fname = fname + "."
+		}
+
 		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 		// err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
 		archiver.DefaultZip.OverwriteExisting = true

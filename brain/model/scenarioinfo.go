@@ -219,7 +219,7 @@ func GetScenariosDigestAll() ([]ScenarioDigest, bool) {
 	defer ScenLock.RUnlock()
 
 	if len(ScenarioMap) == 0 {
-		return nil, true
+		return []ScenarioDigest{}, true
 	}
 	res := make([]ScenarioDigest, len(ScenarioMap))
 	idx := 0

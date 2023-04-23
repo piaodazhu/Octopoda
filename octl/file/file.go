@@ -74,12 +74,12 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	}
 
 	if res.StatusCode != 202 {
-		fmt.Println("Request submit error: ", string(msg))
+		output.PrintFatal("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("UPLOADING...", string(msg))
 	if err != nil {
-		fmt.Println("Task processing error: ", err.Error())
+		output.PrintFatal("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)
@@ -117,12 +117,12 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 	}
 
 	if res.StatusCode != 202 {
-		fmt.Println("Request submit error: ", string(msg))
+		output.PrintFatal("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("SPREADING...", string(msg))
 	if err != nil {
-		fmt.Println("Task processing error: ", err.Error())
+		output.PrintFatal("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)
@@ -194,12 +194,12 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	}
 
 	if res.StatusCode != 202 {
-		fmt.Println("Request submit error: ", string(msg))
+		output.PrintFatal("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
-		fmt.Println("Task processing error: ", err.Error())
+		output.PrintFatal("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)

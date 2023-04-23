@@ -54,8 +54,6 @@ func ScenarioApply(file string, target string, message string) {
 
 func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	var err error
-	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-
 	// create this scenario
 	err = ScenarioCreate(configuration.Name, configuration.Description)
 	if err != nil {
@@ -75,7 +73,11 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		// if err != nil {
 		// 	output.PrintFatal("cmd.Run")
 		// }
-
+		if app.SourcePath[len(app.SourcePath) - 1] == '/' {
+			app.SourcePath = app.SourcePath + "."
+		}
+		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+		archiver.DefaultZip.OverwriteExisting = true
 		err = archiver.DefaultZip.Archive([]string{app.SourcePath}, packName)
 		if err != nil {
 			output.PrintFatal("Archive")
@@ -110,6 +112,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		contentType := bodyWriter.FormDataContentType()
 
 		f.Close()
+		os.Remove(packName)
 		bodyWriter.Close()
 
 		url := fmt.Sprintf("http://%s:%d/%s%s",
@@ -132,21 +135,20 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		}
 
 		if res.StatusCode != 202 {
-			fmt.Println("Request submit error: ", string(msg))
+			output.PrintFatal("Request submit error: " + string(msg))
 			return
 		}
 		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
-			fmt.Println("Task processing error: ", err.Error())
+			output.PrintFatal("Task processing error: " + err.Error())
 			return
 		}
 		output.PrintJSON(results)
 	}
-	os.Remove(packName)
 	// update this scenario
 	err = ScenarioUpdate(configuration.Name, message)
 	if err != nil {
-		fmt.Println(err)
+		output.PrintFatal(err.Error())
 	}
 }
 
