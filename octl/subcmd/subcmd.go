@@ -223,13 +223,33 @@ usage:
 }
 
 func FileTree(arglist []string) {
-	if len(arglist) == 0 {
+	if len(arglist) < 2 {
 		goto usage
-	} else if len(arglist) == 1 {
-		file.ListAllFile(arglist[0], "")
-	} else if len(arglist) == 2 {
-		file.ListAllFile(arglist[0], arglist[1])
-	} else {
+	} 
+	switch arglist[0] {
+	case "store":
+		if len(arglist) == 2 {
+			file.ListAllFile(arglist[0], arglist[1], "")
+		} else if len(arglist) == 3 {
+			file.ListAllFile(arglist[0], arglist[1], arglist[2])
+		} else {
+			goto usage
+		}
+	case "log":
+		if len(arglist) == 2 {
+			file.ListAllFile(arglist[0], arglist[1], "")
+		} else {
+			goto usage
+		}
+	case "nodeapp":
+		if len(arglist) == 3 {
+			file.ListAllFile(arglist[0], arglist[1], arglist[2])
+		} else if len(arglist) == 4 {
+			file.ListAllFile(arglist[0], arglist[1], arglist[2] + "/" + arglist[3])
+		} else {
+			goto usage
+		}
+	default:
 		goto usage
 	}
 	return

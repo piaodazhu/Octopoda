@@ -16,6 +16,7 @@ import (
 
 type FileParams struct {
 	PackName   string
+	PathType   string
 	TargetPath string
 	FileBuf    string
 }
@@ -65,10 +66,28 @@ errorout:
 
 func FileTree(conn net.Conn, raw []byte) {
 	var pathsb strings.Builder
-	pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-	pathsb.Write(raw)
-	res := allFiles(pathsb.String())
-	err := message.SendMessage(conn, message.TypeFileTreeResponse, res)
+	res := []byte{}
+	pathinfo := FileParams{}
+	err := config.Jsoner.Unmarshal(raw, &pathinfo)
+	if err != nil {
+		goto errorout
+	}
+
+	switch pathinfo.PathType {
+	case "store":
+		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
+	case "log":
+		pathsb.WriteString(config.GlobalConfig.Logger.Path)
+	case "nodeapp":
+		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
+	default:
+		goto errorout
+	}
+	pathsb.WriteString(pathinfo.TargetPath)
+
+	res = allFiles(pathsb.String())
+errorout:
+	err = message.SendMessage(conn, message.TypeFileTreeResponse, res)
 	if err != nil {
 		logger.Comm.Println("FileTree send error")
 	}
@@ -100,7 +119,9 @@ func walkDir(path string, files *[]FileInfo) {
 	PthSep := string(os.PathSeparator)
 
 	for _, fi := range dir {
-		if fi.IsDir() {
+		if fi.Name()[0] == '.' {
+			continue
+		} else if fi.IsDir() {
 			walkDir(path+PthSep+fi.Name(), files)
 		} else {
 			detail, _ := fi.Info()

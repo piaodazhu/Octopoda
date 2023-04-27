@@ -205,12 +205,13 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	output.PrintJSON(results)
 }
 
-func ListAllFile(node string, subdir string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s&subdir=%s",
+func ListAllFile(pathtype string, node string, subdir string) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?pathtype=%s&name=%s&subdir=%s",
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
 		config.GlobalConfig.Server.ApiPrefix,
 		config.GlobalConfig.Api.FileTree,
+		pathtype,
 		node,
 		subdir,
 	)

@@ -14,7 +14,7 @@ var usageInfo = map[string]string{
 	"upload":  `octl upload <localFileOrDir> <targetDir>`,
 	"spread":  `octl spread <masterFileOrDir> <targetDir> <node1> <node2> ...`,
 	"distrib": `octl distrib <localFileOrDir> <targetDir> <node1> <node2> ...`,
-	"tree":    `octl tree [master|<node>] [SubDir]`,
+	"tree":    `octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] [SubDir]`,
 	"prune":   `octl prune`,
 	"run":     `octl run [ {<command>} | <script> ] <node1> <node2> ...`,
 }

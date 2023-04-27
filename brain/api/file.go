@@ -21,6 +21,7 @@ import (
 
 type FileParams struct {
 	PackName   string
+	PathType   string
 	TargetPath string
 	FileBuf    string
 }
@@ -240,45 +241,80 @@ func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
 }
 
 func FileTree(ctx *gin.Context) {
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
 	name, ok := ctx.GetQuery("name")
 	if !ok {
-		ctx.Status(400)
+		rmsg.Rmsg = "Lack name"
+		ctx.JSON(400, rmsg)
+		return
+	}
+	pathtype, ok := ctx.GetQuery("pathtype")
+	if !ok {
+		rmsg.Rmsg = "Lack pathtype"
+		ctx.JSON(400, rmsg)
 		return
 	}
 	subdir, _ := ctx.GetQuery("subdir")
-	raw := getFileTree(name, subdir)
+	raw, err := getFileTree(pathtype, name, subdir)
+	if err != nil {
+		rmsg.Rmsg = err.Error()
+		ctx.JSON(404, rmsg)
+		return
+	}
+	// rmsg.Output = string(raw) //  marshal?
+	// ctx.JSON(200, rmsg)
 	ctx.Data(200, "application/json", raw)
 }
 
-func getFileTree(name string, subdir string) []byte {
+type ErrInvalidPathType struct { pathtype, node string }
+func (e ErrInvalidPathType) Error() string { return fmt.Sprintf("Invalid path type: %s on %s\n", e.pathtype, e.node) }
+type ErrInvalidNode struct { node string }
+func (e ErrInvalidNode) Error() string { return fmt.Sprintf("Invalid node: %s\n", e.node) }
+type ErrNetworkError struct { node string }
+func (e ErrNetworkError) Error() string { return fmt.Sprintf("Network error: %s\n", e.node) }
+
+func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 	var pathsb strings.Builder
 	if name == "master" {
-		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
+		switch pathtype {
+		case "store":
+			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
+		case "log":
+			pathsb.WriteString(config.GlobalConfig.Logger.Path)
+		default:
+			return nil, ErrInvalidPathType{pathtype: pathtype, node: name}
+		}
 		pathsb.WriteString(subdir)
-		return allFiles(pathsb.String())
+		return allFiles(pathsb.String()), nil
 	}
 	addr, ok := model.GetNodeAddress(name)
 	if !ok {
-		return []byte{}
+		return nil, ErrInvalidNode{node: name}
 	}
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		logger.Network.Print("FileTree Dial")
-		return []byte{}
+		return nil, ErrNetworkError{node: name}
 	}
 	defer conn.Close()
 
-	err = message.SendMessage(conn, message.TypeFileTree, []byte(subdir))
+	params, _ := config.Jsoner.Marshal(&FileParams{
+		PathType: pathtype,
+		TargetPath: subdir,
+	})
+	err = message.SendMessage(conn, message.TypeFileTree, params)
 	if err != nil {
 		logger.Comm.Print("FileTree")
-		return []byte{}
+		return nil, ErrNetworkError{node: name}
 	}
 	mtype, raw, err := message.RecvMessage(conn)
 	if err != nil || mtype != message.TypeFileTreeResponse {
 		logger.Comm.Print("FileTreeResponse")
-		return []byte{}
+		return nil, ErrNetworkError{node: name}
 	}
-	return raw
+	return raw, nil
 }
 
 type FileInfo struct {
@@ -307,7 +343,9 @@ func walkDir(path string, files *[]FileInfo) {
 	PthSep := string(os.PathSeparator)
 
 	for _, fi := range dir {
-		if fi.IsDir() {
+		if fi.Name()[0] == '.' {
+			continue
+		} else if fi.IsDir() {
 			walkDir(path+PthSep+fi.Name(), files)
 		} else {
 			detail, _ := fi.Info()
