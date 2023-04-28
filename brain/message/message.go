@@ -20,6 +20,9 @@ const (
 	TypeFilePush
 	TypeFilePushResponse
 
+	TypeFilePull
+	TypeFilePullResponse
+
 	TypeFileTree
 	TypeFileTreeResponse
 
@@ -65,6 +68,9 @@ var MsgTypeString map[int]string = map[int]string {
 
 	TypeFilePush: "FilePush",
 	TypeFilePushResponse: "FilePushResponse",
+
+	TypeFilePull: "TypeFilePull",
+	TypeFilePullResponse: "FilePullResponse",
 
 	TypeFileTree: "FileTree",
 	TypeFileTreeResponse: "FileTreeResponse",

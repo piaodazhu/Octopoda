@@ -157,7 +157,7 @@ func FileSpread(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		if fname[len(fname) - 1] == '/' {
+		if fname[len(fname)-1] == '/' {
 			fname = fname + "."
 		}
 
@@ -268,11 +268,18 @@ func FileTree(ctx *gin.Context) {
 	ctx.Data(200, "application/json", raw)
 }
 
-type ErrInvalidPathType struct { pathtype, node string }
-func (e ErrInvalidPathType) Error() string { return fmt.Sprintf("Invalid path type: %s on %s\n", e.pathtype, e.node) }
-type ErrInvalidNode struct { node string }
+type ErrInvalidPathType struct{ pathtype, node string }
+
+func (e ErrInvalidPathType) Error() string {
+	return fmt.Sprintf("Invalid path type: %s on %s\n", e.pathtype, e.node)
+}
+
+type ErrInvalidNode struct{ node string }
+
 func (e ErrInvalidNode) Error() string { return fmt.Sprintf("Invalid node: %s\n", e.node) }
-type ErrNetworkError struct { node string }
+
+type ErrNetworkError struct{ node string }
+
 func (e ErrNetworkError) Error() string { return fmt.Sprintf("Network error: %s\n", e.node) }
 
 func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
@@ -301,7 +308,7 @@ func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 	defer conn.Close()
 
 	params, _ := config.Jsoner.Marshal(&FileParams{
-		PathType: pathtype,
+		PathType:   pathtype,
 		TargetPath: subdir,
 	})
 	err = message.SendMessage(conn, message.TypeFileTree, params)
@@ -455,3 +462,177 @@ func b64Encode(raw []byte) string {
 	}
 	return buffer.String()
 }
+
+func FilePull(ctx *gin.Context) {
+	rmsg := message.Result{
+		Rmsg: "OK",
+	}
+	name, ok := ctx.GetQuery("name")
+	if !ok {
+		rmsg.Rmsg = "Lack name"
+		ctx.JSON(400, rmsg)
+		return
+	}
+	pathtype, ok := ctx.GetQuery("pathtype")
+	if !ok {
+		rmsg.Rmsg = "Lack pathtype"
+		ctx.JSON(400, rmsg)
+		return
+	}
+	fileOrDir, ok := ctx.GetQuery("fileOrDir")
+	if !ok {
+		rmsg.Rmsg = "Lack fileOrDir"
+		ctx.JSON(400, rmsg)
+		return
+	}
+
+	// pull master file?
+	if name == "master" {
+		var pathsb strings.Builder
+		switch pathtype {
+		case "store":
+			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
+		case "log":
+			pathsb.WriteString(config.GlobalConfig.Logger.Path)
+		default:
+			rmsg.Rmsg = ErrInvalidPathType{pathtype: pathtype, node: name}.Error()
+			ctx.JSON(400, rmsg)
+			return
+		}
+		pathsb.WriteString(fileOrDir)
+		_, err := os.Stat(pathsb.String())
+		if err != nil {
+			rmsg.Rmsg = "file or path not found"
+			ctx.JSON(404, rmsg)
+			return
+		}
+		// pack the file or dir
+		packName := packFile(pathsb.String())
+		if packName == "" {
+			rmsg.Rmsg = "Error when packing files"
+			ctx.JSON(500, rmsg)
+			return
+		}
+		defer os.Remove(packName)
+		rmsg.Output = loadFile(packName)
+		ctx.JSON(200, rmsg)
+		return
+	}
+	addr, ok := model.GetNodeAddress(name)
+	if !ok {
+		rmsg.Rmsg = ErrInvalidNode{node: name}.Error()
+		ctx.JSON(404, rmsg)
+		return
+	}
+
+	// fast return
+	taskid := rdb.TaskIdGen()
+	if !rdb.TaskNew(taskid, 3600) {
+		logger.Exceptions.Print("TaskNew")
+	}
+	ctx.String(202, taskid)
+
+	go func() {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Exceptions.Print("TaskMarkFailed Error")
+			}
+			return
+		}
+		defer conn.Close()
+
+		params, _ := config.Jsoner.Marshal(&FileParams{
+			PathType:   pathtype,
+			TargetPath: fileOrDir,
+		})
+		err = message.SendMessage(conn, message.TypeFilePull, params)
+		if err != nil {
+			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Exceptions.Print("TaskMarkFailed Error")
+			}
+			return
+		}
+		mtype, raw, err := message.RecvMessage(conn)
+		if err != nil || mtype != message.TypeFilePullResponse {
+			logger.Comm.Print("TypeFilePullResponse")
+			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Exceptions.Print("TaskMarkFailed Error")
+			}
+			return
+		}
+
+		if len(raw) == 0 {
+			rmsg.Rmsg = "file or path not found"
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Exceptions.Print("TaskMarkFailed Error")
+			}
+			return
+		} 
+		
+		// rmsg.Output = encodeBuf(raw)
+		rmsg.Output = string(raw)
+		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
+			logger.Exceptions.Print("TaskMarkDone Error")
+		}
+	}()
+}
+
+func packFile(fileOrDir string) string {
+	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+	archiver.DefaultZip.OverwriteExisting = true
+	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
+	if err != nil {
+		return ""
+	}
+	return packName
+}
+
+func loadFile(packName string) string {
+	var filebufb64 strings.Builder
+	f, err := os.Open(packName)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	// prepare enough buffer capacity
+	info, _ := f.Stat()
+	filebufb64.Grow(base64.RawStdEncoding.EncodedLen(int(info.Size())))
+
+	// read and encode to base64
+	ChunkSize := 4096 * 4
+	ChunkBuf := make([]byte, ChunkSize)
+	for {
+		n, err := f.Read(ChunkBuf)
+		if err == io.EOF {
+			break
+		}
+		filebufb64.WriteString(base64.RawStdEncoding.EncodeToString(ChunkBuf[:n]))
+	}
+	return filebufb64.String()
+}
+
+// func encodeBuf(buf []byte) string {
+// 	var bufb64 strings.Builder
+
+// 	// prepare enough buffer capacity
+// 	bufb64.Grow(base64.RawStdEncoding.EncodedLen(len(buf)))
+
+// 	// read and encode to base64
+// 	Offset := 0
+// 	Len := len(buf)
+// 	ChunkSize := 4096 * 4
+// 	for Offset < Len {
+// 		end := Offset + ChunkSize
+// 		if end > Len {
+// 			end = Len
+// 		}
+// 		bufb64.WriteString(base64.RawStdEncoding.EncodeToString(buf[Offset:end]))
+// 		Offset += ChunkSize
+// 	}
+// 	return bufb64.String()
+// }

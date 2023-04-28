@@ -40,6 +40,8 @@ func main() {
 		subcmd.Distrib(args[2:])
 	case "tree":
 		subcmd.FileTree(args[2:])
+	case "pull":
+		subcmd.Pull(args[2:])
 	case "prune":
 		subcmd.Prune(args[2:])
 	case "run":

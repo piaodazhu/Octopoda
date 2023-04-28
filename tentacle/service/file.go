@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -61,6 +62,47 @@ errorout:
 	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
 	if err != nil {
 		logger.Comm.Println("FilePush send error")
+	}
+}
+
+func FilePull(conn net.Conn, raw []byte) {
+	var pathsb strings.Builder
+	var err error
+	var packName string
+	payload := []byte{}
+	fileinfo := FileParams{}
+	err = config.Jsoner.Unmarshal(raw, &fileinfo)
+	if err != nil {
+		logger.Exceptions.Println("FilePull")
+		goto errorout
+	}
+	switch fileinfo.PathType {
+	case "store":
+		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
+	case "log":
+		pathsb.WriteString(config.GlobalConfig.Logger.Path)
+	case "nodeapp":
+		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
+	default:
+		goto errorout
+	}
+	pathsb.WriteString(fileinfo.TargetPath)
+	_, err = os.Stat(pathsb.String())
+	if err != nil {
+		goto errorout
+	}
+	// pack the file or dir
+	packName = packFile(pathsb.String())
+	if packName == "" {
+		logger.Exceptions.Println("packFile")
+		goto errorout
+	}
+	defer os.Remove(packName)
+	payload = []byte(loadFile(packName))
+errorout:
+	err = message.SendMessage(conn, message.TypeFilePullResponse, payload)
+	if err != nil {
+		logger.Comm.Println("FilePull send error")
 	}
 }
 
@@ -207,8 +249,8 @@ func unpackFiles(packb64 string, dir string) error {
 	if err != nil {
 		return err
 	}
-	
-	logger.SysInfo.Print("want save: ",file.String(), path)
+
+	logger.SysInfo.Print("want save: ", file.String(), path)
 
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Unarchive(file.String(), path)
@@ -216,7 +258,42 @@ func unpackFiles(packb64 string, dir string) error {
 		logger.Exceptions.Print(err)
 		return ErrUnpack{}
 	}
-	
+
 	os.Remove(file.String())
 	return nil
+}
+
+func packFile(fileOrDir string) string {
+	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+	archiver.DefaultZip.OverwriteExisting = true
+	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
+	if err != nil {
+		return ""
+	}
+	return packName
+}
+
+func loadFile(packName string) string {
+	var filebufb64 strings.Builder
+	f, err := os.Open(packName)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	// prepare enough buffer capacity
+	info, _ := f.Stat()
+	filebufb64.Grow(base64.RawStdEncoding.EncodedLen(int(info.Size())))
+
+	// read and encode to base64
+	ChunkSize := 4096 * 4
+	ChunkBuf := make([]byte, ChunkSize)
+	for {
+		n, err := f.Read(ChunkBuf)
+		if err == io.EOF {
+			break
+		}
+		filebufb64.WriteString(base64.RawStdEncoding.EncodeToString(ChunkBuf[:n]))
+	}
+	return filebufb64.String()
 }

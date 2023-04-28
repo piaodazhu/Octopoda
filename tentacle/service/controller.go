@@ -26,8 +26,11 @@ func HandleConn(conn net.Conn) {
 		NodeStatus(conn, raw)
 	case message.TypeFilePush:
 		FilePush(conn, raw)
+	case message.TypeFilePull:
+		FilePull(conn, raw)
 	case message.TypeFileTree:
 		FileTree(conn, raw)
+	
 	case message.TypeNodeLog:
 		NodeLog(conn, raw)
 	case message.TypeCommandReboot:

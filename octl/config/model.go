@@ -40,6 +40,7 @@ type APIs struct {
 	FileSpread  string `mapstructure:"fileSpread"`
 	FileDistrib string `mapstructure:"fileDistrib"`
 	FileTree    string `mapstructure:"fileTree"`
+	FilePull    string `mapstructure:"filePull"`
 
 	RunCmd    string `mapstructure:"runCmd"`
 	RunScript string `mapstructure:"runScript"`

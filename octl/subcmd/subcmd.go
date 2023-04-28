@@ -257,6 +257,37 @@ usage:
 	PrintUsage("tree")
 }
 
+func Pull(arglist []string) {
+	if len(arglist) < 3 {
+		goto usage
+	} 
+	switch arglist[0] {
+	case "store":
+		fallthrough
+	case "log":
+		if len(arglist) == 3 {
+			file.PullFile(arglist[0], arglist[1], arglist[2], "./")
+		} else if len(arglist) == 4 {
+			file.PullFile(arglist[0], arglist[1], arglist[2], arglist[3])
+		} else {
+			goto usage
+		}
+	case "nodeapp":
+		if len(arglist) == 4 {
+			file.PullFile(arglist[0], arglist[1], arglist[2], arglist[3])
+		} else if len(arglist) == 5 {
+			file.PullFile(arglist[0], arglist[1], arglist[2] + "/" + arglist[3], arglist[4])
+		} else {
+			goto usage
+		}
+	default:
+		goto usage
+	}
+	return
+usage:
+	PrintUsage("pull")
+}
+
 func Prune(arglist []string) {
 	if len(arglist) != 0 {
 		goto usage

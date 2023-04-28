@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -10,6 +11,7 @@ import (
 	"octl/output"
 	"octl/task"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/mholt/archiver"
@@ -225,4 +227,138 @@ func ListAllFile(pathtype string, node string, subdir string) {
 		output.PrintFatal("ReadAll")
 	}
 	output.PrintJSON(msg)
+}
+
+type Result struct {
+	// Result code. Reserved
+	Rcode int
+
+	// Result message. OK, or Error Reason
+	Rmsg string
+
+	// For script or command execution. Script output.
+	Output string
+
+	// For version control. Version hash code.
+	Version string
+
+	// For version control. Modified flag.
+	Modified bool
+}
+
+func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
+	url := fmt.Sprintf("http://%s:%d/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
+		config.GlobalConfig.Server.Ip,
+		config.GlobalConfig.Server.Port,
+		config.GlobalConfig.Server.ApiPrefix,
+		config.GlobalConfig.Api.FilePull,
+		pathtype,
+		node,
+		fileOrDir,
+	)
+	res, err := http.Get(url)
+	if err != nil {
+		output.PrintFatal("Get")
+	}
+	defer res.Body.Close()
+	msg, err := io.ReadAll(res.Body)
+	if err != nil {
+		output.PrintFatal("ReadAll")
+	}
+
+	result := Result{}
+	if res.StatusCode == 200 {
+		// directly get the file from master
+		config.Jsoner.Unmarshal(msg, &result)
+
+		// unpack result.Output
+		err = unpackFiles(result.Output, targetdir)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Println("Success")
+	} else if res.StatusCode == 202 {
+		// have to wait
+		resultmsg, err := task.WaitTask("PULLING...", string(msg))
+		if err != nil {
+			output.PrintFatal("Task processing error: " + err.Error())
+			return
+		}
+		config.Jsoner.Unmarshal(resultmsg, &result)
+		if len(result.Output) == 0 {
+			output.PrintJSON(resultmsg)
+		} else {
+			// unpack result.Output
+			err = unpackFiles(result.Output, targetdir)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			fmt.Println("Success")
+		}
+	} else {
+		// some error
+		output.PrintJSON(msg)
+	}
+}
+
+type ErrUnpack struct{}
+
+func (ErrUnpack) Error() string { return "ErrUnpack" }
+
+func unpackFiles(packb64 string, dir string) error {
+	var file strings.Builder
+	// tmp tar file name
+	fname := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+
+	// make complete path and filename
+	// file.WriteString(config.GlobalConfig.Workspace.Root)
+	file.WriteString(dir)
+	path := file.String()
+	os.Mkdir(path, os.ModePerm)
+	if path[len(path)-1] != '/' {
+		file.WriteByte('/')
+	}
+	file.WriteString(fname)
+
+	err := saveFile(packb64, file.String())
+	if err != nil {
+		return err
+	}
+
+	archiver.DefaultZip.OverwriteExisting = true
+	err = archiver.DefaultZip.Unarchive(file.String(), path)
+	if err != nil {
+		return ErrUnpack{}
+	}
+
+	os.Remove(file.String())
+	return nil
+}
+
+func saveFile(filebufb64, filename string) error {
+	Offset := 0
+	Len := len(filebufb64)
+	ChunkSize := 4096 * 4
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	for Offset < Len {
+		end := Offset + ChunkSize
+		if Offset+ChunkSize > Len {
+			end = Len
+		}
+		content, err := base64.RawStdEncoding.DecodeString(filebufb64[Offset:end])
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(content)
+		if err != nil {
+			return err
+		}
+		Offset += ChunkSize
+	}
+	return nil
 }
