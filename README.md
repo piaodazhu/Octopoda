@@ -43,31 +43,32 @@ Features of Octopoda:
 # 1 build Tentacle
 cd tentacle
 go mod tidy
-(GOOS=? GOARCH=?) go build -o tentacle .
+(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o tentacle .
 
 # 2 build Brain
 cd brain
 go mod tidy
-(GOOS=? GOARCH=?) go build -o brain .
+(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o brain .
 
 # 3 build Octl
 cd octl
 go mod tidy
-(GOOS=? GOARCH=?) go build -o octl .
+(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o octl .
 
 # 4 copy necessary files to corresponding nodes
 
 # 5 edit corresponding configuration
 
 # 6.1 run them in terminal (with -p to print log to Stdout)
-./tentacle -p
-./brain -p
+./tentacle -p   # Should be root user or use sudo
+./brain -p      # Should be root user or use sudo
 
-# 6.2 you can also run them as deamon
-bash setup.sh          # Install and run. Should be root user
-bash uninstall.sh      # Stop and Uninstall. Should be root user
+# 6.2 you can also run them as deamon (Highly recommended)
+bash setup.sh          # Install and run. Should be root user or use sudo
+bash uninstall.sh      # Stop and Uninstall. Should be root user or use sudo
 
 # 7 Manage the Octopoda network with Octl
+./octl help     # get some help
 ./octl <subcmd> <args>
 ```
 
@@ -304,9 +305,15 @@ With this subcmd we can distribute a file or a whole directory to the given node
 
 ### TREE
 
-> ` usage: octl tree [master|<node>] [SubDir]`
+> `octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] [SubDir]`
 
-With this subcmd we can get all files information under `SubDir` on master or a given node. Current Octopoda not support print this files like a tree, it list all files instead. 
+With this subcmd we can get all files information under `SubDir` on master or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. Current Octopoda not support print this files like a tree, it list all files instead. 
+
+### PULL
+
+> `octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`
+
+With this subcmd we can pull file or directory from under `SubDir` from master or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. 
 
 ## E. Script Execution
 
