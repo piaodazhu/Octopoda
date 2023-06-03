@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-var Request	*log.Logger
-var Comm	*log.Logger
-var Network 	*log.Logger
-var Exceptions 	*log.Logger
-var SysInfo 	*log.Logger
+var Request *log.Logger
+var Comm *log.Logger
+var Network *log.Logger
+var Exceptions *log.Logger
+var SysInfo *log.Logger
 
 var wg sync.WaitGroup
 
-func InitLogger() {
-	Request	   = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
-	Comm 	   = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
-	Network    = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
+func InitLogger(stdout bool) {
+	Request = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
+	Comm = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
+	Network = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
 	Exceptions = log.New(nil, "[Exceptions]", log.LstdFlags|log.Lshortfile)
-	SysInfo    = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
+	SysInfo = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
 
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Logger.Path)
@@ -31,11 +31,11 @@ func InitLogger() {
 	sb.WriteString(config.GlobalConfig.Logger.NamePrefix)
 
 	wg.Add(1)
-	go logController(sb.String())
+	go logController(sb.String(), stdout)
 	wg.Wait()
 }
 
-func logController(prefix string) {
+func logController(prefix string, stdout bool) {
 	lastday := time.Now().AddDate(0, 0, -1).Day()
 	var lastf *os.File
 	once := true
@@ -54,12 +54,12 @@ func logController(prefix string) {
 			}
 
 			var writer io.Writer
-			if config.Stdout {
+			if stdout {
 				writer = io.MultiWriter(f, os.Stdout)
 			} else {
 				writer = io.MultiWriter(f)
 			}
-			
+
 			Request.SetOutput(writer)
 			Comm.SetOutput(writer)
 			Network.SetOutput(writer)

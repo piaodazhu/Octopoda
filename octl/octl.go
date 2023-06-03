@@ -7,10 +7,18 @@ import (
 	"os"
 )
 
+var (
+	BuildVersion string
+	BuildTime    string
+	BuildName    string
+	CommitID     string
+)
+
 func main() {
 	args := os.Args
 	if len(args) == 1 {
 		fmt.Println("Octopoda Controlling Tool. ©2023-2023 Z. Luo. All Rights Reserved.")
+		fmt.Printf("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
 	config.InitConfig()
