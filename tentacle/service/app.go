@@ -147,12 +147,12 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		FileBuf:    adParams.Script,
 	}
 	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname)
+	rmsg.Output = string(output)
+
 	if err != nil {
 		logger.Exceptions.Println("execScript")
 		rmsg.Rmsg = err.Error()
 		goto errorout
-	} else {
-		rmsg.Output = string(output)
 	}
 	// commit
 	version, err = app.GitCommit(fullname, adParams.Message)

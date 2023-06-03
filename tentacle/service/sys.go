@@ -136,10 +136,9 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	cmd.Dir = dir
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(sparams.TargetPath, sparams.FileName, outputFile)...)
 
-	err = cmd.Run()
-	if err != nil {
+	scriptErr := cmd.Run()
+	if scriptErr != nil {
 		logger.Exceptions.Println("Run cmd", err)
-		return nil, err
 	}
 
 	// read output
@@ -155,7 +154,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	os.Remove(scriptFile.String())
 	os.Remove(outputFile)
 
-	return result, nil
+	return result, scriptErr
 }
 
 func RunCmd(conn net.Conn, raw []byte) {

@@ -188,7 +188,8 @@ func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
 			return
 		}
 		// logger.SysInfo.Print(rmsg.Rmsg)
-		*result = rmsg.Output
+		// *result = rmsg.Output
+		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 	}
 }
 
@@ -217,6 +218,6 @@ func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) 
 			return
 		}
 		// logger.SysInfo.Print(rmsg.Rmsg)
-		*result = rmsg.Output
+		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 	}
 }

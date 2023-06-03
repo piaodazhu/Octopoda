@@ -7,6 +7,7 @@ import (
 	"brain/model"
 	"brain/rdb"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -239,7 +240,8 @@ func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.Wai
 			return
 		}
 		// logger.Tentacle.Print(rmsg.Rmsg)
-		*result = rmsg.Rmsg
+		// *result = rmsg.Rmsg
+		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 
 		// update scenario version
 		success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, node, rmsg.Version, rmsg.Modified)
@@ -277,7 +279,9 @@ func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.Wai
 			*result = "MasterError"
 			return
 		}
-		*result = string(rmsg.Output)
+		// *result = string(rmsg.Output)
+		// *result = rmsg.Output
+		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 
 		// update scenario version
 		success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, node, rmsg.Version, rmsg.Modified)
