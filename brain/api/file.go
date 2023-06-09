@@ -11,6 +11,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,27 @@ type FileParams struct {
 	FileBuf    string
 }
 
+func pathFixing(path string, base string) string {
+	// dstPath: the unpacked files will be moved under this path
+	var result strings.Builder
+	// find ~
+	homePos := -1
+	for i, c := range path {
+		if c == '~' {
+			homePos = i
+		}
+	}
+	if homePos != -1 {
+		result.WriteString(path[homePos:])
+	} else {
+		if path[0] != '/' {
+			result.WriteString(base)
+		}
+		result.WriteString(path)
+	}
+	return result.String()
+}
+
 func FileUpload(ctx *gin.Context) {
 	tarfile, _ := ctx.FormFile("tarfile")
 	targetPath := ctx.PostForm("targetPath")
@@ -33,26 +55,49 @@ func FileUpload(ctx *gin.Context) {
 		Rmsg: "OK",
 	}
 
-	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Workspace.Store)
-	sb.WriteString(targetPath)
+	// tmpPath: the zip file will be unpacked under this path
+	var tmpSb strings.Builder
+	tmpSb.WriteString(config.GlobalConfig.Workspace.Store)
+	tmpSb.WriteString(".octopoda_tmp/")
 
-	path := sb.String()
-	os.Mkdir(path, os.ModePerm)
+	tmpPath := tmpSb.String()
 
-	sb.WriteString(tarfile.Filename)
-	dst, err := os.Create(sb.String())
+	// dstPath: the unpacked files will be moved under this path
+	dstPath := pathFixing(targetPath, config.GlobalConfig.Workspace.Store)
+
+	os.Mkdir(tmpPath, os.ModePerm)
+
+	tmpSb.WriteString(tarfile.Filename)
+
+	// tmpExtDir: the dir name after being extracted
+	var tmpExtDir strings.Builder
+	for i := tmpSb.Len() - 1; i > 0; i-- {
+		if tmpSb.String()[i] == '.' {
+			tmpExtDir.WriteString(tmpSb.String()[:i])
+			break
+		} else if tmpSb.String()[i] == '/' {
+			logger.Exceptions.Println("tmpExtDir")
+			rmsg.Rmsg = "bad tmpExtDir:" + tmpSb.String()
+			ctx.JSON(403, rmsg)
+			return
+		}
+	}
+	tmpExtDir.WriteString("/*")
+
+	tmpDst, err := os.Create(tmpSb.String())
 	if err != nil {
 		logger.Exceptions.Println("FileCreate")
 		rmsg.Rmsg = "FileCreate:" + err.Error()
 		ctx.JSON(403, rmsg)
+
+		os.RemoveAll(tmpPath)
 		return
 	}
 
 	src, _ := tarfile.Open()
 
-	io.Copy(dst, src)
-	dst.Close()
+	io.Copy(tmpDst, src)
+	tmpDst.Close()
 	src.Close()
 
 	// fast return
@@ -63,19 +108,10 @@ func FileUpload(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		// err = exec.Command("tar", "-xf", sb.String(), "-C", path).Run()
-		// os.Remove(sb.String())
-		// if err != nil {
-		// 	logger.Brain.Println("UnpackFile")
-		// 	rmsg.Rmsg = "UnpackFile:" + err.Error()
-		// 	// ctx.JSON(403, rmsg)
-		// 	if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-		// 		logger.Brain.Print("TaskMarkFailed Error")
-		// 	}
-		// 	return
-		// }
 		archiver.DefaultZip.OverwriteExisting = true
-		err = archiver.DefaultZip.Unarchive(sb.String(), path)
+		err = archiver.DefaultZip.Unarchive(tmpSb.String(), tmpPath)
+		defer os.RemoveAll(tmpPath)
+
 		if err != nil {
 			logger.Exceptions.Println("Unarchive")
 			rmsg.Rmsg = "Unarchive:" + err.Error()
@@ -85,7 +121,17 @@ func FileUpload(ctx *gin.Context) {
 			}
 			return
 		}
-		os.Remove(sb.String())
+
+		cmd := exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s %s", dstPath, tmpExtDir.String(), dstPath))
+		err = cmd.Run()
+		if err != nil {
+			logger.Exceptions.Println("cp -r")
+			rmsg.Rmsg = "cp -r error:" + fmt.Sprintf("cp -r %s %s", tmpExtDir.String(), dstPath)
+			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
+				logger.Exceptions.Print("TaskMarkFailed Error")
+			}
+			return
+		}
 
 		// ctx.JSON(200, rmsg)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
@@ -129,25 +175,30 @@ func FileSpread(ctx *gin.Context) {
 
 	if fsParams.TargetPath == "/" || fsParams.TargetPath == "./" {
 		fsParams.TargetPath = ""
-	} else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
-		logger.Exceptions.Println("Invalid targetPath")
-		rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
-		ctx.JSON(400, rmsg)
-		return
-	}
+	} 
+	// else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
+	// 	logger.Exceptions.Println("Invalid targetPath")
+	// 	rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
+	// 	ctx.JSON(400, rmsg)
+	// 	return
+	// }
 
-	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Workspace.Store)
-	sb.WriteString(fsParams.FileOrDir)
-	fname := sb.String()
+	// var sb strings.Builder
+	// sb.WriteString(config.GlobalConfig.Workspace.Store)
+	// sb.WriteString(fsParams.FileOrDir)
+	// fname := sb.String()
 
-	_, err = os.Stat(fname)
-	if err != nil {
-		logger.Exceptions.Println("FileOrDir Not Found")
-		rmsg.Rmsg = "FileOrDir Not Found:" + err.Error()
-		ctx.JSON(403, rmsg)
-		return
-	}
+	fname := pathFixing(fsParams.FileOrDir, config.GlobalConfig.Workspace.Store)
+	// fmt.Println(fname, "----")
+	
+	// we dont check because fname may be a pattern
+	// _, err = os.Stat(fname)
+	// if err != nil {
+	// 	logger.Exceptions.Println("FileOrDir Not Found")
+	// 	rmsg.Rmsg = "FileOrDir Not Found:" + err.Error()
+	// 	ctx.JSON(403, rmsg)
+	// 	return
+	// }
 
 	// fast return
 	taskid := rdb.TaskIdGen()
@@ -157,14 +208,31 @@ func FileSpread(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		if fname[len(fname)-1] == '/' {
-			fname = fname + "."
-		}
+		// if fname[len(fname)-1] == '/' {
+		// 	fname = fname + "."
+		// }
 
-		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-		// err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+		// packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+		// // err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
+		// archiver.DefaultZip.OverwriteExisting = true
+		// err = archiver.DefaultZip.Archive([]string{fname}, packName)
+
+		wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
+		os.Mkdir(wrapName, os.ModePerm)
+		cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", fname, wrapName))
+		err := cmd.Run()
+		if err != nil {
+			logger.Exceptions.Print("Wrap files: " + fname + "-->" + wrapName + " | " + cmd.String())
+		}
+		defer os.RemoveAll(wrapName)
+
+		packName := fmt.Sprintf("%s.zip", wrapName)
+		// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+		// if err != nil {
+		// 	output.PrintFatal("cmd.Run")
+		// }
 		archiver.DefaultZip.OverwriteExisting = true
-		err = archiver.DefaultZip.Archive([]string{fname}, packName)
+		err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 		if err != nil {
 			logger.Exceptions.Println("Archive")
 			rmsg.Rmsg = "Archive:" + err.Error()
@@ -571,8 +639,8 @@ func FilePull(ctx *gin.Context) {
 				logger.Exceptions.Print("TaskMarkFailed Error")
 			}
 			return
-		} 
-		
+		}
+
 		// rmsg.Output = encodeBuf(raw)
 		rmsg.Output = string(raw)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {

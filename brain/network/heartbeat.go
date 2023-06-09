@@ -147,7 +147,7 @@ closeconnection:
 }
 
 func checkTimestamp(ts int64) bool {
-	return abs(time.Now().Unix()-ts) <= 1
+	return abs(time.Now().Unix()-ts) <= 2
 }
 func abs(x int64) int64 {
 	if x < 0 {

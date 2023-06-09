@@ -11,10 +11,11 @@ import (
 	"octl/output"
 	"octl/task"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 )
 
 func UpLoadFile(localFileOrDir string, targetPath string) {
@@ -27,15 +28,26 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	if localFileOrDir[len(localFileOrDir)-1] == '/' {
 		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
 	}
+	pwd, _ := os.Getwd()
+	srcPath := pathFixing(localFileOrDir, pwd + "/") 
 
-	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-	// err := exec.Command("tar", "-cf", packName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
+	// wrap the files first
+	wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
+	os.Mkdir(wrapName, os.ModePerm)
+	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+	err := cmd.Run()
+	if err != nil {
+		output.PrintFatal("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
+	}
+	defer os.RemoveAll(wrapName)
 
+	packName := fmt.Sprintf("%s.zip", wrapName)
+	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 	// if err != nil {
 	// 	output.PrintFatal("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
-	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
+	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
 		output.PrintFatal("Archive")
 	}
@@ -147,13 +159,23 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
 	}
 
-	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+	// wrap the files first
+	wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
+	os.Mkdir(wrapName, os.ModePerm)
+	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", localFileOrDir, wrapName))
+	err := cmd.Run()
+	if err != nil {
+		output.PrintFatal("Wrap files: " + localFileOrDir + "-->" + wrapName + " | " + cmd.String())
+	}
+	defer os.RemoveAll(wrapName)
+
+	packName := fmt.Sprintf("%s.zip", wrapName)
 	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 	// if err != nil {
 	// 	output.PrintFatal("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
-	err := archiver.DefaultZip.Archive([]string{localFileOrDir}, packName)
+	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
 		output.PrintFatal("Archive")
 	}
@@ -361,4 +383,26 @@ func saveFile(filebufb64, filename string) error {
 		Offset += ChunkSize
 	}
 	return nil
+}
+
+
+func pathFixing(path string, base string) string {
+	// dstPath: the unpacked files will be moved under this path
+	var result strings.Builder
+	// find ~
+	homePos := -1
+	for i, c := range path {
+		if c == '~' {
+			homePos = i
+		}
+	}
+	if homePos != -1 {
+		result.WriteString(path[homePos:])
+	} else {
+		if path[0] != '/' {
+			result.WriteString(base)
+		}
+		result.WriteString(path)
+	}
+	return result.String()
 }

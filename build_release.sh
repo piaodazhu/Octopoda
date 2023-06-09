@@ -4,7 +4,7 @@ BUILD_TIME=$(date "+%F@%T")
 BUILD_NAME="OCTOPODA"
 COMMIT_SHA1=$(git rev-parse HEAD )
 
-LD_FLAGS="-X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.BuildName=${BUILD_NAME} -X main.CommitID=${COMMIT_SHA1}"
+LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 echo "START BUILD VERSION ${BUILD_VERSION}"
 
@@ -28,8 +28,8 @@ GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
 tar -Jcvf octl_${BUILD_VERSION}_darwin_amd64.tar.xz octl octl.yaml example/helloWorld &>/dev/null && echo "Successfully build octl <darwin amd64>"
 mv octl_${BUILD_VERSION}_darwin_amd64.tar.xz ../dist/
 
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
-tar -Jcvf octl_${BUILD_VERSION}_windows_amd64.tar.xz octl octl.yaml example/helloWorld &>/dev/null && echo "Successfully build octl <windows amd64>"
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl.exe .
+tar -Jcvf octl_${BUILD_VERSION}_windows_amd64.tar.xz octl.exe octl.yaml example/helloWorld &>/dev/null && echo "Successfully build octl <windows amd64>"
 mv octl_${BUILD_VERSION}_windows_amd64.tar.xz ../dist/
 
 cd ../brain

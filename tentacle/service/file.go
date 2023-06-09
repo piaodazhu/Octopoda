@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"tentacle/config"
 	"tentacle/logger"
@@ -22,12 +24,33 @@ type FileParams struct {
 	FileBuf    string
 }
 
+func pathFixing(path string, base string) string {
+	// dstPath: the unpacked files will be moved under this path
+	var result strings.Builder
+	// find ~
+	homePos := -1
+	for i, c := range path {
+		if c == '~' {
+			homePos = i
+		}
+	}
+	if homePos != -1 {
+		result.WriteString(path[homePos:])
+	} else {
+		if path[0] != '/' {
+			result.WriteString(base)
+		}
+		result.WriteString(path)
+	}
+	return result.String()
+}
+
 func FilePush(conn net.Conn, raw []byte) {
-	var file strings.Builder
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
 
+	var file string
 	fileinfo := FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
@@ -36,10 +59,10 @@ func FilePush(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 	// logger.Server.Println(fileinfo)
-	file.WriteString(config.GlobalConfig.Workspace.Store)
-	file.WriteString(fileinfo.TargetPath)
-
-	err = unpackFiles(fileinfo.FileBuf, file.String())
+	// file.WriteString(config.GlobalConfig.Workspace.Store)
+	// file.WriteString(fileinfo.TargetPath)
+	file = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
+	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, file)
 	if err != nil {
 		rmsg.Rmsg = "unpack Files"
 		goto errorout
@@ -230,7 +253,51 @@ type ErrUnpack struct{}
 
 func (ErrUnpack) Error() string { return "ErrUnpack" }
 
-func unpackFiles(packb64 string, dir string) error {
+func unpackFiles(packb64 string, packName string, targetDir string) error {
+	pname := filepath.Base(packName)
+	extPos := -1
+	for i := len(pname) - 1; i > 0; i-- {
+		if pname[i] == '.' {
+			extPos = i
+			break
+		}
+	}
+	if extPos == -1 {
+		return fmt.Errorf("extPos == -1")
+	}
+	wname := pname[:extPos]
+	tmpDir := config.GlobalConfig.Workspace.Store + ".octopoda_tmp/"
+	os.Mkdir(tmpDir, os.ModePerm)
+	// defer os.RemoveAll(tmpDir)
+
+	ppath := tmpDir + pname
+	wpath := tmpDir + wname
+
+	err := saveFile(packb64, ppath)
+	if err != nil {
+		return err
+	}
+
+	archiver.DefaultZip.OverwriteExisting = true
+	err = archiver.DefaultZip.Unarchive(ppath, tmpDir)
+	if err != nil {
+		logger.Exceptions.Print(err)
+		return ErrUnpack{}
+	}
+
+	// os.Mkdir(targetDir, os.ModePerm)
+	// fmt.Println(";;;;", fmt.Sprintf("cp -r %s/* %s", wpath, targetDir))
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s", targetDir, wpath, targetDir))
+	err = cmd.Run()
+	if err != nil {
+		logger.Exceptions.Print(err)
+		return fmt.Errorf("cp -r")
+	}
+
+	return nil
+}
+
+func unpackFilesNoWrap(packb64 string, dir string) error {
 	var file strings.Builder
 	// tmp tar file name
 	fname := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
@@ -250,12 +317,9 @@ func unpackFiles(packb64 string, dir string) error {
 		return err
 	}
 
-	logger.SysInfo.Print("want save: ", file.String(), path)
-
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Unarchive(file.String(), path)
 	if err != nil {
-		logger.Exceptions.Print(err)
 		return ErrUnpack{}
 	}
 
