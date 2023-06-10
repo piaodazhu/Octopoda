@@ -1,11 +1,11 @@
 tentacleFace:
-  ip: "192.168.1.1"
+  ip: "0.0.0.0"
   port: 3456
   token: "default"
   activeTimeout: 2
   recordTimeout: 10
 brainFace:
-  ip: "192.168.1.1"
+  ip: "0.0.0.0"
   port: 12345
 redis:
   ip: "127.0.0.1"
@@ -13,12 +13,12 @@ redis:
   password: ""
   db: 0
 logger:
-  path: "/root/octopoda/log"
+  path: "/var/octopoda/brain/log"
   namePrefix: "log"
   rollDays: 3
 workspace:
-  root: "/root/octopoda/workspace/"
-  store: "/root/octopoda/FSTORE/"
+  root: "/var/octopoda/brain/workspace/"
+  store: "/var/octopoda/brain/FSTORE/"
 ssh:
   username: "username"
   password: "password"

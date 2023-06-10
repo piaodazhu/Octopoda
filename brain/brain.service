@@ -6,9 +6,9 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/root/octopoda/brain/bin/brain
+ExecStart=/usr/local/bin/octopoda/brain -c /etc/octopoda/brain/brain.yaml
 ExecStop=/bin/kill -9 $(/bin/pidof brain)
-ExecReload=/bin/kill -9 $(/bin/pidof brain) && /root/octopoda/brain/bin/brain
+ExecReload=/bin/kill -9 $(/bin/pidof brain) && /usr/local/bin/octopoda/brain -c /etc/octopoda/brain/brain.yaml
 
 [Install]
 WantedBy=multi-user.target

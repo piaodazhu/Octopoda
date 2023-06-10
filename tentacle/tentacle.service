@@ -6,9 +6,9 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/root/octopoda/tentacle/bin/tentacle
+ExecStart=/usr/local/bin/octopoda/tentacle -c /etc/octopoda/tentacle/tentacle.yaml
 ExecStop=/bin/kill -9 $(/bin/pidof tentacle)
-ExecReload=/bin/kill -9 $(/bin/pidof tentacle) && /root/octopoda/tentacle/bin/tentacle
+ExecReload=/bin/kill -9 $(/bin/pidof tentacle) && /usr/local/bin/octopoda/tentacle -c /etc/octopoda/tentacle/tentacle.yaml
 
 [Install]
 WantedBy=multi-user.target
