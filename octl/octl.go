@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"octl/config"
 	"octl/subcmd"
@@ -16,12 +17,22 @@ var (
 
 func main() {
 	args := os.Args
-	if len(args) == 1 {
-		fmt.Println("Octopoda Controlling Tool. ©2023-2023 Z. Luo. All Rights Reserved.")
+	var conf string
+	var askver bool
+	flag.BoolVar(&askver, "version", false, "tell version number")
+	flag.StringVar(&conf, "c", "", "specify a configuration file")
+	flag.Parse()
+
+	if askver {
 		fmt.Printf("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
-	config.InitConfig()
+
+	if len(args) == 1 {
+		fmt.Println("Octopoda Controlling Tool. Use 'help', '-version', '-c'...")
+		return
+	}
+	config.InitConfig(conf)
 
 	switch args[1] {
 	case "apply":
