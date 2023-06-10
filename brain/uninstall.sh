@@ -13,9 +13,9 @@ if [ -d "/root/octopoda/brain/bin" ]; then
   echo "remove folder /root/octopoda/brain/bin"
 fi
 
-if [ -d "/etc/octopoda" ]; then
-  rm -rf /etc/octopoda
-  echo "remove folder /etc/octopoda"
+if [ -d "/etc/octopoda/brain" ]; then
+  rm -rf /etc/octopoda/brain
+  echo "remove folder /etc/octopoda/brain"
 fi
 
 echo ">> Uninstall Done"

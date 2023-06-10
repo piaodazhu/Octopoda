@@ -21,8 +21,10 @@ var (
 func main() {
 	var stdout bool
 	var askver bool
+	var conf string
 	flag.BoolVar(&stdout, "p", false, "print log to stdout, default is false")
 	flag.BoolVar(&askver, "version", false, "tell version number")
+	flag.StringVar(&conf, "c", "", "specify a configuration file")
 	flag.Parse()
 
 	if askver {
@@ -30,7 +32,7 @@ func main() {
 		return
 	}
 
-	config.InitConfig()
+	config.InitConfig(conf)
 	logger.InitLogger(stdout)
 	app.InitAppModel()
 	network.InitListener()

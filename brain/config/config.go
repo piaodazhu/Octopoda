@@ -9,25 +9,27 @@ import (
 
 var GlobalConfig ConfigModel
 
-func InitConfig() {
-	viper.SetConfigName("brain")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./")
-	viper.AddConfigPath("/etc/octopoda/")
-	// viper.AddConfigPath("/root/platform/")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic("cannot read config because " + err.Error())
+func InitConfig(conf string) {
+	if conf != "" {
+		viper.SetConfigFile(conf)
+		err := viper.ReadInConfig()
+		if err != nil {
+			panic("cannot read config <" + conf + ">: " + err.Error())
+		}
+	} else {
+		viper.SetConfigName("brain")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath("/etc/octopoda/brain/")
+		viper.AddConfigPath("./")
+		err := viper.ReadInConfig()
+		if err != nil {
+			panic("cannot read config because " + err.Error())
+		}
 	}
-
-	err = viper.Unmarshal(&GlobalConfig)
+	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
 		panic("cannot unmarshal config because " + err.Error())
 	}
-
-	// if Stdout {
-	// 	fmt.Printf("%+v\n", GlobalConfig)
-	// }
 
 	// JSON iterator
 	if GlobalConfig.JsonFast {
