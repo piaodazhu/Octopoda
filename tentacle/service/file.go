@@ -287,7 +287,7 @@ func unpackFiles(packb64 string, packName string, targetDir string) error {
 
 	// os.Mkdir(targetDir, os.ModePerm)
 	// fmt.Println(";;;;", fmt.Sprintf("cp -r %s/* %s", wpath, targetDir))
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s", targetDir, wpath, targetDir))
+	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s", targetDir, wpath, targetDir))
 	err = cmd.Run()
 	if err != nil {
 		logger.Exceptions.Print(err)

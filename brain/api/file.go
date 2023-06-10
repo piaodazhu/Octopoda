@@ -122,7 +122,7 @@ func FileUpload(ctx *gin.Context) {
 			return
 		}
 
-		cmd := exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s %s", dstPath, tmpExtDir.String(), dstPath))
+		cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s %s", dstPath, tmpExtDir.String(), dstPath))
 		err = cmd.Run()
 		if err != nil {
 			logger.Exceptions.Println("cp -r")

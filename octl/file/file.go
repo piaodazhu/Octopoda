@@ -12,6 +12,8 @@ import (
 	"octl/task"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -25,16 +27,21 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 		targetPath = targetPath + "/"
 	}
 
-	if localFileOrDir[len(localFileOrDir)-1] == '/' {
-		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
-	}
+	// if localFileOrDir[len(localFileOrDir)-1] == '/' {
+	// 	localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
+	// }
 	pwd, _ := os.Getwd()
-	srcPath := pathFixing(localFileOrDir, pwd + "/") 
+	srcPath := pathFixing(localFileOrDir, pwd+string(filepath.Separator))
 
 	// wrap the files first
 	wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
 	os.Mkdir(wrapName, os.ModePerm)
-	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+	} else {
+		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+	}
 	err := cmd.Run()
 	if err != nil {
 		output.PrintFatal("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
@@ -155,17 +162,25 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 		targetPath = targetPath + "/"
 	}
 
-	if localFileOrDir[len(localFileOrDir)-1] == '/' {
-		localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
-	}
+	// if localFileOrDir[len(localFileOrDir)-1] == '/' {
+	// 	localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
+	// }
+	
+	pwd, _ := os.Getwd()
+	srcPath := pathFixing(localFileOrDir, pwd+string(filepath.Separator))
 
 	// wrap the files first
 	wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
 	os.Mkdir(wrapName, os.ModePerm)
-	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", localFileOrDir, wrapName))
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+	} else {
+		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+	}
 	err := cmd.Run()
 	if err != nil {
-		output.PrintFatal("Wrap files: " + localFileOrDir + "-->" + wrapName + " | " + cmd.String())
+		output.PrintFatal("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
 	}
 	defer os.RemoveAll(wrapName)
 
@@ -384,7 +399,6 @@ func saveFile(filebufb64, filename string) error {
 	}
 	return nil
 }
-
 
 func pathFixing(path string, base string) string {
 	// dstPath: the unpacked files will be moved under this path

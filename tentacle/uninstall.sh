@@ -13,9 +13,9 @@ if [ -d "/root/octopoda/tentacle/bin" ]; then
   echo "remove folder /root/octopoda/tentacle/bin"
 fi
 
-if [ -d "/etc/octopoda" ]; then
-  rm -rf /etc/octopoda
-  echo "remove folder /etc/octopoda"
+if [ -d "/etc/octopoda/tentacle" ]; then
+  rm -rf /etc/octopoda/tentacle
+  echo "remove folder /etc/octopoda/tentacle"
 fi
 
 echo ">> Uninstall Done"

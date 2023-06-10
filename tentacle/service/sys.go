@@ -132,7 +132,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	// fbuf, _ := os.ReadFile(scriptFile.String())
 	// logger.Client.Println(string(fbuf))
 
-	cmd := exec.Command("bash", scriptFile.String())
+	cmd := exec.Command("/bin/bash", scriptFile.String())
 	cmd.Dir = dir
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(sparams.TargetPath, sparams.FileName, outputFile)...)
 
@@ -168,7 +168,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 
 	command = string(raw)
 
-	output, err = exec.Command("bash", "-c", command).CombinedOutput()
+	output, err = exec.Command("/bin/bash", "-c", command).CombinedOutput()
 	if err != nil {
 		rmsg.Rmsg = err.Error()
 	} else {

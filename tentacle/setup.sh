@@ -17,15 +17,15 @@ if [ ! -d "/root/octopoda/tentacle/bin" ]; then
   echo "create folder /root/octopoda/tentacle/bin"
 fi
 
-if [ ! -d "/etc/octopoda" ]; then
-  mkdir -p /etc/octopoda
-  echo "create folder /etc/octopoda"
+if [ ! -d "/etc/octopoda/tentacle" ]; then
+  mkdir -p /etc/octopoda/tentacle
+  echo "create folder /etc/octopoda/tentacle"
 fi
 cp tentacle /root/octopoda/tentacle/bin
 chmod +x /root/octopoda/tentacle/bin/tentacle
 echo "install binary executable file --> /root/octopoda/tentacle/bin/"
-cp tentacle.yaml /etc/octopoda/
-echo "install config tentacle.yaml --> /etc/octopoda/"
+cp tentacle.yaml /etc/octopoda/tentacle/
+echo "install config tentacle.yaml --> /etc/octopoda/tentacle/"
 
 cp tentacle.service /etc/systemd/system/
 echo "create tentacle deamon"
