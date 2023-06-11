@@ -50,9 +50,9 @@ func InitHeartbeat() {
 
 func MakeNodeJoin() []byte {
 	nodeJoinInfo := NodeJoinInfo{
-		Name: config.GlobalConfig.Worker.Name,
-		IP:   config.GlobalConfig.Worker.Ip,
-		Port: config.GlobalConfig.Worker.Port,
+		Name: config.GlobalConfig.Name,
+		IP:   config.GlobalConfig.Ip,
+		Port: config.GlobalConfig.Port,
 		Ts:   time.Now().Unix(),
 	}
 	serialized_info, err := config.Jsoner.Marshal(nodeJoinInfo)

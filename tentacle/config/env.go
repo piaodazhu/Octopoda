@@ -6,8 +6,8 @@ import "strings"
 
 func OctopodaEnv(scriptDir string, scriptName string, output string) []string {
 	env := []string{
-		"OCTOPODA_NODENAME=" + GlobalConfig.Worker.Name,
-		"OCTOPODA_NODEIP=" + GlobalConfig.Worker.Ip,
+		"OCTOPODA_NODENAME=" + GlobalConfig.Name,
+		"OCTOPODA_NODEIP=" + GlobalConfig.Ip,
 		"OCTOPODA_ROOTDIR=" + GlobalConfig.Workspace.Root + scriptDir,
 		"OCTOPODA_STOREDIR=" + GlobalConfig.Workspace.Store,
 		"OCTOPODA_FILENAME=" + scriptName,

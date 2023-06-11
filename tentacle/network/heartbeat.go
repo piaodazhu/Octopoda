@@ -67,6 +67,8 @@ func KeepAlive() {
 			service.Reboot()
 		} else {
 			logger.Exceptions.Fatal("Dead but wont restart.")
+			retry = 0
+			goto reconnect
 		}
 
 	}()

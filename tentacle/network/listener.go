@@ -13,9 +13,9 @@ var localListener net.Listener
 
 func InitListener() {
 	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Worker.Ip)
+	sb.WriteString(config.GlobalConfig.Ip)
 	sb.WriteByte(':')
-	sb.WriteString(fmt.Sprint(config.GlobalConfig.Worker.Port))
+	sb.WriteString(fmt.Sprint(config.GlobalConfig.Port))
 	listener, err := net.Listen("tcp", sb.String())
 	if err != nil {
 		logger.Exceptions.Panic(err)

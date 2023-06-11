@@ -1,17 +1,21 @@
-tentacle:
-  id: 0
-  name: "pi0"
-  ip: "127.0.0.1"
-  port: 23456
-ssh:
-  username: "username"
-  password: "password"
-  ip: "192.168.1.1"
-  port: 1
+name: "pi0"
+netDevice: "wlan1"
+port: 3457
+httpsNameServer:
+  enable: true
+  host: "192.168.3.181"
+  port: 3455
+  requestInterval: 1
 brain:
+  name: "net1.Brain.01"
+  # if httpNameServer doesn't work, directly try to connect brain:
   ip: "127.0.0.1"
   port: 3456
   token: "default"
+ssh:
+  username: "username"
+  password: "password"
+  port: 1
 logger:
   path: "/var/octopoda/tentacle/log/"
   namePrefix: "log"
