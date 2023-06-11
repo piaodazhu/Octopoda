@@ -15,14 +15,15 @@ var rdb *redis.Client
 var ctx context.Context
 var nedao *NameEntryDao
 
-func DaoInit() {
+func DaoInit() error {
 	rdb = redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
-		DB:       0,
+		DB:       1,
 	})
 	ctx = context.TODO()
 	nedao = &NameEntryDao{DefaultTTL: 5000}
+	return rdb.Ping(ctx).Err()
 }
 
 func GetNameEntryDao() *NameEntryDao {

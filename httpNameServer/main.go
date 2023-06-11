@@ -18,14 +18,17 @@ func main() {
 	var caCertFile string
 	var svrCertFile string
 	var svrKeyFile string
-	flag.IntVar(&port, "p", 9931, "listening port")
+	flag.IntVar(&port, "p", 3455, "listening port")
 	flag.StringVar(&caCertFile, "ca", "ca/ca.pem", "ca certificate")
 	flag.StringVar(&svrCertFile, "crt", "ca/nameserver/server.pem", "server certificate")
 	flag.StringVar(&svrKeyFile, "key", "ca/nameserver/server.key", "server private key")
 	flag.Parse()
 
 	// init dao and service
-	DaoInit()
+	err := DaoInit()
+	if err != nil {
+		log.Panic(err)
+	}
 	ServiceInit()
 
 	// config GIN handler
