@@ -46,7 +46,7 @@ rm -rf octl_${BUILD_VERSION}_darwin_amd64
 
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl.exe .
 mkdir octl_${BUILD_VERSION}_windows_amd64 &>/dev/null && \
-cp -r octl octl.yaml example/helloWorld octl_${BUILD_VERSION}_windows_amd64 &>/dev/null && \
+cp -r octl.exe octl.yaml example/helloWorld octl_${BUILD_VERSION}_windows_amd64 &>/dev/null && \
 tar -Jcvf octl_${BUILD_VERSION}_windows_amd64.tar.xz octl_${BUILD_VERSION}_windows_amd64 &>/dev/null && \
 echo "Successfully build octl <windows amd64>" && \
 mv octl_${BUILD_VERSION}_windows_amd64.tar.xz ../dist/ &>/dev/null && \
