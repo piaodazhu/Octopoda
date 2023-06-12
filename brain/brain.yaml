@@ -1,7 +1,13 @@
+name: "net1.Brain.01"
+netDevice: "ens33"
+httpNameServer:
+  enable: true
+  host: "domain.or.host"
+  port: 3455
+  requestInterval: 1
 tentacleFace:
   ip: "0.0.0.0"
   port: 3456
-  token: "default"
   activeTimeout: 2
   recordTimeout: 10
 brainFace:
