@@ -60,7 +60,7 @@ func DaoInit() error {
 func GetNameEntryDao() *NameEntryDao {
 	return namedao
 }
-func GetNamConfigDao() *ConfigDao {
+func GetNameConfigDao() *ConfigDao {
 	return confdao
 }
 func GetSshInfoDao() *SshInfoDao {
@@ -69,7 +69,15 @@ func GetSshInfoDao() *SshInfoDao {
 
 func (b *BaseDao) list(pattern string) ([]string, error) {
 	pattern = b.DefaultPrefix + "*" + pattern
-	return rdb.Keys(ctx, pattern).Result()
+	keys, err := rdb.Keys(ctx, pattern).Result()
+	if err != nil {
+		return nil, err 
+	}
+	res := make([]string, len(keys))
+	for i := range keys {
+		res[i] = keys[i][len(b.DefaultPrefix):]
+	}
+	return res, nil
 }
 
 func (b *BaseDao) del(key string) error {

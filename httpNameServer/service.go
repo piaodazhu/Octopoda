@@ -91,7 +91,7 @@ func NameList(ctx *gin.Context) {
 	case "name":
 		entry, err = GetNameEntryDao().List(pattern)
 	case "config":
-		entry, err = GetNamConfigDao().List(pattern)
+		entry, err = GetNameConfigDao().List(pattern)
 	case "ssh":
 		entry, err = GetSshInfoDao().List(pattern)
 	default:
@@ -106,17 +106,102 @@ func NameList(ctx *gin.Context) {
 }
 
 func UploadConfig(ctx *gin.Context) {
+	var params ConfigUploadParam
+	err := ctx.ShouldBind(&params)
+	if err != nil {
+		log.Println("ctx.ShouldBind():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
 
+	entry := ConfigEntry{
+		ConfigUploadParam: params,
+		TimeStamp:     time.Now().UnixMilli(),
+	}
+
+	switch entry.Method {
+	case "clear": 
+		err = GetNameConfigDao().Del(params.Name)
+		if err != nil {
+			log.Println("NameConfigDao.Del():", err.Error())
+			ctx.JSON(400, Response{Message: err.Error()})
+			return
+		}
+	case "reset":
+		err = GetNameConfigDao().Del(params.Name)
+		if err != nil {
+			log.Println("NameConfigDao.Del():", err.Error())
+			ctx.JSON(400, Response{Message: err.Error()})
+			return
+		}
+		fallthrough // reset need to clear then append
+	case "append":
+		entry.Method = ""
+		err = GetNameConfigDao().Append(params.Name, entry)
+		if err != nil {
+			log.Println("NameConfigDao.Append():", err.Error())
+			ctx.JSON(400, Response{Message: err.Error()})
+			return
+		}
+	default:
+		log.Println("NameConfigDao.???():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	ctx.JSON(200, Response{Message: "OK"})
 }
 
 func DownloadConfig(ctx *gin.Context) {
-
+	var params ConfigQueryParam
+	err := ctx.ShouldBindQuery(&params)
+	if err != nil {
+		log.Println("ctx.ShouldBindQuery():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	entry, err := GetNameConfigDao().GetRange(params.Name, params.Index, params.Amount)
+	if err != nil {
+		log.Println("dao.DaoGet():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	ctx.JSON(200, Response{Message: "OK", RawConfig: entry})
 }
 
 func UploadSshInfo(ctx *gin.Context) {
+	var params SshInfoUploadParam
+	err := ctx.ShouldBind(&params)
+	if err != nil {
+		log.Println("ctx.ShouldBind():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
 
+	entry := SshInfo{
+		SshInfoUploadParam: params,
+		TimeStamp:     time.Now().UnixMilli(),
+	}
+	err = GetSshInfoDao().Set(params.Name, entry, 0)
+	if err != nil {
+		log.Println("SshInfoDao.Set():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	ctx.JSON(200, Response{Message: "OK"})
 }
 
 func DownloadSshInfo(ctx *gin.Context) {
-
+	key, ok := ctx.GetQuery("name")
+	if !ok {
+		log.Println("ctx.GetQuery(): no name")
+		ctx.JSON(400, Response{Message: "no name"})
+		return
+	}
+	entry, err := GetSshInfoDao().Get(key)
+	if err != nil {
+		log.Println("dao.DaoGet():", err.Error())
+		ctx.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	ctx.JSON(200, Response{Message: "OK", SshInfo: entry})
 }

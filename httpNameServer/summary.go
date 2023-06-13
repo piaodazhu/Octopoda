@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,11 +21,12 @@ func StatsMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var stats *ApiStat
 		var exists bool
-		if stats, exists = summary.ApiStats[c.Request.URL.Path]; exists {
+		key := fmt.Sprintf("%s[%s]", c.Request.URL.Path, c.Request.Method)
+		if stats, exists = summary.ApiStats[key]; exists {
 			stats.Requests++
 		} else {
 			stats = &ApiStat{Requests: 1}
-			summary.ApiStats[c.Request.URL.Path] = stats
+			summary.ApiStats[key] = stats
 		}
 		summary.TotalRequests++
 		c.Next()
