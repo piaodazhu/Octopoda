@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"time"
 )
 
 func Reboot() {
@@ -90,7 +92,7 @@ func RunScript(conn net.Conn, raw []byte) {
 	if err != nil {
 		rmsg.Rmsg = err.Error()
 	} else {
-		rmsg.Rmsg = string(output)
+		rmsg.Output = string(output)
 	}
 
 errorout:
@@ -157,22 +159,45 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	return result, scriptErr
 }
 
+// fix, haven't test
 func RunCmd(conn net.Conn, raw []byte) {
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
 	var command string
 	var err error
-	var output []byte
 	var payload []byte
 
 	command = string(raw)
 
-	output, err = exec.Command("/bin/bash", "-c", command).CombinedOutput()
+	outputFile := fmt.Sprintf("%d.output", time.Now().UnixNano())
+	output, _ := os.Create(outputFile)
+
+	// fbuf, _ := os.ReadFile(scriptFile.String())
+	// logger.Client.Println(string(fbuf))
+
+	cmd := exec.Command("/bin/bash", command)
+	cmd.Dir = "~/"
+	cmd.Env = append(syscall.Environ(), config.OctopodaEnv("", "", outputFile)...)
+
+	scriptErr := cmd.Run()
+	if scriptErr != nil {
+		logger.Exceptions.Println("Run cmd", err)
+	}
+
+	// read output
+	// result := []byte{}
+	result, err := io.ReadAll(output)
 	if err != nil {
-		rmsg.Rmsg = err.Error()
+		logger.Exceptions.Println(err)
+	}
+	output.Close()
+	os.Remove(outputFile)
+
+	if scriptErr != nil {
+		rmsg.Rmsg = scriptErr.Error()
 	} else {
-		rmsg.Output = string(output)
+		rmsg.Output = string(result)
 	}
 
 	payload, _ = config.Jsoner.Marshal(&rmsg)
