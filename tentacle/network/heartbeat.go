@@ -3,7 +3,6 @@ package network
 import (
 	"fmt"
 	"net"
-	"strings"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
@@ -13,16 +12,13 @@ import (
 )
 
 func KeepAlive() {
-	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.Master.Ip)
-	sb.WriteByte(':')
-	sb.WriteString(fmt.Sprint(config.GlobalConfig.Master.Port))
+	addr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.HeartbeatPort)
 
 	go func() {
 		retry := 0
 	reconnect:
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
-			conn, err := net.Dial("tcp", sb.String())
+			conn, err := net.Dial("tcp", addr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
 

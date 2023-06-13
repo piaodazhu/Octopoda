@@ -2,6 +2,7 @@ package model
 
 import (
 	"brain/config"
+	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,9 +18,9 @@ const (
 )
 
 type NodeInfo struct {
-	Id        uint32
-	Name      string
-	Addr      string
+	Id   uint32
+	Name string
+	// Addr      string
 	State     int32
 	OnlineTs  int64
 	OfflineTs int64
@@ -27,6 +28,7 @@ type NodeInfo struct {
 
 type NodeModel struct {
 	NodeInfo
+	MsgConn *net.Conn
 	// Applist []*AppModel
 }
 
@@ -45,7 +47,6 @@ type State struct {
 	DiskUsed     uint64
 	DiskTotal    uint64
 }
-
 
 var NodeMap map[string]*NodeModel
 var NodesLock sync.RWMutex
@@ -67,12 +68,39 @@ func InitNodeMap() {
 	}()
 }
 
-func StoreNode(name string, ip string, port uint16) uint32 {
+// func StoreNode(name string, ip string, port uint16) uint32 {
+// 	var node *NodeModel
+// 	var sb strings.Builder
+// 	sb.WriteString(ip)
+// 	sb.WriteByte(':')
+// 	sb.WriteString(strconv.Itoa(int(port)))
+
+// 	NodesLock.Lock()
+// 	defer NodesLock.Unlock()
+
+// 	if n, found := NodeMap[name]; found {
+// 		node = n
+// 	} else {
+// 		info := NodeInfo{
+// 			Id:   uuid.New().ID(),
+// 			Name: name,
+// 		}
+// 		node = &NodeModel{
+// 			NodeInfo: info,
+// 			MsgConn: nil,
+// 			// Applist:   []*AppModel{},
+// 		}
+// 		NodeMap[name] = node
+// 	}
+// 	node.State = NodeStateReady
+// 	// node.Addr = sb.String()
+// 	node.OnlineTs = time.Now().Unix()
+
+// 	return node.Id
+// }
+
+func StoreNode(name string, conn *net.Conn) uint32 {
 	var node *NodeModel
-	var sb strings.Builder
-	sb.WriteString(ip)
-	sb.WriteByte(':')
-	sb.WriteString(strconv.Itoa(int(port)))
 
 	NodesLock.Lock()
 	defer NodesLock.Unlock()
@@ -90,8 +118,11 @@ func StoreNode(name string, ip string, port uint16) uint32 {
 		}
 		NodeMap[name] = node
 	}
+
+	if conn != nil {
+		node.MsgConn = conn
+	}
 	node.State = NodeStateReady
-	node.Addr = sb.String()
 	node.OnlineTs = time.Now().Unix()
 
 	return node.Id

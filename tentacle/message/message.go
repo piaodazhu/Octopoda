@@ -58,6 +58,8 @@ const (
 
 	TypeAppLatestVersion
 	TypeAppLatestVersionResponse
+
+	TypeUndefined
 )
 
 var MsgTypeString map[int]string = map[int]string {

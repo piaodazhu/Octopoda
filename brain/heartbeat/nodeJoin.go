@@ -4,8 +4,6 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/ticker"
-	"crypto/aes"
-	"crypto/cipher"
 	"encoding/hex"
 	"time"
 )
@@ -17,9 +15,9 @@ type NodeJoinMessage struct {
 
 type NodeJoinInfo struct {
 	Name string `json:"name"`
-	IP   string `json:"ip"`
-	Port uint16 `json:"port"`
-	Ts   int64  `json:"ts"`
+	// IP   string `json:"ip"`
+	// Port uint16 `json:"port"`
+	// Ts   int64  `json:"ts"`
 }
 
 type NodeJoinResponse struct {
@@ -27,27 +25,27 @@ type NodeJoinResponse struct {
 	Cnt int64 `json:"cnt"`
 }
 
-var block cipher.Block
+// var block cipher.Block
 
-func tokenToKey(key string, targetsize int) []byte {
-	keybuf := []byte(key)
-	if len(keybuf) >= targetsize {
-		return keybuf[:targetsize]
-	}
-	for i := len(keybuf); i < targetsize; i++ {
-		keybuf = append(keybuf, '=')
-	}
-	return keybuf
-}
+// func tokenToKey(key string, targetsize int) []byte {
+// 	keybuf := []byte(key)
+// 	if len(keybuf) >= targetsize {
+// 		return keybuf[:targetsize]
+// 	}
+// 	for i := len(keybuf); i < targetsize; i++ {
+// 		keybuf = append(keybuf, '=')
+// 	}
+// 	return keybuf
+// }
 
-func InitHeartbeat() {
-	key := tokenToKey(config.GlobalConfig.TentacleFace.Token, 16)
-	blk, err := aes.NewCipher(key)
-	if err != nil {
-		logger.Exceptions.Panic(err)
-	}
-	block = blk
-}
+// func InitHeartbeat() {
+// 	key := tokenToKey(config.GlobalConfig.TentacleFace.Token, 16)
+// 	blk, err := aes.NewCipher(key)
+// 	if err != nil {
+// 		logger.Exceptions.Panic(err)
+// 	}
+// 	block = blk
+// }
 
 func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 	decBuffer := make([]byte, hex.DecodedLen(len(raw)))

@@ -2,5 +2,6 @@ package network
 
 func Run() {
 	KeepAlive()
-	ListenAndServe()
+	// ListenAndServe()
+	ReadAndServe()
 }

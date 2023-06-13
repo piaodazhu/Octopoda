@@ -1,26 +1,30 @@
 package config
 
 type ConfigModel struct {
-	TentacleFace TentacleFaceModel `mapstructure:"tentacleFace"`
-	BrainFace    BrainFaceModel    `mapstructure:"brainFace"`
-	Sshinfo      SshinfoModel      `mapstructure:"ssh"`
-	Redis        RedisModel        `mapstructure:"redis"`
-	Logger       LoggerModel       `mapstructure:"logger"`
-	Workspace    WorkspaceModel    `mapstructure:"workspace"`
-	JsonFast     bool              `mapstructure:"jsonFast"`
+	Name            string            `mapstructure:"name"`
+	NetDevice       string            `mapstructure:"netDevice"`
+	HttpsNameServer HttpsNsModel      `mapstructure:"httpsNameServer"`
+	TentacleFace    TentacleFaceModel `mapstructure:"tentacleFace"`
+	OctlFace       OctlFaceModel    `mapstructure:"octlFace"`
+	Sshinfo         SshinfoModel      `mapstructure:"ssh"`
+	Redis           RedisModel        `mapstructure:"redis"`
+	Logger          LoggerModel       `mapstructure:"logger"`
+	Workspace       WorkspaceModel    `mapstructure:"workspace"`
+	JsonFast        bool              `mapstructure:"jsonFast"`
 }
 
 type TentacleFaceModel struct {
 	Ip            string `mapstructure:"ip"`
-	Port          uint16 `mapstructure:"port"`
+	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
+	MessagePort   uint16 `mapstructure:"messagePort"`
 	Token         string `mapstructure:"token"`
 	ActiveTimeout int    `mapstructure:"activeTimeout"`
 	RecordTimeout int    `mapstructure:"recordTimeout"`
 }
 
-type BrainFaceModel struct {
-	Ip   string `mapstructure:"ip"`
-	Port uint16 `mapstructure:"port"`
+type OctlFaceModel struct {
+	Ip            string `mapstructure:"ip"`
+	Port          uint16 `mapstructure:"port"`
 }
 
 type SshinfoModel struct {
@@ -46,4 +50,11 @@ type LoggerModel struct {
 type WorkspaceModel struct {
 	Root  string `mapstructure:"root"`
 	Store string `mapstructure:"store"`
+}
+
+type HttpsNsModel struct {
+	Enabled         bool   `mapstructure:"enable"`
+	Host            string `mapstructure:"host"`
+	Port            uint16 `mapstructure:"port"`
+	RequestInterval int    `mapstructure:"requestInterval"`
 }

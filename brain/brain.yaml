@@ -7,10 +7,11 @@ httpNameServer:
   requestInterval: 1
 tentacleFace:
   ip: "0.0.0.0"
-  port: 3456
+  heartbeatPort: 3456
+  messagePort: 3457
   activeTimeout: 2
   recordTimeout: 10
-brainFace:
+octlFace:
   ip: "0.0.0.0"
   port: 12345
 redis:

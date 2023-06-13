@@ -39,7 +39,7 @@ func initNodeStatus() {
 		Name:      config.GlobalConfig.Name,
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),
-		Ip:        config.GlobalConfig.Ip,
+		// Ip:        config.GlobalConfig.Ip,
 		LocalTime: time.Now().UnixNano(),
 
 		CpuLoadShort: 0.0,

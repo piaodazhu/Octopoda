@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"tentacle/app"
 	"tentacle/config"
-	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/network"
 	"tentacle/service"
@@ -35,9 +34,9 @@ func main() {
 	config.InitConfig(conf)
 	logger.InitLogger(stdout)
 	app.InitAppModel()
-	network.InitNetConf()
-	network.InitListener()
-	heartbeat.InitHeartbeat()
+
+	// network.InitListener()
+	// heartbeat.InitHeartbeat()
 	service.InitService()
 
 	network.Run()

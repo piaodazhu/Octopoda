@@ -1,6 +1,4 @@
 name: "pi0"
-netDevice: "wlan1"
-port: 3457
 httpsNameServer:
   enable: true
   host: "192.168.3.181"
@@ -10,7 +8,8 @@ brain:
   name: "net1.Brain.01"
   # if httpNameServer doesn't work, directly try to connect brain:
   ip: "127.0.0.1"
-  port: 3456
+  heartbeatPort: 3456
+  messagePort: 3457
   token: "default"
 ssh:
   username: "username"

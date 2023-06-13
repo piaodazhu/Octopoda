@@ -1,18 +1,18 @@
 package config
 
 type ConfigModel struct {
-	Name            string         `mapstructure:"name"`
-	NetDevice       string         `mapstructure:"netDevice"`
-	Ip              string         `mapstructure:"-"` // don't need to config
-	Port            uint16         `mapstructure:"port"`
-	HttpsNameServer HttpsNsModel   `mapstructure:"httpsNameServer"`
+	Name string `mapstructure:"name"`
+	// NetDevice       string         `mapstructure:"netDevice"`
+	// Ip              string         `mapstructure:"-"` // don't need to config
+	// Port            uint16         `mapstructure:"port"`
+	HttpsNameServer HttpsNsModel `mapstructure:"httpsNameServer"`
 	// Worker          WorkerModel    `mapstructure:"tentacle"`
-	Sshinfo         SshinfoModel   `mapstructure:"ssh"`
-	Master          MasterModel    `mapstructure:"brain"`
-	Logger          LoggerModel    `mapstructure:"logger"`
-	Heartbeat       HeartbeatModel `mapstructure:"heartbeat"`
-	Workspace       WorkspaceModel `mapstructure:"workspace"`
-	JsonFast        bool           `mapstructure:"jsonFast"`
+	Sshinfo   SshinfoModel   `mapstructure:"ssh"`
+	Brain     BrainModel     `mapstructure:"brain"`
+	Logger    LoggerModel    `mapstructure:"logger"`
+	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
+	Workspace WorkspaceModel `mapstructure:"workspace"`
+	JsonFast  bool           `mapstructure:"jsonFast"`
 }
 
 // deprecate
@@ -30,11 +30,11 @@ type SshinfoModel struct {
 	Port     uint16 `mapstructure:"port"`
 }
 
-type MasterModel struct {
-	Name string `mapstructure:"name"`
-	Ip   string `mapstructure:"ip"`
-	Port uint16 `mapstructure:"port"`
-
+type BrainModel struct {
+	Name          string `mapstructure:"name"`
+	Ip            string `mapstructure:"ip"`
+	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
+	MessagePort   uint16 `mapstructure:"messagePort"`
 	// reserved
 	Token string `mapstructure:"token"`
 }
