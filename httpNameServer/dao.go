@@ -2,18 +2,32 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-type NameEntryDao struct {
+type BaseDao struct {
+	DefaultPrefix string
 	DefaultTTL int
+}
+
+type NameEntryDao struct {
+	BaseDao
+}
+type ConfigDao struct {
+	BaseDao
+}
+type SshInfoDao struct {
+	BaseDao
 }
 
 var rdb *redis.Client
 var ctx context.Context
-var nedao *NameEntryDao
+var namedao *NameEntryDao
+var confdao *ConfigDao
+var sshdao *SshInfoDao
 
 func DaoInit() error {
 	rdb = redis.NewClient(&redis.Options{
@@ -22,46 +36,160 @@ func DaoInit() error {
 		DB:       1,
 	})
 	ctx = context.TODO()
-	nedao = &NameEntryDao{DefaultTTL: 5000}
+	namedao = &NameEntryDao{
+		BaseDao: BaseDao{
+			DefaultTTL: 5000, 
+			DefaultPrefix: "NameEntry:",
+		},
+	}
+	confdao = &ConfigDao{
+		BaseDao: BaseDao{
+			DefaultTTL: 0, 
+			DefaultPrefix: "Config:",
+		},
+	}
+	sshdao = &SshInfoDao{
+		BaseDao: BaseDao{
+			DefaultTTL: 0, 
+			DefaultPrefix: "SshInfo:",
+		},
+	}
 	return rdb.Ping(ctx).Err()
 }
 
 func GetNameEntryDao() *NameEntryDao {
-	return nedao
+	return namedao
+}
+func GetNamConfigDao() *ConfigDao {
+	return confdao
+}
+func GetSshInfoDao() *SshInfoDao {
+	return sshdao
 }
 
-func (n *NameEntryDao) DaoSet(key string, entry NameEntry, ttl int) error {
+func (b *BaseDao) list(pattern string) ([]string, error) {
+	pattern = b.DefaultPrefix + "*" + pattern
+	return rdb.Keys(ctx, pattern).Result()
+}
+
+func (b *BaseDao) del(key string) error {
+	key = b.DefaultPrefix + key
+	return rdb.Del(ctx, key).Err()
+}
+
+func (b *BaseDao) set(key string, value string, ttl int) error {
+	key = b.DefaultPrefix + key
 	if ttl == 0 {
-		ttl = n.DefaultTTL
+		ttl = b.DefaultTTL
+	} else if ttl < 0 {
+		ttl = 0
 	}
-
-	err := rdb.HSet(ctx, key, entry).Err()
-	if err != nil {
-		return err
-	}
-
-	if ttl > 0 {
-		err = rdb.Expire(ctx, key, time.Millisecond*time.Duration(ttl)).Err()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return rdb.Set(ctx, key, value, time.Millisecond*time.Duration(ttl)).Err()
 }
 
-func (n *NameEntryDao) DaoGet(key string) (*NameEntry, error) {
+func (b *BaseDao) get(key string) (string, error) {
+	key = b.DefaultPrefix + key
+	value, err := rdb.Get(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+	return value, nil
+}
+
+func (b *BaseDao) append(key string, value string) error {
+	key = b.DefaultPrefix + key
+	return rdb.LPush(ctx, key, value).Err()
+}
+
+func (b *BaseDao) getrange(key string, index, amount int) ([]string, error) {
+	key = b.DefaultPrefix + key
+	return rdb.LRange(ctx, key, int64(index), int64(index+amount)).Result()
+}
+
+// NameEntryDao
+
+func (n *NameEntryDao) Set(key string, entry NameEntry, ttl int) error {
+	raw, _ := json.Marshal(entry)
+	return n.set(key, string(raw), ttl)
+}
+
+func (n *NameEntryDao) Get(key string) (*NameEntry, error) {
+	value, err := n.get(key)
+	if err != nil {
+		return nil, err
+	}
 	res := &NameEntry{}
-	err := rdb.HGetAll(ctx, key).Scan(res)
+	err = json.Unmarshal([]byte(value), res)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (n *NameEntryDao) DaoDel(key string) error {
-	return rdb.Del(ctx, key).Err()
+func (n *NameEntryDao) Del(key string) error {
+	return n.del(key)
 }
 
-func (n *NameEntryDao) DaoList(pattern string) ([]string, error) {
-	return rdb.Keys(ctx, pattern).Result()
+func (n *NameEntryDao) List(pattern string) ([]string, error) {
+	return n.list(pattern)
+}
+
+// ConfigDao
+
+func (c *ConfigDao) Append(key string, config ConfigEntry) error {
+	raw, _ := json.Marshal(config)
+	return c.append(key, string(raw))
+}
+
+func (c *ConfigDao) GetRange(key string, index, amount int) ([]*ConfigEntry, error) {
+	value, err := c.getrange(key, index, amount)
+	if err != nil {
+		return nil, err
+	}
+	res := []*ConfigEntry{}
+	for _, conf := range value {
+		var item ConfigEntry
+		err = json.Unmarshal([]byte(conf), &item)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, &item)
+	}
+	return res, nil
+}
+
+func (c *ConfigDao) Del(key string) error {
+	return c.del(key)
+}
+
+func (c *ConfigDao) List(pattern string) ([]string, error) {
+	return c.list(pattern)
+}
+
+// SshInfoDao
+
+func (s *SshInfoDao) Set(key string, ssh SshInfo, ttl int) error {
+	raw, _ := json.Marshal(ssh)
+	return s.set(key, string(raw), ttl)
+}
+
+func (s *SshInfoDao) Get(key string) (*SshInfo, error) {
+	value, err := s.get(key)
+	if err != nil {
+		return nil, err
+	}
+	res := &SshInfo{}
+	err = json.Unmarshal([]byte(value), res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s *SshInfoDao) Del(key string) error {
+	return s.del(key)
+}
+
+func (s *SshInfoDao) List(pattern string) ([]string, error) {
+	return s.list(pattern)
 }

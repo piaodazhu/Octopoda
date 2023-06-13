@@ -38,9 +38,16 @@ func main() {
 	
 	r.GET("/query", NameQuery)
 	r.GET("/list", NameList)
+	r.GET("/conf", DownloadConfig)
+	r.GET("/sshinfo", DownloadSshInfo)
+
 	r.POST("/register", NameRegister)
 	r.POST("/delete", NameDelete)
+	r.POST("/conf", UploadConfig)
+	r.POST("/sshinfo", UploadSshInfo)
+
 	r.GET("/summary", ServiceSummary)
+	
 
 	// config TLS server
 	certPool := x509.NewCertPool()

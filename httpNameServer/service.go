@@ -7,34 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var summary *Summary
-
-func ServiceInit() {
-	summary = &Summary{
-		TotalRequests: 0,
-		Since:         time.Now().UnixMilli(),
-		ApiStats:      map[string]*ApiStat{},
-	}
-}
-
-func StatsMiddleWare() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var stats *ApiStat
-		var exists bool
-		if stats, exists = summary.ApiStats[c.Request.URL.Path]; exists {
-			stats.Requests++
-		} else {
-			stats = &ApiStat{Requests: 1}
-			summary.ApiStats[c.Request.URL.Path] = stats
-		}
-		summary.TotalRequests++
-		c.Next()
-		if c.Writer.Status() == 200 {
-			stats.Success++
-		}
-	}
-}
-
 func NameRegister(ctx *gin.Context) {
 	var params RegisterParam
 	err := ctx.ShouldBind(&params)
@@ -45,14 +17,10 @@ func NameRegister(ctx *gin.Context) {
 	}
 
 	entry := NameEntry{
-		Type:        params.Type,
-		Name:        params.Name,
-		Ip:          params.Ip,
-		Port:        params.Port,
-		Description: params.Description,
-		TimeStamp:   time.Now().UnixMilli(),
+		RegisterParam: params,
+		TimeStamp:     time.Now().UnixMilli(),
 	}
-	err = GetNameEntryDao().DaoSet(params.Name, entry, params.TTL)
+	err = GetNameEntryDao().Set(params.Name, entry, params.TTL)
 	if err != nil {
 		log.Println("dao.DaoSet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
@@ -68,7 +36,7 @@ func NameDelete(ctx *gin.Context) {
 		ctx.JSON(400, Response{Message: "no name"})
 		return
 	}
-	err := GetNameEntryDao().DaoDel(key)
+	err := GetNameEntryDao().Del(key)
 	if err != nil {
 		log.Println("dao.DaoDel():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
@@ -84,7 +52,7 @@ func NameQuery(ctx *gin.Context) {
 		ctx.JSON(400, Response{Message: "no name"})
 		return
 	}
-	entry, err := GetNameEntryDao().DaoGet(key)
+	entry, err := GetNameEntryDao().Get(key)
 	if err != nil {
 		log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
@@ -114,9 +82,21 @@ func NameList(ctx *gin.Context) {
 		pattern = params.Match
 	case "all":
 		pattern = "*"
+	default:
+		pattern = ""
 	}
 
-	entry, err := GetNameEntryDao().DaoList(pattern)
+	var entry []string
+	switch params.Scope {
+	case "name":
+		entry, err = GetNameEntryDao().List(pattern)
+	case "config":
+		entry, err = GetNamConfigDao().List(pattern)
+	case "ssh":
+		entry, err = GetSshInfoDao().List(pattern)
+	default:
+	}
+
 	if err != nil {
 		log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
@@ -125,6 +105,18 @@ func NameList(ctx *gin.Context) {
 	ctx.JSON(200, Response{Message: "OK", NameList: entry})
 }
 
-func ServiceSummary(ctx *gin.Context) {
-	ctx.JSON(200, summary)
+func UploadConfig(ctx *gin.Context) {
+
+}
+
+func DownloadConfig(ctx *gin.Context) {
+
+}
+
+func UploadSshInfo(ctx *gin.Context) {
+
+}
+
+func DownloadSshInfo(ctx *gin.Context) {
+
 }
