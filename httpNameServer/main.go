@@ -15,10 +15,12 @@ import (
 func main() {
 	// read arg
 	var port int
+	var staticRoot string
 	var caCertFile string
 	var svrCertFile string
 	var svrKeyFile string
 	flag.IntVar(&port, "p", 3455, "listening port")
+	flag.StringVar(&staticRoot, "d", "/var/octopoda/httpns/static/", "static root directory")
 	flag.StringVar(&caCertFile, "ca", "ca/ca.pem", "ca certificate")
 	flag.StringVar(&svrCertFile, "crt", "ca/nameserver/server.pem", "server certificate")
 	flag.StringVar(&svrKeyFile, "key", "ca/nameserver/server.key", "server private key")
@@ -48,6 +50,7 @@ func main() {
 
 	r.GET("/summary", ServiceSummary)
 	
+	r.Static("/static", staticRoot)
 
 	// config TLS server
 	certPool := x509.NewCertPool()
