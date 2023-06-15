@@ -14,8 +14,17 @@ import (
 
 func RunTask(task string, nodes []string) {
 	isScript := true
+	isBackground := true
 	if task[0] == '{' {
 		if len(task) > 2 && task[len(task)-1] == '}' {
+			isScript = false
+			isBackground = false
+			task = task[1 : len(task)-1]
+		} else {
+			return
+		}
+	} else if task[0] == '(' {
+		if len(task) > 2 && task[len(task)-1] == ')' {
 			isScript = false
 			task = task[1 : len(task)-1]
 		} else {
@@ -25,7 +34,7 @@ func RunTask(task string, nodes []string) {
 	if isScript {
 		runScript(task, nodes)
 	} else {
-		runCmd(task, nodes)
+		runCmd(task, nodes, isBackground)
 	}
 }
 
@@ -62,7 +71,7 @@ func runScript(task string, nodes []string) {
 	output.PrintJSON(raw)
 }
 
-func runCmd(task string, nodes []string) {
+func runCmd(task string, nodes []string, bg bool) {
 	url := fmt.Sprintf("http://%s:%d/%s%s",
 		config.GlobalConfig.Server.Ip,
 		config.GlobalConfig.Server.Port,
@@ -74,6 +83,9 @@ func runCmd(task string, nodes []string) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.WriteField("command", task)
+	if bg {
+		writer.WriteField("background", "true")
+	}
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	writer.Close()
 

@@ -243,7 +243,12 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 	if scen, found := ScenarioMap[name]; found {
 		// init but empty
 		if len(scen.Versions) == 0 {
-			return nil, true
+			logger.Exceptions.Println("GetScenarioInfoByName Empty Scenario")
+			return &ScenarioInfo{
+				ScenarioDigest: ScenarioDigest{
+					Name:        scen.Name,
+					Description: scen.Description,
+				}}, true
 		}
 		res := &ScenarioInfo{
 			ScenarioDigest: ScenarioDigest{
@@ -374,4 +379,3 @@ func ResetScenario(scenario, version, message string) bool {
 	scen.modified = false
 	return true
 }
-

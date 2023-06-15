@@ -17,7 +17,7 @@ var usageInfo = map[string]string{
 	"tree":    `octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] [SubDir]`,
 	"pull":	   `octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`,
 	"prune":   `octl prune`,
-	"run":     `octl run [ {<command>} | <script> ] <node1> <node2> ...`,
+	"run":     `octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <node2> ...`,
 }
 
 func PrintUsage(subcmd string) {

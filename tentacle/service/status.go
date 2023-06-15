@@ -77,6 +77,9 @@ func GetCpuCores() int {
 // maybe not 1 second...
 func GetCpuLoad() float64 {
 	percent, _ := cpu.Percent(time.Second, false)
+	if len(percent) == 0 {
+		return 0.0
+	}
 	return percent[0]
 }
 

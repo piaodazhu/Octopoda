@@ -5,7 +5,7 @@ type ConfigModel struct {
 	NetDevice       string            `mapstructure:"netDevice"`
 	HttpsNameServer HttpsNsModel      `mapstructure:"httpsNameServer"`
 	TentacleFace    TentacleFaceModel `mapstructure:"tentacleFace"`
-	OctlFace       OctlFaceModel    `mapstructure:"octlFace"`
+	OctlFace        OctlFaceModel     `mapstructure:"octlFace"`
 	Sshinfo         SshinfoModel      `mapstructure:"ssh"`
 	Redis           RedisModel        `mapstructure:"redis"`
 	Logger          LoggerModel       `mapstructure:"logger"`
@@ -23,8 +23,8 @@ type TentacleFaceModel struct {
 }
 
 type OctlFaceModel struct {
-	Ip            string `mapstructure:"ip"`
-	Port          uint16 `mapstructure:"port"`
+	Ip   string `mapstructure:"ip"`
+	Port uint16 `mapstructure:"port"`
 }
 
 type SshinfoModel struct {

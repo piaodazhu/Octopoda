@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"tentacle/app"
 	"tentacle/config"
 	"tentacle/logger"
@@ -154,6 +155,13 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		rmsg.Rmsg = err.Error()
 		goto errorout
 	}
+
+	// create a dummy file
+	err = exec.Command("echo", "+", ">>", fmt.Sprintf("%s/.DUMMY", fullname)).Run()
+	if err != nil {
+		logger.Exceptions.Println("create dummy file")
+	}
+
 	// commit
 	version, err = app.GitCommit(fullname, adParams.Message)
 	if err != nil {

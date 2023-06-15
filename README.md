@@ -319,9 +319,9 @@ With this subcmd we can pull file or directory from under `SubDir` from master o
 
 ### RUN
 
-> `usage: octl run [ '{<command>}' | <script> ] <node1> <node2> ...`
+> `usage: octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <node2> ...`
 
-With this subcmd we can run a command or a script on given nodes. For running a command, we need to enclose the command in `'{}'`. For running a script, we need to specify the complete filepath of the script.
+With this subcmd we can run a command or a script on given nodes. For running a command, we need to enclose the command in `'{}'`. As for blocking command, we need to run it in background, so we can enclose the command in `'()'`. For running a script, we need to specify the complete filepath of the script.
 
 ### SHELL
 

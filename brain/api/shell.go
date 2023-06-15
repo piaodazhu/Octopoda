@@ -6,6 +6,7 @@ import (
 	"brain/message"
 	"brain/model"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -120,8 +121,18 @@ func RunScript(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
+type CommandParams struct {
+	Command    string
+	Background bool
+}
+
 func RunCmd(ctx *gin.Context) {
 	cmd := ctx.PostForm("command")
+	bg := ctx.PostForm("background")
+	var isbg bool = false
+	if len(bg) != 0 {
+		isbg = true
+	}
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -133,6 +144,12 @@ func RunCmd(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
+	cParams := CommandParams{
+		Command:    cmd,
+		Background: isbg,
+	}
+	payload, _ := json.Marshal(cParams)
+
 	nodes := []string{}
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
@@ -154,13 +171,13 @@ func RunCmd(ctx *gin.Context) {
 		// 	results[i].Result = "NodeNotExists"
 		// }
 		wg.Add(1)
-		go runCmd(name, cmd, &wg, &results[i].Result)
+		go runCmd(name, payload, &wg, &results[i].Result)
 	}
 	wg.Wait()
 	ctx.JSON(200, results)
 }
 
-func runCmd(name string, cmd string, wg *sync.WaitGroup, result *string) {
+func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
@@ -171,8 +188,8 @@ func runCmd(name string, cmd string, wg *sync.WaitGroup, result *string) {
 		*result = "Connection not exists"
 		return
 	}
-	
-	raw, err := message.Request(conn, message.TypeCommandRun, []byte(cmd))
+
+	raw, err := message.Request(conn, message.TypeCommandRun, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"

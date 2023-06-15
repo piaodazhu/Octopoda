@@ -89,8 +89,16 @@ func GitCommit(app string, message string) (Version, error) {
 func GitCreate(app string) bool {
 	path := config.GlobalConfig.Workspace.Root + app
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
-		logger.Exceptions.Print("os.Mkdir")
-		return false
+		logger.Exceptions.Print("os.Mkdir: will overwrite")
+		err := os.RemoveAll(path)
+		if err != nil {
+			logger.Exceptions.Print("os.RemoveAll: overwrite failed")
+			return false
+		}
+		if os.Mkdir(path, os.ModePerm) != nil {
+			logger.Exceptions.Print("os.Mkdir")
+			return false
+		}
 	}
 	if _, err := git.PlainInit(path, false); err != nil {
 		logger.Exceptions.Print("git.PlainInit")
