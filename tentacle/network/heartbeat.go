@@ -61,8 +61,9 @@ func KeepAlive() {
 		logger.Network.Print("Cannot connect to master.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
 			service.Reboot()
+			wg.Done()
 		} else {
-			logger.Exceptions.Fatal("Dead but wont restart.")
+			logger.Exceptions.Print("Dead but wont restart.")
 			retry = 0
 			goto reconnect
 		}

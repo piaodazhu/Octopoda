@@ -91,13 +91,9 @@ func ScenarioDelete(ctx *gin.Context) {
 
 		// node name
 		nodename := dlist[i].NodeName
-		if addr, exists := model.GetNodeAddress(nodename); exists {
-			wg.Add(1)
-			// payload?
-			go deleteApp(addr, payload, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
-		}
+
+		wg.Add(1)
+		go deleteApp(nodename, payload, &wg, &results[i].Result)
 	}
 	wg.Wait()
 
@@ -106,35 +102,34 @@ func ScenarioDelete(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func deleteApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "NetError"
 		return
+	}
+	raw, err := message.Request(conn, message.TypeAppDelete, payload)
+	if err != nil {
+		logger.Comm.Println("TypeAppDeleteResponse", err)
+		*result = "TypeAppDeleteResponse"
+		return
+	}
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("Unmarshal", err)
+		*result = "MasterError"
+		return
+	}
+	if rmsg.Rmsg != "OK" {
+		*result = "NodeError:" + rmsg.Rmsg
 	} else {
-		defer conn.Close()
-
-		message.SendMessage(conn, message.TypeAppDelete, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppDeleteResponse {
-			logger.Comm.Println("TypeAppDeleteResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("Unmarshal", err)
-			*result = "MasterError"
-			return
-		}
-		if rmsg.Rmsg != "OK" {
-			*result = "NodeError:" + rmsg.Rmsg
-		} else {
-			*result = "OK"
-		}
+		*result = "OK"
 	}
 }
 
@@ -270,13 +265,8 @@ func ScenarioReset(ctx *gin.Context) {
 
 		// node name
 		nodename := rlist[i].NodeName
-		if addr, exists := model.GetNodeAddress(nodename); exists {
-			wg.Add(1)
-			// payload?
-			go resetApp(addr, payload, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
-		}
+		wg.Add(1)
+		go resetApp(nodename, payload, &wg, &results[i].Result)
 	}
 	wg.Wait()
 
@@ -285,32 +275,31 @@ func ScenarioReset(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func resetApp(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "NetError"
 		return
-	} else {
-		defer conn.Close()
-
-		message.SendMessage(conn, message.TypeAppReset, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppResetResponse {
-			logger.Comm.Println("TypeAppResetResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("Unmarshal", err)
-			*result = "MasterError"
-			return
-		}
-		*result = rmsg.Rmsg
 	}
+	raw, err := message.Request(conn, message.TypeAppReset, payload)
+	if err != nil {
+		logger.Comm.Println("TypeAppResetResponse", err)
+		*result = "TypeAppResetResponse"
+		return
+	}
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("Unmarshal", err)
+		*result = "MasterError"
+		return
+	}
+	*result = rmsg.Rmsg
 }
 
 func ScenarioFix(ctx *gin.Context) {

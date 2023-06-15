@@ -1,6 +1,6 @@
 package network
 
 func Run() {
-	ListenNodeJoin()
+	WaitNodeJoin()
 	ListenCommand()
 }

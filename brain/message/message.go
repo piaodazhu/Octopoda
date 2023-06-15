@@ -31,7 +31,7 @@ const (
 
 	TypeNodeLog
 	TypeNodeLogResponse
-	
+
 	TypeCommandReboot
 	TypeCommandSSH
 	TypeCommandRun
@@ -58,54 +58,56 @@ const (
 
 	TypeAppLatestVersion
 	TypeAppLatestVersionResponse
+
+	TypeUndefined
 )
 
-var MsgTypeString map[int]string = map[int]string {
-	TypeNodeJoin: "NodeJoin",
-	TypeNodeJoinResponse: "NodeJoinResponse",
-	TypeHeartbeat: "Heartbeat",
+var MsgTypeString map[int]string = map[int]string{
+	TypeNodeJoin:          "NodeJoin",
+	TypeNodeJoinResponse:  "NodeJoinResponse",
+	TypeHeartbeat:         "Heartbeat",
 	TypeHeartbeatResponse: "HeartbeatResponse",
 
-	TypeFilePush: "FilePush",
+	TypeFilePush:         "FilePush",
 	TypeFilePushResponse: "FilePushResponse",
 
-	TypeFilePull: "TypeFilePull",
+	TypeFilePull:         "TypeFilePull",
 	TypeFilePullResponse: "FilePullResponse",
 
-	TypeFileTree: "FileTree",
+	TypeFileTree:         "FileTree",
 	TypeFileTreeResponse: "FileTreeResponse",
 
-	TypeNodeStatus: "NodeState",
+	TypeNodeStatus:         "NodeState",
 	TypeNodeStatusResponse: "NodeStateResponse",
 
-	TypeNodeLog: "NodeLog",
+	TypeNodeLog:         "NodeLog",
 	TypeNodeLogResponse: "NodeLogResponse",
-	
-	TypeCommandReboot: "CommandReboot",
-	TypeCommandSSH: "CommandSSH",
-	TypeCommandRun: "CommandRun",
-	TypeCommandRunScript: "CommandRunScript",
-	TypeCommandResponse: "CommandResponse",
 
-	TypeAppCreate: "AppCreate",
+	TypeCommandReboot:    "CommandReboot",
+	TypeCommandSSH:       "CommandSSH",
+	TypeCommandRun:       "CommandRun",
+	TypeCommandRunScript: "CommandRunScript",
+	TypeCommandResponse:  "CommandResponse",
+
+	TypeAppCreate:         "AppCreate",
 	TypeAppCreateResponse: "AppCreateResponse",
 
-	TypeAppDelete: "AppDelete",
+	TypeAppDelete:         "AppDelete",
 	TypeAppDeleteResponse: "AppDeleteResponse",
 
-	TypeAppDeploy: "AppDeploy",
+	TypeAppDeploy:         "AppDeploy",
 	TypeAppDeployResponse: "AppDeployResponse",
 
-	TypeAppVersion: "AppVersion",
+	TypeAppVersion:         "AppVersion",
 	TypeAppVersionResponse: "AppVersionResponse",
 
-	TypeAppsInfo: "AppsInfo",
+	TypeAppsInfo:         "AppsInfo",
 	TypeAppsInfoResponse: "AppsInfoResponse",
 
-	TypeAppReset: "AppReset",
+	TypeAppReset:         "AppReset",
 	TypeAppResetResponse: "AppResetResponse",
 
-	TypeAppLatestVersion: "AppLatestVersion",
+	TypeAppLatestVersion:         "AppLatestVersion",
 	TypeAppLatestVersionResponse: "AppLatestVersionResponse",
 }
 
@@ -115,7 +117,6 @@ func SendMessage(conn net.Conn, mtype int, raw []byte) error {
 	binary.LittleEndian.PutUint32(Buf[0:], uint32(mtype))
 	binary.LittleEndian.PutUint32(Buf[4:], uint32(Len))
 	copy(Buf[8:], raw)
-
 	Offset := 0
 	for Offset < Len+8 {
 		n, err := conn.Write(Buf[Offset:])

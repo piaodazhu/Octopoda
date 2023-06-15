@@ -2,7 +2,6 @@ package main
 
 import (
 	"brain/config"
-	"brain/heartbeat"
 	"brain/logger"
 	"brain/model"
 	"brain/network"

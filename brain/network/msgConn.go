@@ -1,5 +1,11 @@
 package network
 
-// func ProcessMsgConn(conn net.Conn) {
+import "net"
 
-// }
+func ProcessMsg() {
+
+}
+
+func startMessager(conn net.Conn, name string) {
+
+}

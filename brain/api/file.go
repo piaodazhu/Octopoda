@@ -175,7 +175,7 @@ func FileSpread(ctx *gin.Context) {
 
 	if fsParams.TargetPath == "/" || fsParams.TargetPath == "./" {
 		fsParams.TargetPath = ""
-	} 
+	}
 	// else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
 	// 	logger.Exceptions.Println("Invalid targetPath")
 	// 	rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
@@ -190,7 +190,7 @@ func FileSpread(ctx *gin.Context) {
 
 	fname := pathFixing(fsParams.FileOrDir, config.GlobalConfig.Workspace.Store)
 	// fmt.Println(fname, "----")
-	
+
 	// we dont check because fname may be a pattern
 	// _, err = os.Stat(fname)
 	// if err != nil {
@@ -261,12 +261,8 @@ func FileSpread(ctx *gin.Context) {
 		for i := range fsParams.TargetNodes {
 			name := fsParams.TargetNodes[i]
 			results[i].Name = name
-			if addr, exists := model.GetNodeAddress(name); exists {
-				wg.Add(1)
-				go pushFile(addr, payload, &wg, &results[i].Result)
-			} else {
-				results[i].Result = "NodeNotExists"
-			}
+			wg.Add(1)
+			go pushFile(name, payload, &wg, &results[i].Result)
 		}
 		wg.Wait()
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
@@ -275,36 +271,35 @@ func FileSpread(ctx *gin.Context) {
 	}()
 }
 
-func pushFile(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		*result = "NetError"
 		return
+	}
+
+	raw, err := message.Request(conn, message.TypeFilePush, payload)
+	if err != nil {
+		logger.Comm.Println("TypeFilePushResponse", err)
+		*result = "TypeFilePushResponse"
+		return
+	}
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("UnmarshalNodeState", err)
+		*result = "MasterError"
+		return
+	}
+	if rmsg.Rmsg != "OK" {
+		logger.Exceptions.Print(rmsg.Rmsg)
+		*result = rmsg.Rmsg
 	} else {
-		defer conn.Close()
-
-		message.SendMessage(conn, message.TypeFilePush, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeFilePushResponse {
-			logger.Comm.Println("TypeFilePushResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("UnmarshalNodeState", err)
-			*result = "MasterError"
-			return
-		}
-		if rmsg.Rmsg != "OK" {
-			logger.Exceptions.Print(rmsg.Rmsg)
-			*result = rmsg.Rmsg
-		} else {
-			*result = "OK"
-		}
+		*result = "OK"
 	}
 }
 
@@ -364,29 +359,20 @@ func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 		pathsb.WriteString(subdir)
 		return allFiles(pathsb.String()), nil
 	}
-	addr, ok := model.GetNodeAddress(name)
-	if !ok {
-		return nil, ErrInvalidNode{node: name}
-	}
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		logger.Network.Print("FileTree Dial")
+
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		return nil, ErrNetworkError{node: name}
 	}
-	defer conn.Close()
 
 	params, _ := config.Jsoner.Marshal(&FileParams{
 		PathType:   pathtype,
 		TargetPath: subdir,
 	})
-	err = message.SendMessage(conn, message.TypeFileTree, params)
+	raw, err := message.Request(conn, message.TypeFileTree, params)
 	if err != nil {
 		logger.Comm.Print("FileTree")
-		return nil, ErrNetworkError{node: name}
-	}
-	mtype, raw, err := message.RecvMessage(conn)
-	if err != nil || mtype != message.TypeFileTreeResponse {
-		logger.Comm.Print("FileTreeResponse")
 		return nil, ErrNetworkError{node: name}
 	}
 	return raw, nil
@@ -499,12 +485,13 @@ func FileDistrib(ctx *gin.Context) {
 		for i := range nodes {
 			name := nodes[i]
 			results[i].Name = name
-			if addr, exists := model.GetNodeAddress(name); exists {
-				wg.Add(1)
-				go pushFile(addr, payload, &wg, &results[i].Result)
-			} else {
-				results[i].Result = "NodeNotExists"
-			}
+			// if addr, exists := model.GetNodeAddress(name); exists {
+
+			// } else {
+			// 	results[i].Result = "NodeNotExists"
+			// }
+			wg.Add(1)
+			go pushFile(name, payload, &wg, &results[i].Result)
 		}
 		wg.Wait()
 		if !rdb.TaskMarkDone(taskid, results, 3600) {
@@ -586,8 +573,9 @@ func FilePull(ctx *gin.Context) {
 		ctx.JSON(200, rmsg)
 		return
 	}
-	addr, ok := model.GetNodeAddress(name)
-	if !ok {
+
+	var conn *net.Conn
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		rmsg.Rmsg = ErrInvalidNode{node: name}.Error()
 		ctx.JSON(404, rmsg)
 		return
@@ -601,30 +589,12 @@ func FilePull(ctx *gin.Context) {
 	ctx.String(202, taskid)
 
 	go func() {
-		conn, err := net.Dial("tcp", addr)
-		if err != nil {
-			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
-			return
-		}
-		defer conn.Close()
-
 		params, _ := config.Jsoner.Marshal(&FileParams{
 			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
-		err = message.SendMessage(conn, message.TypeFilePull, params)
+		raw, err := message.Request(conn, message.TypeFilePull, params)
 		if err != nil {
-			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
-			return
-		}
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeFilePullResponse {
 			logger.Comm.Print("TypeFilePullResponse")
 			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {

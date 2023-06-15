@@ -11,8 +11,9 @@ import (
 )
 
 func NodeAppsInfo(ctx *gin.Context) {
-	var name, addr string
+	var name string
 	var ok bool
+	var conn *net.Conn
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -22,32 +23,26 @@ func NodeAppsInfo(ctx *gin.Context) {
 		ctx.JSON(404, rmsg)
 		return
 	}
-	if addr, ok = model.GetNodeAddress(name); !ok {
+
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		rmsg.Rmsg = "Invalid node"
 		ctx.JSON(404, rmsg)
 		return
 	}
-
-	if conn, err := net.Dial("tcp", addr); err != nil {
-		rmsg.Rmsg = "Can't connect node"
+	raw, err := message.Request(conn, message.TypeAppsInfo, []byte{})
+	if err != nil {
+		logger.Comm.Println("NodeAppsInfo", err)
+		rmsg.Rmsg = "NodeAppsInfo"
 		ctx.JSON(404, rmsg)
-	} else {
-		defer conn.Close()
-		message.SendMessage(conn, message.TypeAppsInfo, []byte{})
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppsInfoResponse {
-			logger.Comm.Println("NodeAppsInfo", err)
-			rmsg.Rmsg = "Node error"
-			ctx.JSON(404, rmsg)
-			return
-		}
-		ctx.Data(200, "application/json", raw)
+		return
 	}
+	ctx.Data(200, "application/json", raw)
 }
 
 func NodeAppVersion(ctx *gin.Context) {
-	var name, app, scen, addr string
+	var name, app, scen string
 	var ok bool
+	var conn *net.Conn
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -61,37 +56,29 @@ func NodeAppVersion(ctx *gin.Context) {
 		return
 	}
 
-	if addr, ok = model.GetNodeAddress(name); !ok {
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		rmsg.Rmsg = "Invalid node"
 		ctx.JSON(404, rmsg)
 		return
 	}
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
-		rmsg.Rmsg = "Can't connect node"
-		ctx.JSON(404, rmsg)
-	} else {
-		defer conn.Close()
-
-		aParams := &AppBasic{
-			Name:     app,
-			Scenario: scen,
-		}
-		payload, _ := config.Jsoner.Marshal(aParams)
-		message.SendMessage(conn, message.TypeAppVersion, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppVersionResponse {
-			logger.Comm.Println("NodeAppVersion", err)
-			rmsg.Rmsg = "Node error"
-			ctx.JSON(404, rmsg)
-			return
-		}
-		ctx.Data(200, "application/json", raw)
+	aParams := &AppBasic{
+		Name:     app,
+		Scenario: scen,
 	}
+	payload, _ := config.Jsoner.Marshal(aParams)
+	raw, err := message.Request(conn, message.TypeAppVersion, payload)
+	if err != nil {
+		logger.Comm.Println("NodeAppVersion", err)
+		rmsg.Rmsg = "NodeAppVersion"
+		ctx.JSON(404, rmsg)
+		return
+	}
+	ctx.Data(200, "application/json", raw)
 }
 
 func NodeAppReset(ctx *gin.Context) {
-	var name, app, scen, version, msg, addr string
+	var name, app, scen, version, msg string
 	var ok bool
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -108,63 +95,56 @@ func NodeAppReset(ctx *gin.Context) {
 		return
 	}
 
-	if addr, ok = model.GetNodeAddress(name); !ok {
+	var conn *net.Conn
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		rmsg.Rmsg = "Invalid node"
 		ctx.JSON(404, rmsg)
 		return
 	}
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
-		rmsg.Rmsg = "Can't connect node"
-		ctx.JSON(404, rmsg)
-	} else {
-		defer conn.Close()
-
-		arParams := &AppResetParams{
-			AppBasic: AppBasic{
-				Name:     app,
-				Scenario: scen,
-				Message:  msg,
-			},
-			VersionHash: version,
-		}
-		payload, _ := config.Jsoner.Marshal(arParams)
-		message.SendMessage(conn, message.TypeAppReset, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppResetResponse {
-			logger.Comm.Println("NodeAppReset", err)
-			rmsg.Rmsg = "Node error"
-			ctx.JSON(404, rmsg)
-			return
-		}
-
-		var result message.Result
-		err = config.Jsoner.Unmarshal(raw, &result)
-		if err != nil {
-			logger.Exceptions.Println("NodeAppReset Unmarshal", err)
-			rmsg.Rmsg = "NodeApp Result:" + err.Error()
-			ctx.JSON(500, rmsg)
-			return
-		}
-		if result.Rmsg != "OK" {
-			logger.Exceptions.Println("NodeAppReset", err)
-			ctx.JSON(404, result)
-			return
-		}
-
-		// update scenario version
-		success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, result.Version, result.Modified)
-		if !success {
-			logger.Exceptions.Print("Failed: AddScenNodeApp")
-			rmsg.Rmsg = "AddScenNodeApp"
-			ctx.JSON(500, rmsg)
-		}
-		success = model.UpdateScenario(scen, msg)
-		if !success {
-			logger.Exceptions.Print("Failed: UpdateScenario")
-			rmsg.Rmsg = "UpdateScenario"
-			ctx.JSON(500, rmsg)
-		}
-		ctx.JSON(200, result)
+	arParams := &AppResetParams{
+		AppBasic: AppBasic{
+			Name:     app,
+			Scenario: scen,
+			Message:  msg,
+		},
+		VersionHash: version,
 	}
+	payload, _ := config.Jsoner.Marshal(arParams)
+	raw, err := message.Request(conn, message.TypeAppReset, payload)
+	if err != nil {
+		logger.Comm.Println("NodeAppsInfo", err)
+		rmsg.Rmsg = "NodeAppsInfo"
+		ctx.JSON(404, rmsg)
+		return
+	}
+
+	var result message.Result
+	err = config.Jsoner.Unmarshal(raw, &result)
+	if err != nil {
+		logger.Exceptions.Println("NodeAppReset Unmarshal", err)
+		rmsg.Rmsg = "NodeApp Result:" + err.Error()
+		ctx.JSON(500, rmsg)
+		return
+	}
+	if result.Rmsg != "OK" {
+		logger.Exceptions.Println("NodeAppReset", err)
+		ctx.JSON(404, result)
+		return
+	}
+
+	// update scenario version
+	success := model.AddScenNodeApp(arParams.Scenario, arParams.Name, arParams.Description, name, result.Version, result.Modified)
+	if !success {
+		logger.Exceptions.Print("Failed: AddScenNodeApp")
+		rmsg.Rmsg = "AddScenNodeApp"
+		ctx.JSON(500, rmsg)
+	}
+	success = model.UpdateScenario(scen, msg)
+	if !success {
+		logger.Exceptions.Print("Failed: UpdateScenario")
+		rmsg.Rmsg = "UpdateScenario"
+		ctx.JSON(500, rmsg)
+	}
+	ctx.JSON(200, result)
 }

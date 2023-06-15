@@ -21,7 +21,7 @@ type sshInfo struct {
 }
 
 func SSHInfo(ctx *gin.Context) {
-	var name, addr string
+	var name string
 	var ok bool
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -40,27 +40,20 @@ func SSHInfo(ctx *gin.Context) {
 		ctx.JSON(200, sinfo)
 		return
 	}
-	if addr, ok = model.GetNodeAddress(name); !ok {
-		rmsg.Rmsg = "Invalid node name"
+	var conn *net.Conn
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		rmsg.Rmsg = "Invalid node"
 		ctx.JSON(404, rmsg)
 		return
 	}
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
-		rmsg.Rmsg = "Can't connect node"
+	raw, err := message.Request(conn, message.TypeCommandSSH, []byte{})
+	if err != nil {
+		rmsg.Rmsg = "Node Error:" + err.Error()
 		ctx.JSON(404, rmsg)
-	} else {
-		defer conn.Close()
-		message.SendMessage(conn, message.TypeCommandSSH, []byte{})
-		mtype, payload, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Comm.Println("Node Error: ", err)
-			rmsg.Rmsg = "Node Error:" + err.Error()
-			ctx.JSON(404, rmsg)
-			return
-		}
-		ctx.Data(200, "application/json", payload)
+		return
 	}
+	ctx.Data(200, "application/json", raw)
 }
 
 type ScriptParams struct {
@@ -114,12 +107,14 @@ func RunScript(ctx *gin.Context) {
 	for i := range nodes {
 		name := nodes[i]
 		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go runScript(addr, payload, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
-		}
+		// if addr, exists := model.GetNodeAddress(name); exists {
+		// 	wg.Add(1)
+		// 	go runScript(addr, payload, &wg, &results[i].Result)
+		// } else {
+		// 	results[i].Result = "NodeNotExists"
+		// }
+		wg.Add(1)
+		go runScript(name, payload, &wg, &results[i].Result)
 	}
 	wg.Wait()
 	ctx.JSON(200, results)
@@ -152,72 +147,73 @@ func RunCmd(ctx *gin.Context) {
 	for i := range nodes {
 		name := nodes[i]
 		results[i].Name = name
-		if addr, exists := model.GetNodeAddress(name); exists {
-			wg.Add(1)
-			go runCmd(addr, cmd, &wg, &results[i].Result)
-		} else {
-			results[i].Result = "NodeNotExists"
-		}
+		// if addr, exists := model.GetNodeAddress(name); exists {
+		// 	wg.Add(1)
+		// 	go runCmd(addr, cmd, &wg, &results[i].Result)
+		// } else {
+		// 	results[i].Result = "NodeNotExists"
+		// }
+		wg.Add(1)
+		go runCmd(name, cmd, &wg, &results[i].Result)
 	}
 	wg.Wait()
 	ctx.JSON(200, results)
 }
 
-func runCmd(addr string, cmd string, wg *sync.WaitGroup, result *string) {
+func runCmd(name string, cmd string, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var ok bool
+	var conn *net.Conn
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "Connection not exists"
 		return
-	} else {
-		defer conn.Close()
-
-		message.SendMessage(conn, message.TypeCommandRun, []byte(cmd))
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Comm.Println("TypeCommandResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("UnmarshalNodeState", err)
-			*result = "MasterError"
-			return
-		}
-		// logger.SysInfo.Print(rmsg.Rmsg)
-		// *result = rmsg.Output
-		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 	}
+	
+	raw, err := message.Request(conn, message.TypeCommandRun, []byte(cmd))
+	if err != nil {
+		logger.Comm.Println("Request", err)
+		*result = "Request error"
+		return
+	}
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("UnmarshalNodeState", err)
+		*result = "BrainError"
+		return
+	}
+	// logger.SysInfo.Print(rmsg.Rmsg)
+	// *result = rmsg.Output
+	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 }
 
-func runScript(addr string, payload []byte, wg *sync.WaitGroup, result *string) {
+func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var ok bool
+	var conn *net.Conn
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "Connection not exists"
 		return
-	} else {
-		defer conn.Close()
-
-		message.SendMessage(conn, message.TypeCommandRunScript, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeCommandResponse {
-			logger.Comm.Println("TypeCommandResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("UnmarshalNodeState", err)
-			*result = "MasterError"
-			return
-		}
-		// logger.SysInfo.Print(rmsg.Rmsg)
-		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 	}
+	raw, err := message.Request(conn, message.TypeCommandRunScript, payload)
+	if err != nil {
+		logger.Comm.Println("Request", err)
+		*result = "Request error"
+		return
+	}
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("UnmarshalNodeState", err)
+		*result = "Brain Error"
+		return
+	}
+	// logger.SysInfo.Print(rmsg.Rmsg)
+	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
 }

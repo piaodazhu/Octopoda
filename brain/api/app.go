@@ -109,12 +109,8 @@ func AppPrepare(ctx *gin.Context) {
 		for i := range nodes {
 			name := nodes[i]
 			results[i].Name = name
-			if addr, exists := model.GetNodeAddress(name); exists {
-				wg.Add(1)
-				go createApp(name, addr, &acParams, &wg, &results[i].Result)
-			} else {
-				results[i].Result = "NodeNotExists"
-			}
+			wg.Add(1)
+			go createApp(name, &acParams, &wg, &results[i].Result)
 		}
 		wg.Wait()
 		// logger.Brain.Println(results)
@@ -199,12 +195,8 @@ func AppDeploy(ctx *gin.Context) {
 		for i := range nodes {
 			name := nodes[i]
 			results[i].Name = name
-			if addr, exists := model.GetNodeAddress(name); exists {
-				wg.Add(1)
-				go deployApp(name, addr, &adParams, &wg, &results[i].Result)
-			} else {
-				results[i].Result = "NodeNotExists"
-			}
+			wg.Add(1)
+			go deployApp(name, &adParams, &wg, &results[i].Result)
 		}
 		wg.Wait()
 		// logger.Brain.Println(results)
@@ -214,82 +206,82 @@ func AppDeploy(ctx *gin.Context) {
 	}()
 }
 
-func createApp(node string, addr string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
+func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "NetError"
 		return
+	}
+	payload, _ := config.Jsoner.Marshal(acParams)
+	raw, err := message.Request(conn, message.TypeAppCreate, payload)
+	if err != nil {
+		logger.Comm.Println("TypeAppCreateResponse", err)
+		*result = "TypeAppCreateResponse"
+		return
+	}
+
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("UnmarshalNodeState", err)
+		*result = "MasterError"
+		return
+	}
+	// logger.Tentacle.Print(rmsg.Rmsg)
+	// *result = rmsg.Rmsg
+	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+
+	// update scenario version
+	success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, name, rmsg.Version, rmsg.Modified)
+	if success {
+		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
-		defer conn.Close()
-
-		payload, _ := config.Jsoner.Marshal(acParams)
-		message.SendMessage(conn, message.TypeAppCreate, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppCreateResponse {
-			logger.Comm.Println("TypeAppCreateResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("UnmarshalNodeState", err)
-			*result = "MasterError"
-			return
-		}
-		// logger.Tentacle.Print(rmsg.Rmsg)
-		// *result = rmsg.Rmsg
-		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
-
-		// update scenario version
-		success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, node, rmsg.Version, rmsg.Modified)
-		if success {
-			logger.Request.Print("Success: AddScenNodeApp")
-		} else {
-			logger.Exceptions.Print("Failed: AddScenNodeApp")
-			*result = "Failed: AddScenNodeApp"
-		}
+		logger.Exceptions.Print("Failed: AddScenNodeApp")
+		*result = "Failed: AddScenNodeApp"
 	}
 }
 
-func deployApp(node string, addr string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
+func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	if conn, err := net.Dial("tcp", addr); err != nil {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
+		logger.Comm.Println("GetNodeMsgConn")
+		*result = "NetError"
 		return
+	}
+	payload, _ := config.Jsoner.Marshal(adParams)
+	raw, err := message.Request(conn, message.TypeAppDeploy, payload)
+	if err != nil {
+		logger.Comm.Println("TypeAppDeployResponse", err)
+		*result = "TypeAppDeployResponse"
+		return
+	}
+
+	var rmsg message.Result
+	err = config.Jsoner.Unmarshal(raw, &rmsg)
+	if err != nil {
+		logger.Exceptions.Println("UnmarshalNodeState", err)
+		*result = "MasterError"
+		return
+	}
+	// *result = string(rmsg.Output)
+	// *result = rmsg.Output
+	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+
+	// update scenario version
+	success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
+	if success {
+		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
-		defer conn.Close()
-
-		payload, _ := config.Jsoner.Marshal(adParams)
-		message.SendMessage(conn, message.TypeAppDeploy, payload)
-		mtype, raw, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeAppDeployResponse {
-			logger.Comm.Println("TypeAppDeployResponse", err)
-			*result = "NetError"
-			return
-		}
-
-		var rmsg message.Result
-		err = config.Jsoner.Unmarshal(raw, &rmsg)
-		if err != nil {
-			logger.Exceptions.Println("UnmarshalNodeState", err)
-			*result = "MasterError"
-			return
-		}
-		// *result = string(rmsg.Output)
-		// *result = rmsg.Output
-		*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
-
-		// update scenario version
-		success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, node, rmsg.Version, rmsg.Modified)
-		if success {
-			logger.Request.Print("Success: AddScenNodeApp")
-		} else {
-			logger.Exceptions.Print("Failed: AddScenNodeApp")
-			*result = "Failed: AddScenNodeApp"
-		}
+		logger.Exceptions.Print("Failed: AddScenNodeApp")
+		*result = "Failed: AddScenNodeApp"
 	}
 }

@@ -159,48 +159,61 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	return result, scriptErr
 }
 
-// fix, haven't test
+// cannot get output properly
 func RunCmd(conn net.Conn, raw []byte) {
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
-	var command string
 	var err error
 	var payload []byte
 
-	command = string(raw)
+	// outputFile := fmt.Sprintf("%d.output", time.Now().UnixNano())
+	// output, _ := os.Create(outputFile)
 
-	outputFile := fmt.Sprintf("%d.output", time.Now().UnixNano())
-	output, _ := os.Create(outputFile)
+	// command := string(raw)
+	// cmd := exec.Command("/bin/bash", "-c", command)
+	// cmd.Dir = config.GlobalConfig.Workspace.Root
+	// // cmd.Env = append(syscall.Environ(), config.OctopodaEnv("", "", outputFile)...)
 
-	// fbuf, _ := os.ReadFile(scriptFile.String())
-	// logger.Client.Println(string(fbuf))
+	// result, execErr := cmd.CombinedOutput()
+	// if execErr != nil {
+	// 	logger.Exceptions.Println("Run cmd", execErr)
+	// }
 
-	cmd := exec.Command("/bin/bash", command)
-	cmd.Dir = "~/"
-	cmd.Env = append(syscall.Environ(), config.OctopodaEnv("", "", outputFile)...)
+	// result, err := io.ReadAll(output)
+	// if err != nil {
+	// 	logger.Exceptions.Println(err)
+	// }
+	// output.Close()
+	// os.Remove(outputFile)
 
-	scriptErr := cmd.Run()
-	if scriptErr != nil {
-		logger.Exceptions.Println("Run cmd", err)
-	}
+	// -------------
 
-	// read output
-	// result := []byte{}
-	result, err := io.ReadAll(output)
+	scriptFile := fmt.Sprintf("%s%d.sh", config.GlobalConfig.Workspace.Root, time.Now().UnixNano())
+	content := fmt.Sprintf("(%s) &>/dev/null &", string(raw))
+	result := []byte{}
+	err = os.WriteFile(scriptFile, []byte(content), os.ModePerm)
 	if err != nil {
-		logger.Exceptions.Println(err)
+		logger.Exceptions.Println("WriteFile script", err)
 	}
-	output.Close()
-	os.Remove(outputFile)
 
-	if scriptErr != nil {
-		rmsg.Rmsg = scriptErr.Error()
+	cmd := exec.Command("/bin/bash", scriptFile)
+	cmd.Dir = config.GlobalConfig.Workspace.Root
+
+	execErr := cmd.Run()
+	if execErr != nil {
+		logger.Exceptions.Println("Run cmd", execErr)
+	}	
+	os.Remove(scriptFile)
+
+	if execErr != nil {
+		rmsg.Rmsg = execErr.Error()
 	} else {
 		rmsg.Output = string(result)
 	}
 
 	payload, _ = config.Jsoner.Marshal(&rmsg)
+
 	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
 	if err != nil {
 		logger.Comm.Println("TypeCommandResponse send error")

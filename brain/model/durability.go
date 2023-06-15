@@ -4,8 +4,8 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/message"
+	"fmt"
 	"io"
-	"net"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -121,36 +121,35 @@ func Fix(name string) error {
 
 	// check real nodeapp versions
 	for i := range curNodeApps {
-		if addr, ok := GetNodeAddress(curNodeApps[i].NodeName); !ok {
+		if conn, ok := GetNodeMsgConn(curNodeApps[i].NodeName); !ok {
 			return ErrorNodeOffline{}
 		} else {
-			if conn, err := net.Dial("tcp", addr); err != nil {
-				return ErrorNodeDisconnect{}
-			} else {
-				defer conn.Close()
-				aParams := AppBasic{
-					Name:     curNodeApps[i].AppName,
-					Scenario: curNodeApps[i].ScenName,
-				}
+			aParams := AppBasic{
+				Name:     curNodeApps[i].AppName,
+				Scenario: curNodeApps[i].ScenName,
+			}
 
-				payload, _ := config.Jsoner.Marshal(&aParams)
-				message.SendMessage(conn, message.TypeAppLatestVersion, payload)
-				mtype, raw, err := message.RecvMessage(conn)
-				if err != nil || mtype != message.TypeAppLatestVersionResponse {
-					return ErrorNodeAppError{}
-				}
+			payload, _ := config.Jsoner.Marshal(&aParams)
+			err := message.SendMessage(*conn, message.TypeAppLatestVersion, payload)
+			if err != nil {
+				return fmt.Errorf("SendMessage")
+			}
 
-				var latest Version
-				err = config.Jsoner.Unmarshal(raw, &latest)
-				if err != nil || len(latest.Hash) == 0 {
-					return ErrorNodeAppError{}
-				}
+			mtype, raw, err := message.RecvMessage(*conn)
+			if err != nil || mtype != message.TypeAppLatestVersionResponse {
+				return ErrorNodeAppError{}
+			}
 
-				// check the latest version
-				if curNodeApps[i].Version != latest.Hash {
-					if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
-						return ErrorAddScenNodeApp{}
-					}
+			var latest Version
+			err = config.Jsoner.Unmarshal(raw, &latest)
+			if err != nil || len(latest.Hash) == 0 {
+				return ErrorNodeAppError{}
+			}
+
+			// check the latest version
+			if curNodeApps[i].Version != latest.Hash {
+				if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
+					return ErrorAddScenNodeApp{}
 				}
 			}
 		}

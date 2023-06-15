@@ -106,25 +106,16 @@ func readLogs(params *LogParams) {
 }
 
 func readLogsRemote(name string, params *LogParams) bool {
-	addr, ok := model.GetNodeAddress(name)
-	if !ok {
+	var conn *net.Conn
+	var ok bool
+	if conn, ok = model.GetNodeMsgConn(name); !ok {
 		return false
 	}
-	if conn, err := net.Dial("tcp", addr); err != nil {
-		return false
-	} else {
-		defer conn.Close()
-		query, _ := config.Jsoner.Marshal(params)
-		err := message.SendMessage(conn, message.TypeNodeLog, query)
-		if err != nil {
-			return false
-		}
-
-		mtype, answer, err := message.RecvMessage(conn)
-		if err != nil || mtype != message.TypeNodeLogResponse {
-			return false
-		}
-		err = config.Jsoner.Unmarshal(answer, params)
-		return err == nil
+	query, _ := config.Jsoner.Marshal(params)
+	answer, err := message.Request(conn, message.TypeNodeLog, query)
+	if err != nil {
+		return false 
 	}
+	err = config.Jsoner.Unmarshal(answer, params)
+	return err == nil
 }

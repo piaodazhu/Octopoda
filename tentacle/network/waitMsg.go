@@ -53,7 +53,6 @@ func ReadAndServe() {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue
 			}
-
 			err = message.SendMessage(conn, message.TypeNodeJoin, heartbeat.MakeNodeJoin())
 			if err != nil {
 				conn.Close()

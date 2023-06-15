@@ -3,8 +3,6 @@ package model
 import (
 	"brain/config"
 	"net"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -107,6 +105,9 @@ func StoreNode(name string, conn *net.Conn) uint32 {
 
 	if n, found := NodeMap[name]; found {
 		node = n
+		if n.MsgConn != nil {
+			(*n.MsgConn).Close()
+		}
 	} else {
 		info := NodeInfo{
 			Id:   uuid.New().ID(),
@@ -118,10 +119,7 @@ func StoreNode(name string, conn *net.Conn) uint32 {
 		}
 		NodeMap[name] = node
 	}
-
-	if conn != nil {
-		node.MsgConn = conn
-	}
+	node.MsgConn = conn
 	node.State = NodeStateReady
 	node.OnlineTs = time.Now().Unix()
 
@@ -160,23 +158,23 @@ func PruneDeadNode() {
 	}
 }
 
-func GetNodeInfoByName(name string) (*NodeModel, bool) {
+func GetNodeInfoByName(name string) (*NodeInfo, bool) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	if node, found := NodeMap[name]; found {
-		return node, true
+		return &node.NodeInfo, true
 	}
 	return nil, false
 }
 
-func GetNodeInfoById(id int) (*NodeModel, bool) {
+func GetNodeInfoById(id int) (*NodeInfo, bool) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	for _, node := range NodeMap {
 		if node.Id == uint32(id) {
-			return node, true
+			return &node.NodeInfo, true
 		}
 	}
 	return nil, false
@@ -197,14 +195,23 @@ func GetNodesInfoAll() ([]*NodeInfo, bool) {
 	return res, true
 }
 
-func GetNodeAddress(name string) (string, bool) {
-	NodesLock.Lock()
-	defer NodesLock.Unlock()
+// func GetNodeAddress(name string) (string, bool) {
+// 	NodesLock.Lock()
+// 	defer NodesLock.Unlock()
 
-	if node, found := NodeMap[name]; found && node.State == NodeStateReady {
-		return node.Addr, true
+// 	if node, found := NodeMap[name]; found && node.State == NodeStateReady {
+// 		return node.Addr, true
+// 	}
+// 	return "", false
+// }
+func GetNodeMsgConn(name string) (*net.Conn, bool) {
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
+	node, found := NodeMap[name]
+	if !found || node.MsgConn == nil {
+		return nil, false
 	}
-	return "", false
+	return node.MsgConn, true
 }
 
 func GetNodeState(name string) (int, bool) {

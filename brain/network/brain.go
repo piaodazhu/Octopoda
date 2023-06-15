@@ -2,8 +2,12 @@ package network
 
 import (
 	"brain/config"
-	"strconv"
-	"strings"
+	"brain/heartbeat"
+	"brain/logger"
+	"brain/message"
+	"brain/model"
+	"fmt"
+	"net"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,11 +16,7 @@ var engine *gin.Engine
 var listenaddr string
 
 func InitBrainFace() {
-	var sb strings.Builder
-	sb.WriteString(config.GlobalConfig.BrainFace.Ip)
-	sb.WriteByte(':')
-	sb.WriteString(strconv.Itoa(int(config.GlobalConfig.BrainFace.Port)))
-	listenaddr = sb.String()
+	listenaddr = fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
 
 	// gin.SetMode(gin.DebugMode)
 	// engine = gin.Default()
@@ -26,6 +26,76 @@ func InitBrainFace() {
 	engine.Use(gin.Recovery())
 
 	initRouter(engine)
+}
+
+var heartbeatListener net.Listener
+var messagerListener net.Listener
+
+func InitTentacleFace() {
+	var err error
+	addr1 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.HeartbeatPort)
+	heartbeatListener, err = net.Listen("tcp", addr1)
+	if err != nil {
+		logger.Exceptions.Panic(err)
+	}
+
+	addr2 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.MessagePort)
+	messagerListener, err = net.Listen("tcp", addr2)
+	if err != nil {
+		logger.Exceptions.Panic(err)
+	}
+}
+
+func WaitNodeJoin() {
+	acceptNodeJoin(heartbeatListener)
+	acceptNodeJoin(messagerListener)
+}
+
+func acceptNodeJoin(listener net.Listener) {
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				logger.Network.Print(err)
+				continue
+			}
+			go ProcessNodeJoin(conn)
+		}
+	}()
+}
+
+func ProcessNodeJoin(conn net.Conn) {
+	mtype, msg, err := message.RecvMessage(conn)
+	if err != nil || mtype != message.TypeNodeJoin {
+		logger.Comm.Print(err, message.TypeNodeJoin)
+		conn.Close()
+		return
+	}
+	joinRequest, err := heartbeat.ParseNodeJoin(msg)
+	if err != nil {
+		logger.Network.Print(err)
+		conn.Close()
+		return
+	}
+
+	err = message.SendMessage(conn, message.TypeNodeJoinResponse, heartbeat.MakeNodeJoinResponse())
+	if err != nil {
+		logger.Network.Print(err)
+		conn.Close()
+		return
+	}
+
+	_, port, _ := net.SplitHostPort(conn.LocalAddr().String())
+	if port == fmt.Sprint(config.GlobalConfig.TentacleFace.HeartbeatPort) {
+		// heartbeat connection established
+		id := model.StoreNode(joinRequest.Name, nil)
+		logger.Network.Printf("New node join, name=%s, id=%d\n", joinRequest.Name, id)
+		startHeartbeat(conn, joinRequest.Name)
+	} else {
+		id := model.StoreNode(joinRequest.Name, &conn)
+		logger.Network.Printf("establish msg conn, name=%s, id=%d\n", joinRequest.Name, id)
+		startMessager(conn, joinRequest.Name)
+	}
 }
 
 func ListenCommand() {
