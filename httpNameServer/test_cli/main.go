@@ -46,6 +46,18 @@ func InitHttpsClient(caCert, cliCert, cliKey string) {
 	}
 }
 
+func PingServer() error {
+	res, err := httpsClient.Get(host + "/ping")
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("Ping Error")
+	}
+	return nil
+}
+
 func NameRegister(entry *RegisterParam) error {
 	form := url.Values{}
 	form.Set("name", entry.Name)
@@ -210,7 +222,7 @@ func GetSummary() error {
 	}
 	var summary Summary
 	json.Unmarshal(buf, &summary)
-	
+
 	fmt.Println(summary.TotalRequests, time.UnixMilli(summary.Since).Format("2006-01-02 15:04:05"))
 	for url, stats := range summary.ApiStats {
 		fmt.Printf("url=%s, total request=%d, success request=%d\n", url, stats.Requests, stats.Success)
@@ -230,14 +242,19 @@ func main() {
 	flag.Parse()
 
 	InitHttpsClient(caCertFile, cliCertFile, cliKeyFile)
-	
+	fmt.Println("------- ping -------")
+	err := PingServer()
+	if err != nil {
+		log.Panicln("Cannot ping server", err)
+	}
+
 	entry1 := RegisterParam{
 		Type:        "brain",
 		Name:        "net1.Brain.01",
 		Ip:          "192.168.3.181",
 		Port:        3456,
 		Description: "for test",
-		TTL: 0,
+		TTL:         0,
 	}
 	entry2 := RegisterParam{
 		Type:        "brain",
@@ -245,7 +262,7 @@ func main() {
 		Ip:          "192.168.3.182",
 		Port:        3456,
 		Description: "hello world",
-		TTL: 10,
+		TTL:         10,
 	}
 	entry3 := RegisterParam{
 		Type:        "tentacle",
@@ -253,7 +270,7 @@ func main() {
 		Ip:          "192.168.3.183",
 		Port:        3456,
 		Description: "3333",
-		TTL: 10,
+		TTL:         10,
 	}
 	entry4 := RegisterParam{
 		Type:        "tentacle",
@@ -261,61 +278,61 @@ func main() {
 		Ip:          "192.168.3.184",
 		Port:        3456,
 		Description: "4444",
-		TTL: 10,
+		TTL:         10,
 	}
 	fakeconf1, _ := json.Marshal(entry1)
 	fakeconf2, _ := json.Marshal(entry2)
 	fakeconf3, _ := json.Marshal(entry3)
 	fakeconf4, _ := json.Marshal(entry4)
 	conf1 := ConfigUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.01",
-		Method: "append",
+		Type:      "brain",
+		Name:      "net1.Brain.01",
+		Method:    "append",
 		RawConfig: string(fakeconf1),
 	}
 	conf2 := ConfigUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.01",
-		Method: "append",
+		Type:      "brain",
+		Name:      "net1.Brain.01",
+		Method:    "append",
 		RawConfig: string(fakeconf2),
 	}
 	conf3 := ConfigUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.01",
-		Method: "append",
+		Type:      "brain",
+		Name:      "net1.Brain.01",
+		Method:    "append",
 		RawConfig: string(fakeconf3),
 	}
 	conf4 := ConfigUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.01",
-		Method: "reset",
+		Type:      "brain",
+		Name:      "net1.Brain.01",
+		Method:    "reset",
 		RawConfig: string(fakeconf4),
 	}
 	conf5 := ConfigUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.01",
-		Method: "clear",
+		Type:      "brain",
+		Name:      "net1.Brain.01",
+		Method:    "clear",
 		RawConfig: "{should be ignored}",
 	}
 	sshinfo1 := SshInfoUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.05",
+		Type:     "brain",
+		Name:     "net1.Brain.05",
 		Username: "pi",
-		Ip: "192.168.3.181",
-		Port: 22,
+		Ip:       "192.168.3.181",
+		Port:     22,
 		Password: "sshinfo1",
 	}
 	sshinfo2 := SshInfoUploadParam{
-		Type: "brain",
-		Name: "net1.Brain.06",
+		Type:     "brain",
+		Name:     "net1.Brain.06",
 		Username: "pi",
-		Ip: "192.168.3.182",
-		Port: 33,
+		Ip:       "192.168.3.182",
+		Port:     33,
 		Password: "sshinfo2",
 	}
 
 	fmt.Println("------- register name -------")
-	err := NameRegister(&entry1)
+	err = NameRegister(&entry1)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -358,8 +375,8 @@ func main() {
 
 	fmt.Println("------- query configs -------")
 	q := ConfigQueryParam{
-		Name: conf1.Name,
-		Index: 0,
+		Name:   conf1.Name,
+		Index:  0,
 		Amount: 2,
 	}
 	err = ConfigQuery(&q)
@@ -377,7 +394,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	
+
 	fmt.Println("------- register sshinfo -------")
 	err = SshinfoRegister(&sshinfo1)
 	if err != nil {
@@ -400,7 +417,7 @@ func main() {
 
 	fmt.Println("------- query list -------")
 	lqp := ListQueryParam{
-		Scope: "name",
+		Scope:  "name",
 		Method: "all",
 	}
 	err = NameList(&lqp)

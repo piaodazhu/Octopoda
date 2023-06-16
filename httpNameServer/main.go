@@ -38,6 +38,9 @@ func main() {
 	r := gin.Default()
 	r.Use(StatsMiddleWare())
 	
+	r.GET("/ping", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
 	r.GET("/query", NameQuery)
 	r.GET("/list", NameList)
 	r.GET("/conf", DownloadConfig)
