@@ -27,4 +27,13 @@ heartbeat:
 workspace:
   root: "/var/octopoda/tentacle/workspace/"
   store: "/var/octopoda/tentacle/FSTORE/"
+ssl:
+  caCert: "/etc/octopoda/cert/ca.pem"
+  clientCert: "/etc/octopoda/cert/client.pem"
+  clientKey: "/etc/octopoda/cert/client.key"
+env:
+  - key: "key1"
+    value: "val1"
+  - key: "key2"
+    value: "val2"
 jsonFast: true

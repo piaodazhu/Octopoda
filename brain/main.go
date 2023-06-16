@@ -40,7 +40,7 @@ func main() {
 	model.InitScenarioMap()
 
 	// heartbeat.InitHeartbeat()
-
+	network.InitNameClient()
 	network.InitTentacleFace()
 	network.InitBrainFace()
 
