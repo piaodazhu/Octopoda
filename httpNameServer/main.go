@@ -21,7 +21,7 @@ func main() {
 	var svrKeyFile string
 	flag.IntVar(&port, "p", 3455, "listening port")
 	flag.StringVar(&staticRoot, "d", "/var/octopoda/httpns/static/", "static root directory")
-	flag.StringVar(&caCertFile, "ca", "ca/ca.pem", "ca certificate")
+	flag.StringVar(&caCertFile, "ca", "ca/nameserver/ca.pem", "ca certificate")
 	flag.StringVar(&svrCertFile, "crt", "ca/nameserver/server.pem", "server certificate")
 	flag.StringVar(&svrKeyFile, "key", "ca/nameserver/server.key", "server private key")
 	flag.Parse()

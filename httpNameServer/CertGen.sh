@@ -12,7 +12,18 @@ then
 	CN=$2
 
 	openssl genrsa -out $FNAME.key 2048 && \
-	openssl req -new -x509 -days 3650 -key $FNAME.key -subj "/C=CN/ST=BJ/L=BJ/O=BIT/CN=$CN" -out $FNAME.pem && \
+	openssl req -new -x509 -sha256 -days 3650 -key $FNAME.key -subj "/C=CN/ST=BJ/L=BJ/O=BIT/CN=$CN" -out $FNAME.pem && \
+	echo "DONE"
+	rm -rf $FNAME.srl
+	exit 0
+fi
+
+if [[ ($TYPE == "clientlist" || $TYPE == "clist") && $# == 2 ]];
+then
+	for line in `cat $2`
+	do
+		bash CertGen.sh cli $line
+	done && \
 	echo "DONE"
 	exit 0
 fi
@@ -35,10 +46,11 @@ OUTPUT=$CN
 
 mkdir -p $OUTPUT && \
 echo ">> generating key pair and cert signing request..." && \
-openssl req -newkey rsa:2048 -nodes -keyout $OUTPUT/$FNAME.key \
+openssl req -newkey rsa:2048 -nodes -sha256 -keyout $OUTPUT/$FNAME.key \
 	-subj "/C=CN/ST=BJ/L=BJ/O=BIT/CN=$CN" -out $OUTPUT/$FNAME.csr &&\
 echo ">> CA is signing cert..." && \
-openssl x509 -req -extfile <(printf "$EXTARG")  -days 3650 -in $OUTPUT/$FNAME.csr \
+openssl x509 -req -extfile <(printf "$EXTARG") -sha256 -days 3650 -in $OUTPUT/$FNAME.csr \
 	-CA $CA_CRT -CAkey $CA_KEY -CAcreateserial -out $OUTPUT/$FNAME.pem && \
 rm $OUTPUT/$FNAME.csr && \
+cp $CA_CRT $OUTPUT/ && \
 echo "DONE"
