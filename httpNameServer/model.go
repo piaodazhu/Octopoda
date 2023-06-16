@@ -10,7 +10,7 @@ type RegisterParam struct {
 	Name        string `form:"name" json:"name" binding:"required,min=2"`
 	Ip          string `form:"ip" json:"ip" binding:"required,ip"`
 	Port        int    `form:"port" json:"port" binding:"required,gte=1,lte=65535"`
-	Port2       int    `form:"port2" json:"port2" binding:"omitemtpy,gte=1,lte=65535"`
+	Port2       int    `form:"port2" json:"port2" binding:"omitempty,gte=1,lte=65535"`
 	Description string `form:"description" json:"description" binding:"omitempty"`
 	TTL         int    `form:"ttl" json:"ttl,omitempty" binding:"omitempty"`
 }

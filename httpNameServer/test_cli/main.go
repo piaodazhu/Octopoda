@@ -224,9 +224,9 @@ func main() {
 	var cliCertFile string
 	var cliKeyFile string
 	flag.IntVar(&port, "p", 9931, "listening port")
-	flag.StringVar(&caCertFile, "ca", "../ca/ca.pem", "ca certificate")
-	flag.StringVar(&cliCertFile, "crt", "../ca/net1.Brain.01/client.pem", "client certificate")
-	flag.StringVar(&cliKeyFile, "key", "../ca/net1.Brain.01/client.key", "client private key")
+	flag.StringVar(&caCertFile, "ca", "ca.pem", "ca certificate")
+	flag.StringVar(&cliCertFile, "crt", "client.pem", "client certificate")
+	flag.StringVar(&cliKeyFile, "key", "client.key", "client private key")
 	flag.Parse()
 
 	InitHttpsClient(caCertFile, cliCertFile, cliKeyFile)
