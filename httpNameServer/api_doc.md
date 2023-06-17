@@ -1,3 +1,10 @@
+## 0 ping
+- url: /ping
+- method: GET
+- argument: none
+- response: none. statuscode 200
+```
+
 ## 1 register a name entry
 - url: /register
 - method: POST

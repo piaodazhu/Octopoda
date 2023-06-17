@@ -5,7 +5,10 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
+	"httpns/config"
+	"httpns/logger"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -14,17 +17,48 @@ import (
 
 func main() {
 	// read arg
+	var stdout bool
+	var conf string
+	var ip string
 	var port int
-	var staticRoot string
 	var caCertFile string
 	var svrCertFile string
 	var svrKeyFile string
-	flag.IntVar(&port, "p", 3455, "listening port")
-	flag.StringVar(&staticRoot, "d", "/var/octopoda/httpns/static/", "static root directory")
-	flag.StringVar(&caCertFile, "ca", "ca/nameserver/ca.pem", "ca certificate")
-	flag.StringVar(&svrCertFile, "crt", "ca/nameserver/server.pem", "server certificate")
-	flag.StringVar(&svrKeyFile, "key", "ca/nameserver/server.key", "server private key")
+	flag.StringVar(&conf, "c", "", "specify config file")
+	flag.BoolVar(&stdout, "p", false, "print log to stdout, default is false")
+	flag.StringVar(&ip, "ip", "", "listening ip")
+	flag.IntVar(&port, "port", 0, "listening port")
+	flag.StringVar(&caCertFile, "ca", "", "ca certificate")
+	flag.StringVar(&svrCertFile, "crt", "", "server certificate")
+	flag.StringVar(&svrKeyFile, "key", "", "server private key")
 	flag.Parse()
+
+	config.InitConfig(conf)
+	logger.InitLogger(stdout)
+	if port != 0 {
+		config.GlobalConfig.ServePort = uint16(port)
+	}
+	if caCertFile != "" {
+		config.GlobalConfig.Sslinfo.CaCert = caCertFile
+	}
+	if svrCertFile != "" {
+		config.GlobalConfig.Sslinfo.ServerCert = svrCertFile
+	}
+	if svrKeyFile != "" {
+		config.GlobalConfig.Sslinfo.ServerKey = svrKeyFile
+	}
+
+	if ip != "" {
+		config.GlobalConfig.ServeIp = ip
+	} else if config.GlobalConfig.NetDevice == "" {
+		config.GlobalConfig.ServeIp = "0.0.0.0"
+	} else {
+		devIp, err := getIpByDevice(config.GlobalConfig.NetDevice)
+		if err != nil {
+			panic("serve IP has not been configured or detected!")
+		}
+		config.GlobalConfig.ServeIp = devIp
+	}
 
 	// init dao and service
 	err := DaoInit()
@@ -35,9 +69,11 @@ func main() {
 
 	// config GIN handler
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(OctopodaLogger())
 	r.Use(StatsMiddleWare())
-	
+
 	r.GET("/ping", func(ctx *gin.Context) {
 		ctx.Status(200)
 	})
@@ -52,12 +88,12 @@ func main() {
 	r.POST("/sshinfo", UploadSshInfo)
 
 	r.GET("/summary", ServiceSummary)
-	
-	r.Static("/static", staticRoot)
+
+	mountStatic(r)
 
 	// config TLS server
 	certPool := x509.NewCertPool()
-	ca, err := os.ReadFile(caCertFile)
+	ca, err := os.ReadFile(config.GlobalConfig.Sslinfo.CaCert)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -74,9 +110,35 @@ func main() {
 
 	// run HTTP server with TLS
 	s := http.Server{
-		Addr:      fmt.Sprintf(":%d", port),
+		Addr:      fmt.Sprintf("%s:%d", config.GlobalConfig.ServeIp, config.GlobalConfig.ServePort),
 		Handler:   r,
 		TLSConfig: tlsConfig,
 	}
-	log.Fatal(s.ListenAndServeTLS(svrCertFile, svrKeyFile))
+
+	log.Fatal(s.ListenAndServeTLS(config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey))
+}
+
+func mountStatic(engine *gin.Engine) {
+	for _, c := range config.GlobalConfig.StaticDirs {
+		engine.Static(c.Url, c.Dir)
+	}
+}
+
+func getIpByDevice(device string) (string, error) {
+	iface, err := net.InterfaceByName(device)
+	if err != nil {
+		return "", err
+	}
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return "", err
+	}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String(), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("IPv4 address not found with device %s", device)
 }
