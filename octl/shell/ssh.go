@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"os"
 	"time"
@@ -31,7 +31,7 @@ type SSHTerminal struct {
 
 func SSH(nodename string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.SshInfo,
 		nodename,

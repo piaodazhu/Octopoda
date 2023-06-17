@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 )
 
 func NodeInfo(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeInfo,
 		name,
@@ -28,7 +28,7 @@ func NodeInfo(name string) {
 
 func NodesInfo() {
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodesInfo,
 	)
@@ -44,7 +44,7 @@ func NodesInfo() {
 
 func NodePrune() {
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodePrune,
 	)

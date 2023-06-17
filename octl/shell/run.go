@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"os"
 	"path/filepath"
@@ -49,7 +49,7 @@ func runScript(task string, nodes []string) {
 	fname := filepath.Base(task)
 
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.RunScript,
 	)
@@ -73,7 +73,7 @@ func runScript(task string, nodes []string) {
 
 func runCmd(task string, nodes []string, bg bool) {
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.RunCmd,
 	)

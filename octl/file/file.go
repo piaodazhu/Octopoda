@@ -8,7 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"octl/task"
 	"os"
@@ -79,7 +79,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	bodyWriter.Close()
 
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileUpload,
 	)
@@ -121,7 +121,7 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 	buf, _ := config.Jsoner.Marshal(fsParams)
 
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileSpread,
 	)
@@ -215,7 +215,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	bodyWriter.Close()
 
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileDistrib,
 	)
@@ -244,7 +244,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 
 func ListAllFile(pathtype string, node string, subdir string) {
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&subdir=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileTree,
 		pathtype,
@@ -282,7 +282,7 @@ type Result struct {
 
 func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FilePull,
 		pathtype,

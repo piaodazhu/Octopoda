@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"strconv"
 )
@@ -37,7 +37,7 @@ func NodeLog(name string, params []string) {
 		}
 	}
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeLog,
 		name,

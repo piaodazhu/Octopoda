@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"octl/task"
 	"os"
@@ -117,7 +117,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		bodyWriter.Close()
 
 		url := fmt.Sprintf("http://%s/%s%s",
-			httpnc.BrainAddr,
+			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppCreate,
 		)
@@ -212,7 +212,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 
 		// run the scripts
 		url := fmt.Sprintf("http://%s/%s%s",
-			httpnc.BrainAddr,
+			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppDepoly,
 		)
@@ -330,7 +330,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 
 		// run purge script in corresponding nodes
 		url := fmt.Sprintf("http://%s/%s%s",
-			httpnc.BrainAddr,
+			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppDepoly,
 		)
@@ -397,7 +397,7 @@ func (ErrDupScenario) Error() string { return "ErrDupScenario" }
 func ScenarioCreate(name, description string) error {
 	fmt.Println(">> create scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioInfo,
 	)
@@ -423,7 +423,7 @@ func ScenarioCreate(name, description string) error {
 func ScenarioUpdate(name, message string) error {
 	fmt.Println(">> update scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioUpdate,
 	)
@@ -449,7 +449,7 @@ func ScenarioUpdate(name, message string) error {
 func ScenarioDelete(name string) error {
 	fmt.Println(">> delete scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioInfo,
 		name,

@@ -7,13 +7,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 )
 
 func NodeAppsInfo(node string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeApps,
 		node,
@@ -30,7 +30,7 @@ func NodeAppsInfo(node string) {
 
 func NodeAppInfo(node, app, scenario string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeAppVersion,
 		node,
@@ -49,7 +49,7 @@ func NodeAppInfo(node, app, scenario string) {
 
 func NodeAppReset(node, app, scenario, version, message string) {
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeAppVersion,
 	)

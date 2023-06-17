@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/subcmd"
 	"os"
 )
@@ -20,21 +20,28 @@ func main() {
 	args := os.Args
 	var conf string
 	var askver bool
+	var usage bool
 	flag.BoolVar(&askver, "version", false, "tell version number")
 	flag.StringVar(&conf, "c", "", "specify a configuration file")
+	flag.BoolVar(&usage, "usage", false, "print subcommand usage")
 	flag.Parse()
+
+	if len(args) == 1 {
+		fmt.Println("Octopoda Controlling Tool. Use '-usage', '-version', '-c'...")
+		return
+	}
 
 	if askver {
 		fmt.Printf("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
-
-	if len(args) == 1 {
-		fmt.Println("Octopoda Controlling Tool. Use 'help', '-version', '-c'...")
-		return
+	if usage {
+		subcmd.PrintUsages()
+		return 
 	}
+
 	config.InitConfig(conf)
-	httpnc.InitClient()
+	nameclient.InitClient()
 	switch args[1] {
 	case "apply":
 		subcmd.Apply(args[2:])

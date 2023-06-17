@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 	"os"
 )
@@ -151,7 +151,7 @@ type NodeInfo struct {
 func checkNodes(nodeset map[string]struct{}) bool {
 	// get all nodes in the cluster
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodesInfo,
 	)

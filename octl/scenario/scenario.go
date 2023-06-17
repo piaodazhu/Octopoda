@@ -7,13 +7,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
-	"octl/httpnc"
+	"octl/nameclient"
 	"octl/output"
 )
 
 func ScenariosInfo() {
 	url := fmt.Sprintf("http://%s/%s%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenariosInfo,
 	)
@@ -29,7 +29,7 @@ func ScenariosInfo() {
 
 func ScenarioInfo(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioInfo,
 		name,
@@ -46,7 +46,7 @@ func ScenarioInfo(name string) {
 
 func ScenarioFix(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioFix,
 		name,
@@ -63,7 +63,7 @@ func ScenarioFix(name string) {
 
 func ScenarioVersion(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioVersion,
 		name,
@@ -80,7 +80,7 @@ func ScenarioVersion(name string) {
 
 func ScenarioReset(name string, version string, message string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		httpnc.BrainAddr,
+		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioVersion,
 		name,
