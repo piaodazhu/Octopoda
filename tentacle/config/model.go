@@ -12,6 +12,8 @@ type ConfigModel struct {
 	Logger    LoggerModel    `mapstructure:"logger"`
 	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
 	Workspace WorkspaceModel `mapstructure:"workspace"`
+	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
+	CustomEnv       []*CustomEnvItem  `mapstructure:"env"`
 	JsonFast  bool           `mapstructure:"jsonFast"`
 }
 
@@ -62,4 +64,15 @@ type HttpsNsModel struct {
 	Host            string `mapstructure:"host"`
 	Port            uint16 `mapstructure:"port"`
 	RequestInterval int    `mapstructure:"requestInterval"`
+}
+
+type SslinfoModel struct {
+	CaCert     string `mapstructure:"caCert"`
+	ClientCert string `mapstructure:"clientCert"`
+	ClientKey  string `mapstructure:"clientKey"`
+}
+
+type CustomEnvItem struct {
+	Key   string `mapstructure:"key"`
+	Value string `mapstructure:"value"`
 }
