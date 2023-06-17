@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"octl/config"
+	"octl/httpnc"
 	"octl/subcmd"
 	"os"
 )
@@ -33,7 +34,7 @@ func main() {
 		return
 	}
 	config.InitConfig(conf)
-
+	httpnc.InitClient()
 	switch args[1] {
 	case "apply":
 		subcmd.Apply(args[2:])

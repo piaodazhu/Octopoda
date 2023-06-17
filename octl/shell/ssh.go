@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"octl/config"
+	"octl/httpnc"
 	"octl/output"
 	"os"
 	"time"
@@ -29,27 +30,26 @@ type SSHTerminal struct {
 }
 
 func SSH(nodename string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?name=%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.SshInfo,
 		nodename,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 	defer res.Body.Close()
 
 	sshinfo := SSHInfo{}
 	err = config.Jsoner.Unmarshal(buf, &sshinfo)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 	dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
 }

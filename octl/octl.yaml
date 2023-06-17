@@ -1,8 +1,17 @@
-server:
-  name: "master"
+httpsNameServer:
+  enable: true
+  host: "192.168.3.181"
+  port: 3455
+  requestInterval: 1
+brain:
+  name: "brain"
+  apiPrefix : "api/v1"
   ip: 127.0.0.1
   port: 12345
-  apiPrefix : "api/v1"
+ssl:
+  caCert: "/root/Octopoda/httpNameServer/ca/tentacle/ca.pem"
+  clientCert: "/root/Octopoda/httpNameServer/ca/tentacle/client.pem"
+  clientKey: "/root/Octopoda/httpNameServer/ca/tentacle/client.key"
 jsonFast: true
 outputPretty: true
 api:  

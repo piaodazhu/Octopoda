@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/httpnc"
 	"octl/output"
 	"octl/task"
 	"os"
@@ -44,25 +45,25 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	}
 	err := cmd.Run()
 	if err != nil {
-		output.PrintFatal("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
+		output.PrintFatalln("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
 	}
 	defer os.RemoveAll(wrapName)
 
 	packName := fmt.Sprintf("%s.zip", wrapName)
 	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 	// if err != nil {
-	// 	output.PrintFatal("cmd.Run")
+	// 	output.PrintFatalln("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
-		output.PrintFatal("Archive")
+		output.PrintFatalln("Archive")
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		output.PrintFatal("err")
+		output.PrintFatalln("err")
 	}
 	defer f.Close()
 
@@ -77,30 +78,29 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 
 	bodyWriter.Close()
 
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileUpload,
 	)
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		output.PrintFatal("post")
+		output.PrintFatalln("post")
 	}
 
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		output.PrintFatal("ReadAll")
+		output.PrintFatalln("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
-		output.PrintFatal("Request submit error: " + string(msg))
+		output.PrintFatalln("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("UPLOADING...", string(msg))
 	if err != nil {
-		output.PrintFatal("Task processing error: " + err.Error())
+		output.PrintFatalln("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)
@@ -120,30 +120,29 @@ func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
 	}
 	buf, _ := config.Jsoner.Marshal(fsParams)
 
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileSpread,
 	)
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
-		output.PrintFatal("Post")
+		output.PrintFatalln("Post")
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		output.PrintFatal("ReadAll")
+		output.PrintFatalln("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
-		output.PrintFatal("Request submit error: " + string(msg))
+		output.PrintFatalln("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("SPREADING...", string(msg))
 	if err != nil {
-		output.PrintFatal("Task processing error: " + err.Error())
+		output.PrintFatalln("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)
@@ -165,7 +164,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	// if localFileOrDir[len(localFileOrDir)-1] == '/' {
 	// 	localFileOrDir = localFileOrDir[:len(localFileOrDir)-1]
 	// }
-	
+
 	pwd, _ := os.Getwd()
 	srcPath := pathFixing(localFileOrDir, pwd+string(filepath.Separator))
 
@@ -180,25 +179,25 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	}
 	err := cmd.Run()
 	if err != nil {
-		output.PrintFatal("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
+		output.PrintFatalln("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
 	}
 	defer os.RemoveAll(wrapName)
 
 	packName := fmt.Sprintf("%s.zip", wrapName)
 	// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
 	// if err != nil {
-	// 	output.PrintFatal("cmd.Run")
+	// 	output.PrintFatalln("cmd.Run")
 	// }
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
-		output.PrintFatal("Archive")
+		output.PrintFatalln("Archive")
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		output.PrintFatal("err")
+		output.PrintFatalln("err")
 	}
 	defer f.Close()
 
@@ -215,40 +214,38 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 
 	bodyWriter.Close()
 
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileDistrib,
 	)
 
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		output.PrintFatal("post")
+		output.PrintFatalln("post")
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		output.PrintFatal("ReadAll")
+		output.PrintFatalln("ReadAll")
 	}
 
 	if res.StatusCode != 202 {
-		output.PrintFatal("Request submit error: " + string(msg))
+		output.PrintFatalln("Request submit error: " + string(msg))
 		return
 	}
 	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
-		output.PrintFatal("Task processing error: " + err.Error())
+		output.PrintFatalln("Task processing error: " + err.Error())
 		return
 	}
 	output.PrintJSON(results)
 }
 
 func ListAllFile(pathtype string, node string, subdir string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?pathtype=%s&name=%s&subdir=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&subdir=%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FileTree,
 		pathtype,
 		node,
@@ -256,12 +253,12 @@ func ListAllFile(pathtype string, node string, subdir string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatal("Get")
+		output.PrintFatalln("Get")
 	}
 	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
 	if err != nil {
-		output.PrintFatal("ReadAll")
+		output.PrintFatalln("ReadAll")
 	}
 	output.PrintJSON(msg)
 }
@@ -284,10 +281,9 @@ type Result struct {
 }
 
 func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
+		httpnc.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.FilePull,
 		pathtype,
 		node,
@@ -295,12 +291,12 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatal("Get")
+		output.PrintFatalln("Get")
 	}
 	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
 	if err != nil {
-		output.PrintFatal("ReadAll")
+		output.PrintFatalln("ReadAll")
 	}
 
 	result := Result{}
@@ -318,7 +314,7 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		// have to wait
 		resultmsg, err := task.WaitTask("PULLING...", string(msg))
 		if err != nil {
-			output.PrintFatal("Task processing error: " + err.Error())
+			output.PrintFatalln("Task processing error: " + err.Error())
 			return
 		}
 		config.Jsoner.Unmarshal(resultmsg, &result)
