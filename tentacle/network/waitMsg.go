@@ -19,7 +19,6 @@ func ReadAndServe() {
 					fmt.Println("recover from ", err.(error).Error())
 				}
 			}()
-
 			conn, err := net.Dial("tcp", brainMsgAddr)
 			if err != nil {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))

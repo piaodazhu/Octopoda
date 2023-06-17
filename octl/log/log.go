@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
+	"octl/nameclient"
 	"octl/output"
 	"strconv"
 )
@@ -35,10 +36,9 @@ func NodeLog(name string, params []string) {
 			return
 		}
 	}
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodeLog,
 		name,
 		maxlines,
@@ -46,7 +46,7 @@ func NodeLog(name string, params []string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatal("Get")
+		output.PrintFatalln("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)

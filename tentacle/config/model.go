@@ -1,29 +1,17 @@
 package config
 
 type ConfigModel struct {
-	Name string `mapstructure:"name"`
-	// NetDevice       string         `mapstructure:"netDevice"`
-	// Ip              string         `mapstructure:"-"` // don't need to config
-	// Port            uint16         `mapstructure:"port"`
-	HttpsNameServer HttpsNsModel `mapstructure:"httpsNameServer"`
-	// Worker          WorkerModel    `mapstructure:"tentacle"`
-	Sshinfo   SshinfoModel   `mapstructure:"ssh"`
-	Brain     BrainModel     `mapstructure:"brain"`
-	Logger    LoggerModel    `mapstructure:"logger"`
-	Heartbeat HeartbeatModel `mapstructure:"heartbeat"`
-	Workspace WorkspaceModel `mapstructure:"workspace"`
-	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
-	CustomEnv       []*CustomEnvItem  `mapstructure:"env"`
-	JsonFast  bool           `mapstructure:"jsonFast"`
+	Name            string           `mapstructure:"name"`
+	HttpsNameServer HttpsNsModel     `mapstructure:"httpsNameServer"`
+	Sshinfo         SshinfoModel     `mapstructure:"ssh"`
+	Brain           BrainModel       `mapstructure:"brain"`
+	Logger          LoggerModel      `mapstructure:"logger"`
+	Heartbeat       HeartbeatModel   `mapstructure:"heartbeat"`
+	Workspace       WorkspaceModel   `mapstructure:"workspace"`
+	Sslinfo         SslinfoModel     `mapstructure:"ssl"`
+	CustomEnv       []*CustomEnvItem `mapstructure:"env"`
+	JsonFast        bool             `mapstructure:"jsonFast"`
 }
-
-// deprecate
-// type WorkerModel struct {
-// 	Id   int    `mapstructure:"id"`
-// 	Name string `mapstructure:"name"`
-// 	Ip   string `mapstructure:"ip"`
-// 	Port uint16 `mapstructure:"port"`
-// }
 
 type SshinfoModel struct {
 	Username string `mapstructure:"username"`

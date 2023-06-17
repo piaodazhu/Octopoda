@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
+	"octl/nameclient"
 	"octl/output"
 	"os"
 )
@@ -149,22 +150,21 @@ type NodeInfo struct {
 
 func checkNodes(nodeset map[string]struct{}) bool {
 	// get all nodes in the cluster
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodesInfo,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatal("Get")
+		output.PrintFatalln("Get")
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	nodes := []NodeInfo{}
 	err = config.Jsoner.Unmarshal(raw, &nodes)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 	// fmt.Println(nodes)
 	// fmt.Println(nodes)

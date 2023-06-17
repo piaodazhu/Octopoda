@@ -11,6 +11,7 @@ import (
 )
 
 func KeepAlive() {
+	time.Sleep(time.Second)
 	go func() {
 		retry := 0
 	reconnect:
