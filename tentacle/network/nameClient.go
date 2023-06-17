@@ -28,26 +28,23 @@ func InitNameClient() {
 		return
 	}
 
-	nsAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
+	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
 	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
-
 	// init https client
 	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ClientCert, config.GlobalConfig.Sslinfo.ClientKey)
 	if err != nil {
 		logger.Network.Fatal("InitHttpsClient:", err.Error())
 		return
 	}
-
 	err = pingNameServer()
 	if err != nil {
 		logger.Network.Fatal("pingNameServer:", err.Error())
 		return
 	}
-
 	go func() {
 		fails := 0
 		for {
-			entry, err := NameQuery(config.GlobalConfig.Brain.Name)
+			entry, err := nameQuery(config.GlobalConfig.Brain.Name+".tentacleFace")
 			if err != nil {
 				logger.Network.Println("NameQuery error:", err.Error())
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
@@ -59,7 +56,7 @@ func InitNameClient() {
 				continue
 			}
 			brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
-			brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
+			brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
 			fails = 0
 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
 		}
@@ -96,7 +93,7 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 }
 
 func pingNameServer() error {
-	res, err := httpsClient.Get(fmt.Sprintf("https://%s:%d/ping", nsAddr, config.GlobalConfig.HttpsNameServer.Port))
+	res, err := httpsClient.Get(fmt.Sprintf("https://%s/ping", nsAddr))
 	if err != nil {
 		return err
 	}
@@ -107,8 +104,8 @@ func pingNameServer() error {
 	return nil
 }
 
-func NameQuery(name string) (*message.NameEntry, error) {
-	res, err := httpsClient.Get(fmt.Sprintf("https://%s:%d/query?name=%s", nsAddr, config.GlobalConfig.HttpsNameServer.Port, name))
+func nameQuery(name string) (*message.NameEntry, error) {
+	res, err := httpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +113,9 @@ func NameQuery(name string) (*message.NameEntry, error) {
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
+	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("NameQuery status code = %d", res.StatusCode)
 	}
 	var response message.Response
 	err = json.Unmarshal(buf, &response)
