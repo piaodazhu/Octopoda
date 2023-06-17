@@ -2,7 +2,6 @@ package config
 
 type ConfigModel struct {
 	Name            string            `mapstructure:"name"`
-	NetDevice       string            `mapstructure:"netDevice"`
 	HttpsNameServer HttpsNsModel      `mapstructure:"httpsNameServer"`
 	TentacleFace    TentacleFaceModel `mapstructure:"tentacleFace"`
 	OctlFace        OctlFaceModel     `mapstructure:"octlFace"`
@@ -11,11 +10,11 @@ type ConfigModel struct {
 	Logger          LoggerModel       `mapstructure:"logger"`
 	Workspace       WorkspaceModel    `mapstructure:"workspace"`
 	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
-	CustomEnv       []*CustomEnvItem  `mapstructure:"env"`
 	JsonFast        bool              `mapstructure:"jsonFast"`
 }
 
 type TentacleFaceModel struct {
+	NetDevice     string `mapstructure:"netDevice"`
 	Ip            string `mapstructure:"ip"`
 	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
 	MessagePort   uint16 `mapstructure:"messagePort"`
@@ -25,8 +24,9 @@ type TentacleFaceModel struct {
 }
 
 type OctlFaceModel struct {
-	Ip   string `mapstructure:"ip"`
-	Port uint16 `mapstructure:"port"`
+	NetDevice string `mapstructure:"netDevice"`
+	Ip        string `mapstructure:"ip"`
+	Port      uint16 `mapstructure:"port"`
 }
 
 type SshinfoModel struct {
@@ -67,7 +67,3 @@ type SslinfoModel struct {
 	ClientKey  string `mapstructure:"clientKey"`
 }
 
-type CustomEnvItem struct {
-	Key   string `mapstructure:"key"`
-	Value string `mapstructure:"value"`
-}

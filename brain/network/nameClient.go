@@ -26,7 +26,7 @@ func InitNameClient() {
 		return
 	}
 
-	nsAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
+	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
 	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
 
 	// init https client
@@ -44,54 +44,84 @@ func InitNameClient() {
 
 	retry := 6
 	success := false
-	var nameEntry *message.RegisterParam
+	var nameEntry1, nameEntry2 *message.RegisterParam
 	for retry > 0 {
-		myip, err := getIpByDevice(config.GlobalConfig.NetDevice)
+		tentacleFaceIp, err := getTentacleFaceIp()
 		if err != nil {
-			logger.Network.Println("getIpByDevice:", err)
+			logger.Network.Println("getTentacleFaceIp", err)
+			time.Sleep(time.Second * 10)
+			retry--
+			continue
+		}
+		octlFaceIp, err := getOctlFaceIp()
+		if err != nil {
+			logger.Network.Println("getTentacleFaceIp", err)
 			time.Sleep(time.Second * 10)
 			retry--
 			continue
 		}
 
 		// first report to ns
-		nameEntry = &message.RegisterParam{
+		nameEntry1 = &message.RegisterParam{
 			Type:        "brain",
-			Name:        config.GlobalConfig.Name,
-			Ip:          myip,
+			Name:        config.GlobalConfig.Name + ".tentacleFace",
+			Ip:          tentacleFaceIp,
 			Port:        int(config.GlobalConfig.TentacleFace.HeartbeatPort),
 			Port2:       int(config.GlobalConfig.TentacleFace.MessagePort),
 			Description: "first update since running",
 			TTL:         0,
 		}
+		nameEntry2 = &message.RegisterParam{
+			Type:        "brain",
+			Name:        config.GlobalConfig.Name + ".octlFace",
+			Ip:          octlFaceIp,
+			Port:        int(config.GlobalConfig.OctlFace.Port),
+			Description: "first update since running",
+			TTL:         0,
+		}
 
-		err = nameRegister(nameEntry)
+		err = nameRegister(nameEntry1)
 		if err != nil {
-			logger.Network.Fatal("NameRegister:", err)
+			logger.Network.Fatal("NameRegister1:", err)
+		}
+		err = nameRegister(nameEntry2)
+		if err != nil {
+			logger.Network.Fatal("NameRegister2:", err)
 		}
 		success = true
 		retry = 0
 	}
 	if !success {
-		logger.Network.Fatal("Exit because cannot get IPv4 address of netDevice ", config.GlobalConfig.NetDevice)
+		logger.Network.Fatal("Exit because cannot get IPv4 address of netDevice")
 		return
 	}
 	// periodical report to ns
 	go func() {
 		for {
 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
-			myip, err := getIpByDevice(config.GlobalConfig.NetDevice)
+			tentacleFaceIp, err := getTentacleFaceIp()
 			if err != nil {
-				logger.Network.Println("getIpByDevice:", err)
+				logger.Network.Println("getTentacleFaceIp", err)
 				time.Sleep(time.Second * 10)
 				continue
 			}
-
-			nameEntry.Description = "periodical"
-			nameEntry.Ip = myip
-			err = nameRegister(nameEntry)
+			octlFaceIp, err := getOctlFaceIp()
 			if err != nil {
-				logger.Network.Println("NameRegister:", err)
+				logger.Network.Println("getTentacleFaceIp", err)
+				time.Sleep(time.Second * 10)
+				continue
+			}
+			nameEntry1.Description = "periodical"
+			nameEntry1.Ip = tentacleFaceIp
+			nameEntry2.Description = "periodical"
+			nameEntry2.Ip = octlFaceIp
+			err = nameRegister(nameEntry1)
+			if err != nil {
+				logger.Network.Println("NameRegister1:", err)
+			}
+			err = nameRegister(nameEntry2)
+			if err != nil {
+				logger.Network.Println("NameRegister2:", err)
 			}
 		}
 	}()
@@ -114,6 +144,20 @@ func getIpByDevice(device string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("IPv4 address not found with device %s", device)
+}
+
+func getTentacleFaceIp() (string, error) {
+	if config.GlobalConfig.TentacleFace.Ip != "" {
+		return config.GlobalConfig.TentacleFace.Ip, nil
+	}
+	return getIpByDevice(config.GlobalConfig.TentacleFace.NetDevice)
+}
+
+func getOctlFaceIp() (string, error) {
+	if config.GlobalConfig.OctlFace.Ip != "" {
+		return config.GlobalConfig.OctlFace.Ip, nil
+	}
+	return getIpByDevice(config.GlobalConfig.OctlFace.NetDevice)
 }
 
 func InitHttpsClient(caCert, cliCert, cliKey string) error {
@@ -150,10 +194,11 @@ func nameRegister(entry *message.RegisterParam) error {
 	form.Set("name", entry.Name)
 	form.Set("ip", entry.Ip)
 	form.Set("port", strconv.Itoa(entry.Port))
+	form.Set("port2", strconv.Itoa(entry.Port2))
 	form.Set("type", entry.Type)
 	form.Set("description", entry.Description)
 	form.Set("ttl", strconv.Itoa(entry.TTL))
-	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s:%d/register", nsAddr, config.GlobalConfig.HttpsNameServer.Port), form)
+	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s/register", nsAddr), form)
 	if err != nil {
 		return err
 	}
@@ -171,7 +216,7 @@ func nameRegister(entry *message.RegisterParam) error {
 }
 
 func pingNameServer() error {
-	res, err := httpsClient.Get(fmt.Sprintf("https://%s:%d/ping", nsAddr, config.GlobalConfig.HttpsNameServer.Port))
+	res, err := httpsClient.Get(fmt.Sprintf("https://%s/ping", nsAddr))
 	if err != nil {
 		return err
 	}
