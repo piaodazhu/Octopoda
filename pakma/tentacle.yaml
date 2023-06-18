@@ -1,0 +1,45 @@
+name: "pi0"
+httpsNameServer:
+  enable: true
+  host: "192.168.3.181"
+  port: 3455
+  requestInterval: 1
+brain:
+  # if httpsNameServer is enabled
+  name: "brain"   
+  # if httpsNameServer is disabled    
+  ip: "127.0.0.1"
+  heartbeatPort: 1111
+  messagePort: 1112
+  
+  token: "default"
+ssh:
+  username: "username"
+  password: "password"
+  port: 1
+logger:
+  path: "/var/octopoda/tentacle/log/"
+  namePrefix: "log"
+  rollDays: 3
+heartbeat:
+  sendInterval: 1
+  reconnectInterval: 5
+  retryTime: 6
+  autoRestart: false
+workspace:
+  root: "/var/octopoda/tentacle/workspace/"
+  store: "/var/octopoda/tentacle/FSTORE/"
+ssl:
+  caCert: "/root/Octopoda/httpNameServer/ca/tentacle/ca.pem"
+  clientCert: "/root/Octopoda/httpNameServer/ca/tentacle/client.pem"
+  clientKey: "/root/Octopoda/httpNameServer/ca/tentacle/client.key"
+env:
+  - key: "k1"
+    value: "v1"
+  - key: "k2"
+    value: "v2"
+pakma:
+  port: 3450
+  root: "/var/octopoda/tentacle/pakma/"
+  previewDuration: 120
+jsonFast: true
