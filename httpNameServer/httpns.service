@@ -1,0 +1,15 @@
+[Unit]
+Description=Octopoda Https Name Server Deamon for ICN Platform Project
+StartLimitIntervalSec=1
+After=network-online.target
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/local/bin/octopoda/httpns -c /etc/octopoda/httpns/httpns.yaml
+ExecStop=/bin/kill -9 $(/bin/pidof httpns)
+ExecReload=/bin/kill -9 $(/bin/pidof httpns) && /usr/local/bin/octopoda/httpns -c /etc/octopoda/httpns/httpns.yaml
+
+[Install]
+WantedBy=multi-user.target
