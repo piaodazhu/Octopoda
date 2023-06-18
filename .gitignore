@@ -18,6 +18,7 @@ test/
 nworkerd
 tentacle/tentacle
 brain/brain
+pakma/pakma
 octl/octl
 tentacle_arm
 build_dist

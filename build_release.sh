@@ -13,7 +13,7 @@ cd octl
 BUILD_OS=linux
 BUILD_ARCH=amd64
 BUILD_ARM=
-BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
@@ -27,7 +27,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=arm
 BUILD_ARM=7
-BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
@@ -41,7 +41,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=darwin
 BUILD_ARCH=arm64
 BUILD_ARM=
-BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
@@ -55,7 +55,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=darwin
 BUILD_ARCH=amd64
 BUILD_ARM=
-BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
@@ -69,7 +69,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=windows
 BUILD_ARCH=amd64
 BUILD_ARM=
-BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
@@ -85,7 +85,7 @@ cd ../brain
 BUILD_OS=linux
 BUILD_ARCH=amd64
 BUILD_ARM=
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
@@ -100,7 +100,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=arm
 BUILD_ARM=7
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
@@ -115,7 +115,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=arm64
 BUILD_ARM=
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
@@ -130,7 +130,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=386
 BUILD_ARM=
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
@@ -145,7 +145,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=mips
 BUILD_ARM=
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
@@ -162,7 +162,7 @@ cd ../tentacle
 BUILD_OS=linux
 BUILD_ARCH=amd64
 BUILD_ARM=
-BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .
@@ -178,7 +178,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=arm
 BUILD_ARM=7
-BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .
@@ -193,7 +193,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=arm64
 BUILD_ARM=
-BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .
@@ -208,7 +208,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=386
 BUILD_ARM=
-BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .
@@ -223,7 +223,7 @@ rm -rf ${BUILD_NAME}
 BUILD_OS=linux
 BUILD_ARCH=mips
 BUILD_ARM=
-BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}${BUILD_ARM}
+BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .

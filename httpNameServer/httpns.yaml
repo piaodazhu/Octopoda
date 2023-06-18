@@ -1,5 +1,5 @@
-NetDevice: ""
-ServePort: 3455
+netDevice: ""
+servePort: 3455
 redis:
   ip: "127.0.0.1"
   port: 6379
@@ -14,7 +14,7 @@ ssl:
   serverCert: "/root/Octopoda/httpNameServer/ca/nameserver/server.pem"
   serverKey: "/root/Octopoda/httpNameServer/ca/nameserver/server.key"
 staticDir:
-  - url: "release"
+  - url: "/release"
     dir: "/var/octopoda/release"
-  - url: "src"
+  - url: "/src"
     dir: "/var/octopoda/src"

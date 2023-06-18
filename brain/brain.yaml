@@ -41,4 +41,8 @@ env:
     value: "val1"
   - key: "key2"
     value: "val2"
+pakma:
+  port: 3451
+  root: "/var/octopoda/brain/pakma/"
+  previewDuration: 120
 jsonFast: true

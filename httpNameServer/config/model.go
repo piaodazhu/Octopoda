@@ -1,13 +1,13 @@
 package config
 
 type ConfigModel struct {
-	NetDevice  string `mapstructure:"NetDevice"`
+	NetDevice  string `mapstructure:"netDevice"`
 	ServeIp    string
 	ServePort  uint16            `mapstructure:"servePort"`
 	Redis      RedisModel        `mapstructure:"redis"`
 	Logger     LoggerModel       `mapstructure:"logger"`
 	Sslinfo    SslinfoModel      `mapstructure:"ssl"`
-	StaticDirs []*StaticDirModel `mastructure:"staticDir"`
+	StaticDirs []*StaticDirModel `mapstructure:"staticDir"`
 }
 
 type RedisModel struct {
