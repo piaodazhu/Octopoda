@@ -1,0 +1,15 @@
+[Unit]
+Description=Octopoda Package Manager (Pakma) Deamon for ICN Platform Project
+StartLimitIntervalSec=1
+After=network-online.target
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/local/bin/octopoda/pakma_brain -c /etc/octopoda/brain/brain.yaml
+ExecStop=/bin/kill -9 $(/bin/pidof pakma_brain)
+ExecReload=/bin/kill -9 $(/bin/pidof pakma_brain) && /usr/local/bin/octopoda/pakma_brain -c /etc/octopoda/brain/brain.yaml
+
+[Install]
+WantedBy=multi-user.target

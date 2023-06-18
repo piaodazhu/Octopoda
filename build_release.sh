@@ -235,4 +235,53 @@ echo "Successfully build ${BUILD_NAME}" && \
 mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
 rm -rf ${BUILD_NAME}
 
+cd ../httpNameServer
+
+BUILD_OS=linux
+BUILD_ARCH=amd64
+BUILD_ARM=
+BUILD_NAME=httpns_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
+LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
+
+GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o httpns .
+mkdir ${BUILD_NAME} &>/dev/null && \
+cp -r httpns httpns.service httpns.yaml setup.sh uninstall.sh \
+      ${BUILD_NAME} &>/dev/null && \
+tar -Jcvf ${BUILD_NAME}.tar.xz ${BUILD_NAME} &>/dev/null && \
+echo "Successfully build ${BUILD_NAME}" && \
+mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
+rm -rf ${BUILD_NAME}
+
+cd ../pakma
+
+BUILD_OS=linux
+BUILD_ARCH=amd64
+BUILD_ARM=
+BUILD_NAME=pakma_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
+LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
+
+GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o pakma .
+mkdir ${BUILD_NAME} &>/dev/null && \
+cp -r pakma pakma_tentacle.service pakma_brain.service setup.sh uninstall.sh \
+      ${BUILD_NAME} &>/dev/null && \
+tar -Jcvf ${BUILD_NAME}.tar.xz ${BUILD_NAME} &>/dev/null && \
+echo "Successfully build ${BUILD_NAME}" && \
+mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
+rm -rf ${BUILD_NAME}
+
+BUILD_OS=linux
+BUILD_ARCH=arm
+BUILD_ARM=7
+BUILD_NAME=pakma_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
+LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
+
+GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o pakma .
+mkdir ${BUILD_NAME} &>/dev/null && \
+cp -r pakma pakma_tentacle.service pakma_brain.service setup.sh uninstall.sh \
+      ${BUILD_NAME} &>/dev/null && \
+tar -Jcvf ${BUILD_NAME}.tar.xz ${BUILD_NAME} &>/dev/null && \
+echo "Successfully build ${BUILD_NAME}" && \
+mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
+rm -rf ${BUILD_NAME}
+
 echo "ALL DONE!"
