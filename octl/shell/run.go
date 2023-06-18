@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/nameclient"
 	"octl/output"
 	"os"
 	"path/filepath"
@@ -47,10 +48,9 @@ func runScript(task string, nodes []string) {
 	defer f.Close()
 	fname := filepath.Base(task)
 
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.RunScript,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
@@ -63,7 +63,7 @@ func runScript(task string, nodes []string) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		output.PrintFatal("Post")
+		output.PrintFatalln("Post")
 	}
 	defer res.Body.Close()
 
@@ -72,10 +72,9 @@ func runScript(task string, nodes []string) {
 }
 
 func runCmd(task string, nodes []string, bg bool) {
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.RunCmd,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
@@ -91,7 +90,7 @@ func runCmd(task string, nodes []string, bg bool) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		output.PrintFatal("Post")
+		output.PrintFatalln("Post")
 	}
 	defer res.Body.Close()
 

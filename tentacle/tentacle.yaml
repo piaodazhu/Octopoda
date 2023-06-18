@@ -5,11 +5,13 @@ httpsNameServer:
   port: 3455
   requestInterval: 1
 brain:
-  name: "net1.Brain.01"
-  # if httpNameServer doesn't work, directly try to connect brain:
+  # if httpsNameServer is enabled
+  name: "brain"   
+  # if httpsNameServer is disabled    
   ip: "127.0.0.1"
-  heartbeatPort: 3456
-  messagePort: 3457
+  heartbeatPort: 1111
+  messagePort: 1112
+  
   token: "default"
 ssh:
   username: "username"
@@ -27,4 +29,13 @@ heartbeat:
 workspace:
   root: "/var/octopoda/tentacle/workspace/"
   store: "/var/octopoda/tentacle/FSTORE/"
+ssl:
+  caCert: "/root/Octopoda/httpNameServer/ca/tentacle/ca.pem"
+  clientCert: "/root/Octopoda/httpNameServer/ca/tentacle/client.pem"
+  clientKey: "/root/Octopoda/httpNameServer/ca/tentacle/client.key"
+env:
+  - key: "k1"
+    value: "v1"
+  - key: "k2"
+    value: "v2"
 jsonFast: true

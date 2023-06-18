@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"octl/config"
+	"octl/nameclient"
 	"octl/output"
 	"octl/task"
 	"os"
@@ -21,12 +22,12 @@ import (
 func ScenarioApply(file string, target string, message string) {
 	buf, err := os.ReadFile(file)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 	var configuration ScenarioConfigModel
 	err = yaml.Unmarshal(buf, &configuration)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 
 	err = checkConfig(&configuration)
@@ -57,7 +58,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	// create this scenario
 	err = ScenarioCreate(configuration.Name, configuration.Description)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 
 	// for each application
@@ -71,29 +72,29 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		// // fmt.Println(cmd.String())
 		// err = cmd.Run()
 		// if err != nil {
-		// 	output.PrintFatal("cmd.Run")
+		// 	output.PrintFatalln("cmd.Run")
 		// }
-		if app.SourcePath[len(app.SourcePath) - 1] == '/' {
+		if app.SourcePath[len(app.SourcePath)-1] == '/' {
 			app.SourcePath = app.SourcePath + "."
 		}
 		packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
 		archiver.DefaultZip.OverwriteExisting = true
 		err = archiver.DefaultZip.Archive([]string{app.SourcePath}, packName)
 		if err != nil {
-			output.PrintFatal("Archive")
+			output.PrintFatalln("Archive")
 		}
 		// err = cmd.Wait()
 		// if err != nil {
-		// 	output.PrintFatal(err)
+		// 	output.PrintFatalln(err)
 		// }
 		// if !cmd.ProcessState.Success() {
-		// 	output.PrintFatal("tar error")
+		// 	output.PrintFatalln("tar error")
 		// }
 
 		// distrib the files
 		f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			output.PrintFatal("err")
+			output.PrintFatalln("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -115,32 +116,31 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		os.Remove(packName)
 		bodyWriter.Close()
 
-		url := fmt.Sprintf("http://%s:%d/%s%s",
-			config.GlobalConfig.Server.Ip,
-			config.GlobalConfig.Server.Port,
-			config.GlobalConfig.Server.ApiPrefix,
+		url := fmt.Sprintf("http://%s/%s%s",
+			nameclient.BrainAddr,
+			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppCreate,
 		)
 
 		client := http.Client{Timeout: 0}
 		res, err := client.Post(url, contentType, &bodyBuffer)
 		if err != nil {
-			output.PrintFatal("post")
+			output.PrintFatalln("post")
 		}
 		// defer res.Body.Close()
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			output.PrintFatal("ReadAll")
+			output.PrintFatalln("ReadAll")
 		}
 
 		if res.StatusCode != 202 {
-			output.PrintFatal("Request submit error: " + string(msg))
+			output.PrintFatalln("Request submit error: " + string(msg))
 			return
 		}
 		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
-			output.PrintFatal("Task processing error: " + err.Error())
+			output.PrintFatalln("Task processing error: " + err.Error())
 			return
 		}
 		output.PrintJSON(results)
@@ -148,7 +148,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 	// update this scenario
 	err = ScenarioUpdate(configuration.Name, message)
 	if err != nil {
-		output.PrintFatal(err.Error())
+		output.PrintFatalln(err.Error())
 	}
 }
 
@@ -189,7 +189,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		// load the script
 		f, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			output.PrintFatal("err")
+			output.PrintFatalln("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -211,10 +211,9 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		bodyWriter.Close()
 
 		// run the scripts
-		url := fmt.Sprintf("http://%s:%d/%s%s",
-			config.GlobalConfig.Server.Ip,
-			config.GlobalConfig.Server.Port,
-			config.GlobalConfig.Server.ApiPrefix,
+		url := fmt.Sprintf("http://%s/%s%s",
+			nameclient.BrainAddr,
+			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppDepoly,
 		)
 
@@ -222,7 +221,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 
 		req, err := http.NewRequest("POST", url, &bodyBuffer)
 		if err != nil {
-			output.PrintFatal("NewRequest")
+			output.PrintFatalln("NewRequest")
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -247,13 +246,13 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		fmt.Println(">> deploy", orlist[i].info)
 		res, err := http.DefaultClient.Do(orlist[i].req)
 		if err != nil {
-			output.PrintFatal("DoRequest")
+			output.PrintFatalln("DoRequest")
 		}
 
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			output.PrintFatal("ReadAll")
+			output.PrintFatalln("ReadAll")
 		}
 
 		if res.StatusCode != 202 {
@@ -306,7 +305,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		// load the script
 		f, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			output.PrintFatal("err")
+			output.PrintFatalln("err")
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -330,16 +329,15 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		bodyWriter.Close()
 
 		// run purge script in corresponding nodes
-		url := fmt.Sprintf("http://%s:%d/%s%s",
-			config.GlobalConfig.Server.Ip,
-			config.GlobalConfig.Server.Port,
-			config.GlobalConfig.Server.ApiPrefix,
+		url := fmt.Sprintf("http://%s/%s%s",
+			nameclient.BrainAddr,
+			config.GlobalConfig.Brain.ApiPrefix,
 			config.GlobalConfig.Api.ScenarioAppDepoly,
 		)
 
 		req, err := http.NewRequest("POST", url, &bodyBuffer)
 		if err != nil {
-			output.PrintFatal("NewRequest")
+			output.PrintFatalln("NewRequest")
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -364,13 +362,13 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		fmt.Println(">> delete", orlist[i].info)
 		res, err := http.DefaultClient.Do(orlist[i].req)
 		if err != nil {
-			output.PrintFatal("DoRequest")
+			output.PrintFatalln("DoRequest")
 		}
 
 		msg, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
-			output.PrintFatal("ReadAll")
+			output.PrintFatalln("ReadAll")
 		}
 
 		if res.StatusCode != 202 {
@@ -398,10 +396,9 @@ func (ErrDupScenario) Error() string { return "ErrDupScenario" }
 
 func ScenarioCreate(name, description string) error {
 	fmt.Println(">> create scenario", name)
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioInfo,
 	)
 
@@ -425,10 +422,9 @@ func ScenarioCreate(name, description string) error {
 
 func ScenarioUpdate(name, message string) error {
 	fmt.Println(">> update scenario", name)
-	url := fmt.Sprintf("http://%s:%d/%s%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioUpdate,
 	)
 
@@ -452,10 +448,9 @@ func ScenarioUpdate(name, message string) error {
 
 func ScenarioDelete(name string) error {
 	fmt.Println(">> delete scenario", name)
-	url := fmt.Sprintf("http://%s:%d/%s%s?name=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?name=%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.ScenarioInfo,
 		name,
 	)

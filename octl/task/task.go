@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"octl/config"
+	"octl/nameclient"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -17,10 +18,9 @@ type ErrWaitTask struct {
 
 func (e ErrWaitTask) Error() string { return fmt.Sprintf("[%d] %s\n", e.status, e.message) }
 func WaitTask(prefix string, taskid string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/%s%s?taskid=%s",
-		config.GlobalConfig.Server.Ip,
-		config.GlobalConfig.Server.Port,
-		config.GlobalConfig.Server.ApiPrefix,
+	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.TaskState,
 		taskid,
 	)

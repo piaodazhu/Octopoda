@@ -1,19 +1,20 @@
-name: "net1.Brain.01"
-netDevice: "ens33"
-httpNameServer:
+name: "brain"
+httpsNameServer:
   enable: true
-  host: "domain.or.host"
+  host: "192.168.3.181"
   port: 3455
   requestInterval: 1
 tentacleFace:
-  ip: "0.0.0.0"
+  netDevice: "ens33"
   heartbeatPort: 3456
   messagePort: 3457
+  ip: "0.0.0.0"     # just one of ip and netDevice is needed
   activeTimeout: 2
   recordTimeout: 10
 octlFace:
-  ip: "0.0.0.0"
+  netDevice: "ens33"
   port: 12345
+  ip: "0.0.0.0"    # just one of ip and netDevice is needed
 redis:
   ip: "127.0.0.1"
   port: 6379
@@ -31,4 +32,13 @@ ssh:
   password: "password"
   ip: "127.0.0.1"
   port: 1
+ssl:
+  caCert: "/root/Octopoda/httpNameServer/ca/tentacle/ca.pem"
+  clientCert: "/root/Octopoda/httpNameServer/ca/tentacle/client.pem"
+  clientKey: "/root/Octopoda/httpNameServer/ca/tentacle/client.key"
+env:
+  - key: "key1"
+    value: "val1"
+  - key: "key2"
+    value: "val2"
 jsonFast: true

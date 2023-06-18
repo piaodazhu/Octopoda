@@ -117,7 +117,8 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	scriptFile.WriteString(config.GlobalConfig.Workspace.Root)
 	scriptFile.WriteString(sparams.TargetPath)
 
-	os.Mkdir(scriptFile.String(), os.ModePerm)
+	scriptDir := scriptFile.String()
+	os.Mkdir(scriptDir, os.ModePerm)
 	if scriptFile.String()[scriptFile.Len()-1] != '/' {
 		scriptFile.WriteByte('/')
 	}
@@ -136,7 +137,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 
 	cmd := exec.Command("/bin/bash", scriptFile.String())
 	cmd.Dir = dir
-	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(sparams.TargetPath, sparams.FileName, outputFile)...)
+	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(scriptDir, sparams.FileName, outputFile)...)
 
 	scriptErr := cmd.Run()
 	if scriptErr != nil {
@@ -189,6 +190,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 
 		cmd := exec.Command("/bin/bash", scriptFile)
 		cmd.Dir = config.GlobalConfig.Workspace.Root
+		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 
 		execErr = cmd.Run()
 		if execErr != nil {
@@ -198,6 +200,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 	} else {
 		cmd := exec.Command("/bin/bash", "-c", cparams.Command)
 		cmd.Dir = config.GlobalConfig.Workspace.Root
+		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 
 		result, execErr = cmd.CombinedOutput()
 		if execErr != nil {

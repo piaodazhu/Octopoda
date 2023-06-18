@@ -1,7 +1,6 @@
 package network
 
 import (
-	"fmt"
 	"net"
 	"tentacle/config"
 	"tentacle/heartbeat"
@@ -12,13 +11,12 @@ import (
 )
 
 func KeepAlive() {
-	addr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.HeartbeatPort)
-
+	time.Sleep(time.Second)
 	go func() {
 		retry := 0
 	reconnect:
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
-			conn, err := net.Dial("tcp", addr)
+			conn, err := net.Dial("tcp", brainHeartAddr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
 

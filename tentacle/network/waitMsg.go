@@ -10,35 +10,7 @@ import (
 	"time"
 )
 
-// var localListener net.Listener
-
-// func InitListener() {
-// 	var sb strings.Builder
-// 	sb.WriteString(config.GlobalConfig.Ip)
-// 	sb.WriteByte(':')
-// 	sb.WriteString(fmt.Sprint(config.GlobalConfig.Port))
-// 	listener, err := net.Listen("tcp", sb.String())
-// 	if err != nil {
-// 		logger.Exceptions.Panic(err)
-// 	}
-// 	localListener = listener
-// }
-
-// func ListenAndServe() {
-// 	defer localListener.Close()
-// 	logger.SysInfo.Println("Listening on", localListener.Addr())
-// 	for {
-// 		conn, err := localListener.Accept()
-// 		if err != nil {
-// 			logger.Exceptions.Println(err)
-// 		}
-// 		go service.HandleConn(conn)
-// 	}
-// }
-
 func ReadAndServe() {
-	addr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.MessagePort)
-
 	go func() {
 		// always loop
 		for {
@@ -47,8 +19,7 @@ func ReadAndServe() {
 					fmt.Println("recover from ", err.(error).Error())
 				}
 			}()
-
-			conn, err := net.Dial("tcp", addr)
+			conn, err := net.Dial("tcp", brainMsgAddr)
 			if err != nil {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue

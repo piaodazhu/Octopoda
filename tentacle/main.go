@@ -35,6 +35,7 @@ func main() {
 	logger.InitLogger(stdout)
 	app.InitAppModel()
 
+	network.InitNameClient()
 	// network.InitListener()
 	// heartbeat.InitHeartbeat()
 	service.InitService()

@@ -2,7 +2,6 @@ package config
 
 type ConfigModel struct {
 	Name            string            `mapstructure:"name"`
-	NetDevice       string            `mapstructure:"netDevice"`
 	HttpsNameServer HttpsNsModel      `mapstructure:"httpsNameServer"`
 	TentacleFace    TentacleFaceModel `mapstructure:"tentacleFace"`
 	OctlFace        OctlFaceModel     `mapstructure:"octlFace"`
@@ -10,10 +9,12 @@ type ConfigModel struct {
 	Redis           RedisModel        `mapstructure:"redis"`
 	Logger          LoggerModel       `mapstructure:"logger"`
 	Workspace       WorkspaceModel    `mapstructure:"workspace"`
+	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
 	JsonFast        bool              `mapstructure:"jsonFast"`
 }
 
 type TentacleFaceModel struct {
+	NetDevice     string `mapstructure:"netDevice"`
 	Ip            string `mapstructure:"ip"`
 	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
 	MessagePort   uint16 `mapstructure:"messagePort"`
@@ -23,8 +24,9 @@ type TentacleFaceModel struct {
 }
 
 type OctlFaceModel struct {
-	Ip   string `mapstructure:"ip"`
-	Port uint16 `mapstructure:"port"`
+	NetDevice string `mapstructure:"netDevice"`
+	Ip        string `mapstructure:"ip"`
+	Port      uint16 `mapstructure:"port"`
 }
 
 type SshinfoModel struct {
@@ -58,3 +60,10 @@ type HttpsNsModel struct {
 	Port            uint16 `mapstructure:"port"`
 	RequestInterval int    `mapstructure:"requestInterval"`
 }
+
+type SslinfoModel struct {
+	CaCert     string `mapstructure:"caCert"`
+	ClientCert string `mapstructure:"clientCert"`
+	ClientKey  string `mapstructure:"clientKey"`
+}
+
