@@ -10,9 +10,9 @@ logger:
   namePrefix: "log"
   rollDays: 3
 ssl:
-  caCert: "/root/Octopoda/httpNameServer/ca/nameserver/ca.pem"
-  serverCert: "/root/Octopoda/httpNameServer/ca/nameserver/server.pem"
-  serverKey: "/root/Octopoda/httpNameServer/ca/nameserver/server.key"
+  caCert: "/etc/octopoda/cert/ca.pem"
+  serverCert: "/etc/octopoda/cert/server.pem"
+  serverKey: "/etc/octopoda/cert/server.key"
 staticDir:
   - url: "/release"
     dir: "/var/octopoda/release"

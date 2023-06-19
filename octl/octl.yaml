@@ -1,17 +1,19 @@
 httpsNameServer:
   enable: true
-  host: "192.168.3.181"
+  host: "10.108.30.85"
   port: 3455
   requestInterval: 1
 brain:
+  # if httpsNameServer is enabled
   name: "brain"
-  apiPrefix : "api/v1"
+  # if httpsNameServer is disabled 
   ip: 127.0.0.1
   port: 12345
+  apiPrefix : "api/v1"
 ssl:
-  caCert: "/root/Octopoda/httpNameServer/ca/tentacle/ca.pem"
-  clientCert: "/root/Octopoda/httpNameServer/ca/tentacle/client.pem"
-  clientKey: "/root/Octopoda/httpNameServer/ca/tentacle/client.key"
+  caCert: "./cert/ca.pem"
+  clientCert: "./cert/client.pem"
+  clientKey: "./cert/client.key"
 jsonFast: true
 outputPretty: true
 api:  

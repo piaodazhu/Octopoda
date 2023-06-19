@@ -147,14 +147,14 @@ func getIpByDevice(device string) (string, error) {
 }
 
 func getTentacleFaceIp() (string, error) {
-	if config.GlobalConfig.TentacleFace.Ip != "" {
+	if config.GlobalConfig.TentacleFace.Ip == "" {
 		return config.GlobalConfig.TentacleFace.Ip, nil
 	}
 	return getIpByDevice(config.GlobalConfig.TentacleFace.NetDevice)
 }
 
 func getOctlFaceIp() (string, error) {
-	if config.GlobalConfig.OctlFace.Ip != "" {
+	if config.GlobalConfig.OctlFace.Ip == "" {
 		return config.GlobalConfig.OctlFace.Ip, nil
 	}
 	return getIpByDevice(config.GlobalConfig.OctlFace.NetDevice)

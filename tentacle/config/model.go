@@ -10,6 +10,7 @@ type ConfigModel struct {
 	Workspace       WorkspaceModel   `mapstructure:"workspace"`
 	Sslinfo         SslinfoModel     `mapstructure:"ssl"`
 	CustomEnv       []*CustomEnvItem `mapstructure:"env"`
+	PakmaServer     PakmaModel       `mapstructure:"pakma"`
 	JsonFast        bool             `mapstructure:"jsonFast"`
 }
 
@@ -63,4 +64,10 @@ type SslinfoModel struct {
 type CustomEnvItem struct {
 	Key   string `mapstructure:"key"`
 	Value string `mapstructure:"value"`
+}
+
+type PakmaModel struct {
+	Root            string `mapstructure:"root"`
+	Port            uint16 `mapstructure:"port"`
+	PreviewDuration int    `mapstructure:"previewDuration"`
 }
