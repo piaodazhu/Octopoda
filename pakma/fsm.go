@@ -27,6 +27,8 @@ func InitFiniteStateMachine() {
 		initState()
 	}
 
+	loadHistory()
+
 	if !dirExists(config.GlobalConfig.Packma.Root) {
 		os.MkdirAll(config.GlobalConfig.Packma.Root, os.ModePerm)
 	}

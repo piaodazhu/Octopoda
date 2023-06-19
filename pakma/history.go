@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"pakma/config"
 	"sort"
 	"strconv"
 	"time"
@@ -24,11 +27,12 @@ func WriteHistory(format string, a ...interface{}) {
 		Timestamp: time.Now().Unix(),
 		Message:   fmt.Sprintf(format, a...),
 	})
+	dumpHistory()
 }
 
 func SearchHistory(ts int64, limit int) []UpdatorHistoryItem {
 	idx := sort.Search(len(history), func(i int) bool {
-		return history[i].Timestamp >= ts 
+		return history[i].Timestamp >= ts
 	})
 	if idx == len(history) {
 		return history[max(0, len(history)-limit):] // last nlimit records
@@ -86,4 +90,27 @@ func max[T int | int64 | uint | uint64 | float32 | float64](x, y T) T {
 		return x
 	}
 	return y
+}
+
+func dumpHistory() {
+	serialized, _ := json.Marshal(history)
+	if fileExists(config.GlobalConfig.Packma.Root + "pakma_history.json") {
+		os.Rename(config.GlobalConfig.Packma.Root+"pakma_history.json", config.GlobalConfig.Packma.Root+"pakma_history.json.bk")
+	}
+	os.WriteFile(config.GlobalConfig.Packma.Root+"pakma_history.json", serialized, os.ModePerm)
+}
+
+func loadHistory() error {
+	if !fileExists(config.GlobalConfig.Packma.Root + "pakma_history.json") {
+		return fmt.Errorf("pakma_history.json not found")
+	}
+	serialized, err := os.ReadFile(config.GlobalConfig.Packma.Root + "pakma_history.json")
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(serialized, &history)
+	if err != nil {
+		return err
+	}
+	return nil
 }
