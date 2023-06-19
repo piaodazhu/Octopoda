@@ -59,6 +59,9 @@ const (
 	TypeAppLatestVersion
 	TypeAppLatestVersionResponse
 
+	TypePakmaCommand
+	TypePakmaCommandResponse
+
 	TypeUndefined
 )
 
@@ -109,6 +112,9 @@ var MsgTypeString map[int]string = map[int]string {
 
 	TypeAppLatestVersion: "AppLatestVersion",
 	TypeAppLatestVersionResponse: "AppLatestVersionResponse",
+
+	TypePakmaCommand: "TypePakmaCommand",
+	TypePakmaCommandResponse: "TypePakmaCommandResponse",
 }
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

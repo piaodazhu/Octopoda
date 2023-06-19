@@ -43,5 +43,8 @@ func main() {
 	r.POST("/confirm", ConfirmHandler)     // http://127.0.0.1/confirm
 	r.POST("/install", InstallHandler)     // http://127.0.0.1/install
 
-	r.Run(":3458")
+	err := r.Run(fmt.Sprintf(":%d", config.GlobalConfig.Packma.ServePort))
+	if err != nil {
+		panic(err)
+	}
 }

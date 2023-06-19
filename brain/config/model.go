@@ -10,6 +10,7 @@ type ConfigModel struct {
 	Logger          LoggerModel       `mapstructure:"logger"`
 	Workspace       WorkspaceModel    `mapstructure:"workspace"`
 	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
+	PakmaServer     PakmaModel        `mapstructure:"pakma"`
 	JsonFast        bool              `mapstructure:"jsonFast"`
 }
 
@@ -67,3 +68,8 @@ type SslinfoModel struct {
 	ClientKey  string `mapstructure:"clientKey"`
 }
 
+type PakmaModel struct {
+	Root            string `mapstructure:"root"`
+	Port            uint16 `mapstructure:"port"`
+	PreviewDuration int    `mapstructure:"previewDuration"`
+}

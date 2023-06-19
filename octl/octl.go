@@ -39,6 +39,9 @@ func main() {
 		subcmd.PrintUsages()
 		return 
 	}
+	if conf != "" {
+		args = args[2:]
+	}
 
 	config.InitConfig(conf)
 	nameclient.InitClient()

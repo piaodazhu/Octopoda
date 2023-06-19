@@ -1,14 +1,15 @@
-package service
+package api
 
 import (
+	"brain/config"
+	"brain/logger"
+	"brain/message"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/message"
+
 	"unicode"
 )
 
@@ -92,7 +93,6 @@ func pakmaDowngrade() ([]byte, error) {
 	buf, err := io.ReadAll(res.Body)
 	return buf, err
 }
-
 
 type PakmaParams struct {
 	Command string

@@ -1,11 +1,10 @@
 package node
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
+	"net/url"
 	"octl/config"
 	"octl/nameclient"
 	"octl/output"
@@ -45,29 +44,27 @@ func Pakma(firstarg string, args []string) {
 		return
 	}
 
-	url := fmt.Sprintf("http://%s/%s%s",
+	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.Pakma,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	defer writer.Close()
-	writer.WriteField("subcmd", subcmd)
-	writer.WriteField("targetNodes", string(nodes_serialized))
+	values := url.Values{}
+	values.Set("command", subcmd)
+	values.Set("targetNodes", string(nodes_serialized))
 
 	if version != "" {
 		if checkVersion(version) {
-			writer.WriteField("version", version)
+			values.Set("version", version)
 		} else {
 			output.PrintFatalln("pakma invalid version number (right example: 1.4.1): ", version)
 			return
 		}
 	}
 
-	res, err := http.Post(url, writer.FormDataContentType(), body)
+	res, err := http.PostForm(URL, values)
 	if err != nil {
 		output.PrintFatalln("Post")
 	}
