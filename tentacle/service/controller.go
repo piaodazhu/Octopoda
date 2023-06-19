@@ -110,6 +110,8 @@ func HandleMessage(conn net.Conn) error {
 		AppReset(conn, raw)
 	case message.TypeAppLatestVersion:
 		AppLatestVersion(conn, raw)
+	case message.TypePakmaCommand:
+		PakmaCommand(conn, raw)
 	default:
 		message.SendMessage(conn, message.TypeUndefined, []byte{})
 		logger.Comm.Println("unsupported protocol")

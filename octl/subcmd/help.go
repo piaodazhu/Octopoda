@@ -18,6 +18,8 @@ var usageInfo = map[string]string{
 	"pull":	   `octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`,
 	"prune":   `octl prune`,
 	"run":     `octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <node2> ...`,
+
+	"pakma": `octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade] <master> <node1> <node2> ...`,
 }
 
 func PrintUsage(subcmd string) {

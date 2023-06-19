@@ -39,6 +39,9 @@ func main() {
 		subcmd.PrintUsages()
 		return 
 	}
+	if conf != "" {
+		args = args[2:]
+	}
 
 	config.InitConfig(conf)
 	nameclient.InitClient()
@@ -73,6 +76,8 @@ func main() {
 		subcmd.Prune(args[2:])
 	case "run":
 		subcmd.Run(args[2:])
+	case "pakma":
+		subcmd.Pakma(args[2:])
 	case "help":
 		subcmd.PrintUsages()
 	default:

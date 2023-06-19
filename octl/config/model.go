@@ -59,6 +59,7 @@ type APIs struct {
 
 	RunCmd    string `mapstructure:"runCmd"`
 	RunScript string `mapstructure:"runScript"`
+	Pakma     string `mapstructure:"pakma"`
 
 	TaskState string `mapstructure:"taskState"`
 

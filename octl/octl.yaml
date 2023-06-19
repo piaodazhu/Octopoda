@@ -50,3 +50,4 @@ api:
   taskState: "/taskstate"
 
   sshInfo: "/sshinfo"
+  pakma: "/pakma"
