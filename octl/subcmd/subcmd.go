@@ -307,3 +307,13 @@ func Run(arglist []string) {
 usage:
 	PrintUsage("run")
 }
+
+func Pakma(arglist []string) {
+	if len(arglist) < 2 {
+		goto usage
+	}
+	node.Pakma(arglist[0], arglist[1:])
+	return
+usage:
+	PrintUsage("pakma")
+}

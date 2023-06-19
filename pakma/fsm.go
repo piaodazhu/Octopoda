@@ -192,8 +192,12 @@ func installVersion(version string) error {
 		return fmt.Errorf("cannot unpack %s.tar.xz", config.GlobalConfig.Packma.Root+path+".tar.xz")
 	}
 
-	// 5 stop service && replace binary && start service
+	
 begininstall:
+	// 5 before stopping the old service, sleep for a while to make sure tentacle/brain report its result to octl
+	time.Sleep(time.Second)
+
+	// 6 stop service && replace binary && start service
 	stopCmd := exec.Command("systemctl", "stop", config.GlobalConfig.AppName)
 	replaceCmd := exec.Command("cp", bin, "/usr/local/bin/octopoda/")
 	startCmd := exec.Command("systemctl", "start", config.GlobalConfig.AppName)
