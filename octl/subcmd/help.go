@@ -21,8 +21,9 @@ var usageInfo = map[string]string{
 
 	"pakma": `octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade] <master> <node1> <node2> ...`,
 
-	"setssh": `octl setssh <anyname>`,
 	"ssh": `octl ssh <anyname>`,
+	"setssh": `octl setssh <anyname>`,
+	"delssh": `octl setssh <anyname>`,
 }
 
 func PrintUsage(subcmd string) {

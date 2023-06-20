@@ -1,6 +1,5 @@
 package nameclient
 
-
 type NameEntry struct {
 	RegisterParam
 	TimeStamp int64 `json:"ts"`

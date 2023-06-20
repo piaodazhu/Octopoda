@@ -133,8 +133,26 @@ func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
 	return nil
 }
 
-func SshinfoQuery(name string) error {
+func SshinfoQuery(name string) (*SshInfo, error) {
 	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/sshinfo?name=%s", nsAddr, name))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	buf, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response Response
+	json.Unmarshal(buf, &response)
+	return response.SshInfo, nil
+}
+
+func NameDelete(name string, scope string) error {
+	form := url.Values{}
+	form.Set("name", name)
+	form.Set("scope", scope)
+	res, err := HttpsClient.PostForm(fmt.Sprintf("https://%s/delete", nsAddr), form)
 	if err != nil {
 		return err
 	}

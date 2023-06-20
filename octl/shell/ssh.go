@@ -35,7 +35,7 @@ func SetSSH(nodename string) {
 	fmt.Println("Please enter its IP (leave empty for auto resolving from name): ")
 	fmt.Scanln(&form.Ip)
 	if form.Ip == "" {
-		entry, err := nameclient.NameQuery(nodename+".octlFace")
+		entry, err := nameclient.NameQuery(nodename+".octlFace")  // conduct from its brain's octl face
 		if err != nil {
 			output.PrintFatalf("httpsNameServer could not resolve name [%s]\n", nodename)
 		}
@@ -77,29 +77,20 @@ func SetSSH(nodename string) {
 	output.PrintInfoln("SshinfoRegister success")
 }
 
-func GetSSH(nodename string) {
-	// url := fmt.Sprintf("http://%s/%s%s?name=%s",
-	// 	nameclient.BrainAddr,
-	// 	config.GlobalConfig.Brain.ApiPrefix,
-	// 	config.GlobalConfig.Api.SshInfo,
-	// 	nodename,
-	// )
-	// res, err := http.Get(url)
-	// if err != nil {
-	// 	output.PrintFatalln(err.Error())
-	// }
-	// buf, err := io.ReadAll(res.Body)
-	// if err != nil {
-	// 	output.PrintFatalln(err.Error())
-	// }
-	// defer res.Body.Close()
+func DelSSH(nodename string) {
+	err := nameclient.NameDelete(nodename, "ssh")
+	if err != nil {
+		output.PrintFatalln("SshinfoDelete error:", err)
+	}
+	output.PrintInfoln("SshinfoDelete success")
+}
 
-	// sshinfo := SSHInfo{}
-	// err = config.Jsoner.Unmarshal(buf, &sshinfo)
-	// if err != nil {
-	// 	output.PrintFatalln(err.Error())
-	// }
-	// dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
+func GetSSH(nodename string) {
+	sshinfo, err := nameclient.SshinfoQuery(nodename)
+	if err != nil {
+		output.PrintFatalln("SshinfoQuery error:", err)
+	}
+	dossh(sshinfo.Ip, sshinfo.Username, sshinfo.Password)
 }
 
 func SSH(nodename string) {

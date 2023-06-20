@@ -48,6 +48,7 @@ func main() {
 	if nameclient.BrainAddr == "" &&
 		args[1] != "ssh" &&
 		args[1] != "setssh" &&
+		args[1] != "delssh" &&
 		args[1] != "help" {
 		output.PrintFatalln("could not resolve brain address.")
 	}
@@ -84,10 +85,12 @@ func main() {
 		subcmd.Run(args[2:])
 	case "pakma":
 		subcmd.Pakma(args[2:])
-	case "setssh":
-		subcmd.SetSSH(args[2:])
 	case "ssh":
 		subcmd.SSH(args[2:])
+	case "setssh":
+		subcmd.SetSSH(args[2:])
+	case "delssh":
+		subcmd.DelSSH(args[2:])
 	case "help":
 		subcmd.PrintUsages()
 	default:
