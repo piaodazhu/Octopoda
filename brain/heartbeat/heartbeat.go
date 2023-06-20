@@ -3,28 +3,19 @@ package heartbeat
 import (
 	"brain/config"
 	"brain/logger"
-	"time"
 )
 
-type HeartbeatMessage struct {
-	Type int    `json:"type"`
-	Raw  string `json:"raw"`
-}
-
 type HeartBeatInfo struct {
-	Ts  int64 `json:"ts"`
-	Cnt int64 `json:"cnt"`
+	Msg string `json:"msg"` // reserved for future usage
 }
 
 type HeartBeatResponse struct {
-	Ts  int64 `json:"ts"`
-	Cnt int64 `json:"cnt"`
+	Msg string `json:"msg"` // reserved for future usage
 }
 
-func MakeHeartbeat(ticks int64) []byte {
+func MakeHeartbeat(msg string) []byte {
 	hbInfo := HeartBeatInfo{
-		Ts:  time.Now().Unix(),
-		Cnt: ticks,
+		Msg: msg,
 	}
 
 	serialized_info, err := config.Jsoner.Marshal(hbInfo)
@@ -45,8 +36,8 @@ func ParseHeartbeat(raw []byte) (HeartBeatInfo, error) {
 	return info, nil
 }
 
-func MakeHeartbeatResponse(ticks int64) []byte {
-	return MakeHeartbeat(ticks)
+func MakeHeartbeatResponse(msg string) []byte {
+	return MakeHeartbeat(msg)
 }
 
 func ParseHeartbeatResponse(raw []byte) (HeartBeatResponse, error) {

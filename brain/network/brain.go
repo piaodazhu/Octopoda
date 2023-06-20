@@ -94,7 +94,7 @@ func ProcessNodeJoin(conn net.Conn) {
 	} else {
 		id := model.StoreNode(joinRequest.Name, &conn)
 		logger.Network.Printf("establish msg conn, name=%s, id=%d\n", joinRequest.Name, id)
-		startMessager(conn, joinRequest.Name)
+		// startMessager(conn, joinRequest.Name)
 	}
 }
 

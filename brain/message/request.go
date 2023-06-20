@@ -10,8 +10,8 @@ func Request(conn *net.Conn, mtype int, payload []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, resbuf, err := RecvMessage(*conn)  // mtype ??
-	if err != nil {
+	rtype, resbuf, err := RecvMessage(*conn) 
+	if err != nil || rtype != mtype+1 {
 		return nil, err
 	}
 	return resbuf, nil

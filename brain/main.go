@@ -6,7 +6,6 @@ import (
 	"brain/model"
 	"brain/network"
 	"brain/rdb"
-	"brain/ticker"
 	"flag"
 	"fmt"
 )
@@ -34,7 +33,7 @@ func main() {
 
 	config.InitConfig(conf)
 	logger.InitLogger(stdout)
-	ticker.InitTicker()
+
 	rdb.InitRedis()
 	model.InitNodeMap()
 	model.InitScenarioMap()
