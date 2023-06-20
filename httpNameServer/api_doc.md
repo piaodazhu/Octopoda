@@ -130,7 +130,21 @@
 }
 ```
 
-## 7 list stored keys
+## 7 delete a name record
+- url: /delete
+- method: POST
+- argument: in post form
+- fields:
+	- name (string, required): it is the key of this record.
+	- scope	(string, optional): one of `name` `config` `ssh`, default is `name`.
+- response:
+```json
+{
+	"msg":"OK"
+}
+```
+
+## 8 list stored keys
 - url: /list
 - method: GET
 - argument: in query
@@ -151,7 +165,7 @@
 }
 ```
 
-## 8 summery of service
+## 9 summery of service
 - url: /summery
 - method: GET
 - argument: no

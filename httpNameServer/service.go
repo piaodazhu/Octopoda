@@ -36,7 +36,23 @@ func NameDelete(ctx *gin.Context) {
 		ctx.JSON(400, Response{Message: "no name"})
 		return
 	}
-	err := GetNameEntryDao().Del(key)
+	scope, ok := ctx.GetPostForm("scope")
+	if !ok {
+		scope = "name"
+	}
+	var err error
+	switch scope {
+	case "name":
+		err = GetNameEntryDao().Del(key)
+	case "config":
+		err = GetNameConfigDao().Del(key)
+	case "ssh":
+		err = GetSshInfoDao().Del(key)
+	default:
+		log.Println("ctx.GetQuery(): invalid scope")
+		ctx.JSON(404, Response{Message: "invalid scope"})
+		return
+	}
 	if err != nil {
 		log.Println("dao.DaoDel():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
