@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"octl/config"
 	"octl/nameclient"
 	"octl/output"
 	"os"
@@ -35,7 +33,7 @@ func SetSSH(nodename string) {
 	fmt.Println("Please enter its IP (leave empty for auto resolving from name): ")
 	fmt.Scanln(&form.Ip)
 	if form.Ip == "" {
-		entry, err := nameclient.NameQuery(nodename+".octlFace")  // conduct from its brain's octl face
+		entry, err := nameclient.NameQuery(nodename + ".octlFace") // conduct from its brain's octl face
 		if err != nil {
 			output.PrintFatalf("httpsNameServer could not resolve name [%s]\n", nodename)
 		}
@@ -91,31 +89,6 @@ func GetSSH(nodename string) {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
 	dossh(sshinfo.Ip, sshinfo.Username, sshinfo.Password)
-}
-
-func SSH(nodename string) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
-		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.SshInfo,
-		nodename,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	defer res.Body.Close()
-
-	sshinfo := SSHInfo{}
-	err = config.Jsoner.Unmarshal(buf, &sshinfo)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
 }
 
 func dossh(addr, user, passwd string) {

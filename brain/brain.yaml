@@ -27,11 +27,6 @@ logger:
 workspace:
   root: "/var/octopoda/brain/workspace/"
   store: "/var/octopoda/brain/FSTORE/"
-ssh:
-  username: "username"
-  password: "password"
-  ip: "127.0.0.1"
-  port: 1
 ssl:
   caCert: "/etc/octopoda/cert/ca.pem"
   clientCert: "/etc/octopoda/cert/client.pem"

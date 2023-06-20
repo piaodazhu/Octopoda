@@ -87,7 +87,6 @@ var MsgTypeString map[int]string = map[int]string {
 	TypeNodeLogResponse: "NodeLogResponse",
 	
 	TypeCommandReboot: "CommandReboot",
-	TypeCommandSSH: "CommandSSH",
 	TypeCommandRun: "CommandRun",
 	TypeCommandRunScript: "CommandRunScript",
 	TypeCommandResponse: "CommandResponse",

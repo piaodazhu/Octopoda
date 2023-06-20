@@ -52,7 +52,6 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/file/tree", api.FileTree)
 		group.GET("/file/pull", api.FilePull)
 
-		group.GET("/sshinfo", api.SSHInfo)
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
 		

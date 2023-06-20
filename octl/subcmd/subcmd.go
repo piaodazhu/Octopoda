@@ -182,17 +182,6 @@ usage:
 	PrintUsage("reset")
 }
 
-func Shell(arglist []string) {
-	fmt.Print("subcmd shell is deprecated. Use subcmd ssh instead.")
-	// 	if len(arglist) != 1 {
-	// 		goto usage
-	// 	}
-	// 	shell.SSH(arglist[0])
-	// 	return
-	// usage:
-	// 	PrintUsage("shell")
-}
-
 func SetSSH(arglist []string) {
 	if len(arglist) != 1 {
 		goto usage

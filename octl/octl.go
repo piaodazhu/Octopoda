@@ -67,8 +67,6 @@ func main() {
 		subcmd.Version(args[2:])
 	case "reset":
 		subcmd.Reset(args[2:])
-	case "shell":
-		subcmd.Shell(args[2:])
 	case "upload":
 		subcmd.Upload(args[2:])
 	case "spread":
