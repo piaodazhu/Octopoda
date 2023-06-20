@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"octl/config"
 	"octl/output"
 	"os"
-	"time"
+	"strconv"
 )
 
 var nsAddr string
@@ -25,6 +26,7 @@ func InitClient() {
 		return
 	}
 
+	BrainAddr = ""
 	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
 	output.PrintInfof("NameService client is enabled. nsAddr=%s", nsAddr)
 	// init https client
@@ -39,24 +41,12 @@ func InitClient() {
 		return
 	}
 
-	retry := 6
-	success := false
-	for retry > 0 {
-		entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".octlFace")
-		if err != nil {
-			output.PrintFatalf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name + ".octlFace", err.Error())
-			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
-			retry--
-			continue
-		}
-		BrainAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
-		success = true
-		retry = 0
-	}
-	if !success {
-		output.PrintFatalln("Exit because cannot get IPv4 address of netDevice")
+	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".octlFace")
+	if err != nil {
+		output.PrintWarningf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
 		return
 	}
+	BrainAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
 }
 
 func initHttpsClient(caCert, cliCert, cliKey string) error {
@@ -100,7 +90,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func nameQuery(name string) (*NameEntry, error) {
+func NameQuery(name string) (*NameEntry, error) {
 	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err
@@ -119,4 +109,41 @@ func nameQuery(name string) (*NameEntry, error) {
 		return nil, err
 	}
 	return response.NameEntry, nil
+}
+
+func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
+	form := url.Values{}
+	form.Set("name", sshinfo.Name)
+	form.Set("ip", sshinfo.Ip)
+	form.Set("port", strconv.Itoa(sshinfo.Port))
+	form.Set("type", sshinfo.Type)
+	form.Set("username", sshinfo.Username)
+	form.Set("password", sshinfo.Password)
+	res, err := HttpsClient.PostForm(fmt.Sprintf("https://%s/sshinfo", nsAddr), form)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	buf, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	var response Response
+	json.Unmarshal(buf, &response)
+	return nil
+}
+
+func SshinfoQuery(name string) error {
+	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/sshinfo?name=%s", nsAddr, name))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	buf, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	var response Response
+	json.Unmarshal(buf, &response)
+	return nil
 }

@@ -29,6 +29,79 @@ type SSHTerminal struct {
 	stderr  io.Reader
 }
 
+func SetSSH(nodename string) {
+	form := nameclient.SshInfoUploadParam{Type: "other", Name: nodename}
+
+	fmt.Println("Please enter its IP (leave empty for auto resolving from name): ")
+	fmt.Scanln(&form.Ip)
+	if form.Ip == "" {
+		entry, err := nameclient.NameQuery(nodename+".octlFace")
+		if err != nil {
+			output.PrintFatalf("httpsNameServer could not resolve name [%s]\n", nodename)
+		}
+		form.Ip = entry.Ip
+		form.Type = entry.Type
+	}
+
+	fmt.Println("Please enter its Port (leave empty for default 22): ")
+	fmt.Scanln(&form.Port)
+	if form.Port == 0 {
+		form.Port = 22
+	}
+
+	fmt.Println("Please enter its username: ")
+	fmt.Scanln(&form.Username)
+	if form.Username == "" {
+		output.PrintFatalln("username must not leave empty")
+	}
+
+	fmt.Println("Please enter its password: ")
+	pass, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		output.PrintFatalln("ReadPassword error:", err)
+	}
+	form.Password = string(pass)
+
+	var confirm string
+	fmt.Println("Please enter [yes|no] to confirm: ")
+	fmt.Scanln(&confirm)
+	if confirm != "yes" && confirm != "y" {
+		output.PrintInfoln("you cancelled setssh. Bye")
+		os.Exit(0)
+	}
+
+	err = nameclient.SshinfoRegister(&form)
+	if err != nil {
+		output.PrintFatalln("SshinfoRegister error:", err)
+	}
+	output.PrintInfoln("SshinfoRegister success")
+}
+
+func GetSSH(nodename string) {
+	// url := fmt.Sprintf("http://%s/%s%s?name=%s",
+	// 	nameclient.BrainAddr,
+	// 	config.GlobalConfig.Brain.ApiPrefix,
+	// 	config.GlobalConfig.Api.SshInfo,
+	// 	nodename,
+	// )
+	// res, err := http.Get(url)
+	// if err != nil {
+	// 	output.PrintFatalln(err.Error())
+	// }
+	// buf, err := io.ReadAll(res.Body)
+	// if err != nil {
+	// 	output.PrintFatalln(err.Error())
+	// }
+	// defer res.Body.Close()
+
+	// sshinfo := SSHInfo{}
+	// err = config.Jsoner.Unmarshal(buf, &sshinfo)
+	// if err != nil {
+	// 	output.PrintFatalln(err.Error())
+	// }
+	// dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
+}
+
 func SSH(nodename string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,

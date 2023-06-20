@@ -10,7 +10,7 @@ var usageInfo = map[string]string{
 	"log":     `octl log [master|node <node>] [l<maxline>] [d<maxday>]`,
 	"version": `octl version [scenario <scen>|nodeapp <node> <app>@<scen>]`,
 	"reset":   `octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>`,
-	"shell":   `octl shell <node>`,
+	"shell (deprecated)":   `octl shell <node>`,
 	"upload":  `octl upload <localFileOrDir> <targetDir>`,
 	"spread":  `octl spread <masterFileOrDir> <targetDir> <node1> <node2> ...`,
 	"distrib": `octl distrib <localFileOrDir> <targetDir> <node1> <node2> ...`,
@@ -20,6 +20,9 @@ var usageInfo = map[string]string{
 	"run":     `octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <node2> ...`,
 
 	"pakma": `octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade] <master> <node1> <node2> ...`,
+
+	"setssh": `octl setssh <anyname>`,
+	"ssh": `octl ssh <anyname>`,
 }
 
 func PrintUsage(subcmd string) {
