@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"syscall"
 	"tentacle/config"
@@ -36,32 +35,6 @@ func RemoteReboot(conn net.Conn, raw []byte) {
 	// if err != nil {
 	// 	logger.Client.Fatal(err)
 	// }
-}
-
-type sshInfo struct {
-	Addr     string
-	Username string
-	Password string
-}
-
-func SSHInfo(conn net.Conn, raw []byte) {
-	// valid raw
-
-	var addr strings.Builder
-	addr.WriteString(config.GlobalConfig.Sshinfo.Ip)
-	addr.WriteByte(':')
-	addr.WriteString(strconv.Itoa(int(config.GlobalConfig.Sshinfo.Port)))
-	sshinfo := sshInfo{
-		Addr:     addr.String(),
-		Username: config.GlobalConfig.Sshinfo.Username,
-		Password: config.GlobalConfig.Sshinfo.Password,
-	}
-	payload, _ := config.Jsoner.Marshal(&sshinfo)
-	err := message.SendMessage(conn, message.TypeCommandResponse, payload)
-
-	if err != nil {
-		logger.Comm.Println("SSHInfo send error")
-	}
 }
 
 type ScriptParams struct {

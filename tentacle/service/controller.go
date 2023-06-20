@@ -35,8 +35,6 @@ func HandleConn(conn net.Conn) {
 		NodeLog(conn, raw)
 	case message.TypeCommandReboot:
 		RemoteReboot(conn, raw)
-	case message.TypeCommandSSH:
-		SSHInfo(conn, raw)
 	case message.TypeCommandRun:
 		RunCmd(conn, raw)
 	case message.TypeCommandRunScript:
@@ -89,8 +87,6 @@ func HandleMessage(conn net.Conn) error {
 		NodeLog(conn, raw)
 	case message.TypeCommandReboot:
 		RemoteReboot(conn, raw)
-	case message.TypeCommandSSH:
-		SSHInfo(conn, raw)
 	case message.TypeCommandRun:
 		RunCmd(conn, raw)
 	case message.TypeCommandRunScript:

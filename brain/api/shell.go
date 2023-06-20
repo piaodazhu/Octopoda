@@ -15,48 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type sshInfo struct {
-	Addr     string
-	Username string
-	Password string
-}
-
-func SSHInfo(ctx *gin.Context) {
-	var name string
-	var ok bool
-	rmsg := message.Result{
-		Rmsg: "OK",
-	}
-	if name, ok = ctx.GetQuery("name"); !ok {
-		rmsg.Rmsg = "Lack node name"
-		ctx.JSON(404, rmsg)
-		return
-	}
-	if name == "master" {
-		sinfo := sshInfo{
-			Addr:     fmt.Sprintf("%s:%d", config.GlobalConfig.Sshinfo.Ip, config.GlobalConfig.Sshinfo.Port),
-			Username: config.GlobalConfig.Sshinfo.Username,
-			Password: config.GlobalConfig.Sshinfo.Password,
-		}
-		ctx.JSON(200, sinfo)
-		return
-	}
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		rmsg.Rmsg = "Invalid node"
-		ctx.JSON(404, rmsg)
-		return
-	}
-
-	raw, err := message.Request(conn, message.TypeCommandSSH, []byte{})
-	if err != nil {
-		rmsg.Rmsg = "Node Error:" + err.Error()
-		ctx.JSON(404, rmsg)
-		return
-	}
-	ctx.Data(200, "application/json", raw)
-}
-
 type ScriptParams struct {
 	FileName   string
 	TargetPath string

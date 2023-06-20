@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"octl/config"
 	"octl/nameclient"
 	"octl/output"
 	"os"
@@ -29,29 +27,68 @@ type SSHTerminal struct {
 	stderr  io.Reader
 }
 
-func SSH(nodename string) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
-		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.SshInfo,
-		nodename,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	defer res.Body.Close()
+func SetSSH(nodename string) {
+	form := nameclient.SshInfoUploadParam{Type: "other", Name: nodename}
 
-	sshinfo := SSHInfo{}
-	err = config.Jsoner.Unmarshal(buf, &sshinfo)
-	if err != nil {
-		output.PrintFatalln(err.Error())
+	fmt.Println("Please enter its IP (leave empty for auto resolving from name): ")
+	fmt.Scanln(&form.Ip)
+	if form.Ip == "" {
+		entry, err := nameclient.NameQuery(nodename + ".octlFace") // conduct from its brain's octl face
+		if err != nil {
+			output.PrintFatalf("httpsNameServer could not resolve name [%s]\n", nodename)
+		}
+		form.Ip = entry.Ip
+		form.Type = entry.Type
 	}
-	dossh(sshinfo.Addr, sshinfo.Username, sshinfo.Password)
+
+	fmt.Println("Please enter its Port (leave empty for default 22): ")
+	fmt.Scanln(&form.Port)
+	if form.Port == 0 {
+		form.Port = 22
+	}
+
+	fmt.Println("Please enter its username: ")
+	fmt.Scanln(&form.Username)
+	if form.Username == "" {
+		output.PrintFatalln("username must not leave empty")
+	}
+
+	fmt.Println("Please enter its password: ")
+	pass, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		output.PrintFatalln("ReadPassword error:", err)
+	}
+	form.Password = string(pass)
+
+	var confirm string
+	fmt.Println("Please enter [yes|no] to confirm: ")
+	fmt.Scanln(&confirm)
+	if confirm != "yes" && confirm != "y" {
+		output.PrintInfoln("you cancelled setssh. Bye")
+		os.Exit(0)
+	}
+
+	err = nameclient.SshinfoRegister(&form)
+	if err != nil {
+		output.PrintFatalln("SshinfoRegister error:", err)
+	}
+	output.PrintInfoln("SshinfoRegister success")
+}
+
+func DelSSH(nodename string) {
+	err := nameclient.NameDelete(nodename, "ssh")
+	if err != nil {
+		output.PrintFatalln("SshinfoDelete error:", err)
+	}
+	output.PrintInfoln("SshinfoDelete success")
+}
+
+func GetSSH(nodename string) {
+	sshinfo, err := nameclient.SshinfoQuery(nodename)
+	if err != nil {
+		output.PrintFatalln("SshinfoQuery error:", err)
+	}
+	dossh(sshinfo.Ip, sshinfo.Username, sshinfo.Password)
 }
 
 func dossh(addr, user, passwd string) {

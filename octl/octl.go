@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"octl/config"
 	"octl/nameclient"
+	"octl/output"
 	"octl/subcmd"
 	"os"
 )
@@ -27,17 +27,17 @@ func main() {
 	flag.Parse()
 
 	if len(args) == 1 {
-		fmt.Println("Octopoda Controlling Tool. Use '-usage', '-version', '-c'...")
+		output.PrintInfoln("Octopoda Controlling Tool. Use '-usage', '-version', '-c'...")
 		return
 	}
 
 	if askver {
-		fmt.Printf("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
+		output.PrintInfof("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
 	if usage {
 		subcmd.PrintUsages()
-		return 
+		return
 	}
 	if conf != "" {
 		args = args[2:]
@@ -45,6 +45,13 @@ func main() {
 
 	config.InitConfig(conf)
 	nameclient.InitClient()
+	if nameclient.BrainAddr == "" &&
+		args[1] != "ssh" &&
+		args[1] != "setssh" &&
+		args[1] != "delssh" &&
+		args[1] != "help" {
+		output.PrintFatalln("could not resolve brain address.")
+	}
 	switch args[1] {
 	case "apply":
 		subcmd.Apply(args[2:])
@@ -60,8 +67,6 @@ func main() {
 		subcmd.Version(args[2:])
 	case "reset":
 		subcmd.Reset(args[2:])
-	case "shell":
-		subcmd.Shell(args[2:])
 	case "upload":
 		subcmd.Upload(args[2:])
 	case "spread":
@@ -78,9 +83,15 @@ func main() {
 		subcmd.Run(args[2:])
 	case "pakma":
 		subcmd.Pakma(args[2:])
+	case "ssh":
+		subcmd.SSH(args[2:])
+	case "setssh":
+		subcmd.SetSSH(args[2:])
+	case "delssh":
+		subcmd.DelSSH(args[2:])
 	case "help":
 		subcmd.PrintUsages()
 	default:
-		fmt.Println("sub command not support")
+		output.PrintFatalln("sub command not support")
 	}
 }

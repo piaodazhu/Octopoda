@@ -3,7 +3,6 @@ package config
 type ConfigModel struct {
 	Name            string           `mapstructure:"name"`
 	HttpsNameServer HttpsNsModel     `mapstructure:"httpsNameServer"`
-	Sshinfo         SshinfoModel     `mapstructure:"ssh"`
 	Brain           BrainModel       `mapstructure:"brain"`
 	Logger          LoggerModel      `mapstructure:"logger"`
 	Heartbeat       HeartbeatModel   `mapstructure:"heartbeat"`
@@ -12,13 +11,6 @@ type ConfigModel struct {
 	CustomEnv       []*CustomEnvItem `mapstructure:"env"`
 	PakmaServer     PakmaModel       `mapstructure:"pakma"`
 	JsonFast        bool             `mapstructure:"jsonFast"`
-}
-
-type SshinfoModel struct {
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	Ip       string `mapstructure:"ip"`
-	Port     uint16 `mapstructure:"port"`
 }
 
 type BrainModel struct {

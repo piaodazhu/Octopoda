@@ -182,14 +182,34 @@ usage:
 	PrintUsage("reset")
 }
 
-func Shell(arglist []string) {
+func SetSSH(arglist []string) {
 	if len(arglist) != 1 {
 		goto usage
 	}
-	shell.SSH(arglist[0])
+	shell.SetSSH(arglist[0])
 	return
 usage:
-	PrintUsage("shell")
+	PrintUsage("setssh")
+}
+
+func DelSSH(arglist []string) {
+	if len(arglist) != 1 {
+		goto usage
+	}
+	shell.DelSSH(arglist[0])
+	return
+usage:
+	PrintUsage("setssh")
+}
+
+func SSH(arglist []string) {
+	if len(arglist) != 1 {
+		goto usage
+	}
+	shell.GetSSH(arglist[0])
+	return
+usage:
+	PrintUsage("ssh")
 }
 
 func Upload(arglist []string) {
@@ -225,7 +245,7 @@ usage:
 func FileTree(arglist []string) {
 	if len(arglist) < 2 {
 		goto usage
-	} 
+	}
 	switch arglist[0] {
 	case "store":
 		if len(arglist) == 2 {
@@ -245,7 +265,7 @@ func FileTree(arglist []string) {
 		if len(arglist) == 3 {
 			file.ListAllFile(arglist[0], arglist[1], arglist[2])
 		} else if len(arglist) == 4 {
-			file.ListAllFile(arglist[0], arglist[1], arglist[2] + "/" + arglist[3])
+			file.ListAllFile(arglist[0], arglist[1], arglist[2]+"/"+arglist[3])
 		} else {
 			goto usage
 		}
@@ -260,7 +280,7 @@ usage:
 func Pull(arglist []string) {
 	if len(arglist) < 3 {
 		goto usage
-	} 
+	}
 	switch arglist[0] {
 	case "store":
 		fallthrough
@@ -276,7 +296,7 @@ func Pull(arglist []string) {
 		if len(arglist) == 4 {
 			file.PullFile(arglist[0], arglist[1], arglist[2], arglist[3])
 		} else if len(arglist) == 5 {
-			file.PullFile(arglist[0], arglist[1], arglist[2] + "/" + arglist[3], arglist[4])
+			file.PullFile(arglist[0], arglist[1], arglist[2]+"/"+arglist[3], arglist[4])
 		} else {
 			goto usage
 		}

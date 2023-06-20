@@ -13,10 +13,6 @@ brain:
   messagePort: 1112
   
   token: "default"
-ssh:
-  username: "username"
-  password: "password"
-  port: 1
 logger:
   path: "/var/octopoda/tentacle/log/"
   namePrefix: "log"
