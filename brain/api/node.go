@@ -119,34 +119,6 @@ sendres:
 	channel <- state
 }
 
-func NodeReboot(ctx *gin.Context) {
-	var name string
-	var ok bool
-	var conn *net.Conn
-
-	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
-		return
-	}
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		ctx.JSON(404, struct{}{})
-		return
-	}
-	err := message.SendMessage(*conn, message.TypeCommandReboot, []byte{})
-	if err != nil {
-		logger.Comm.Println("NodeReboot", err)
-		ctx.JSON(404, struct{}{})
-		return
-	}
-	mtype, _, err := message.RecvMessage(*conn)
-	if err != nil || mtype != message.TypeCommandResponse {
-		logger.Comm.Println("NodeReboot", err)
-		ctx.JSON(404, struct{}{})
-		return
-	}
-	ctx.JSON(200, struct{}{})
-}
-
 func NodePrune(ctx *gin.Context) {
 	model.PruneDeadNode()
 	ctx.Status(200)

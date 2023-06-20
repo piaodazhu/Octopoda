@@ -2,11 +2,11 @@ package network
 
 import (
 	"net"
+	"os/exec"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/service"
 	"time"
 )
 
@@ -58,7 +58,7 @@ func KeepAlive() {
 
 		logger.Network.Print("Cannot connect to master.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
-			service.Reboot()
+			exec.Command("reboot").Run()
 			wg.Done()
 		} else {
 			logger.Exceptions.Print("Dead but wont restart.")

@@ -21,7 +21,6 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/node/info", api.NodeInfo)
 		group.GET("/node/status", api.NodeState)
 		group.GET("/node/log", api.NodeLog)
-		group.GET("/node/reboot", api.NodeReboot)
 		group.GET("/node/prune", api.NodePrune)
 
 		group.GET("/node/apps", api.NodeAppsInfo)

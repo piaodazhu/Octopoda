@@ -20,13 +20,21 @@ Features of Octopoda:
 
 ## Topology
 ```
-                     SSH +--------------------------->-----------+------>-----+------ ...
-     (Web)               |                                       |            | 
-  +---------+  Run  +--------+   HTTP   +---------+   TCP   +----------+ +----------+ 
-  |  Admin  | <===> |  Octl  | <------> |  Brain  | <-----> | Tentacle | | Tentacle | ... 
+                                            +-----------------+ 
+                                            | HttpsNameServer | 
+                                            +-----------------+   HTTPS 
+                                             |               |-------------+  
+                     SSH .-------------------|------->-------|---+------>--|--+------ ... 
+     (Web)               |                   |               |   |         |  |  
+  +---------+  Run  +--------+   HTTP   +---------+   TCP   +----------+ +----------+  
+  |  Admin  | <===> |  Octl  | <------> |  Brain  | <-----> | Tentacle | | Tentacle | ...  
   +---------+       +--------+          +---------+         +----------+ +----------+  
- \----------------------------/        \-----------/       \-----------------------------/
-          Admin Client                  Master Node           Controlled Networks
+ \----------------------------/              |HTTP               |             | 
+          Admin Client                  +---------+         +---------+   +---------+ 
+                                        |  Pakma  |         |  Pakma  |   |  Pakma  | 
+                                        +---------+         +---------+   +---------+ 
+                                       \-----------/       \-----------------------------/ 
+                                         Master Node           Controlled Networks 
 ```
 ## SAN Model
 **SAN** model is the working model of Octopoda: `S` stands for `Scenario`, A stands for `Application` and `N` stands for `Node`. The current model has the following features:
@@ -324,14 +332,27 @@ With this subcmd we can pull file or directory from under `SubDir` from master o
 
 With this subcmd we can run a command or a script on given nodes. For running a command, we need to enclose the command in `'{}'`. As for blocking command, we need to run it in background, so we can enclose the command in `'()'`. For running a script, we need to specify the complete filepath of the script.
 
-### SHELL
+## F. Fast SSH
 
-> `usage: octl shell <node>`
+### setssh
 
-With this subcmd we can quickly login a given node via SSH. For some complex operation, this subcmd brings convenience. **Note that admin client should be able to connect to the node if we need to run this subcmd.**
+> `usage: octl setssh <name>`
 
-However, this function in current Octopoda is not safe enough. If the network environment can't be trusted, don't fill the configuration file with actual usernamed and password.
+Set SSH login information binding with a name. It will be uploaded to HttpsNameServer, so make sure HttpsNameServer is online.
 
+### delssh
+
+> `usage: octl delssh <name>`
+
+Delete SSH login information binding with a name. It will be deleted from HttpsNameServer, so make sure HttpsNameServer is online.
+
+### ssh
+
+> `usage: octl ssh <name>`
+
+Directly login the host binding with a name via SSH. It will query HttpsNameServer for login infomation, so make sure HttpsNameServer is online.
+
+ 
 
 # Scenario Example
 See an example in `./octl/example/helloWorld`. The file `deployment.yaml` defines scenario called `helloWorld`. This scenario consists of 3 application, running on 2 nodes, with some targets. You can manage `helloWorld` scenario with octl:

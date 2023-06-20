@@ -147,7 +147,7 @@ func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 		return
 	}
 
-	raw, err := message.Request(conn, message.TypeCommandRun, payload)
+	raw, err := message.Request(conn, message.TypeRunCommand, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"
@@ -176,7 +176,7 @@ func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 		*result = "Connection not exists"
 		return
 	}
-	raw, err := message.Request(conn, message.TypeCommandRunScript, payload)
+	raw, err := message.Request(conn, message.TypeRunScript, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"
