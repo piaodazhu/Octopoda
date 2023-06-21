@@ -5,8 +5,6 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -16,26 +14,22 @@ const (
 )
 
 type NodeInfo struct {
-	Id   uint32
-	Name string
-	// Addr      string
+	Name      string
 	State     int32
 	OnlineTs  int64
 	OfflineTs int64
+	ActiveTs  int64
 }
 
 type NodeModel struct {
 	NodeInfo
 	MsgConn *net.Conn
-	// Applist []*AppModel
 }
 
 type State struct {
-	Id        int
 	Name      string
 	Platform  string
 	CpuCores  int
-	Ip        string
 	LocalTime int64
 
 	CpuLoadShort float64
@@ -56,7 +50,7 @@ func InitNodeMap() {
 			time.Sleep(time.Second)
 			NodesLock.Lock()
 			for _, node := range NodeMap {
-				if node.State == NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().Unix() {
+				if node.State == NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().UnixMilli() {
 					// logger.Tentacle.Print("MarkDeadNode", nodename)
 					node.State = NodeStateDead
 				}
@@ -92,12 +86,12 @@ func InitNodeMap() {
 // 	}
 // 	node.State = NodeStateReady
 // 	// node.Addr = sb.String()
-// 	node.OnlineTs = time.Now().Unix()
+// 	node.OnlineTs = time.Now().UnixMilli()
 
 // 	return node.Id
 // }
 
-func StoreNode(name string, conn *net.Conn) uint32 {
+func StoreNode(name string, conn *net.Conn) {
 	var node *NodeModel
 
 	NodesLock.Lock()
@@ -110,7 +104,6 @@ func StoreNode(name string, conn *net.Conn) uint32 {
 		}
 	} else {
 		info := NodeInfo{
-			Id:   uuid.New().ID(),
 			Name: name,
 		}
 		node = &NodeModel{
@@ -121,9 +114,7 @@ func StoreNode(name string, conn *net.Conn) uint32 {
 	}
 	node.MsgConn = conn
 	node.State = NodeStateReady
-	node.OnlineTs = time.Now().Unix()
-
-	return node.Id
+	node.OnlineTs = time.Now().UnixMilli()
 }
 
 func UpdateNode(name string) bool {
@@ -137,7 +128,7 @@ func DisconnNode(name string) bool {
 	defer NodesLock.Unlock()
 	if node, found := NodeMap[name]; found {
 		node.State = int32(NodeStateDisconn)
-		node.OfflineTs = time.Now().Unix() //
+		node.OfflineTs = time.Now().UnixMilli() //
 		return true
 	}
 	return false
@@ -158,52 +149,31 @@ func PruneDeadNode() {
 	}
 }
 
-func GetNodeInfoByName(name string) (*NodeInfo, bool) {
+func GetNodeInfoByName(name string) (*NodeModel, bool) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	if node, found := NodeMap[name]; found {
-		return &node.NodeInfo, true
+		return node, true
 	}
 	return nil, false
 }
 
-func GetNodeInfoById(id int) (*NodeInfo, bool) {
-	NodesLock.RLock()
-	defer NodesLock.RUnlock()
-
-	for _, node := range NodeMap {
-		if node.Id == uint32(id) {
-			return &node.NodeInfo, true
-		}
-	}
-	return nil, false
-}
-
-func GetNodesInfoAll() ([]*NodeInfo, bool) {
+func GetNodesInfoAll() ([]*NodeModel, bool) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	if len(NodeMap) == 0 {
 		return nil, false
 	}
-	res := make([]*NodeInfo, 0, len(NodeMap))
+	res := make([]*NodeModel, 0, len(NodeMap))
 	for _, val := range NodeMap {
 		copynode := *val
-		res = append(res, &copynode.NodeInfo)
+		res = append(res, &copynode)
 	}
 	return res, true
 }
 
-// func GetNodeAddress(name string) (string, bool) {
-// 	NodesLock.Lock()
-// 	defer NodesLock.Unlock()
-
-// 	if node, found := NodeMap[name]; found && node.State == NodeStateReady {
-// 		return node.Addr, true
-// 	}
-// 	return "", false
-// }
 func GetNodeMsgConn(name string) (*net.Conn, bool) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
@@ -230,6 +200,7 @@ func SetNodeState(name string, state int) bool {
 
 	if node, found := NodeMap[name]; found {
 		node.State = int32(state)
+		node.ActiveTs = time.Now().UnixMilli()
 		return true
 	}
 	return false

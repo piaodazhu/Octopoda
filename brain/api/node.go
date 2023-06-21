@@ -5,16 +5,73 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
+type NodeInfoText struct {
+	Name         string `json:"name"`
+	Health       string `json:"health"`
+	MsgConnState string `json:"msg_conn"`
+	OnlineTime   string `json:"online_time,omitempty"`
+	OfflineTime  string `json:"offline_time,omitempty"`
+	LastOnline   string `json:"last_active,omitempty"`
+}
+
+type NodesInfoText struct {
+	NodeInfoList []*NodeInfoText `json:"nodes"`
+	Total        int             `json:"total"`
+	Active       int             `json:"active"`
+	Offline      int             `json:"offline"`
+}
+
+func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
+	res := &NodeInfoText{
+		Name: node.Name,
+	}
+	switch node.State {
+	case 0:
+		res.Health = "Healthy"
+		res.OnlineTime = time.Since(time.UnixMilli(node.OnlineTs)).String()
+	case 1:
+		res.Health = "Disconnect"
+		res.LastOnline = time.UnixMilli(node.ActiveTs).Format("2006-01-02 15:04:05")
+	case 2:
+		res.Health = "Offline"
+		res.OfflineTime = time.Since(time.UnixMilli(node.OfflineTs)).String()
+	}
+	if node.MsgConn == nil {
+		res.MsgConnState = "Off"
+	} else {
+		res.MsgConnState = "On"
+	}
+	return res
+}
+
+func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
+	res := &NodesInfoText{
+		NodeInfoList: make([]*NodeInfoText, len(nodes)),
+	}
+	for i, node := range nodes {
+		res.Total++
+		if node.State == 0 {
+			res.Active++
+		} else if node.State == 2 {
+			res.Offline++
+		}
+		res.NodeInfoList[i] = nodeInfoToText(node)
+	}
+	return res
+}
+
 func NodeInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
-	var node *model.NodeInfo
+	var node *model.NodeModel
 	if name, ok = ctx.GetQuery("name"); !ok {
 		ctx.JSON(404, struct{}{})
 		return
@@ -23,7 +80,8 @@ func NodeInfo(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	ctx.JSON(200, node)
+	fmt.Println(nodeInfoToText(node))
+	ctx.JSON(200, nodeInfoToText(node))
 }
 
 func NodeState(ctx *gin.Context) {
@@ -55,18 +113,18 @@ func NodeState(ctx *gin.Context) {
 }
 
 func NodesInfo(ctx *gin.Context) {
-	var nodes []*model.NodeInfo
+	var nodes []*model.NodeModel
 	var ok bool
 
 	if nodes, ok = model.GetNodesInfoAll(); !ok {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	ctx.JSON(200, nodes)
+	ctx.JSON(200, nodesInfoToText(nodes))
 }
 
 func NodesState(ctx *gin.Context) {
-	var nodes []*model.NodeInfo
+	var nodes []*model.NodeModel
 	var states []model.State
 	var ok bool
 

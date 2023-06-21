@@ -114,7 +114,7 @@ func UpdateScenario(name, message string) bool {
 				BasicVersionModel: BasicVersionModel{
 					Version:   hex.EncodeToString(versionhash[:]),
 					Message:   message,
-					Timestamp: time.Now().Unix(),
+					Timestamp: time.Now().UnixMilli(),
 				},
 				Apps: scen.newversionbuf,
 			})
@@ -369,7 +369,7 @@ func ResetScenario(scenario, version, message string) bool {
 		BasicVersionModel: BasicVersionModel{
 			Version:   version,
 			Message:   message,
-			Timestamp: time.Now().Unix(),
+			Timestamp: time.Now().UnixMilli(),
 		},
 		Apps: scen.Versions[idx].Apps,
 	})
