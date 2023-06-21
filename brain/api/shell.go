@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -139,15 +138,7 @@ func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var ok bool
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "Connection not exists"
-		return
-	}
-
-	raw, err := message.Request(conn, message.TypeRunCommand, payload)
+	raw, err := model.Request(name, message.TypeRunCommand, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"
@@ -169,14 +160,7 @@ func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var ok bool
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "Connection not exists"
-		return
-	}
-	raw, err := message.Request(conn, message.TypeRunScript, payload)
+	raw, err := model.Request(name, message.TypeRunScript, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"

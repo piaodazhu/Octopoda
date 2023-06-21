@@ -6,27 +6,10 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+
 	"fmt"
 	"net"
-
-	"github.com/gin-gonic/gin"
 )
-
-var engine *gin.Engine
-var listenaddr string
-
-func InitBrainFace() {
-	listenaddr = fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
-
-	// gin.SetMode(gin.DebugMode)
-	// engine = gin.Default()
-
-	gin.SetMode(gin.ReleaseMode)
-	engine = gin.New()
-	engine.Use(gin.Recovery())
-
-	initRouter(engine)
-}
 
 var heartbeatListener net.Listener
 var messagerListener net.Listener
@@ -95,8 +78,4 @@ func ProcessNodeJoin(conn net.Conn) {
 		model.StoreNode(joinRequest.Name, &conn)
 		logger.Network.Printf("establish msg conn, name=%s\n", joinRequest.Name)
 	}
-}
-
-func ListenCommand() {
-	engine.Run(listenaddr)
 }

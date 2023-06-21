@@ -1,14 +1,30 @@
-package network
+package main
 
 import (
 	"brain/api"
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+var engine *gin.Engine
+
+func Run() {
+	// gin.SetMode(gin.DebugMode)
+	// engine = gin.Default()
+
+	gin.SetMode(gin.ReleaseMode)
+	engine = gin.New()
+	engine.Use(gin.Recovery())
+
+	initRouter(engine)
+	ListenCommand()
+}
 
 func initRouter(engine *gin.Engine) {
 	engine.Use(BusyBlocker())
@@ -53,7 +69,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
-		
+
 		group.POST("/pakma", api.PakmaCmd)
 	}
 }
@@ -82,13 +98,17 @@ func OctopodaLogger() gin.HandlerFunc {
 
 func BusyBlocker() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !model.CheckReady() {			
+		if !model.CheckReady() {
 			c.AbortWithStatusJSON(503, message.Result{
 				Rcode: -1,
-				Rmsg: "Server Busy",
+				Rmsg:  "Server Busy",
 			})
 		}
 		c.Next()
 	}
 }
 
+func ListenCommand() {
+	listenaddr := fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
+	engine.Run(listenaddr)
+}

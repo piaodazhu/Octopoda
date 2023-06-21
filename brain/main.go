@@ -38,10 +38,9 @@ func main() {
 	model.InitNodeMap()
 	model.InitScenarioMap()
 
-	// heartbeat.InitHeartbeat()
 	network.InitNameClient()
 	network.InitTentacleFace()
-	network.InitBrainFace()
+	network.WaitNodeJoin()
 
-	network.Run()
+	Run()
 }

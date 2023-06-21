@@ -60,37 +60,6 @@ func InitNodeMap() {
 	}()
 }
 
-// func StoreNode(name string, ip string, port uint16) uint32 {
-// 	var node *NodeModel
-// 	var sb strings.Builder
-// 	sb.WriteString(ip)
-// 	sb.WriteByte(':')
-// 	sb.WriteString(strconv.Itoa(int(port)))
-
-// 	NodesLock.Lock()
-// 	defer NodesLock.Unlock()
-
-// 	if n, found := NodeMap[name]; found {
-// 		node = n
-// 	} else {
-// 		info := NodeInfo{
-// 			Id:   uuid.New().ID(),
-// 			Name: name,
-// 		}
-// 		node = &NodeModel{
-// 			NodeInfo: info,
-// 			MsgConn: nil,
-// 			// Applist:   []*AppModel{},
-// 		}
-// 		NodeMap[name] = node
-// 	}
-// 	node.State = NodeStateReady
-// 	// node.Addr = sb.String()
-// 	node.OnlineTs = time.Now().UnixMilli()
-
-// 	return node.Id
-// }
-
 func StoreNode(name string, conn *net.Conn) {
 	var node *NodeModel
 
@@ -174,14 +143,32 @@ func GetNodesInfoAll() ([]*NodeModel, bool) {
 	return res, true
 }
 
-func GetNodeMsgConn(name string) (*net.Conn, bool) {
+var (
+	GetConnOk = 0
+	GetConnNoNode = 1
+	GetConnNoConn = 2
+)
+func GetNodeMsgConn(name string) (*net.Conn, int) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
-	if !found || node.MsgConn == nil {
-		return nil, false
+	if !found {
+		return nil, GetConnNoNode
 	}
-	return node.MsgConn, true
+	if node.MsgConn == nil {
+		return nil, GetConnNoConn
+	}
+	return node.MsgConn, GetConnOk
+}
+
+func ResetNodeMsgConn(name string) {
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
+	node, found := NodeMap[name]
+	if found && node.MsgConn != nil {
+		(*node.MsgConn).Close()
+		node.MsgConn = nil
+	}
 }
 
 func GetNodeState(name string) (int, bool) {

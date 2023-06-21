@@ -5,7 +5,6 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"net"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +12,6 @@ import (
 func NodeAppsInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
-	var conn *net.Conn
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -24,12 +22,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 		return
 	}
 
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		rmsg.Rmsg = "Invalid node"
-		ctx.JSON(404, rmsg)
-		return
-	}
-	raw, err := message.Request(conn, message.TypeAppsInfo, []byte{})
+	raw, err := model.Request(name, message.TypeAppsInfo, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"
@@ -41,8 +34,6 @@ func NodeAppsInfo(ctx *gin.Context) {
 
 func NodeAppVersion(ctx *gin.Context) {
 	var name, app, scen string
-	var ok bool
-	var conn *net.Conn
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -56,18 +47,12 @@ func NodeAppVersion(ctx *gin.Context) {
 		return
 	}
 
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		rmsg.Rmsg = "Invalid node"
-		ctx.JSON(404, rmsg)
-		return
-	}
-
 	aParams := &AppBasic{
 		Name:     app,
 		Scenario: scen,
 	}
 	payload, _ := config.Jsoner.Marshal(aParams)
-	raw, err := message.Request(conn, message.TypeAppVersion, payload)
+	raw, err := model.Request(name, message.TypeAppVersion, payload)
 	if err != nil {
 		logger.Comm.Println("NodeAppVersion", err)
 		rmsg.Rmsg = "NodeAppVersion"
@@ -79,7 +64,6 @@ func NodeAppVersion(ctx *gin.Context) {
 
 func NodeAppReset(ctx *gin.Context) {
 	var name, app, scen, version, msg string
-	var ok bool
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -95,13 +79,6 @@ func NodeAppReset(ctx *gin.Context) {
 		return
 	}
 
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		rmsg.Rmsg = "Invalid node"
-		ctx.JSON(404, rmsg)
-		return
-	}
-
 	arParams := &AppResetParams{
 		AppBasic: AppBasic{
 			Name:     app,
@@ -111,7 +88,7 @@ func NodeAppReset(ctx *gin.Context) {
 		VersionHash: version,
 	}
 	payload, _ := config.Jsoner.Marshal(arParams)
-	raw, err := message.Request(conn, message.TypeAppReset, payload)
+	raw, err := model.Request(name, message.TypeAppReset, payload)
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"

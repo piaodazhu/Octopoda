@@ -6,7 +6,6 @@ import (
 	"brain/message"
 	"brain/model"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 
@@ -86,25 +85,13 @@ func NodeInfo(ctx *gin.Context) {
 
 func NodeState(ctx *gin.Context) {
 	var name string
-	var conn *net.Conn
 	var ok bool
 	if name, ok = ctx.GetQuery("name"); !ok {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		ctx.JSON(404, struct{}{})
-		return
-	}
-	err := message.SendMessage(*conn, message.TypeNodeStatus, []byte{})
+	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		logger.Comm.Println("NodeState", err)
-		ctx.JSON(404, struct{}{})
-		return
-	}
-
-	mtype, raw, err := message.RecvMessage(*conn)
-	if err != nil || mtype != message.TypeNodeStatusResponse {
 		logger.Comm.Println("NodeState", err)
 		ctx.JSON(404, struct{}{})
 		return
@@ -148,22 +135,12 @@ func NodesState(ctx *gin.Context) {
 
 func getNodeState(name string, channel chan<- model.State, wg *sync.WaitGroup) {
 	defer wg.Done()
-	var conn *net.Conn
-	var ok bool
 	var state model.State = model.State{Name: name}
 	var err error
 	var raw []byte
-	var mtype int
 
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		goto sendres
-	}
-	err = message.SendMessage(*conn, message.TypeNodeStatus, []byte{})
+	raw, err = model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		goto sendres
-	}
-	mtype, raw, err = message.RecvMessage(*conn)
-	if err != nil || mtype != message.TypeNodeStatusResponse {
 		logger.Comm.Println("getNodeState", err)
 		goto sendres
 	}

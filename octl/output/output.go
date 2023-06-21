@@ -14,19 +14,19 @@ func PrintJSON(message interface{}) {
 		switch msg := message.(type) {
 		case string:
 			s := pretty.Color(pretty.Pretty([]byte(msg)), nil)
-			fmt.Println(string(s))
+			fmt.Print(string(s))
 		case []byte:
 			s := pretty.Color(pretty.Pretty(msg), nil)
-			fmt.Println(string(s))
+			fmt.Print(string(s))
 		default:
 			PrintFatalln("unsupported message type")
 		}
 	} else {
 		switch msg := message.(type) {
 		case string:
-			fmt.Println(msg)
+			fmt.Print(msg)
 		case []byte:
-			fmt.Println(string(msg))
+			fmt.Print(string(msg))
 		default:
 			PrintFatalln("unsupported message type")
 		}
