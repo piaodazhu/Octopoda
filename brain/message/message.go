@@ -31,12 +31,12 @@ const (
 
 	TypeNodeLog
 	TypeNodeLogResponse
-	
-	TypeCommandReboot
-	TypeCommandSSH
-	TypeCommandRun
-	TypeCommandRunScript
-	TypeCommandResponse
+
+	TypeRunCommand
+	TypeRunCommandResponse
+
+	TypeRunScript
+	TypeRunScriptResponse
 
 	TypeAppCreate
 	TypeAppCreateResponse
@@ -65,55 +65,55 @@ const (
 	TypeUndefined
 )
 
-var MsgTypeString map[int]string = map[int]string {
-	TypeNodeJoin: "NodeJoin",
-	TypeNodeJoinResponse: "NodeJoinResponse",
-	TypeHeartbeat: "Heartbeat",
+var MsgTypeString map[int]string = map[int]string{
+	TypeNodeJoin:          "NodeJoin",
+	TypeNodeJoinResponse:  "NodeJoinResponse",
+	TypeHeartbeat:         "Heartbeat",
 	TypeHeartbeatResponse: "HeartbeatResponse",
 
-	TypeFilePush: "FilePush",
+	TypeFilePush:         "FilePush",
 	TypeFilePushResponse: "FilePushResponse",
 
-	TypeFilePull: "TypeFilePull",
+	TypeFilePull:         "TypeFilePull",
 	TypeFilePullResponse: "FilePullResponse",
 
-	TypeFileTree: "FileTree",
+	TypeFileTree:         "FileTree",
 	TypeFileTreeResponse: "FileTreeResponse",
 
-	TypeNodeStatus: "NodeState",
+	TypeNodeStatus:         "NodeState",
 	TypeNodeStatusResponse: "NodeStateResponse",
 
-	TypeNodeLog: "NodeLog",
+	TypeNodeLog:         "NodeLog",
 	TypeNodeLogResponse: "NodeLogResponse",
-	
-	TypeCommandReboot: "CommandReboot",
-	TypeCommandSSH: "CommandSSH",
-	TypeCommandRun: "CommandRun",
-	TypeCommandRunScript: "CommandRunScript",
-	TypeCommandResponse: "CommandResponse",
 
-	TypeAppCreate: "AppCreate",
+	TypeRunCommand:         "RunCommand",
+	TypeRunCommandResponse: "RunCommandResponse",
+
+	TypeRunScript:         "RunScript",
+	TypeRunScriptResponse: "RunScriptResponse",
+
+	TypeAppCreate:         "AppCreate",
 	TypeAppCreateResponse: "AppCreateResponse",
 
-	TypeAppDelete: "AppDelete",
+	TypeAppDelete:         "AppDelete",
 	TypeAppDeleteResponse: "AppDeleteResponse",
 
-	TypeAppDeploy: "AppDeploy",
+	TypeAppDeploy:         "AppDeploy",
 	TypeAppDeployResponse: "AppDeployResponse",
 
-	TypeAppVersion: "AppVersion",
+	TypeAppVersion:         "AppVersion",
 	TypeAppVersionResponse: "AppVersionResponse",
 
-	TypeAppsInfo: "AppsInfo",
+	TypeAppsInfo:         "AppsInfo",
 	TypeAppsInfoResponse: "AppsInfoResponse",
 
-	TypeAppReset: "AppReset",
+	TypeAppReset:         "AppReset",
 	TypeAppResetResponse: "AppResetResponse",
 
-	TypeAppLatestVersion: "AppLatestVersion",
+	TypeAppLatestVersion:         "AppLatestVersion",
 	TypeAppLatestVersionResponse: "AppLatestVersionResponse",
 
-	TypePakmaCommand: "TypePakmaCommand",
+	TypePakmaCommand:         "TypePakmaCommand",
 	TypePakmaCommandResponse: "TypePakmaCommandResponse",
 }
 

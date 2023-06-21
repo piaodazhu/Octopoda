@@ -88,7 +88,8 @@ func GetSSH(nodename string) {
 	if err != nil {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
-	dossh(sshinfo.Ip, sshinfo.Username, sshinfo.Password)
+	addr := fmt.Sprintf("%s:%d", sshinfo.Ip, sshinfo.Port)
+	dossh(addr, sshinfo.Username, sshinfo.Password)
 }
 
 func dossh(addr, user, passwd string) {

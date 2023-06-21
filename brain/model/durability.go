@@ -4,7 +4,6 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/message"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -121,36 +120,27 @@ func Fix(name string) error {
 
 	// check real nodeapp versions
 	for i := range curNodeApps {
-		if conn, ok := GetNodeMsgConn(curNodeApps[i].NodeName); !ok {
-			return ErrorNodeOffline{}
-		} else {
-			aParams := AppBasic{
-				Name:     curNodeApps[i].AppName,
-				Scenario: curNodeApps[i].ScenName,
-			}
+		aParams := AppBasic{
+			Name:     curNodeApps[i].AppName,
+			Scenario: curNodeApps[i].ScenName,
+		}
 
-			payload, _ := config.Jsoner.Marshal(&aParams)
-			err := message.SendMessage(*conn, message.TypeAppLatestVersion, payload)
-			if err != nil {
-				return fmt.Errorf("SendMessage")
-			}
+		payload, _ := config.Jsoner.Marshal(&aParams)
+		raw, err := Request(curNodeApps[i].NodeName, message.TypeAppLatestVersion, payload)
+		if err != nil {
+			return ErrorNodeAppError{}
+		}
 
-			mtype, raw, err := message.RecvMessage(*conn)
-			if err != nil || mtype != message.TypeAppLatestVersionResponse {
-				return ErrorNodeAppError{}
-			}
+		var latest Version
+		err = config.Jsoner.Unmarshal(raw, &latest)
+		if err != nil || len(latest.Hash) == 0 {
+			return ErrorNodeAppError{}
+		}
 
-			var latest Version
-			err = config.Jsoner.Unmarshal(raw, &latest)
-			if err != nil || len(latest.Hash) == 0 {
-				return ErrorNodeAppError{}
-			}
-
-			// check the latest version
-			if curNodeApps[i].Version != latest.Hash {
-				if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
-					return ErrorAddScenNodeApp{}
-				}
+		// check the latest version
+		if curNodeApps[i].Version != latest.Hash {
+			if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
+				return ErrorAddScenNodeApp{}
 			}
 		}
 	}

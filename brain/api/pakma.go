@@ -6,7 +6,6 @@ import (
 	"brain/message"
 	"brain/model"
 	"fmt"
-	"net"
 	"strconv"
 	"sync"
 
@@ -63,14 +62,7 @@ func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *string
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var ok bool
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "Connection not exists"
-		return
-	}
-	raw, err := message.Request(conn, message.TypePakmaCommand, payload)
+	raw, err := model.Request(name, message.TypePakmaCommand, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"

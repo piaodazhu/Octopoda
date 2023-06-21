@@ -20,7 +20,7 @@ func HandleConn(conn net.Conn) {
 	if mtype != message.TypeAppLatestVersion {
 		logger.Comm.Print(">> Receive Command: ", message.MsgTypeString[mtype])
 	}
-	
+
 	switch mtype {
 	case message.TypeNodeStatus:
 		NodeStatus(conn, raw)
@@ -30,14 +30,12 @@ func HandleConn(conn net.Conn) {
 		FilePull(conn, raw)
 	case message.TypeFileTree:
 		FileTree(conn, raw)
-	
+
 	case message.TypeNodeLog:
 		NodeLog(conn, raw)
-	case message.TypeCommandReboot:
-		RemoteReboot(conn, raw)
-	case message.TypeCommandRun:
+	case message.TypeRunCommand:
 		RunCmd(conn, raw)
-	case message.TypeCommandRunScript:
+	case message.TypeRunScript:
 		RunScript(conn, raw)
 
 	case message.TypeAppCreate:
@@ -60,7 +58,6 @@ func HandleConn(conn net.Conn) {
 	}
 }
 
-
 func HandleMessage(conn net.Conn) error {
 	mtype, raw, err := message.RecvMessage(conn)
 	if err != nil {
@@ -70,8 +67,8 @@ func HandleMessage(conn net.Conn) error {
 	if mtype != message.TypeAppLatestVersion {
 		logger.Comm.Print(">> Receive Command: ", message.MsgTypeString[mtype])
 	}
-	
-	// If connect is broken in following process, then when we entering 
+
+	// If connect is broken in following process, then when we entering
 	// this function next time, message.RecvMessage(conn) will return error.
 	switch mtype {
 	case message.TypeNodeStatus:
@@ -82,14 +79,12 @@ func HandleMessage(conn net.Conn) error {
 		FilePull(conn, raw)
 	case message.TypeFileTree:
 		FileTree(conn, raw)
-	
+
 	case message.TypeNodeLog:
 		NodeLog(conn, raw)
-	case message.TypeCommandReboot:
-		RemoteReboot(conn, raw)
-	case message.TypeCommandRun:
+	case message.TypeRunCommand:
 		RunCmd(conn, raw)
-	case message.TypeCommandRunScript:
+	case message.TypeRunScript:
 		RunScript(conn, raw)
 
 	case message.TypeAppCreate:

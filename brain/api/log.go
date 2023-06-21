@@ -5,7 +5,6 @@ import (
 	"brain/message"
 	"brain/model"
 	"bufio"
-	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -106,15 +105,10 @@ func readLogs(params *LogParams) {
 }
 
 func readLogsRemote(name string, params *LogParams) bool {
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		return false
-	}
 	query, _ := config.Jsoner.Marshal(params)
-	answer, err := message.Request(conn, message.TypeNodeLog, query)
+	answer, err := model.Request(name, message.TypeNodeLog, query)
 	if err != nil {
-		return false 
+		return false
 	}
 	err = config.Jsoner.Unmarshal(answer, params)
 	return err == nil

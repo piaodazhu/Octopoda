@@ -2,11 +2,8 @@ package api
 
 import (
 	"brain/config"
-	"brain/logger"
-	"brain/message"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 
@@ -114,65 +111,4 @@ func checkVersion(version string) bool {
 		return false
 	}
 	return true
-}
-
-func PakmaCommand(conn net.Conn, raw []byte) {
-	rmsg := message.Result{
-		Rmsg: "OK",
-	}
-	var params PakmaParams
-	var payload []byte
-	var err error
-	var valid bool = true
-	err = config.Jsoner.Unmarshal(raw, &params)
-	if err != nil {
-		logger.Exceptions.Println("PakmaCommand Unmarshal")
-		rmsg.Rmsg = "PakmaCommand Unmarshal"
-		goto errorout
-	}
-
-	switch params.Command {
-	case "install":
-		if !checkVersion(params.Version) {
-			valid = false
-			logger.Exceptions.Println("PakmaCommand invalid version")
-			rmsg.Rmsg = "PakmaCommand invalid version"
-			break
-		}
-		payload, err = pakmaInstall(params.Version)
-	case "upgrade":
-		if !checkVersion(params.Version) {
-			valid = false
-			logger.Exceptions.Println("PakmaCommand invalid version")
-			rmsg.Rmsg = "PakmaCommand invalid version"
-			break
-		}
-		payload, err = pakmaUpgrade(params.Version)
-	case "state":
-		payload, err = pakmaState()
-	case "confirm":
-		payload, err = pakmaConfirm()
-	case "cancel":
-		payload, err = pakmaCancel()
-	case "downgrade":
-		payload, err = pakmaDowngrade()
-	case "history":
-		payload, err = pakmaHistory(params.Time, params.Limit)
-	default:
-		valid = false
-		logger.Exceptions.Println("PakmaCommand unsupport command")
-		rmsg.Rmsg = "PakmaCommand unsupport command"
-	}
-	if !valid {
-		payload, _ = config.Jsoner.Marshal(&rmsg)
-	} else if err != nil {
-		logger.Exceptions.Println("Pakma request error")
-		rmsg.Rmsg = "Pakma request error"
-		payload, _ = config.Jsoner.Marshal(&rmsg)
-	}
-errorout:
-	err = message.SendMessage(conn, message.TypePakmaCommandResponse, payload)
-	if err != nil {
-		logger.Comm.Println("PakmaCommand service error")
-	}
 }

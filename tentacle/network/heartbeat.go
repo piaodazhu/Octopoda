@@ -2,11 +2,11 @@ package network
 
 import (
 	"net"
+	"os/exec"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/service"
 	"time"
 )
 
@@ -46,7 +46,15 @@ func KeepAlive() {
 					goto reconnect
 				}
 
-				err = LoopHeartbeat(conn, joinResponse.Cnt)
+				err = SynchronizeTime(joinResponse.Ts)
+				if err != nil {
+					logger.Network.Print(err)
+					conn.Close()
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
+					goto reconnect
+				}
+
+				err = LoopHeartbeat(conn)
 				if err != nil {
 					logger.Network.Print(err)
 					conn.Close()
@@ -58,7 +66,7 @@ func KeepAlive() {
 
 		logger.Network.Print("Cannot connect to master.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
-			service.Reboot()
+			exec.Command("reboot").Run()
 			wg.Done()
 		} else {
 			logger.Exceptions.Print("Dead but wont restart.")
@@ -69,10 +77,9 @@ func KeepAlive() {
 	}()
 }
 
-func LoopHeartbeat(conn net.Conn, start int64) error {
-	counter := start
+func LoopHeartbeat(conn net.Conn) error {
 	for {
-		err := message.SendMessage(conn, message.TypeHeartbeat, heartbeat.MakeHeartbeat(counter))
+		err := message.SendMessage(conn, message.TypeHeartbeat, heartbeat.MakeHeartbeat("ping"))
 		if err != nil {
 			return err
 		}
@@ -82,11 +89,16 @@ func LoopHeartbeat(conn net.Conn, start int64) error {
 			return err
 		}
 		response, err := heartbeat.ParseHeartbeatResponse(raw)
-		if err != nil || response.Cnt <= counter {
+		if err != nil || response.Msg != "pong" {
 			return err
 		}
-		counter = response.Cnt
 
 		time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.SendInterval))
 	}
+}
+
+func SynchronizeTime(ts int64) error {
+	// seems that it may not work. To be fixed.
+	cmd := exec.Command("date", "-s", time.UnixMicro(ts).Format("01/02/2006 15:04:05.999"))
+	return cmd.Run()
 }

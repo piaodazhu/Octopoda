@@ -5,11 +5,11 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+
 	"brain/rdb"
 	"encoding/base64"
 	"fmt"
 	"io"
-	"net"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -210,15 +210,8 @@ func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, resul
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "NetError"
-		return
-	}
 	payload, _ := config.Jsoner.Marshal(acParams)
-	raw, err := message.Request(conn, message.TypeAppCreate, payload)
+	raw, err := model.Request(name, message.TypeAppCreate, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppCreateResponse", err)
 		*result = "TypeAppCreateResponse"
@@ -250,15 +243,8 @@ func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "NetError"
-		return
-	}
 	payload, _ := config.Jsoner.Marshal(adParams)
-	raw, err := message.Request(conn, message.TypeAppDeploy, payload)
+	raw, err := model.Request(name, message.TypeAppDeploy, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppDeployResponse", err)
 		*result = "TypeAppDeployResponse"

@@ -5,7 +5,6 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"net"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -106,14 +105,7 @@ func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "NetError"
-		return
-	}
-	raw, err := message.Request(conn, message.TypeAppDelete, payload)
+	raw, err := model.Request(name, message.TypeAppDelete, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppDeleteResponse", err)
 		*result = "TypeAppDeleteResponse"
@@ -279,14 +271,7 @@ func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		logger.Comm.Println("GetNodeMsgConn")
-		*result = "NetError"
-		return
-	}
-	raw, err := message.Request(conn, message.TypeAppReset, payload)
+	raw, err := model.Request(name, message.TypeAppReset, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppResetResponse", err)
 		*result = "TypeAppResetResponse"

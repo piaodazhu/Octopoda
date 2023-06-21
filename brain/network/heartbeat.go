@@ -6,7 +6,6 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"brain/ticker"
 	"context"
 	"net"
 	"time"
@@ -16,7 +15,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 	var mtype int
 	var msg []byte
 	var health bool
-	// var hb heartbeat.HeartBeatInfo
+	var hbinfo heartbeat.HeartBeatInfo
 	var err error
 
 	for {
@@ -28,14 +27,14 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 			goto reportstate
 		}
 
-		_, err = heartbeat.ParseHeartbeat(msg)
-		if err != nil {
+		hbinfo, err = heartbeat.ParseHeartbeat(msg)
+		if err != nil || hbinfo.Msg != "ping" {
 			logger.Network.Print(err)
 			health = false
 			goto reportstate
 		}
 
-		err = message.SendMessage(conn, message.TypeHeartbeatResponse, heartbeat.MakeHeartbeatResponse(ticker.GetTick()))
+		err = message.SendMessage(conn, message.TypeHeartbeatResponse, heartbeat.MakeHeartbeatResponse("pong"))
 		if err != nil {
 			logger.Network.Print(err)
 			health = false

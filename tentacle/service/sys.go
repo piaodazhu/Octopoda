@@ -15,28 +15,6 @@ import (
 	"time"
 )
 
-func Reboot() {
-	logger.SysInfo.Println("Reboot.")
-	_, err := exec.Command("reboot").CombinedOutput()
-	if err != nil {
-		logger.Exceptions.Fatal(err)
-	}
-}
-
-func RemoteReboot(conn net.Conn, raw []byte) {
-	// valid raw
-	err := message.SendMessage(conn, message.TypeCommandResponse, []byte{})
-	if err != nil {
-		logger.Comm.Println("Reboot send error")
-	}
-
-	logger.SysInfo.Println("Reboot.")
-	// _, err = exec.Command("reboot").CombinedOutput()
-	// if err != nil {
-	// 	logger.Client.Fatal(err)
-	// }
-}
-
 type ScriptParams struct {
 	FileName   string
 	TargetPath string
@@ -70,9 +48,9 @@ func RunScript(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeCommandResponse, payload)
+	err = message.SendMessage(conn, message.TypeRunScriptResponse, payload)
 	if err != nil {
-		logger.Comm.Println("TypeCommandResponse send error")
+		logger.Comm.Println("TypeRunScriptResponse send error")
 	}
 }
 
@@ -189,8 +167,8 @@ func RunCmd(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err := message.SendMessage(conn, message.TypeCommandResponse, payload)
+	err := message.SendMessage(conn, message.TypeRunCommandResponse, payload)
 	if err != nil {
-		logger.Comm.Println("TypeCommandResponse send error")
+		logger.Comm.Println("TypeRunCommandResponse send error")
 	}
 }

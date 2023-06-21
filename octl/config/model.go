@@ -33,7 +33,6 @@ type APIs struct {
 	NodeInfo       string `mapstructure:"nodeInfo"`
 	NodeStatus     string `mapstructure:"nodeStatus"`
 	NodeLog        string `mapstructure:"nodeLog"`
-	NodeReboot     string `mapstructure:"nodeReboot"`
 	NodePrune      string `mapstructure:"nodePrune"`
 	NodeApps       string `mapstructure:"nodeApps"`
 	NodeAppVersion string `mapstructure:"nodeAppVersion"`

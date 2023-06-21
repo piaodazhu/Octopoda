@@ -6,9 +6,9 @@ require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f
 	github.com/json-iterator/go v1.1.12
-	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/spf13/viper v1.15.0
+	github.com/tidwall/pretty v1.2.1
 	golang.org/x/crypto v0.7.0
 	golang.org/x/term v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -31,7 +31,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
-	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

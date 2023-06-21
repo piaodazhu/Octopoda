@@ -15,11 +15,9 @@ import (
 )
 
 type Status struct {
-	// Id        int
 	Name      string
 	Platform  string
 	CpuCores  int
-	Ip        string
 	LocalTime int64
 
 	CpuLoadShort float64
@@ -35,11 +33,9 @@ var stateLock sync.RWMutex
 
 func initNodeStatus() {
 	nodeStatus = Status{
-		// Id:        config.GlobalConfig.Id,
 		Name:      config.GlobalConfig.Name,
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),
-		// Ip:        config.GlobalConfig.Ip,
 		LocalTime: time.Now().UnixNano(),
 
 		CpuLoadShort: 0.0,

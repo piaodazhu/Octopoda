@@ -20,7 +20,6 @@ api:
   nodeInfo: "/node/info"
   nodeStatus: "/node/status"
   nodeLog: "/node/log"
-  nodeReboot: "/node/reboot"
   nodePrune: "/node/prune"
   nodeApps: "/node/apps"
   nodeAppVersion: "/node/app/version"

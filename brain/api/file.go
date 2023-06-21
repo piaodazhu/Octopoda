@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -275,14 +274,7 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		*result = "NetError"
-		return
-	}
-
-	raw, err := message.Request(conn, message.TypeFilePush, payload)
+	raw, err := model.Request(name, message.TypeFilePush, payload)
 	if err != nil {
 		logger.Comm.Println("TypeFilePushResponse", err)
 		*result = "TypeFilePushResponse"
@@ -360,17 +352,11 @@ func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 		return allFiles(pathsb.String()), nil
 	}
 
-	var conn *net.Conn
-	var ok bool
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		return nil, ErrNetworkError{node: name}
-	}
-
 	params, _ := config.Jsoner.Marshal(&FileParams{
 		PathType:   pathtype,
 		TargetPath: subdir,
 	})
-	raw, err := message.Request(conn, message.TypeFileTree, params)
+	raw, err := model.Request(name, message.TypeFileTree, params)
 	if err != nil {
 		logger.Comm.Print("FileTree")
 		return nil, ErrNetworkError{node: name}
@@ -574,13 +560,6 @@ func FilePull(ctx *gin.Context) {
 		return
 	}
 
-	var conn *net.Conn
-	if conn, ok = model.GetNodeMsgConn(name); !ok {
-		rmsg.Rmsg = ErrInvalidNode{node: name}.Error()
-		ctx.JSON(404, rmsg)
-		return
-	}
-
 	// fast return
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
@@ -593,7 +572,7 @@ func FilePull(ctx *gin.Context) {
 			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
-		raw, err := message.Request(conn, message.TypeFilePull, params)
+		raw, err := model.Request(name, message.TypeFilePull, params)
 		if err != nil {
 			logger.Comm.Print("TypeFilePullResponse")
 			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
