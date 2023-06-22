@@ -24,19 +24,18 @@ func NodeLog(name string, params []string) {
 		}
 		switch params[i][:2] {
 		case "-l":
-			x, err := strconv.Atoi(params[i][1:])
+			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
 				return
 			}
 			maxlines = x
 		case "-d":
-			x, err := strconv.Atoi(params[i][1:])
+			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
 				return
 			}
 			maxdaysbefore = x
 		default:
-			return
 		}
 	}
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",

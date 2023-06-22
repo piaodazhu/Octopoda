@@ -8,17 +8,51 @@ import (
 	"octl/config"
 	"octl/nameclient"
 	"octl/output"
+	"strconv"
+	"time"
 	"unicode"
 )
+
+const timefmt string = "2006-01-02@15:04:05"
 
 func Pakma(firstarg string, args []string) {
 	var subcmd string = firstarg
 	var version string = ""
 	var nodes []string
 
+	var timestr, limit string
+	END := len(args)
+
+	for i := range args {
+		if len(args[i]) < 3 {
+			continue
+		}
+		switch args[i][:2] {
+		case "-t":
+			timestr = args[i][2:]
+			_, err := time.Parse(timefmt, timestr)
+			if err != nil {
+				output.PrintFatalf("pakma subcmd: invalid timestr (should be like %s)", timefmt)
+				return
+			}
+			END--
+		case "-l":
+			limit = args[i][2:]
+			x, err := strconv.Atoi(limit)
+			if err != nil || x <= 0 {
+				output.PrintFatalf("pakma subcmd: invalid limit (should be int >0)")
+				return
+			}
+			END--
+		default:
+		}
+	}
+	if END != len(args) && firstarg != "history" {
+		output.PrintFatalln("only packma history support -t and -l")
+	}
+
 	if len(args) < 1 {
 		output.PrintFatalln("not any node is specified")
-		return
 	}
 
 	switch firstarg {
@@ -39,6 +73,8 @@ func Pakma(firstarg string, args []string) {
 		fallthrough
 	case "downgrade":
 		nodes = args
+	case "history":
+		nodes = args[:END]
 	default:
 		output.PrintFatalln("pakma subcommand not support: ", firstarg)
 		return
@@ -54,6 +90,8 @@ func Pakma(firstarg string, args []string) {
 	values := url.Values{}
 	values.Set("command", subcmd)
 	values.Set("targetNodes", string(nodes_serialized))
+	values.Set("time", timestr)
+	values.Set("limit", limit)
 
 	if version != "" {
 		if checkVersion(version) {

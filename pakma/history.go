@@ -20,7 +20,7 @@ type UpdatorHistory []UpdatorHistoryItem
 
 var history UpdatorHistory
 
-const timefmt string = "2006-01-02-15:04:05"
+const timefmt string = "2006-01-02@15:04:05"
 
 func WriteHistory(format string, a ...interface{}) {
 	history = append(history, UpdatorHistoryItem{
