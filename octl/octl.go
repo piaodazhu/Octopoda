@@ -17,6 +17,7 @@ var (
 )
 
 func main() {
+	subcmd.InitUsage()
 	args := os.Args
 	var conf string
 	var askver bool
@@ -25,7 +26,7 @@ func main() {
 	flag.StringVar(&conf, "c", "", "specify a configuration file")
 	flag.BoolVar(&usage, "usage", false, "print subcommand usage")
 	flag.Parse()
-
+	
 	if len(args) == 1 {
 		output.PrintInfoln("Octopoda Controlling Tool. Use '-usage', '-version', '-c'...")
 		return
@@ -36,13 +37,13 @@ func main() {
 		return
 	}
 	if usage {
-		subcmd.PrintUsages()
+		subcmd.PrintUsages(nil)
 		return
 	}
 	if conf != "" {
 		args = args[2:]
 	}
-
+	
 	config.InitConfig(conf)
 	nameclient.InitClient()
 	if nameclient.BrainAddr == "" &&
@@ -90,7 +91,7 @@ func main() {
 	case "delssh":
 		subcmd.DelSSH(args[2:])
 	case "help":
-		subcmd.PrintUsages()
+		subcmd.PrintUsages(args[2:])
 	default:
 		output.PrintFatalln("sub command not support")
 	}

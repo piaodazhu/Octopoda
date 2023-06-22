@@ -20,5 +20,5 @@ func setStdJsoner() {
 }
 
 func setFastJsoner() {
-	Jsoner = jsoniter.ConfigCompatibleWithStandardLibrary
+	Jsoner = jsoniter.ConfigFastest
 }

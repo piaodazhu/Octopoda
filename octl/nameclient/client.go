@@ -96,12 +96,12 @@ func NameQuery(name string) (*NameEntry, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("NameQuery status code = %d", res.StatusCode)
+	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
-	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("NameQuery status code = %d", res.StatusCode)
 	}
 	var response Response
 	err = json.Unmarshal(buf, &response)
@@ -124,6 +124,9 @@ func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
 		return err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("ssh info register rejected by server")
+	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -139,6 +142,9 @@ func SshinfoQuery(name string) (*SshInfo, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("ssh info not found")
+	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -157,6 +163,9 @@ func NameDelete(name string, scope string) error {
 		return err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("ssh info not found")
+	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err

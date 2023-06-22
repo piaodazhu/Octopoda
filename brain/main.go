@@ -42,5 +42,7 @@ func main() {
 	network.InitTentacleFace()
 	network.WaitNodeJoin()
 
-	Run()
+	if err := Run(); err != nil {
+		panic(err)
+	}
 }

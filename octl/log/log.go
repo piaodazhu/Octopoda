@@ -19,14 +19,17 @@ import (
 func NodeLog(name string, params []string) {
 	maxlines, maxdaysbefore := 30, 0
 	for i := range params {
-		switch params[i][0] {
-		case 'l':
+		if len(params[i]) < 3 {
+			continue
+		}
+		switch params[i][:2] {
+		case "-l":
 			x, err := strconv.Atoi(params[i][1:])
 			if err != nil {
 				return
 			}
 			maxlines = x
-		case 'd':
+		case "-d":
 			x, err := strconv.Atoi(params[i][1:])
 			if err != nil {
 				return
