@@ -5,8 +5,8 @@ applications:
 -
   name: "helloPrinter"
   # scripts should be found under this path of current host
-  scriptpath: "./example/helloWorld/hello/scripts/"
-  sourcepath: "./example/helloWorld/hello/src/"
+  scriptpath: "hello/scripts/"
+  sourcepath: "hello/src/"
   description: "print hello to hello.txt"
   nodes:
     - 'pi-24'
@@ -38,8 +38,8 @@ applications:
       order: 1
 -
   name: "worldPrinter"
-  scriptpath: "./example/helloWorld/world/scripts/"
-  sourcepath: "./example/helloWorld/world/src/"
+  scriptpath: "world/scripts/"
+  sourcepath: "world/src/"
   description: "print world to world.txt"
   nodes:
     - 'pi-240'
@@ -66,8 +66,8 @@ applications:
       order: 2
 -
   name: "helloWorldPrinter"
-  scriptpath: "./example/helloWorld/helloworld/scripts/"
-  sourcepath: "./example/helloWorld/helloworld/src/"
+  scriptpath: "helloworld/scripts/"
+  sourcepath: "helloworld/src/"
   description: "print helloworld to helloworld.txt"
   nodes:
     - 'pi-24'

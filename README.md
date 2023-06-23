@@ -112,11 +112,17 @@ Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be re
 
 
 ## B. Scenario Deployment
+### CREATE
+
+> `usage: octl create <scenario> [with <app1> <app2> ...]`
+
+With this subcmd we can generate a template folder for a scenarios, which can be edited and then used for `apply` subcmd.
+
 ### APPLY
 
-> `usage: octl apply xx.yaml [target] -m "your message"`
+> `usage: octl apply <scenario> [target] -m "your message"`
 
-With this subcmd we can create, delete, run a scenario. The information required for scenario deployment is defined in a yaml file. Below is a typical deployment file. 
+With this subcmd we can create, delete, run a scenario. The information required for scenario deployment is defined in the `<scenario>` folder, with a deployment.yaml configuration file and application subfolders. Below is a typical deployment file. 
 
 ```yaml
 # a simple example
@@ -126,8 +132,8 @@ applications:
 -
   name: "helloPrinter"
   # scripts should be found under this path of current host
-  scriptpath: "./example/helloWorld/hello/scripts/"
-  sourcepath: "./example/helloWorld/hello/src/"
+  scriptpath: "hello/scripts/"
+  sourcepath: "hello/src/"
   description: "print hello to hello.txt"
   nodes:
     - 'pi-24'
@@ -159,8 +165,8 @@ applications:
       order: 1
 -
   name: "worldPrinter"
-  scriptpath: "./example/helloWorld/world/scripts/"
-  sourcepath: "./example/helloWorld/world/src/"
+  scriptpath: "world/scripts/"
+  sourcepath: "world/src/"
   description: "print world to world.txt"
   nodes:
     - 'pi-240'
@@ -187,8 +193,8 @@ applications:
       order: 2
 -
   name: "helloWorldPrinter"
-  scriptpath: "./example/helloWorld/helloworld/scripts/"
-  sourcepath: "./example/helloWorld/helloworld/src/"
+  scriptpath: "helloworld/scripts/"
+  sourcepath: "helloworld/src/"
   description: "print helloworld to helloworld.txt"
   nodes:
     - 'pi-24'
