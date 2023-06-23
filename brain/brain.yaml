@@ -31,6 +31,15 @@ ssl:
   caCert: "/etc/octopoda/cert/ca.pem"
   clientCert: "/etc/octopoda/cert/client.pem"
   clientKey: "/etc/octopoda/cert/client.key"
+mailAlert:
+  enable: true
+  smtpServer: "mail.example.com"
+  smtpServerPort: 25
+  sender: "sender@example.com"
+  password: "sender"
+  receivers:
+    - "receiver1@example.com"
+    - "receiver2@example.com"
 env:
   - key: "key1"
     value: "val1"
