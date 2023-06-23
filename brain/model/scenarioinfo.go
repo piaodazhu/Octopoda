@@ -98,7 +98,7 @@ func AddScenario(name, description string) bool {
 	return true
 }
 
-func UpdateScenario(name, message string) bool {
+func UpdateScenario(name, message string) (bool, bool) {
 	ScenLock.Lock()
 	defer ScenLock.Unlock()
 	defer saveNoLock()
@@ -106,9 +106,10 @@ func UpdateScenario(name, message string) bool {
 	var scen *ScenarioModel
 	var found bool
 	if scen, found = ScenarioMap[name]; !found {
-		return false
+		return false, false
 	} else {
-		if scen.modified {
+		hasModified := scen.modified
+		if hasModified {
 			versionhash := sha1.Sum([]byte(message + time.Now().String()))
 			scen.Versions = append(scen.Versions, &ScenarioVersionModel{
 				BasicVersionModel: BasicVersionModel{
@@ -119,14 +120,13 @@ func UpdateScenario(name, message string) bool {
 				Apps: scen.newversionbuf,
 			})
 			// triger save?
-
 			scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
 			scen.modified = false
 		}
 		// scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
 		// scen.modified = false
 		// logger.Brain.Println("Len of v = ", len(scen.Versions))
-		return true
+		return hasModified, true
 	}
 }
 

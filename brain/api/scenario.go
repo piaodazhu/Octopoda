@@ -40,11 +40,13 @@ func ScenarioUpdate(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
-	if !model.UpdateScenario(name, msg) {
+	modified, ok := model.UpdateScenario(name, msg)
+	if !ok {
 		rmsg.Rmsg = "ERROR: UpdateScenario"
 		ctx.JSON(404, rmsg)
 		return
 	}
+	rmsg.Modified = modified
 	ctx.JSON(200, rmsg)
 }
 

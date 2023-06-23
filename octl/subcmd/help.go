@@ -21,7 +21,7 @@ Node:prune:octl prune:octl prune
 Node:log:octl log [master|node <node>] [-l<maxline>] [-d<maxday>]:octl log node pi0 -l50 -d2
 
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
-Scenario:apply:octl apply xx.yaml [target] -m "your message":octl apply deployment.yaml prepare -m "prepare my scenario"
+Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"
 Scenario:version:octl version [scenario <scen>|nodeapp <node> <app>@<scen>]:octl version scenario ChatScen
 Scenario:reset:octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m "your message":octl reset scenario ChatScen -v b698 -m "back to yesterday"
 Scenario:fix:octl fix scenario <scen>:octl fix scenario ChatScen

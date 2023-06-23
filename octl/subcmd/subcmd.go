@@ -10,6 +10,21 @@ import (
 	"strings"
 )
 
+func Create(arglist []string) {
+	if len(arglist) == 0 {
+		goto usage 
+	} else if len(arglist) == 1 {
+		scenario.Create(arglist[0], "yourApp")
+	} else if len(arglist) == 2 || arglist[1] != "with" {
+		goto usage
+	} else {
+		scenario.Create(arglist[0], arglist[2:]...)
+	}
+	return
+usage:
+	PrintUsage("create")
+}
+
 func Apply(arglist []string) {
 	if len(arglist) == 0 || len(arglist) > 4 {
 		goto usage

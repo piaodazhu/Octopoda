@@ -54,6 +54,8 @@ func main() {
 		output.PrintFatalln("could not resolve brain address.")
 	}
 	switch args[1] {
+	case "create":
+		subcmd.Create(args[2:])
 	case "apply":
 		subcmd.Apply(args[2:])
 	case "get":

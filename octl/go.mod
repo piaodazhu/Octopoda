@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/briandowns/spinner v1.23.0
-	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f
 	github.com/json-iterator/go v1.1.12
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/spf13/viper v1.15.0
