@@ -1,9 +1,11 @@
 package main
 
 import (
+	"brain/alert"
 	"brain/config"
 	"brain/logger"
 	"brain/model"
+
 	"brain/network"
 	"brain/rdb"
 	"flag"
@@ -35,6 +37,7 @@ func main() {
 	logger.InitLogger(stdout)
 
 	rdb.InitRedis()
+	alert.InitAlert()
 	model.InitNodeMap()
 	model.InitScenarioMap()
 
@@ -42,5 +45,7 @@ func main() {
 	network.InitTentacleFace()
 	network.WaitNodeJoin()
 
-	Run()
+	if err := Run(); err != nil {
+		panic(err)
+	}
 }

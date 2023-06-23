@@ -14,7 +14,7 @@ import (
 
 var engine *gin.Engine
 
-func Run() {
+func Run() error {
 	// gin.SetMode(gin.DebugMode)
 	// engine = gin.Default()
 
@@ -23,7 +23,7 @@ func Run() {
 	engine.Use(gin.Recovery())
 
 	initRouter(engine)
-	ListenCommand()
+	return ListenCommand()
 }
 
 func initRouter(engine *gin.Engine) {
@@ -108,7 +108,7 @@ func BusyBlocker() gin.HandlerFunc {
 	}
 }
 
-func ListenCommand() {
+func ListenCommand() error {
 	listenaddr := fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
-	engine.Run(listenaddr)
+	return engine.Run(listenaddr)
 }

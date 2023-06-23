@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"octl/config"
 
-	"os"
-
 	"github.com/tidwall/pretty"
 )
 
@@ -35,12 +33,12 @@ func PrintJSON(message interface{}) {
 
 func PrintFatalf(format string, args ...interface{}) {
 	fmt.Printf("\033[1;31mFatal Error: %s\033[0m\n", fmt.Sprintf(format, args...))
-	os.Exit(1)
+	panic(0)
 }
 
 func PrintFatalln(args ...interface{}) {
 	fmt.Printf("\033[1;31mFatal Error: %s\033[0m\n", fmt.Sprint(args...))
-	os.Exit(1)
+	panic(0)
 }
 
 func PrintInfof(format string, args ...interface{}) {

@@ -117,11 +117,12 @@ func NodeAppReset(ctx *gin.Context) {
 		rmsg.Rmsg = "AddScenNodeApp"
 		ctx.JSON(500, rmsg)
 	}
-	success = model.UpdateScenario(scen, msg)
+	modified, success := model.UpdateScenario(scen, msg)
 	if !success {
 		logger.Exceptions.Print("Failed: UpdateScenario")
 		rmsg.Rmsg = "UpdateScenario"
 		ctx.JSON(500, rmsg)
 	}
+	rmsg.Modified = modified
 	ctx.JSON(200, result)
 }

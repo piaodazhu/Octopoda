@@ -9,6 +9,7 @@ type ConfigModel struct {
 	Logger          LoggerModel       `mapstructure:"logger"`
 	Workspace       WorkspaceModel    `mapstructure:"workspace"`
 	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
+	MailAlert       MailAlertModel    `mapstructure:"mailAlert"`
 	PakmaServer     PakmaModel        `mapstructure:"pakma"`
 	JsonFast        bool              `mapstructure:"jsonFast"`
 }
@@ -58,6 +59,15 @@ type SslinfoModel struct {
 	CaCert     string `mapstructure:"caCert"`
 	ClientCert string `mapstructure:"clientCert"`
 	ClientKey  string `mapstructure:"clientKey"`
+}
+
+type MailAlertModel struct {
+	Enabled    bool     `mapstructure:"enable"`
+	SmtpServer string   `mapstructure:"smtpServer"`
+	SmtpPort   uint16   `mapstructure:"smtpServerPort"`
+	Sender     string   `mapstructure:"sender"`
+	Password   string   `mapstructure:"password"`
+	Receivers  []string `mapstructure:"receivers"`
 }
 
 type PakmaModel struct {

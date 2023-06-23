@@ -59,22 +59,22 @@ func checkConfig(config *ScenarioConfigModel) error {
 	if config.Name == "" || config.Description == "" || len(config.Applications) == 0 {
 		return ErrMissingFields{}
 	}
-	// fmt.Printf("%+v\n", *config)
-	// os.Exit(0)
 
 	nodeset := map[string]struct{}{}
-	var err error
-	for _, app := range config.Applications {
+	for i := range config.Applications {
+		app := &config.Applications[i]
 		if app.Name == "" || app.Description == "" || app.ScriptPath == "" || len(app.Nodes) == 0 {
 			return ErrMissingFields{}
 		}
 
+		// path recorrect
+		app.SourcePath = basePath + "/" + app.SourcePath
+		app.ScriptPath = basePath + "/" + app.ScriptPath
+
 		// check source path valid
-		if len(app.SourcePath) != 0 {
-			info, err := os.Stat(app.SourcePath)
-			if err != nil || !info.IsDir() {
-				return ErrInvalidSource{}
-			}
+		info, err := os.Stat(app.SourcePath)
+		if err != nil || !info.IsDir() {
+			return ErrInvalidSource{}
 		}
 
 		// collect all nodename then check once
@@ -123,7 +123,7 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 
 		// check file exists
 		info, err := os.Stat(path + script[i].File)
-		// fmt.Println(path + script[i].File, path)
+
 		if err != nil || info.IsDir() {
 			return ErrInvalidScript{}
 		}
@@ -139,13 +139,20 @@ func checkTarget(script []ScriptConfigModel, path string) error {
 	return nil
 }
 
-type NodeInfo struct {
-	Id        uint32
-	Name      string
-	Addr      string
-	State     int32
-	OnlineTs  int64
-	OfflineTs int64
+type NodeInfoText struct {
+	Name         string `json:"name"`
+	Health       string `json:"health"`
+	MsgConnState string `json:"msg_conn"`
+	OnlineTime   string `json:"online_time,omitempty"`
+	OfflineTime  string `json:"offline_time,omitempty"`
+	LastOnline   string `json:"last_active,omitempty"`
+}
+
+type NodesInfoText struct {
+	NodeInfoList []*NodeInfoText `json:"nodes"`
+	Total        int             `json:"total"`
+	Active       int             `json:"active"`
+	Offline      int             `json:"offline"`
 }
 
 func checkNodes(nodeset map[string]struct{}) bool {
@@ -161,17 +168,18 @@ func checkNodes(nodeset map[string]struct{}) bool {
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
-	nodes := []NodeInfo{}
-	err = config.Jsoner.Unmarshal(raw, &nodes)
+	nodesInfo := NodesInfoText{}
+	err = config.Jsoner.Unmarshal(raw, &nodesInfo)
 	if err != nil {
 		output.PrintFatalln(err.Error())
 	}
 	// fmt.Println(nodes)
 	// fmt.Println(nodes)
 	// put them into a set
+	nodes := nodesInfo.NodeInfoList
 	nodemap := map[string]struct{}{}
 	for i := range nodes {
-		if nodes[i].State == 0 {
+		if nodes[i].Health == "Healthy" {
 			nodemap[nodes[i].Name] = struct{}{}
 		}
 	}

@@ -144,7 +144,8 @@ func Fix(name string) error {
 			}
 		}
 	}
-	if !UpdateScenario(name, "System Data Fix") {
+	_, ok := UpdateScenario(name, "System Data Fix")
+	if !ok {
 		return ErrorUpdateScenario{}
 	}
 	return nil

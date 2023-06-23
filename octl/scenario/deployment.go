@@ -11,6 +11,7 @@ import (
 	"octl/output"
 	"octl/task"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -19,8 +20,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ScenarioApply(file string, target string, message string) {
-	buf, err := os.ReadFile(file)
+var basePath string
+
+func ScenarioApply(scenFolder string, target string, message string) {
+	var err error
+	basePath, err = filepath.Abs(scenFolder)
+	if err != nil {
+		output.PrintFatalf("scenario dir %s not exists: %s\n", scenFolder, err.Error())
+	}
+
+	confFile := basePath + "/deployment.yaml"
+	buf, err := os.ReadFile(confFile)
 	if err != nil {
 		output.PrintFatalln(err.Error())
 	}
@@ -305,7 +315,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		// load the script
 		f, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 		if err != nil {
-			output.PrintFatalln("err")
+			output.PrintFatalln(err)
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)

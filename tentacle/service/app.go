@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"tentacle/app"
 	"tentacle/config"
 	"tentacle/logger"
@@ -156,10 +155,10 @@ func AppDeploy(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	// create a dummy file
-	err = exec.Command("echo", "+", ">>", fmt.Sprintf("%s/.DUMMY", fullname)).Run()
+	// append a dummy file
+	err = appendDummyFile(fullname)
 	if err != nil {
-		logger.Exceptions.Println("create dummy file")
+		logger.Exceptions.Println("append dummy file", err)
 	}
 
 	// commit
@@ -231,4 +230,20 @@ errorout:
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")
 	}
+}
+
+func appendDummyFile(fullname string) error {
+	f, err := os.OpenFile(config.GlobalConfig.Workspace.Root+fullname+"/.DUMMY", os.O_APPEND | os.O_CREATE | os.O_RDWR, os.ModeAppend)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString("+\n")
+	if err != nil {
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"fmt"
 	"sync"
 	"time"
 
@@ -79,7 +78,6 @@ func NodeInfo(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	fmt.Println(nodeInfoToText(node))
 	ctx.JSON(200, nodeInfoToText(node))
 }
 
