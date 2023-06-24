@@ -12,6 +12,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func RunScript(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeRunScriptResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("TypeRunScriptResponse send error")
 	}
@@ -167,7 +168,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err := message.SendMessage(conn, message.TypeRunCommandResponse, payload)
+	err := message.SendMessageUnique(conn, message.TypeRunCommandResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("TypeRunCommandResponse send error")
 	}

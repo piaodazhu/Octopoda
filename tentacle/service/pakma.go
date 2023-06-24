@@ -9,6 +9,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"unicode"
 )
 
@@ -93,7 +94,6 @@ func pakmaDowngrade() ([]byte, error) {
 	return buf, err
 }
 
-
 type PakmaParams struct {
 	Command string
 	Version string
@@ -171,7 +171,7 @@ func PakmaCommand(conn net.Conn, raw []byte) {
 		payload, _ = config.Jsoner.Marshal(&rmsg)
 	}
 errorout:
-	err = message.SendMessage(conn, message.TypePakmaCommandResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypePakmaCommandResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("PakmaCommand service error")
 	}

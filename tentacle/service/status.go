@@ -7,6 +7,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -55,7 +56,7 @@ func NodeStatus(conn net.Conn, raw []byte) {
 	stateLock.RUnlock()
 	text := statusToText(state)
 	serialized_info, _ := config.Jsoner.Marshal(&text)
-	err := message.SendMessage(conn, message.TypeNodeStatusResponse, serialized_info)
+	err := message.SendMessageUnique(conn, message.TypeNodeStatusResponse, snp.GenSerial(), serialized_info)
 	if err != nil {
 		logger.Comm.Println("NodeStatus service error")
 	}

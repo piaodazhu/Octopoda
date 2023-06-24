@@ -3,6 +3,7 @@ package model
 import (
 	"brain/alert"
 	"brain/message"
+	"brain/snp"
 	"fmt"
 	"net"
 	"strings"
@@ -16,6 +17,7 @@ func Request(name string, mtype int, payload []byte) ([]byte, error) {
 	var resbuf []byte
 	var err error
 	retryCnt := 3
+	serialNum := snp.GenSerial()
 	trace := []string{}
 	defer func() {
 		if resbuf == nil || retryCnt != 3 {
@@ -40,10 +42,10 @@ retry:
 		goto retry
 	}
 
-	err = message.SendMessage(*conn, mtype, payload)
+	err = message.SendMessageUnique(*conn, mtype, serialNum, payload)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
 		message.MsgTypeString[mtype], ", ", string(payload),
-		"retry=", 3-retryCnt, ", SendMessage(conn is nil?", conn == nil, ", ",
+		"retry=", 3-retryCnt, ", SendMessageUnique(conn is nil?", conn == nil, ", ",
 		message.MsgTypeString[mtype], ", ", string(payload), "): err=", err))
 	if err != nil {
 		ResetNodeMsgConn(name)
@@ -54,10 +56,10 @@ retry:
 		retryCnt--
 		goto retry
 	}
-	rtype, resbuf, err = message.RecvMessage(*conn)
+	rtype, resbuf, err = message.RecvMessageUnique(*conn)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "),
 		name, ", ", message.MsgTypeString[mtype], ", ", string(payload),
-		"retry=", 3-retryCnt, ", RecvMessage(conn is nil?", conn == nil, "): ",
+		"retry=", 3-retryCnt, ", RecvMessageUnique(conn is nil?", conn == nil, "): ",
 		message.MsgTypeString[rtype], ", ", string(resbuf), ", ", err))
 	if err != nil {
 		ResetNodeMsgConn(name)
