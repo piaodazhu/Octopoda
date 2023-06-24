@@ -54,8 +54,7 @@ func NodeStatus(conn net.Conn, raw []byte) {
 	state := nodeStatus
 	state.LocalTime = time.Now()
 	stateLock.RUnlock()
-	text := statusToText(state)
-	serialized_info, _ := config.Jsoner.Marshal(&text)
+	serialized_info, _ := config.Jsoner.Marshal(&state)
 	err := message.SendMessageUnique(conn, message.TypeNodeStatusResponse, snp.GenSerial(), serialized_info)
 	if err != nil {
 		logger.Comm.Println("NodeStatus service error")
@@ -140,35 +139,5 @@ func maintainStatus() {
 		// logger.Server.Println(nodeStatus)
 
 		time.Sleep(time.Second)
-	}
-}
-
-type StatusText struct {
-	Name         string `json:"name"`
-	Platform     string `json:"platform"`
-	CpuCores     int    `json:"cpu_cores"`
-	LocalTime    string `json:"local_time"`
-	CpuLoadShort string `json:"cpu_average1"`
-	CpuLoadLong  string `json:"cpu_average10"`
-	MemUsage     string `json:"memory_usage"`
-	DiskUsage    string `json:"disk_usage"`
-}
-
-func statusToText(status Status) StatusText {
-	return StatusText{
-		Name:         status.Name,
-		Platform:     status.Platform,
-		CpuCores:     status.CpuCores,
-		LocalTime:    status.LocalTime.Format("2006-01-02 15:04:05"),
-		CpuLoadShort: fmt.Sprintf("%5.1f%%", status.CpuLoadShort),
-		CpuLoadLong:  fmt.Sprintf("%5.1f%%", status.CpuLoadLong),
-		MemUsage: fmt.Sprintf("%5.1f%%: (%.2fGB / %.2fGB)",
-			float64(status.MemUsed*100)/float64(status.MemTotal),
-			float64(status.MemUsed)/1073741824,
-			float64(status.MemTotal)/1073741824),
-		DiskUsage: fmt.Sprintf("%5.1f%%: (%.2fGB / %.2fGB)",
-			float64(status.DiskUsed*100)/float64(status.DiskTotal),
-			float64(status.DiskUsed)/1073741824,
-			float64(status.DiskTotal)/1073741824),
 	}
 }
