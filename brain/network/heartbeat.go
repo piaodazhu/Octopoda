@@ -7,6 +7,7 @@ import (
 	"brain/message"
 	"brain/model"
 	"context"
+	"fmt"
 	"net"
 	"time"
 )
@@ -23,12 +24,14 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 		mtype, msg, err = message.RecvMessage(conn)
 		if err != nil || mtype != message.TypeHeartbeat {
 			// logger.Tentacle.Print(err)
+			fmt.Println("tag1", mtype, msg, err)
 			health = false
 			goto reportstate
 		}
 
 		hbinfo, err = heartbeat.ParseHeartbeat(msg)
 		if err != nil || hbinfo.Msg != "ping" {
+			fmt.Println("tag2", err)
 			logger.Network.Print(err)
 			health = false
 			goto reportstate
@@ -36,6 +39,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 
 		err = message.SendMessage(conn, message.TypeHeartbeatResponse, heartbeat.MakeHeartbeatResponse("pong"))
 		if err != nil {
+			fmt.Println("tag3", err)
 			logger.Network.Print(err)
 			health = false
 			goto reportstate

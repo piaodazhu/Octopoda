@@ -71,3 +71,12 @@ type Summary struct {
 	Since         int64               `json:"since"`
 	ApiStats      map[string]*ApiStat `json:"api_stats"`
 }
+
+type Tokens struct {
+	CurToken   string `json:"cur_token"`
+	CurAge     int    `json:"cur_age"`
+	CurSerial  int64  `json:"cur_serial"`
+	PrevToken  string `json:"prev_token"`
+	PrevAge    int    `json:"prev_age"`
+	PrevSerial int64  `json:"prev_serial"`
+}

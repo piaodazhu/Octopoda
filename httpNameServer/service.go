@@ -132,11 +132,11 @@ func UploadConfig(ctx *gin.Context) {
 
 	entry := ConfigEntry{
 		ConfigUploadParam: params,
-		TimeStamp:     time.Now().UnixMilli(),
+		TimeStamp:         time.Now().UnixMilli(),
 	}
 
 	switch entry.Method {
-	case "clear": 
+	case "clear":
 		err = GetNameConfigDao().Del(params.Name)
 		if err != nil {
 			log.Println("NameConfigDao.Del():", err.Error())
@@ -195,7 +195,7 @@ func UploadSshInfo(ctx *gin.Context) {
 
 	entry := SshInfo{
 		SshInfoUploadParam: params,
-		TimeStamp:     time.Now().UnixMilli(),
+		TimeStamp:          time.Now().UnixMilli(),
 	}
 	err = GetSshInfoDao().Set(params.Name, entry, 0)
 	if err != nil {
@@ -220,4 +220,17 @@ func DownloadSshInfo(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(200, Response{Message: "OK", SshInfo: entry})
+}
+
+func DistribToken(ctx *gin.Context) {
+	tks := token
+	res := Tokens{
+		CurToken:   tks[0].raw,
+		CurAge:     int(time.Since(tks[0].birth).Seconds()),
+		CurSerial:  tks[0].serial,
+		PrevToken:  tks[1].raw,
+		PrevAge:    int(time.Since(tks[1].birth).Seconds()),
+		PrevSerial: tks[1].serial,
+	}
+	ctx.JSON(200, res)
 }
