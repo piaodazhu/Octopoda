@@ -75,6 +75,9 @@ func main() {
 		config.GlobalConfig.ServeIp = devIp
 	}
 
+	// start rolling token
+	startRollingToken()
+
 	// init dao and service
 	err := DaoInit()
 	if err != nil {
@@ -96,6 +99,7 @@ func main() {
 	r.GET("/list", NameList)
 	r.GET("/conf", DownloadConfig)
 	r.GET("/sshinfo", DownloadSshInfo)
+	r.GET("/tokens", DistribToken)
 
 	r.POST("/register", NameRegister)
 	r.POST("/delete", NameDelete)

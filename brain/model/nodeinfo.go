@@ -26,11 +26,11 @@ type NodeModel struct {
 	MsgConn *net.Conn
 }
 
-type State struct {
+type Status struct {
 	Name      string
 	Platform  string
 	CpuCores  int
-	LocalTime int64
+	LocalTime time.Time
 
 	CpuLoadShort float64
 	CpuLoadLong  float64

@@ -33,11 +33,10 @@ func main() {
 
 	config.InitConfig(conf)
 	logger.InitLogger(stdout)
+
 	app.InitAppModel()
 
 	network.InitNameClient()
-	// network.InitListener()
-	// heartbeat.InitHeartbeat()
 	service.InitService()
 
 	network.Run()

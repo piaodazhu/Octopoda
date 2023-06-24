@@ -6,6 +6,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 )
 
 func AppLatestVersion(conn net.Conn, raw []byte) {
@@ -20,7 +21,7 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 		payload, _ = config.Jsoner.Marshal(&v)
 	}
 
-	err = message.SendMessage(conn, message.TypeAppLatestVersionResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppLatestVersionResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppLatestVersion send error")
 	}
@@ -36,7 +37,7 @@ func AppVersions(conn net.Conn, raw []byte) {
 	} else {
 		payload = app.Versions(aParams.Name, aParams.Scenario)
 	}
-	err = message.SendMessage(conn, message.TypeAppVersionResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppVersionResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppVersion send error")
 	}
@@ -83,7 +84,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppResetResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppResetResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppReset send error")
 	}

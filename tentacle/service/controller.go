@@ -4,6 +4,7 @@ import (
 	"net"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 )
 
 func InitService() {
@@ -12,7 +13,7 @@ func InitService() {
 
 func HandleConn(conn net.Conn) {
 	defer conn.Close()
-	mtype, raw, err := message.RecvMessage(conn)
+	mtype, raw, err := message.RecvMessageUnique(conn)
 	if err != nil {
 		logger.Comm.Println(err)
 		return
@@ -59,7 +60,7 @@ func HandleConn(conn net.Conn) {
 }
 
 func HandleMessage(conn net.Conn) error {
-	mtype, raw, err := message.RecvMessage(conn)
+	mtype, raw, err := message.RecvMessageUnique(conn)
 	if err != nil {
 		logger.Comm.Println(err)
 		return err
@@ -69,7 +70,7 @@ func HandleMessage(conn net.Conn) error {
 	}
 
 	// If connect is broken in following process, then when we entering
-	// this function next time, message.RecvMessage(conn) will return error.
+	// this function next time, message.RecvMessageUnique(conn) will return error.
 	switch mtype {
 	case message.TypeNodeStatus:
 		NodeStatus(conn, raw)
@@ -104,7 +105,7 @@ func HandleMessage(conn net.Conn) error {
 	case message.TypePakmaCommand:
 		PakmaCommand(conn, raw)
 	default:
-		message.SendMessage(conn, message.TypeUndefined, []byte{})
+		message.SendMessageUnique(conn, message.TypeUndefined, snp.GenSerial(), []byte{})
 		logger.Comm.Println("unsupported protocol")
 	}
 	return nil

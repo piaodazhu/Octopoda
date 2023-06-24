@@ -8,11 +8,12 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"time"
 )
 
 func AppsInfo(conn net.Conn, raw []byte) {
-	err := message.SendMessage(conn, message.TypeAppsInfoResponse, app.Digest())
+	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, snp.GenSerial(), app.Digest())
 	if err != nil {
 		logger.Comm.Println("AppsInfo send error")
 	}
@@ -101,7 +102,7 @@ func AppCreate(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppCreateResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppCreate send error")
 	}
@@ -186,7 +187,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppDeployResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppDeploy send error")
 	}
@@ -226,14 +227,14 @@ func AppDelete(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeAppDeleteResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")
 	}
 }
 
 func appendDummyFile(fullname string) error {
-	f, err := os.OpenFile(config.GlobalConfig.Workspace.Root+fullname+"/.DUMMY", os.O_APPEND | os.O_CREATE | os.O_RDWR, os.ModeAppend)
+	f, err := os.OpenFile(config.GlobalConfig.Workspace.Root+fullname+"/.DUMMY", os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModeAppend)
 	if err != nil {
 		return err
 	}

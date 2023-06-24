@@ -12,6 +12,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"time"
 
 	"github.com/mholt/archiver/v3"
@@ -82,7 +83,7 @@ func FilePush(conn net.Conn, raw []byte) {
 	// }
 errorout:
 	payload, _ := config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessage(conn, message.TypeFilePushResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeFilePushResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("FilePush send error")
 	}
@@ -123,7 +124,7 @@ func FilePull(conn net.Conn, raw []byte) {
 	defer os.Remove(packName)
 	payload = []byte(loadFile(packName))
 errorout:
-	err = message.SendMessage(conn, message.TypeFilePullResponse, payload)
+	err = message.SendMessageUnique(conn, message.TypeFilePullResponse, snp.GenSerial(), payload)
 	if err != nil {
 		logger.Comm.Println("FilePull send error")
 	}
@@ -152,7 +153,7 @@ func FileTree(conn net.Conn, raw []byte) {
 
 	res = allFiles(pathsb.String())
 errorout:
-	err = message.SendMessage(conn, message.TypeFileTreeResponse, res)
+	err = message.SendMessageUnique(conn, message.TypeFileTreeResponse, snp.GenSerial(), res)
 	if err != nil {
 		logger.Comm.Println("FileTree send error")
 	}

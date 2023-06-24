@@ -4,6 +4,7 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/message"
+	"brain/security"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -21,6 +22,7 @@ var nsAddr string
 var httpsClient *http.Client
 
 func InitNameClient() {
+	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
 		return
@@ -125,6 +127,7 @@ func InitNameClient() {
 			}
 		}
 	}()
+	fetchTokens()
 }
 
 func getIpByDevice(device string) (string, error) {
@@ -224,5 +227,58 @@ func pingNameServer() error {
 	if res.StatusCode != 200 {
 		return fmt.Errorf("cannot Ping https Nameserver")
 	}
+	return nil
+}
+
+func GetToken() (*message.Tokens, error) {
+	res, err := httpsClient.Get(fmt.Sprintf("https://%s/tokens", nsAddr))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("cannot get token from Nameserver")
+	}
+	raw, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	tks := &message.Tokens{}
+	err = json.Unmarshal(raw, tks)
+	if err != nil {
+		return nil, err
+	}
+	return tks, nil
+}
+
+func fetchTokens() {
+	ticker := time.NewTicker(security.Fetchinterval)
+	go func() {
+		fetchAndUpdate()
+		for range ticker.C {
+			if err := fetchAndUpdate(); err != nil {
+				logger.Exceptions.Println("can not get token:", err)
+				continue
+			}
+		}
+	}()
+}
+
+func fetchAndUpdate() error {
+	tks, err := GetToken()
+	if err != nil {
+		return err
+	}
+	cur := security.Token{
+		Raw:    []byte(tks.CurToken),
+		Serial: tks.CurSerial,
+		Age:    tks.CurAge,
+	}
+	prev := security.Token{
+		Raw:    []byte(tks.PrevToken),
+		Serial: tks.PrevSerial,
+		Age:    tks.PrevAge,
+	}
+	security.UpdateTokens(cur, prev)
 	return nil
 }

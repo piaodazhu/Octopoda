@@ -38,6 +38,7 @@ func main() {
 
 	rdb.InitRedis()
 	alert.InitAlert()
+
 	model.InitNodeMap()
 	model.InitScenarioMap()
 

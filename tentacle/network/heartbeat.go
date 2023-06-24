@@ -7,6 +7,7 @@ import (
 	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/snp"
 	"time"
 )
 
@@ -25,14 +26,14 @@ func KeepAlive() {
 			} else {
 				retry = 0
 
-				err := message.SendMessage(conn, message.TypeNodeJoin, heartbeat.MakeNodeJoin())
+				err := message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin())
 				if err != nil {
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 
-				_, raw, err := message.RecvMessage(conn)
+				_, raw, err := message.RecvMessageUnique(conn)
 				if err != nil {
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
@@ -79,12 +80,12 @@ func KeepAlive() {
 
 func LoopHeartbeat(conn net.Conn) error {
 	for {
-		err := message.SendMessage(conn, message.TypeHeartbeat, heartbeat.MakeHeartbeat("ping"))
+		err := message.SendMessageUnique(conn, message.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat("ping"))
 		if err != nil {
 			return err
 		}
 
-		mtype, raw, err := message.RecvMessage(conn)
+		mtype, raw, err := message.RecvMessageUnique(conn)
 		if err != nil || mtype != message.TypeHeartbeatResponse {
 			return err
 		}

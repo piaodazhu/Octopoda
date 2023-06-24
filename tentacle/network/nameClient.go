@@ -11,6 +11,7 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/security"
 	"time"
 )
 
@@ -21,6 +22,7 @@ var brainHeartAddr, brainMsgAddr string
 func InitNameClient() {
 	defaultBrainHeartAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.HeartbeatPort)
 	defaultBrainMsgAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.MessagePort)
+	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
 		brainHeartAddr = defaultBrainHeartAddr
@@ -44,7 +46,7 @@ func InitNameClient() {
 	go func() {
 		fails := 0
 		for {
-			entry, err := nameQuery(config.GlobalConfig.Brain.Name+".tentacleFace")
+			entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
 			if err != nil {
 				logger.Network.Println("NameQuery error:", err.Error())
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
@@ -61,6 +63,7 @@ func InitNameClient() {
 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
 		}
 	}()
+	fetchTokens()
 }
 
 func InitHttpsClient(caCert, cliCert, cliKey string) error {
@@ -123,4 +126,58 @@ func nameQuery(name string) (*message.NameEntry, error) {
 		return nil, err
 	}
 	return response.NameEntry, nil
+}
+
+func GetToken() (*message.Tokens, error) {
+	res, err := httpsClient.Get(fmt.Sprintf("https://%s/tokens", nsAddr))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("cannot get token from Nameserver")
+	}
+	raw, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	tks := &message.Tokens{}
+	err = json.Unmarshal(raw, tks)
+	if err != nil {
+		return nil, err
+	}
+	return tks, nil
+}
+
+
+func fetchTokens() {
+	ticker := time.NewTicker(security.Fetchinterval)
+	go func() {
+		fetchAndUpdate()
+		for range ticker.C {
+			if err := fetchAndUpdate(); err != nil {
+				logger.Exceptions.Println("can not get token:", err)
+				continue
+			}
+		}
+	}()
+}
+
+func fetchAndUpdate() error {
+	tks, err := GetToken()
+	if err != nil {
+		return err
+	}
+	cur := security.Token{
+		Raw:    []byte(tks.CurToken),
+		Serial: tks.CurSerial,
+		Age:    tks.CurAge,
+	}
+	prev := security.Token{
+		Raw:    []byte(tks.PrevToken),
+		Serial: tks.PrevSerial,
+		Age:    tks.PrevAge,
+	}
+	security.UpdateTokens(cur, prev)
+	return nil
 }
