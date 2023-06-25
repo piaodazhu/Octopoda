@@ -227,7 +227,7 @@ func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, resul
 	}
 	// logger.Tentacle.Print(rmsg.Rmsg)
 	// *result = rmsg.Rmsg
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 
 	// update scenario version
 	success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, name, rmsg.Version, rmsg.Modified)
@@ -260,7 +260,7 @@ func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 	}
 	// *result = string(rmsg.Output)
 	// *result = rmsg.Output
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 
 	// update scenario version
 	success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)

@@ -7,6 +7,7 @@ import (
 	"brain/model"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -65,6 +66,9 @@ func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 		}
 		res.NodeInfoList[i] = nodeInfoToText(node)
 	}
+	sort.Slice(res.NodeInfoList, func(i, j int) bool {
+		return res.NodeInfoList[i].Name < res.NodeInfoList[j].Name
+	})
 	return res
 }
 
@@ -185,9 +189,13 @@ func NodesState(ctx *gin.Context) {
 		disk_used_sum += v.DiskUsed
 		disk_tot_sum += v.DiskTotal
 	}
-	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum / float64(len(nodes)))
-	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100) / float64(mem_tot_sum))
-	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100) / float64(disk_tot_sum))
+	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum/float64(len(nodes)))
+	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100)/float64(mem_tot_sum))
+	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100)/float64(disk_tot_sum))
+
+	sort.Slice(nodesStatus.NodesStatusList, func(i, j int) bool {
+		return nodesStatus.NodesStatusList[i].Name < nodesStatus.NodesStatusList[j].Name
+	})
 
 	ctx.JSON(200, nodesStatus)
 }

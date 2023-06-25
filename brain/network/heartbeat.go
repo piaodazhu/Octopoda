@@ -1,6 +1,7 @@
 package network
 
 import (
+	"brain/alert"
 	"brain/config"
 	"brain/heartbeat"
 	"brain/logger"
@@ -62,6 +63,7 @@ closeconnection:
 
 func startHeartbeat(conn net.Conn, name string) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
+	hbStartTime := time.Now()
 
 	hbchan := make(chan bool)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -89,4 +91,10 @@ func startHeartbeat(conn net.Conn, name string) {
 	}
 errout:
 	cancel()
+	brainLive := time.Since(startTime)
+	tentacleLive := time.Since(hbStartTime)
+	if brainLive > 5*time.Minute && tentacleLive > time.Minute {
+		msg := fmt.Sprintf("[TRACE NODESTATE]: node <%s> is offline. Brain has been live for %s, this node has been live for %s.\n", name, brainLive, tentacleLive)
+		alert.Alert(msg)
+	}
 }

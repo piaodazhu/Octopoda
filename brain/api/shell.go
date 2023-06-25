@@ -153,7 +153,7 @@ func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	}
 	// logger.SysInfo.Print(rmsg.Rmsg)
 	// *result = rmsg.Output
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 }
 
 func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) {
@@ -174,5 +174,5 @@ func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 		return
 	}
 	// logger.SysInfo.Print(rmsg.Rmsg)
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 }
