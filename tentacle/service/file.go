@@ -38,7 +38,7 @@ func pathFixing(path string, base string) string {
 	if homePos != -1 {
 		result.WriteString(path[homePos:])
 	} else {
-		if path[0] != '/' {
+		if len(path) == 0 || path[0] != '/' {
 			result.WriteString(base)
 		}
 		result.WriteString(path)
@@ -62,6 +62,7 @@ func FilePush(conn net.Conn, raw []byte) {
 	// logger.Server.Println(fileinfo)
 	// file.WriteString(config.GlobalConfig.Workspace.Store)
 	// file.WriteString(fileinfo.TargetPath)
+
 	file = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
 	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, file)
 	if err != nil {

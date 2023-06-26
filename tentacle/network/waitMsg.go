@@ -18,6 +18,7 @@ func ReadAndServe() {
 			defer func() {
 				if err := recover(); err != nil {
 					fmt.Println("recover from ", err.(error).Error())
+					ReadAndServe()
 				}
 			}()
 			conn, err := net.Dial("tcp", brainMsgAddr)

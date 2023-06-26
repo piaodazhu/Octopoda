@@ -70,7 +70,7 @@ retry:
 		retryCnt--
 		goto retry
 	} else if rtype != mtype+1 {
-		return nil, fmt.Errorf("node %s send malformed response", name)
+		return nil, fmt.Errorf("node %s send malformed response. (%s->%s)", name, message.MsgTypeString[mtype],  message.MsgTypeString[rtype])
 	}
 
 	return resbuf, nil

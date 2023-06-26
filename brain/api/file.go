@@ -39,7 +39,7 @@ func pathFixing(path string, base string) string {
 	if homePos != -1 {
 		result.WriteString(path[homePos:])
 	} else {
-		if path[0] != '/' {
+		if len(path) == 0 || path[0] != '/' {
 			result.WriteString(base)
 		}
 		result.WriteString(path)
@@ -62,6 +62,7 @@ func FileUpload(ctx *gin.Context) {
 	tmpPath := tmpSb.String()
 
 	// dstPath: the unpacked files will be moved under this path
+	fmt.Println("targetPath:", targetPath)
 	dstPath := pathFixing(targetPath, config.GlobalConfig.Workspace.Store)
 
 	os.Mkdir(tmpPath, os.ModePerm)
