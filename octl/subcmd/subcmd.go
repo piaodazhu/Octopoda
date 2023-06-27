@@ -90,17 +90,14 @@ usage:
 }
 
 func Status(arglist []string) {
-	if len(arglist) == 0 {
+	if len(arglist) != 1 {
 		goto usage
 	}
 	switch arglist[0] {
 	case "nodes":
 		node.NodesStatus()
-	case "node":
-		if len(arglist) != 2 {
-			goto usage
-		}
-		node.NodeStatus(arglist[1])
+	default:
+		node.NodeStatus(arglist[0])
 	}
 	return
 usage:
@@ -126,18 +123,7 @@ func Log(arglist []string) {
 	if len(arglist) == 0 {
 		goto usage
 	}
-	switch arglist[0] {
-	case "master":
-		log.NodeLog(arglist[0], arglist[1:])
-	case "node":
-		if len(arglist) == 1 {
-			goto usage
-		}
-		log.NodeLog(arglist[1], arglist[2:])
-		// case "scenario":
-
-		// default:
-	}
+	log.NodeLog(arglist[0], arglist[1:])
 	return
 usage:
 	PrintUsage("log")

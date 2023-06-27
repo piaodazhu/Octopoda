@@ -16,9 +16,9 @@ var UsageList []UsageEntry
 var Usages = `
 
 Node:get:octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]:octl get node pi0
-Node:status:octl status [nodes|node <node>]:octl status nodes
+Node:status:octl status [nodes|<node>|master]:octl status nodes
 Node:prune:octl prune:octl prune
-Node:log:octl log [master|node <node>] [-l<maxline>] [-d<maxday>]:octl log node pi0 -l50 -d2
+Node:log:octl log [master|<node>] [-l<maxline>] [-d<maxday>]:octl log pi0 -l50 -d2
 
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
 Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"

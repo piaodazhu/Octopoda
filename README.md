@@ -94,7 +94,7 @@ With this subcmd we can get some basic information about current octopoda networ
 
 ### STATUS
 
-> `usage: octl status [nodes|node <node>]`
+> `usage: octl status [nodes|<node>|master]`
 
 With this subcmd we can get the running status of nodes or a given node, such as:
 - CPU Load.
@@ -104,7 +104,7 @@ With this subcmd we can get the running status of nodes or a given node, such as
 
 ### LOG
 
-> `usage: octl log [master|node <node>] [l<maxline>] [d<maxday>]`
+> `usage: octl log [<node>|master] [-l<maxline>] [-d<maxday>]`
 
 With this subcmd we can get the running log of master or a given node. The argument `l` means max lines need to be read, and argument `d` means max days before today need to be read.
 
