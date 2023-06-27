@@ -5,6 +5,7 @@ import (
 	"brain/config"
 	"brain/logger"
 	"brain/model"
+	"brain/sys"
 
 	"brain/network"
 	"brain/rdb"
@@ -41,6 +42,7 @@ func main() {
 
 	model.InitNodeMap()
 	model.InitScenarioMap()
+	sys.InitNodeStatus()
 
 	network.InitNameClient()
 	network.InitTentacleFace()

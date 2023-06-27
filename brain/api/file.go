@@ -284,7 +284,7 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRmsg", err)
 		*result = "MasterError"
 		return
 	}

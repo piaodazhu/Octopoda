@@ -83,8 +83,8 @@ var MsgTypeString map[int]string = map[int]string{
 	TypeFileTree:         "FileTree",
 	TypeFileTreeResponse: "FileTreeResponse",
 
-	TypeNodeStatus:         "NodeState",
-	TypeNodeStatusResponse: "NodeStateResponse",
+	TypeNodeStatus:         "NodeStatus",
+	TypeNodeStatusResponse: "NodeStatusResponse",
 
 	TypeNodeLog:         "NodeLog",
 	TypeNodeLogResponse: "NodeLogResponse",

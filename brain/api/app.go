@@ -221,7 +221,7 @@ func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, resul
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalNodeStatus", err)
 		*result = "MasterError"
 		return
 	}
@@ -254,7 +254,7 @@ func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalNodeStatus", err)
 		*result = "MasterError"
 		return
 	}

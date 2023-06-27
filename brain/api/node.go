@@ -5,6 +5,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/sys"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -135,23 +136,28 @@ func statusToText(status model.Status) StatusText {
 	}
 }
 
-func NodeState(ctx *gin.Context) {
+func NodeStatus(ctx *gin.Context) {
 	var name string
 	var ok bool
 	if name, ok = ctx.GetQuery("name"); !ok {
 		ctx.JSON(404, struct{}{})
 		return
 	}
+	var status model.Status
+	if name == "master" {
+		ctx.JSON(200, statusToText(sys.LocalStatus()))
+		return
+	}
 	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		logger.Comm.Println("NodeState", err)
+		logger.Comm.Println("NodeStatus", err)
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	var status model.Status
+	
 	err = json.Unmarshal(raw, &status)
 	if err != nil {
-		logger.Comm.Println("NodeState Unmarshal", err)
+		logger.Comm.Println("NodeStatus Unmarshal", err)
 		ctx.JSON(404, struct{}{})
 		return
 	}
@@ -171,7 +177,7 @@ func NodesState(ctx *gin.Context) {
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
 	for _, node := range nodes {
-		go getNodeState(node.Name, channel, &wg)
+		go getNodeStatus(node.Name, channel, &wg)
 	}
 	wg.Wait()
 	close(channel)
@@ -200,7 +206,7 @@ func NodesState(ctx *gin.Context) {
 	ctx.JSON(200, nodesStatus)
 }
 
-func getNodeState(name string, channel chan<- model.Status, wg *sync.WaitGroup) {
+func getNodeStatus(name string, channel chan<- model.Status, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var state model.Status
 	var err error
@@ -208,13 +214,13 @@ func getNodeState(name string, channel chan<- model.Status, wg *sync.WaitGroup) 
 
 	raw, err = model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		logger.Comm.Println("getNodeState", err)
+		logger.Comm.Println("getNodeStatus", err)
 		goto sendres
 	}
 
 	err = config.Jsoner.Unmarshal(raw, &state)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalNodeStatus", err)
 		goto sendres
 	}
 sendres:

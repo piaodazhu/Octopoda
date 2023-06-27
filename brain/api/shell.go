@@ -147,7 +147,7 @@ func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRuncmd", err)
 		*result = "BrainError"
 		return
 	}
@@ -169,7 +169,7 @@ func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRunscript", err)
 		*result = "Brain Error"
 		return
 	}

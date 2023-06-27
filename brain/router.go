@@ -35,7 +35,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.Use(OctopodaLogger())
 		group.GET("/node/info", api.NodeInfo)
-		group.GET("/node/status", api.NodeState)
+		group.GET("/node/status", api.NodeStatus)
 		group.GET("/node/log", api.NodeLog)
 		group.GET("/node/prune", api.NodePrune)
 
