@@ -286,9 +286,7 @@ func Pull(arglist []string) {
 	case "store":
 		fallthrough
 	case "log":
-		if len(arglist) == 3 {
-			file.PullFile(arglist[0], arglist[1], arglist[2], "./")
-		} else if len(arglist) == 4 {
+		if len(arglist) == 4 {
 			file.PullFile(arglist[0], arglist[1], arglist[2], arglist[3])
 		} else {
 			goto usage

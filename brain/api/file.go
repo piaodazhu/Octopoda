@@ -565,6 +565,8 @@ func FilePull(ctx *gin.Context) {
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
 		logger.Exceptions.Print("TaskNew")
+		ctx.JSON(500, rmsg)
+		return
 	}
 	ctx.String(202, taskid)
 
@@ -585,13 +587,13 @@ func FilePull(ctx *gin.Context) {
 
 		if len(raw) == 0 {
 			rmsg.Rmsg = "file or path not found"
+			logger.Exceptions.Print("file or path not found")
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
 				logger.Exceptions.Print("TaskMarkFailed Error")
 			}
 			return
 		}
 
-		// rmsg.Output = encodeBuf(raw)
 		rmsg.Output = string(raw)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
 			logger.Exceptions.Print("TaskMarkDone Error")

@@ -3,6 +3,7 @@ package network
 import (
 	"net"
 	"os/exec"
+	"runtime"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
@@ -20,7 +21,6 @@ func KeepAlive() {
 			conn, err := net.Dial("tcp", brainHeartAddr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
-
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				retry++
 			} else {
@@ -50,9 +50,9 @@ func KeepAlive() {
 				err = SynchronizeTime(joinResponse.Ts)
 				if err != nil {
 					logger.Network.Print(err)
-					conn.Close()
-					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
-					goto reconnect
+					// conn.Close()
+					// time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
+					// goto reconnect
 				}
 
 				err = LoopHeartbeat(conn)
@@ -79,6 +79,8 @@ func KeepAlive() {
 }
 
 func LoopHeartbeat(conn net.Conn) error {
+	joinwg.Done()
+	defer joinwg.Add(1)
 	for {
 		err := message.SendMessageUnique(conn, message.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat("ping"))
 		if err != nil {
@@ -100,6 +102,10 @@ func LoopHeartbeat(conn net.Conn) error {
 
 func SynchronizeTime(ts int64) error {
 	// seems that it may not work. To be fixed.
-	cmd := exec.Command("date", "-s", time.UnixMicro(ts).Format("01/02/2006 15:04:05.999"))
-	return cmd.Run()
+	var err error = nil
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("date", "-s", time.UnixMicro(ts).Format("01/02/2006 15:04:05.999"))
+		err = cmd.Run()
+	}
+	return err
 }

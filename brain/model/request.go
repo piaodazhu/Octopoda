@@ -28,7 +28,7 @@ func Request(name string, mtype int, payload []byte) ([]byte, error) {
 retry:
 	conn, rcode = GetNodeMsgConn(name)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload),
+		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", GetNodeMsgConn(", name, "): conn is nil?",
 		conn == nil, ", rcode=", rcode))
 	if rcode == GetConnNoNode {
@@ -44,9 +44,9 @@ retry:
 
 	err = message.SendMessageUnique(*conn, mtype, serialNum, payload)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload),
+		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", SendMessageUnique(conn is nil?", conn == nil, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload), "): err=", err))
+		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]), "): err=", err))
 	if err != nil {
 		ResetNodeMsgConn(name)
 		if retryCnt == 0 {
@@ -58,7 +58,7 @@ retry:
 	}
 	rtype, resbuf, err = message.RecvMessageUnique(*conn)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "),
-		name, ", ", message.MsgTypeString[mtype], ", ", string(payload),
+		name, ", ", message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", RecvMessageUnique(conn is nil?", conn == nil, "): ",
 		message.MsgTypeString[rtype], ", ", string(resbuf), ", ", err))
 	if err != nil {
@@ -74,4 +74,11 @@ retry:
 	}
 
 	return resbuf, nil
+}
+
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
 }

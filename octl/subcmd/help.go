@@ -30,7 +30,7 @@ File:upload:octl upload <localFileOrDir> <targetDir>:octl upload './pictures' '.
 File:spread:octl spread <masterFileOrDir> <targetDir> <node1> <node2> ...:octl spread './collections/img' '~/Pictures' pi0 pi1 pi2
 File:distrib:octl distrib <localFileOrDir> <targetDir> <node1> <node2> ...:octl distrib './pictures' '~/Pictures' pi0 pi1 pi2
 File:tree:octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] [SubDir]:octl tree store pi0 '~/Pictures'
-File:pull:octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] FileOrDir [localDir]:octl pull pi0 nodeapp alice@ChatScen './data/123.dat' './data'
+File:pull:octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] FileOrDir [localDir]:octl pull nodeapp pi0 alice@ChatScen './data/123.dat' './data'
 
 SSH:ssh:octl ssh <anyname>:octl ssh pi0
 SSH:setssh:octl setssh <anyname>:octl setssh pi0

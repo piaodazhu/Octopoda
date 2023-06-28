@@ -280,6 +280,13 @@ type Result struct {
 	Modified bool
 }
 
+type FilePullParams struct {
+	PackName   string
+	PathType   string
+	TargetPath string
+	FileBuf    string
+}
+
 func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
 		nameclient.BrainAddr,
@@ -300,16 +307,26 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	}
 
 	result := Result{}
+	finfo := FilePullParams{}
 	if res.StatusCode == 200 {
-		// directly get the file from master
-		config.Jsoner.Unmarshal(msg, &result)
+		// get the file info structure from master
+		err = config.Jsoner.Unmarshal(msg, &result)
+		if err != nil {
+			output.PrintFatalln(err.Error())
+		}
+
+		// marshal the file info
+		err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
+		if err != nil {
+			output.PrintFatalln(err.Error())
+		}
 
 		// unpack result.Output
-		err = unpackFiles(result.Output, targetdir)
+		err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
 		if err != nil {
-			fmt.Println(err.Error())
+			output.PrintFatalln(err.Error())
 		}
-		fmt.Println("Success")
+		output.PrintInfoln("Success")
 	} else if res.StatusCode == 202 {
 		// have to wait
 		resultmsg, err := task.WaitTask("PULLING...", string(msg))
@@ -321,12 +338,17 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		if len(result.Output) == 0 {
 			output.PrintJSON(resultmsg)
 		} else {
-			// unpack result.Output
-			err = unpackFiles(result.Output, targetdir)
+			// marshal the file info
+			err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
 			if err != nil {
-				fmt.Println(err.Error())
+				output.PrintFatalln(err.Error())
 			}
-			fmt.Println("Success")
+			// unpack result.Output
+			err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
+			if err != nil {
+				output.PrintFatalln(err.Error())
+			}
+			output.PrintInfoln("Success")
 		}
 	} else {
 		// some error
@@ -338,36 +360,52 @@ type ErrUnpack struct{}
 
 func (ErrUnpack) Error() string { return "ErrUnpack" }
 
-func unpackFiles(packb64 string, dir string) error {
-	var file strings.Builder
-	// tmp tar file name
-	fname := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-
-	// make complete path and filename
-	// file.WriteString(config.GlobalConfig.Workspace.Root)
-	file.WriteString(dir)
-	path := file.String()
-	os.Mkdir(path, os.ModePerm)
-	if path[len(path)-1] != '/' {
-		file.WriteByte('/')
+func unpackFiles(packb64 string, packName string, targetDir string) error {
+	pname := filepath.Base(packName)
+	extPos := -1
+	for i := len(pname) - 1; i > 0; i-- {
+		if pname[i] == '.' {
+			extPos = i
+			break
+		}
 	}
-	file.WriteString(fname)
+	if extPos == -1 {
+		return fmt.Errorf("extPos == -1")
+	}
+	wname := pname[:extPos]
+	tmpDir := ".octopoda_tmp/"
+	os.Mkdir(tmpDir, os.ModePerm)
+	defer os.RemoveAll(tmpDir)
 
-	err := saveFile(packb64, file.String())
+	ppath := tmpDir + pname
+	wpath := tmpDir + wname
+
+	err := saveFile(packb64, ppath)
 	if err != nil {
 		return err
 	}
 
 	archiver.DefaultZip.OverwriteExisting = true
-	err = archiver.DefaultZip.Unarchive(file.String(), path)
+	err = archiver.DefaultZip.Unarchive(ppath, tmpDir)
 	if err != nil {
 		return ErrUnpack{}
 	}
 
-	os.Remove(file.String())
+	os.MkdirAll(targetDir, os.ModePerm)
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", wpath, targetDir))
+	} else {
+		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", wpath, targetDir))
+	}
+	err = cmd.Run()
+	if err != nil {
+		output.PrintWarningln("Wrap files: " + wpath + "-->" + targetDir + " | " + cmd.String())
+		return fmt.Errorf("cp -r")
+	}
+
 	return nil
 }
-
 
 func saveFile(filebufb64, filename string) error {
 	Offset := 0
