@@ -5,8 +5,10 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/sys"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -65,6 +67,9 @@ func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 		}
 		res.NodeInfoList[i] = nodeInfoToText(node)
 	}
+	sort.Slice(res.NodeInfoList, func(i, j int) bool {
+		return res.NodeInfoList[i].Name < res.NodeInfoList[j].Name
+	})
 	return res
 }
 
@@ -131,23 +136,28 @@ func statusToText(status model.Status) StatusText {
 	}
 }
 
-func NodeState(ctx *gin.Context) {
+func NodeStatus(ctx *gin.Context) {
 	var name string
 	var ok bool
 	if name, ok = ctx.GetQuery("name"); !ok {
 		ctx.JSON(404, struct{}{})
 		return
 	}
+	var status model.Status
+	if name == "master" {
+		ctx.JSON(200, statusToText(sys.LocalStatus()))
+		return
+	}
 	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		logger.Comm.Println("NodeState", err)
+		logger.Comm.Println("NodeStatus", err)
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	var status model.Status
+	
 	err = json.Unmarshal(raw, &status)
 	if err != nil {
-		logger.Comm.Println("NodeState Unmarshal", err)
+		logger.Comm.Println("NodeStatus Unmarshal", err)
 		ctx.JSON(404, struct{}{})
 		return
 	}
@@ -167,7 +177,7 @@ func NodesState(ctx *gin.Context) {
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
 	for _, node := range nodes {
-		go getNodeState(node.Name, channel, &wg)
+		go getNodeStatus(node.Name, channel, &wg)
 	}
 	wg.Wait()
 	close(channel)
@@ -185,14 +195,18 @@ func NodesState(ctx *gin.Context) {
 		disk_used_sum += v.DiskUsed
 		disk_tot_sum += v.DiskTotal
 	}
-	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum / float64(len(nodes)))
-	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100) / float64(mem_tot_sum))
-	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100) / float64(disk_tot_sum))
+	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum/float64(len(nodes)))
+	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100)/float64(mem_tot_sum))
+	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100)/float64(disk_tot_sum))
+
+	sort.Slice(nodesStatus.NodesStatusList, func(i, j int) bool {
+		return nodesStatus.NodesStatusList[i].Name < nodesStatus.NodesStatusList[j].Name
+	})
 
 	ctx.JSON(200, nodesStatus)
 }
 
-func getNodeState(name string, channel chan<- model.Status, wg *sync.WaitGroup) {
+func getNodeStatus(name string, channel chan<- model.Status, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var state model.Status
 	var err error
@@ -200,13 +214,13 @@ func getNodeState(name string, channel chan<- model.Status, wg *sync.WaitGroup) 
 
 	raw, err = model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
-		logger.Comm.Println("getNodeState", err)
+		logger.Comm.Println("getNodeStatus", err)
 		goto sendres
 	}
 
 	err = config.Jsoner.Unmarshal(raw, &state)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalNodeStatus", err)
 		goto sendres
 	}
 sendres:

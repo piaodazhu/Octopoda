@@ -1,6 +1,7 @@
 package network
 
 import (
+	"brain/alert"
 	"brain/config"
 	"brain/heartbeat"
 	"brain/logger"
@@ -24,15 +25,13 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 		health = true
 		mtype, msg, err = message.RecvMessageUnique(conn)
 		if err != nil || mtype != message.TypeHeartbeat {
-			// logger.Tentacle.Print(err)
-			fmt.Println("tag1", mtype, msg, err)
+			logger.Network.Print(err)
 			health = false
 			goto reportstate
 		}
 
 		hbinfo, err = heartbeat.ParseHeartbeat(msg)
 		if err != nil || hbinfo.Msg != "ping" {
-			fmt.Println("tag2", err)
 			logger.Network.Print(err)
 			health = false
 			goto reportstate
@@ -40,7 +39,6 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
 
 		err = message.SendMessageUnique(conn, message.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse("pong"))
 		if err != nil {
-			fmt.Println("tag3", err)
 			logger.Network.Print(err)
 			health = false
 			goto reportstate
@@ -62,6 +60,7 @@ closeconnection:
 
 func startHeartbeat(conn net.Conn, name string) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
+	hbStartTime := time.Now()
 
 	hbchan := make(chan bool)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -89,4 +88,10 @@ func startHeartbeat(conn net.Conn, name string) {
 	}
 errout:
 	cancel()
+	brainLive := time.Since(startTime)
+	tentacleLive := time.Since(hbStartTime)
+	if brainLive > 5*time.Minute && tentacleLive > time.Minute {
+		msg := fmt.Sprintf("[TRACE NODESTATE]: node <%s> is offline. Brain has been live for %s, this node has been live for %s.\n", name, brainLive, tentacleLive)
+		alert.Alert(msg)
+	}
 }

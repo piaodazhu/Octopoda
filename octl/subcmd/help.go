@@ -16,9 +16,9 @@ var UsageList []UsageEntry
 var Usages = `
 
 Node:get:octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]:octl get node pi0
-Node:status:octl status [nodes|node <node>]:octl status nodes
+Node:status:octl status [nodes|<node>|master]:octl status nodes
 Node:prune:octl prune:octl prune
-Node:log:octl log [master|node <node>] [-l<maxline>] [-d<maxday>]:octl log node pi0 -l50 -d2
+Node:log:octl log [master|<node>] [-l<maxline>] [-d<maxday>]:octl log pi0 -l50 -d2
 
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
 Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"
@@ -30,7 +30,7 @@ File:upload:octl upload <localFileOrDir> <targetDir>:octl upload './pictures' '.
 File:spread:octl spread <masterFileOrDir> <targetDir> <node1> <node2> ...:octl spread './collections/img' '~/Pictures' pi0 pi1 pi2
 File:distrib:octl distrib <localFileOrDir> <targetDir> <node1> <node2> ...:octl distrib './pictures' '~/Pictures' pi0 pi1 pi2
 File:tree:octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] [SubDir]:octl tree store pi0 '~/Pictures'
-File:pull:octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] FileOrDir [localDir]:octl pull pi0 nodeapp alice@ChatScen './data/123.dat' './data'
+File:pull:octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> app>@<scen>] FileOrDir [localDir]:octl pull nodeapp pi0 alice@ChatScen './data/123.dat' './data'
 
 SSH:ssh:octl ssh <anyname>:octl ssh pi0
 SSH:setssh:octl setssh <anyname>:octl setssh pi0
@@ -38,7 +38,7 @@ SSH:delssh:octl delssh <anyname>:octl delssh pi0
 
 Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> node2> ...:octl run '{ls ~/}' pi0
 
-Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|owngrade|history] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
+Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
 `
 
 func InitUsage() {

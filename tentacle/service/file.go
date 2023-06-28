@@ -2,12 +2,14 @@ package service
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"tentacle/config"
 	"tentacle/logger"
@@ -38,7 +40,7 @@ func pathFixing(path string, base string) string {
 	if homePos != -1 {
 		result.WriteString(path[homePos:])
 	} else {
-		if path[0] != '/' {
+		if len(path) == 0 || path[0] != '/' {
 			result.WriteString(base)
 		}
 		result.WriteString(path)
@@ -59,9 +61,7 @@ func FilePush(conn net.Conn, raw []byte) {
 		rmsg.Rmsg = "FilePush"
 		goto errorout
 	}
-	// logger.Server.Println(fileinfo)
-	// file.WriteString(config.GlobalConfig.Workspace.Store)
-	// file.WriteString(fileinfo.TargetPath)
+
 	file = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
 	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, file)
 	if err != nil {
@@ -69,18 +69,6 @@ func FilePush(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	// os.Mkdir(file.String(), os.ModePerm)
-	// if file.String()[file.Len()-1] != '/' {
-	// 	file.WriteByte('/')
-	// }
-
-	// file.WriteString(fileinfo.TarName)
-
-	// err = saveFile(fileinfo.FileBuf, file.String())
-	// if err != nil {
-	// 	rmsg.Rmsg = "FileNotSave"
-	// 	goto errorout
-	// }
 errorout:
 	payload, _ := config.Jsoner.Marshal(&rmsg)
 	err = message.SendMessageUnique(conn, message.TypeFilePushResponse, snp.GenSerial(), payload)
@@ -92,7 +80,9 @@ errorout:
 func FilePull(conn net.Conn, raw []byte) {
 	var pathsb strings.Builder
 	var err error
-	var packName string
+	var packName, wrapName, srcPath, pwd string
+	var cmd *exec.Cmd
+
 	payload := []byte{}
 	fileinfo := FileParams{}
 	err = config.Jsoner.Unmarshal(raw, &fileinfo)
@@ -111,18 +101,44 @@ func FilePull(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 	pathsb.WriteString(fileinfo.TargetPath)
-	_, err = os.Stat(pathsb.String())
+
+	pwd, _ = os.Getwd()
+	srcPath = pathFixing(pathsb.String(), pwd+string(filepath.Separator))
+	// _, err = os.Stat(srcPath)
+	// if err != nil {
+	// 	logger.Exceptions.Println(srcPath, " not exist")
+	// 	goto errorout
+	// }
+
+	// wrap the files first
+	wrapName = fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
+	os.MkdirAll(wrapName, os.ModePerm)
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+	} else {
+		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+	}
+	err = cmd.Run()
 	if err != nil {
+		logger.Exceptions.Println("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
 		goto errorout
 	}
-	// pack the file or dir
-	packName = packFile(pathsb.String())
-	if packName == "" {
+	defer os.RemoveAll(wrapName)
+
+	packName = fmt.Sprintf("%s.zip", wrapName)
+
+	archiver.DefaultZip.OverwriteExisting = true
+	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
+	if err != nil {
 		logger.Exceptions.Println("packFile")
-		goto errorout
 	}
 	defer os.Remove(packName)
-	payload = []byte(loadFile(packName))
+
+	fileinfo.FileBuf = loadFile(packName)
+	fileinfo.PackName = packName
+
+	payload, _ = json.Marshal(&fileinfo)
 errorout:
 	err = message.SendMessageUnique(conn, message.TypeFilePullResponse, snp.GenSerial(), payload)
 	if err != nil {
@@ -269,7 +285,7 @@ func unpackFiles(packb64 string, packName string, targetDir string) error {
 	wname := pname[:extPos]
 	tmpDir := config.GlobalConfig.Workspace.Store + ".octopoda_tmp/"
 	os.Mkdir(tmpDir, os.ModePerm)
-	// defer os.RemoveAll(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	ppath := tmpDir + pname
 	wpath := tmpDir + wname
@@ -328,15 +344,15 @@ func unpackFilesNoWrap(packb64 string, dir string) error {
 	return nil
 }
 
-func packFile(fileOrDir string) string {
-	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-	archiver.DefaultZip.OverwriteExisting = true
-	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
-	if err != nil {
-		return ""
-	}
-	return packName
-}
+// func packFile(fileOrDir string) string {
+// 	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
+// 	archiver.DefaultZip.OverwriteExisting = true
+// 	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
+// 	if err != nil {
+// 		return ""
+// 	}
+// 	return packName
+// }
 
 func loadFile(packName string) string {
 	var filebufb64 strings.Builder
@@ -351,7 +367,7 @@ func loadFile(packName string) string {
 	filebufb64.Grow(base64.RawStdEncoding.EncodedLen(int(info.Size())))
 
 	// read and encode to base64
-	ChunkSize := 4096 * 4
+	ChunkSize := 4096 * 3
 	ChunkBuf := make([]byte, ChunkSize)
 	for {
 		n, err := f.Read(ChunkBuf)

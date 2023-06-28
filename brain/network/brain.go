@@ -7,6 +7,7 @@ import (
 	"brain/message"
 	"brain/model"
 	"brain/snp"
+	"time"
 
 	"fmt"
 	"net"
@@ -15,8 +16,12 @@ import (
 var heartbeatListener net.Listener
 var messagerListener net.Listener
 
+var startTime time.Time
+
 func InitTentacleFace() {
+	startTime = time.Now()
 	var err error
+	
 	addr1 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.HeartbeatPort)
 	heartbeatListener, err = net.Listen("tcp", addr1)
 	if err != nil {

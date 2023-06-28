@@ -18,8 +18,10 @@ func ReadAndServe() {
 			defer func() {
 				if err := recover(); err != nil {
 					fmt.Println("recover from ", err.(error).Error())
+					ReadAndServe()
 				}
 			}()
+			joinwg.Wait()
 			conn, err := net.Dial("tcp", brainMsgAddr)
 			if err != nil {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))

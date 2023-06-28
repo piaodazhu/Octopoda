@@ -147,13 +147,13 @@ func runCmd(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRuncmd", err)
 		*result = "BrainError"
 		return
 	}
 	// logger.SysInfo.Print(rmsg.Rmsg)
 	// *result = rmsg.Output
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 }
 
 func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) {
@@ -169,10 +169,10 @@ func runScript(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRunscript", err)
 		*result = "Brain Error"
 		return
 	}
 	// logger.SysInfo.Print(rmsg.Rmsg)
-	*result = fmt.Sprintf("[%s]: %s", rmsg.Rmsg, rmsg.Output)
+	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 }

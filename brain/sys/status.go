@@ -1,13 +1,11 @@
-package service
+package sys
 
 import (
+	"brain/config"
+	"brain/logger"
+	"brain/model"
 	"fmt"
-	"net"
 	"sync"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/message"
-	"tentacle/snp"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -15,25 +13,11 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-type Status struct {
-	Name      string
-	Platform  string
-	CpuCores  int
-	LocalTime time.Time
-
-	CpuLoadShort float64
-	CpuLoadLong  float64
-	MemUsed      uint64
-	MemTotal     uint64
-	DiskUsed     uint64
-	DiskTotal    uint64
-}
-
-var nodeStatus Status
+var nodeStatus model.Status
 var stateLock sync.RWMutex
 
-func initNodeStatus() {
-	nodeStatus = Status{
+func InitNodeStatus() {
+	nodeStatus = model.Status{
 		Name:      config.GlobalConfig.Name,
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),
@@ -49,16 +33,12 @@ func initNodeStatus() {
 	go maintainStatus()
 }
 
-func NodeStatus(conn net.Conn, raw []byte) {
+func LocalStatus() model.Status {
 	stateLock.RLock()
 	state := nodeStatus
 	state.LocalTime = time.Now()
 	stateLock.RUnlock()
-	serialized_info, _ := config.Jsoner.Marshal(&state)
-	err := message.SendMessageUnique(conn, message.TypeNodeStatusResponse, snp.GenSerial(), serialized_info)
-	if err != nil {
-		logger.Comm.Println("NodeStatus service error")
-	}
+	return state
 }
 
 func GetCpuInfo() string {

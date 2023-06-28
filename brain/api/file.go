@@ -39,7 +39,7 @@ func pathFixing(path string, base string) string {
 	if homePos != -1 {
 		result.WriteString(path[homePos:])
 	} else {
-		if path[0] != '/' {
+		if len(path) == 0 || path[0] != '/' {
 			result.WriteString(base)
 		}
 		result.WriteString(path)
@@ -62,6 +62,7 @@ func FileUpload(ctx *gin.Context) {
 	tmpPath := tmpSb.String()
 
 	// dstPath: the unpacked files will be moved under this path
+	fmt.Println("targetPath:", targetPath)
 	dstPath := pathFixing(targetPath, config.GlobalConfig.Workspace.Store)
 
 	os.Mkdir(tmpPath, os.ModePerm)
@@ -283,7 +284,7 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	var rmsg message.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeState", err)
+		logger.Exceptions.Println("UnmarshalRmsg", err)
 		*result = "MasterError"
 		return
 	}
@@ -564,6 +565,8 @@ func FilePull(ctx *gin.Context) {
 	taskid := rdb.TaskIdGen()
 	if !rdb.TaskNew(taskid, 3600) {
 		logger.Exceptions.Print("TaskNew")
+		ctx.JSON(500, rmsg)
+		return
 	}
 	ctx.String(202, taskid)
 
@@ -584,13 +587,13 @@ func FilePull(ctx *gin.Context) {
 
 		if len(raw) == 0 {
 			rmsg.Rmsg = "file or path not found"
+			logger.Exceptions.Print("file or path not found")
 			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
 				logger.Exceptions.Print("TaskMarkFailed Error")
 			}
 			return
 		}
 
-		// rmsg.Output = encodeBuf(raw)
 		rmsg.Output = string(raw)
 		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
 			logger.Exceptions.Print("TaskMarkDone Error")

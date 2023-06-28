@@ -3,19 +3,36 @@ package output
 import (
 	"fmt"
 	"octl/config"
+	"strings"
 
 	"github.com/tidwall/pretty"
 )
+
+var replacer *strings.Replacer
+
+func init() {
+	replacer = strings.NewReplacer(
+		"\\n", "\n",
+		"\\t", "\t",
+		"\\r", "\r",
+		"\\u003c", "\u003c", // <
+		"\\u003e", "\u003e", // >
+		"\\u0026", "\u0026", // &
+		"\\u001b", "\u001b", // esc
+		`\"`, `"`,
+		`\'`, `'`,
+	)
+}
 
 func PrintJSON(message interface{}) {
 	if config.GlobalConfig.OutputPretty {
 		switch msg := message.(type) {
 		case string:
 			s := pretty.Color(pretty.Pretty([]byte(msg)), nil)
-			fmt.Print(string(s))
+			fmt.Println(replacer.Replace(string(s)))
 		case []byte:
 			s := pretty.Color(pretty.Pretty(msg), nil)
-			fmt.Print(string(s))
+			fmt.Println(replacer.Replace(string(s)))
 		default:
 			PrintFatalln("unsupported message type")
 		}
