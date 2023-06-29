@@ -71,6 +71,8 @@ func Pakma(firstarg string, args []string) {
 		fallthrough
 	case "cancel":
 		fallthrough
+	case "clean":
+		fallthrough
 	case "downgrade":
 		nodes = args
 	case "history":
