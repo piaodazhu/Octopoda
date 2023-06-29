@@ -72,6 +72,17 @@ func pakmaCancel() ([]byte, error) {
 	return buf, err
 }
 
+func pakmaClean() ([]byte, error) {
+	URL := fmt.Sprintf("http://127.0.0.1:%d/clean", config.GlobalConfig.PakmaServer.Port)
+	res, err := http.PostForm(URL, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	buf, err := io.ReadAll(res.Body)
+	return buf, err
+}
+
 func pakmaConfirm() ([]byte, error) {
 	URL := fmt.Sprintf("http://127.0.0.1:%d/confirm", config.GlobalConfig.PakmaServer.Port)
 	res, err := http.PostForm(URL, url.Values{})
@@ -154,6 +165,8 @@ func PakmaCommand(conn net.Conn, raw []byte) {
 		payload, err = pakmaConfirm()
 	case "cancel":
 		payload, err = pakmaCancel()
+	case "clean":
+		payload, err = pakmaClean()
 	case "downgrade":
 		payload, err = pakmaDowngrade()
 	case "history":

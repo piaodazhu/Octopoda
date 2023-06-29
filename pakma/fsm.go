@@ -194,7 +194,6 @@ func installVersion(version string) error {
 		return fmt.Errorf("cannot unpack %s.tar.xz", config.GlobalConfig.Packma.Root+path+".tar.xz")
 	}
 
-	
 begininstall:
 	// 5 before stopping the old service, sleep for a while to make sure tentacle/brain report its result to octl
 	time.Sleep(time.Second)
@@ -219,4 +218,11 @@ begininstall:
 	// fmt.Println(replaceCmd.String())
 	// fmt.Println(startCmd.String())
 	return nil
+}
+
+func doClean() {
+	pattern := fmt.Sprintf("%s*%s*", config.GlobalConfig.Packma.Root, config.GlobalConfig.AppName)
+	if err := exec.Command("rm", "-rf", pattern).Run(); err != nil {
+		PakmaError = err
+	}
 }

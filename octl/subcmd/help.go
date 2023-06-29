@@ -38,7 +38,7 @@ SSH:delssh:octl delssh <anyname>:octl delssh pi0
 
 Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> node2> ...:octl run '{ls ~/}' pi0
 
-Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
+Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
 `
 
 func InitUsage() {

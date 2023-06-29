@@ -358,7 +358,27 @@ Delete SSH login information binding with a name. It will be deleted from HttpsN
 
 Directly login the host binding with a name via SSH. It will query HttpsNameServer for login infomation, so make sure HttpsNameServer is online.
 
- 
+## G. HttpsNameServer
+
+### APIs
+
+see `httpNameServer/api_doc.md`
+
+### CertGen
+
+Fast script to generate keys and certificates for CA, server and client.
+
+## H. Online Upgrade - Pakma
+
+> `usage: octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]`
+
+Pakma is a localhost http service to support tentacle/brain online upgrade, downgrade. So far, HttpsNameServer must be enabled to provide [release package](https://github.com/piaodazhu/Octopoda/releases).
+
+Pakma's basic mechanism is **stable-(upgrade)-preview-(confirm/cancel/timeout)-stable**. If the upgraded version of tentacle/brain can not work well, pakma will automatically rollback it to the old stable version after 2 minites timeout.
+
+- example1: octl pakma install 1.5.1 master pi0 pi1 pi2   (first upgrade, use install)
+- example2: octl pakma state master pi0 pi1 pi2
+- example3: octl pakma upgrade 1.5.1 master pi0 pi1 pi2   (after first upgrade, use upgrade)
 
 # Scenario Example
 See an example in `./octl/example/helloWorld`. The file `deployment.yaml` defines scenario called `helloWorld`. This scenario consists of 3 application, running on 2 nodes, with some targets. You can manage `helloWorld` scenario with octl:

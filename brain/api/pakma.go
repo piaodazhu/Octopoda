@@ -102,6 +102,8 @@ func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *string) {
 		response, err = pakmaConfirm()
 	case "cancel":
 		response, err = pakmaCancel()
+	case "clean":
+		response, err = pakmaClean()
 	case "downgrade":
 		response, err = pakmaDowngrade()
 	case "history":

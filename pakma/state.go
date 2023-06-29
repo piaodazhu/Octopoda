@@ -26,18 +26,6 @@ type PakmaState struct {
 
 var StateMsg map[int]string
 
-// func getVersionFromPath(path string) (string, error) {
-// 	segments := strings.Split(path, "_")
-// 	if len(segments) != 4 {
-// 		return "", fmt.Errorf("invalid package path.")
-// 	}
-// 	verSeg := segments[1]
-// 	if len(verSeg) < 6 || verSeg[0] != 'v' {
-// 		return "", fmt.Errorf("invalid version number.")
-// 	}
-// 	return verSeg[1:], nil
-// }
-
 func getPathFromVersion(version string) string {
 	return fmt.Sprintf("%s_v%s_%s_%s", config.GlobalConfig.AppName, version, config.GlobalConfig.AppOS, config.GlobalConfig.AppArch)
 }

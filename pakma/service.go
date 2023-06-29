@@ -106,3 +106,11 @@ func GetStateHandler(ctx *gin.Context) {
 	}
 	ctx.JSON(statusCode, res)
 }
+
+func CleanHandler(ctx *gin.Context) {
+	Busy.Lock()
+	defer Busy.Unlock()
+	res := Response{Msg: "OK"}
+	doClean()
+	ctx.JSON(200, res)
+}
