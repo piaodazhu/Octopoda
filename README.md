@@ -1,7 +1,7 @@
 ![Octopoda](assets/logo.gif)
 # Octopoda
 
-🐙 **Octopoda** is a lightweight multi-nodes scenario management platform. It's not a lightweight K8S. It is originally designed for managing Lab101's ICN application scenarios (Obviously it can do more than that), which require the execution of commands on the node at the lower level of the system, such as inserting a kernel driver module. **Note that it not safe enough to deploy Octopoda in unfamiliar network environment.**
+🐙 **Octopoda** is a lightweight multi-node scenario management platform. It's not a lightweight K8S. It is originally designed for managing Lab101's ICN application scenarios (Obviously it can do more than that), which require the execution of commands on the node at the lower level of the system, such as inserting a kernel driver module. **Note that it not safe enough to deploy Octopoda in unfamiliar network environment.**
 
 Features of Octopoda:
 1. Simple topology.
