@@ -1,7 +1,7 @@
 [Unit]
 Description=Octopoda Https Name Server Deamon for ICN Platform Project
 StartLimitIntervalSec=1
-After=network-online.target
+After=network.target
 [Service]
 Type=simple
 Restart=always

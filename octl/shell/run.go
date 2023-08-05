@@ -9,11 +9,17 @@ import (
 	"octl/config"
 	"octl/nameclient"
 	"octl/output"
+	"octl/node"
 	"os"
 	"path/filepath"
 )
 
-func RunTask(task string, nodes []string) {
+func RunTask(task string, names []string) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+
 	isScript := true
 	isBackground := true
 	if task[0] == '{' {
@@ -39,7 +45,12 @@ func RunTask(task string, nodes []string) {
 	}
 }
 
-func runScript(task string, nodes []string) {
+func runScript(task string, names []string) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+
 	f, err := os.OpenFile(task, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		fmt.Println(task, " is not a script")
@@ -71,7 +82,12 @@ func runScript(task string, nodes []string) {
 	output.PrintJSON(raw)
 }
 
-func runCmd(task string, nodes []string, bg bool) {
+func runCmd(task string, names []string, bg bool) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+	
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,

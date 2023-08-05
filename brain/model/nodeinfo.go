@@ -15,6 +15,7 @@ const (
 
 type NodeInfo struct {
 	Name      string
+	Addr      string
 	State     int32
 	OnlineTs  int64
 	OfflineTs int64
@@ -60,7 +61,7 @@ func InitNodeMap() {
 	}()
 }
 
-func StoreNode(name string, conn *net.Conn) {
+func StoreNode(name, addr string, conn *net.Conn) {
 	var node *NodeModel
 
 	NodesLock.Lock()
@@ -81,6 +82,7 @@ func StoreNode(name string, conn *net.Conn) {
 		}
 		NodeMap[name] = node
 	}
+	node.Addr = addr
 	node.MsgConn = conn
 	node.State = NodeStateReady
 	node.OnlineTs = time.Now().UnixMilli()
@@ -144,10 +146,11 @@ func GetNodesInfoAll() ([]*NodeModel, bool) {
 }
 
 var (
-	GetConnOk = 0
+	GetConnOk     = 0
 	GetConnNoNode = 1
 	GetConnNoConn = 2
 )
+
 func GetNodeMsgConn(name string) (*net.Conn, int) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()

@@ -8,15 +8,17 @@ import (
 
 type NodeJoinInfo struct {
 	Name string `json:"name"`
+	Addr string `json:"addr"`
 }
 
 type NodeJoinResponse struct {
 	Ts  int64 `json:"ts"`
 }
 
-func MakeNodeJoin() []byte {
+func MakeNodeJoin(addr string) []byte {
 	nodeJoinInfo := NodeJoinInfo{
 		Name: config.GlobalConfig.Name,
+		Addr: addr,
 	}
 	serialized_info, err := config.Jsoner.Marshal(nodeJoinInfo)
 	if err != nil {
