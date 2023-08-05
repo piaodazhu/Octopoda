@@ -110,6 +110,17 @@ With this subcmd we can get the running log of master or a given node. The argum
 
 Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be return.
 
+### GROUP
+
+> `usage: octl group [get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]`
+
+With this subcmd we can create/get/query a node group, which is a set consists of multiple nodes. When calling `file distrib/spread`, `run` and writing scenarios deployment file, we can use `@GroupName` to represent multiple nodes with the group name. Its useful when the number of nodes is large. For example:
+
+1. We set a group g1 to present node1 and node2: `octl group get g1 node1 node2`.
+2. Then we run command: `octl run '{hostname}' @g1 node3`
+3. Then we get the result: the hostname of node1, node2 and node3.
+
+Note that we can use more than one groups in arguments, or mix node names with group names, and the final node names will be automatically de-duplicated. When we set a group with some nodes, **Brain** will check if all nodes are healthy or if the group is already exists. To disable this check, use `octl group set-nocheck` instead of `octl group set`.
 
 ## B. Scenario Deployment
 ### CREATE
