@@ -4,5 +4,6 @@ use (
 	./brain
 	./httpNameServer
 	./octl
+	./pakma
 	./tentacle
 )
