@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"octl/config"
 	"octl/nameclient"
+	"octl/node"
 	"octl/output"
 	"octl/task"
 	"os"
@@ -112,7 +113,12 @@ type FileSpreadParams struct {
 	TargetNodes []string
 }
 
-func SpreadFile(FileOrDir string, targetPath string, nodes []string) {
+func SpreadFile(FileOrDir string, targetPath string, names []string) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+
 	fsParams := &FileSpreadParams{
 		TargetPath:  targetPath,
 		FileOrDir:   FileOrDir,
@@ -154,7 +160,12 @@ type FileDistribParams struct {
 	TargetNodes []string
 }
 
-func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
+func DistribFile(localFileOrDir string, targetPath string, names []string) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+
 	if targetPath == "." {
 		targetPath = ""
 	} else if targetPath[len(targetPath)-1] != '/' {
@@ -177,7 +188,7 @@ func DistribFile(localFileOrDir string, targetPath string, nodes []string) {
 	} else {
 		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
 	}
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		output.PrintFatalln("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
 	}
@@ -288,6 +299,9 @@ type FilePullParams struct {
 }
 
 func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
+	if len(node) == 0 || node[0] == '@' {
+		output.PrintFatalln("command pull not support node group")
+	}
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,

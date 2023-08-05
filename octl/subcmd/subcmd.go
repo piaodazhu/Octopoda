@@ -12,7 +12,7 @@ import (
 
 func Create(arglist []string) {
 	if len(arglist) == 0 {
-		goto usage 
+		goto usage
 	} else if len(arglist) == 1 {
 		scenario.Create(arglist[0], "yourApp")
 	} else if len(arglist) == 2 || arglist[1] != "with" {
@@ -335,4 +335,39 @@ func Pakma(arglist []string) {
 	return
 usage:
 	PrintUsage("pakma")
+}
+
+func Group(arglist []string) {
+	switch arglist[0] {
+	case "get":
+		if len(arglist) != 2 {
+			goto usage
+		}
+		node.GroupGet(arglist[1])
+	case "get-all":
+		if len(arglist) != 1 {
+			goto usage
+		}
+		node.GroupGetAll()
+	case "set":
+		if len(arglist) <= 2 {
+			goto usage
+		}
+		node.GroupSet(arglist[1], false, arglist[2:])
+	case "set-nocheck":
+		if len(arglist) <= 2 {
+			goto usage
+		}
+		node.GroupSet(arglist[1], true, arglist[2:])
+	case "del":
+		if len(arglist) != 2 {
+			goto usage
+		}
+		node.GroupDel(arglist[1])
+	default:
+		goto usage
+	}
+	return
+usage:
+	PrintUsage("group")
 }

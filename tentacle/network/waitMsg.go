@@ -27,7 +27,8 @@ func ReadAndServe() {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue
 			}
-			err = message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin())
+			ipstr := conn.LocalAddr().(*net.TCPAddr).IP.String()
+			err = message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
 			if err != nil {
 				conn.Close()
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))

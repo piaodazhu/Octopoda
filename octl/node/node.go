@@ -1,6 +1,9 @@
 package node
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,4 +56,32 @@ func NodePrune() {
 		output.PrintFatalln("Get")
 	}
 	res.Body.Close()
+}
+
+func NodesParse(names []string) ([]string, error) {
+	// parse nodes
+	body, _ := json.Marshal(names)
+
+	url := fmt.Sprintf("http://%s/%s%s",
+		nameclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
+		config.GlobalConfig.Api.NodesParse,
+	)
+	res, err := http.Post(url, "application/json", bytes.NewReader(body))
+	if err != nil {
+		output.PrintFatalln("Get")
+	}
+	defer res.Body.Close()
+
+	raw, _ := io.ReadAll(res.Body)
+	if res.StatusCode == 200 {
+		nodes := []string{}
+		err := json.Unmarshal(raw, &nodes)
+		if err != nil {
+			output.PrintFatalln(err)
+		}
+		return nodes, nil
+	} else {
+		return nil, errors.New(string(raw))
+	}
 }

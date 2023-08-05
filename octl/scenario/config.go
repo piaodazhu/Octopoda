@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"octl/config"
 	"octl/nameclient"
+	"octl/node"
 	"octl/output"
 	"os"
 )
@@ -60,7 +61,7 @@ func checkConfig(config *ScenarioConfigModel) error {
 		return ErrMissingFields{}
 	}
 
-	nodeset := map[string]struct{}{}
+	// nodeset := map[string]struct{}{}
 	for i := range config.Applications {
 		app := &config.Applications[i]
 		if app.Name == "" || app.Description == "" || app.ScriptPath == "" || len(app.Nodes) == 0 {
@@ -78,8 +79,12 @@ func checkConfig(config *ScenarioConfigModel) error {
 		}
 
 		// collect all nodename then check once
-		for _, node := range app.Nodes {
-			nodeset[node] = struct{}{}
+		// for _, node := range app.Nodes {
+		// 	nodeset[node] = struct{}{}
+		// }
+		app.Nodes, err = node.NodesParse(app.Nodes)
+		if err != nil {
+			return ErrInvalidNode{}
 		}
 
 		// check: must implement the 4 basic target
@@ -90,9 +95,9 @@ func checkConfig(config *ScenarioConfigModel) error {
 	}
 
 	// check node validity
-	if !checkNodes(nodeset) {
-		return ErrInvalidNode{}
-	}
+	// if !checkNodes(nodeset) {
+	// 	return ErrInvalidNode{}
+	// }
 
 	return nil
 }

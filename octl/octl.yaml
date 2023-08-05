@@ -27,6 +27,7 @@ api:
 
   nodesInfo: "/nodes/info"
   nodesStatus: "/nodes/status"
+  nodesParse: "/nodes/parse"
 
   scenarioInfo: "/scenario/info"
   scenarioUpdate: "/scenario/update"
@@ -50,3 +51,6 @@ api:
 
   sshInfo: "/sshinfo"
   pakma: "/pakma"
+
+  group: "/group"
+  groups: "/groups"

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 )
 
 var engine *gin.Engine
@@ -45,6 +46,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.GET("/nodes/info", api.NodesInfo)
 		group.GET("/nodes/status", api.NodesState)
+		group.POST("/nodes/parse", api.NodesParse)
 
 		group.GET("/scenario/info", api.ScenarioInfo)
 		group.POST("/scenario/info", api.ScenarioCreate)
@@ -71,6 +73,13 @@ func initRouter(engine *gin.Engine) {
 		group.POST("/run/cmd", api.RunCmd)
 
 		group.POST("/pakma", api.PakmaCmd)
+
+		
+		group.POST("/group", api.GroupSetGroup)
+		group.GET("/group", api.GroupGetGroup)
+		group.DELETE("/group", api.GroupDeleteGroup)
+
+		group.GET("/groups", RateLimiter(1, 1), api.GroupGetAll)
 	}
 }
 
@@ -111,4 +120,14 @@ func BusyBlocker() gin.HandlerFunc {
 func ListenCommand() error {
 	listenaddr := fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
 	return engine.Run(listenaddr)
+}
+
+func RateLimiter(r float64, burst int) gin.HandlerFunc {
+	limiter := rate.NewLimiter(rate.Limit(r), burst)
+	return func(ctx *gin.Context) {
+		if !limiter.Allow() {
+			ctx.AbortWithStatusJSON(403, fmt.Sprintf("rate limit(r=%.1f,b=%d)", r, burst))
+		}
+		ctx.Next()
+	}
 }

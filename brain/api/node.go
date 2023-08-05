@@ -5,6 +5,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/rdb"
 	"brain/sys"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 
 type NodeInfoText struct {
 	Name         string `json:"name"`
+	Addr         string `json:"addr"`
 	Health       string `json:"health"`
 	MsgConnState string `json:"msg_conn"`
 	OnlineTime   string `json:"online_time,omitempty"`
@@ -34,6 +36,7 @@ type NodesInfoText struct {
 func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 	res := &NodeInfoText{
 		Name: node.Name,
+		Addr: node.Addr,
 	}
 	switch node.State {
 	case 0:
@@ -154,7 +157,7 @@ func NodeStatus(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	
+
 	err = json.Unmarshal(raw, &status)
 	if err != nil {
 		logger.Comm.Println("NodeStatus Unmarshal", err)
@@ -230,4 +233,46 @@ sendres:
 func NodePrune(ctx *gin.Context) {
 	model.PruneDeadNode()
 	ctx.Status(200)
+}
+
+// NodesParse will: 1 parse group to nodes 2 check node health 3 remove duplicate nodes
+func NodesParse(ctx *gin.Context) {
+	names := []string{}
+	if err := ctx.Bind(&names); err != nil {
+		ctx.JSON(400, err)
+		return
+	}
+	nodeSet := map[string]struct{}{}
+	for _, name := range names {
+		if len(name) == 0 {
+			continue
+		}
+		if _, ok := nodeSet[name]; ok {
+			continue
+		}
+
+		if name[0] == '@' {
+			res, ok := rdb.GroupGet(name[1:])
+			if !ok || len(res) == 0 {
+				ctx.String(400, "invalid group %s", name[1:])
+				return
+			}
+			for _, node := range res {
+				nodeSet[node] = struct{}{}
+			}
+		} else {
+			res, ok := model.GetNodeState(name)
+			if !ok || res != model.NodeStateReady {
+				ctx.String(400, "invalid node %s", name)
+				return
+			}
+			nodeSet[name] = struct{}{}
+		}
+	}
+
+	nodes := []string{}
+	for node := range nodeSet {
+		nodes = append(nodes, node)
+	}
+	ctx.JSON(200, nodes)
 }
