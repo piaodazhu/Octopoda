@@ -1,12 +1,32 @@
 #!/bin/bash
-NAME=renjiang
-INSTALL_VERSION=v1.5.2
+if [[ $# == 0 ]];
+then
+	echo "usage: bash setup_plus.sh <tentacle_name>, or bash setup_plus.sh tlist <namelist_file>"
+	exit 0
+fi
+
+if [[ $# == 2 ]];
+then
+	for line in `cat $2`
+	do
+		bash setup_plus.sh $line
+	done && \
+	echo "DONE"
+	exit 0
+elif [[ $# > 2 ]];
+then	
+	echo "usage: bash setup_plus.sh <tentacle_name>, or bash setup_plus.sh tlist <namelist_file>"
+	exit 1
+fi
+
+NAME=$1
 INSTALL_ARCH=arm
+INSTALL_VERSION=v1.5.2
+OUTPUT_DIR=./installers/
+
 HTTPNS_URL=https://10.108.30.85:3455/release
 CERTGEN_SCRIPT=./httpNameServer/CertGen.sh
 CACERT_DIR=./httpNameServer/ca
-OUTPUT_DIR=./installers/
-
 
 # prepare scripts and keys
 WORK_DIR=${OUTPUT_DIR}/installer_$NAME
@@ -19,9 +39,6 @@ wget --ca-certificate=$NAME/ca.pem --certificate=$NAME/client.pem --private-key=
 wget --ca-certificate=$NAME/ca.pem --certificate=$NAME/client.pem --private-key=$NAME/client.key \
 	${HTTPNS_URL}/pakma_${INSTALL_VERSION}_linux_${INSTALL_ARCH}.tar.xz || (rm -rf ${WORK_DIR} && exit 1)
 
-# wget --ca-certificate /etc/octopoda/cert/ca.pem --certificate /etc/octopoda/cert/client.pem --certificate-type PEM --private-key=/etc/octopoda/cert/client.key ${HTTPNS_URL}/tentacle_${INSTALL_VERSION}_linux_${INSTALL_ARCH}.tar.xz || (rm -rf ${WORK_DIR} && exit 1)
-# wget --ca-certificate /etc/octopoda/cert/ca.pem --certificate /etc/octopoda/cert/client.pem --certificate-type PEM --private-key=/etc/octopoda/cert/client.key ${HTTPNS_URL}/pakma_${INSTALL_VERSION}_linux_${INSTALL_ARCH}.tar.xz || (rm -rf ${WORK_DIR} && exit 1)
-
 # write installation script
 cat > install.sh << EOF
 if [ "\$(id -u)" != "0" ]; then
@@ -32,9 +49,10 @@ tar -Jxvf tentacle_${INSTALL_VERSION}_linux_${INSTALL_ARCH}.tar.xz && \\
 	cd tentacle_${INSTALL_VERSION}_linux_${INSTALL_ARCH} && \\
 	sed -i "s/pi0/$NAME/" tentacle.yaml && bash setup.sh && \\
 	echo "setup tentacle done" || exit 1
-cd ../ && cp $NAME/ca.pem $NAME/client.key $NAME/client.pem /etc/octopoda/tentacle/cert/ && echo "copy cert and key done" || exit 1
+cd ../ && mkdir -p /etc/octopoda/cert/ && cp $NAME/ca.pem $NAME/client.key $NAME/client.pem /etc/octopoda/cert/ && \\
+	echo "copy cert and key done" || exit 1
 tar -Jxvf pakma_${INSTALL_VERSION}_linux_${INSTALL_ARCH}.tar.xz && \\
-	cd pakma_${INSTALL_VERSION}_linux_${INSTALL_ARCH} && bash setup.sh tentacle \\
+	cd pakma_${INSTALL_VERSION}_linux_${INSTALL_ARCH} && bash setup.sh tentacle && \\
 	echo "setup pakma_tentacle done" || exit 1
 echo "DONE"
 EOF

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -43,27 +44,42 @@ func InitNameClient() {
 		logger.Network.Fatal("pingNameServer:", err.Error())
 		return
 	}
-	go func() {
-		fails := 0
-		for {
-			entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
-			if err != nil {
-				logger.Network.Println("NameQuery error:", err.Error())
-				time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
-				fails++
-				if fails > 10 {
-					brainHeartAddr = defaultBrainHeartAddr
-					brainMsgAddr = defaultBrainMsgAddr
-				}
-				continue
-			}
-			brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
-			brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
-			fails = 0
-			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
-		}
-	}()
+	// go func() {
+	// 	fails := 0
+	// 	for {
+	// 		entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
+	// 		if err != nil {
+	// 			logger.Network.Println("NameQuery error:", err.Error())
+	// 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
+	// 			fails++
+	// 			if fails > 10 {
+	// 				brainHeartAddr = defaultBrainHeartAddr
+	// 				brainMsgAddr = defaultBrainMsgAddr
+	// 			}
+	// 			continue
+	// 		}
+	// 		brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
+	// 		brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
+	// 		fails = 0
+	// 		time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
+	// 	}
+	// }()
+	ResolveBrain()
 	fetchTokens()
+}
+
+func ResolveBrain() error {
+	if !config.GlobalConfig.HttpsNameServer.Enabled {
+		return errors.New("name resolution not enabled")
+	}
+	entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
+	if err != nil {
+		logger.Network.Println("NameQuery error:", err.Error())
+		return err
+	}
+	brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
+	brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
+	return nil
 }
 
 func InitHttpsClient(caCert, cliCert, cliKey string) error {
@@ -148,7 +164,6 @@ func GetToken() (*message.Tokens, error) {
 	}
 	return tks, nil
 }
-
 
 func fetchTokens() {
 	ticker := time.NewTicker(security.Fetchinterval)

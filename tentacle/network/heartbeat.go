@@ -17,6 +17,7 @@ func KeepAlive() {
 	go func() {
 		retry := 0
 	reconnect:
+		ResolveBrain()
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := net.Dial("tcp", brainHeartAddr)
 			if err != nil {
