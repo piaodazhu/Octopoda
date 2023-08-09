@@ -57,6 +57,16 @@ func GroupSetGroup(ctx *gin.Context) {
 		ctx.JSON(400, struct{}{})
 		return
 	}
+	// unique
+	nodes := []string{}
+	seen := map[string]struct{}{}
+	for _, node := range ginfo.Nodes {
+		seen[node] = struct{}{}
+	}
+	for node := range seen {
+		nodes = append(nodes, node)
+	}
+
 	// check nodes
 	if !ginfo.NoCheck {
 		if rdb.GroupExist(ginfo.Name) {
@@ -64,7 +74,7 @@ func GroupSetGroup(ctx *gin.Context) {
 			return
 		}
 		invalid := []string{}
-		for _, node := range ginfo.Nodes {
+		for _, node := range nodes {
 			if state, ok := model.GetNodeState(node); !ok || state != model.NodeStateReady {
 				invalid = append(invalid, node)
 			}
@@ -76,7 +86,7 @@ func GroupSetGroup(ctx *gin.Context) {
 	}
 
 	// add group nodes
-	if ok := rdb.GroupAdd(ginfo.Name, ginfo.Nodes); !ok {
+	if ok := rdb.GroupAdd(ginfo.Name, nodes); !ok {
 		ctx.String(404, "set group %s failed", ginfo.Name)
 		return
 	}

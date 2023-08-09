@@ -18,7 +18,7 @@ const timefmt string = "2006-01-02@15:04:05"
 func Pakma(firstarg string, args []string) {
 	var subcmd string = firstarg
 	var version string = ""
-	var nodes []string
+	var names []string
 
 	var timestr, limit string
 	END := len(args)
@@ -64,7 +64,7 @@ func Pakma(firstarg string, args []string) {
 			return
 		}
 		version = args[0]
-		nodes = args[1:]
+		names = args[1:]
 	case "state":
 		fallthrough
 	case "confirm":
@@ -74,12 +74,17 @@ func Pakma(firstarg string, args []string) {
 	case "clean":
 		fallthrough
 	case "downgrade":
-		nodes = args
+		names = args
 	case "history":
-		nodes = args[:END]
+		names = args[:END]
 	default:
 		output.PrintFatalln("pakma subcommand not support: ", firstarg)
 		return
+	}
+
+	nodes, err := NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
 	}
 
 	URL := fmt.Sprintf("http://%s/%s%s",

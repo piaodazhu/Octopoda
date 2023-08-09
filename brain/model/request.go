@@ -4,6 +4,7 @@ import (
 	"brain/alert"
 	"brain/message"
 	"brain/snp"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -74,6 +75,22 @@ retry:
 	}
 
 	return resbuf, nil
+}
+
+func RequestWithTimeout(name string, mtype int, payload []byte, timeout time.Duration) (res []byte, err error) {
+	ch := make(chan struct{}, 1)
+	go func() {
+		res, err = Request(name, mtype, payload)
+		ch <- struct{}{}
+		close(ch)
+	} ()
+
+	select {
+	case <- time.After(timeout):
+		return nil, errors.New("request timeout")
+	case <- ch:
+		return
+	}
 }
 
 func min(x, y int) int {

@@ -151,6 +151,10 @@ func NodeStatus(ctx *gin.Context) {
 		ctx.JSON(200, statusToText(sys.LocalStatus()))
 		return
 	}
+	if state, ok := model.GetNodeState(name); !ok || state != model.NodeStateReady {
+		ctx.JSON(404, struct{}{})
+		return
+	}
 	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeStatus", err)
@@ -168,7 +172,7 @@ func NodeStatus(ctx *gin.Context) {
 }
 
 func NodesState(ctx *gin.Context) {
-	var nodes []*model.NodeModel
+	var nodes, aliveNodes []*model.NodeModel
 	var nodesStatus NodesStatusText
 	var ok bool
 
@@ -176,10 +180,16 @@ func NodesState(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 	}
 
-	channel := make(chan model.Status, len(nodes))
+	for _, n := range nodes {
+		if n.State == model.NodeStateReady {
+			aliveNodes = append(aliveNodes, n)
+		}
+	}
+
+	channel := make(chan model.Status, len(aliveNodes))
 	var wg sync.WaitGroup
-	wg.Add(len(nodes))
-	for _, node := range nodes {
+	wg.Add(len(aliveNodes))
+	for _, node := range aliveNodes {
 		go getNodeStatus(node.Name, channel, &wg)
 	}
 	wg.Wait()
@@ -198,7 +208,7 @@ func NodesState(ctx *gin.Context) {
 		disk_used_sum += v.DiskUsed
 		disk_tot_sum += v.DiskTotal
 	}
-	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum/float64(len(nodes)))
+	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum/float64(len(aliveNodes)))
 	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100)/float64(mem_tot_sum))
 	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100)/float64(disk_tot_sum))
 

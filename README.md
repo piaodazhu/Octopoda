@@ -46,38 +46,79 @@ Features of Octopoda:
 - Each application running on a specific node is called a **NodeApp**, and it can be identified uniquely by (nodename, application name, scenario name).
 - The granularity of version control are scenario and NodeApp. **Version updates of NodeApps automatically trigger version updates of the scenario they belong to.**
 
-# Build & Try
+# Quick Start
 ```sh
-# 1 build Tentacle
-cd tentacle
-go mod tidy
-(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o tentacle .
+# 1 Generate keys and certificates
+cd httpNameServer
+bash ./CertGen.sh ca helloCa # generate your ca key and cert ( keep your ca.key very safe! )
+bash ./CertGen.sh server helloNs 1.1.1.1 # for your httpsNameServer
+bash ./CertGen.sh client helloBrain # for your Brain
+bash ./CertGen.sh client helloTentacle # for your Tentacle 
 
-# 2 build Brain
-cd brain
-go mod tidy
-(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o brain .
+cp ca.pem server.key server.pem /etc/octopoda/cert/ # copy to your httpsNameServer
+cp ca.pem client.key client.pem /etc/octopoda/cert/ # copy to your Brain and Tentacle
 
-# 3 build Octl
-cd octl
-go mod tidy
-(GOOS=? GOARCH=? CGO_ENABLED=?) go build -o octl .
+# 2 Install httpsNameServer on a machine
+sudo systemctl start redis-server
+tar -Jxvf httpns_v1.5.2_linux_amd64.tar.xz
+cd httpns_v1.5.2_linux_amd64
+# then modify httpns.yaml if you want 
+# run it foreground
+sudo ./httpns -p
+# or install it and start background
+sudo bash setup.sh
 
-# 4 copy necessary files to corresponding nodes
+# 3 Install Brain on a machine
+sudo systemctl start redis-server
+tar -Jxvf brain_v1.5.2_linux_amd64.tar.xz
+cd brain_v1.5.2_linux_amd64
+# then modify brain.yaml if you want (httpsNameServer, name, nic is important)
+# run it foreground
+sudo ./brain -p
+# or install it and start background
+sudo bash setup.sh
 
-# 5 edit corresponding configuration
+# 4 Install Tentacle on a machine
+tar -Jxvf tentacle_v1.5.2_linux_amd64.tar.xz
+cd tentacle_v1.5.2_linux_amd64
+# then modify tentacle.yaml if you want (httpsNameServer, name, brain is important)
+# run it foreground
+sudo ./tentacle -p
+# or install it and start background
+sudo bash setup.sh
 
-# 6.1 run them in terminal (with -p to print log to Stdout)
-./tentacle -p   # Should be root user or use sudo
-./brain -p      # Should be root user or use sudo
+# 5 Install Pakma on your Brain or Tentacle machine (optional, only for online upgrade)
+tar -Jxvf pakma_v1.5.2_linux_amd64.tar.xz
+cd pakma_v1.5.2_linux_amd64
+# make sure pakma is installed after Brain or Tentacle
+# install it for your Brain
+sudo bash setup.sh brain
+# or install it for your Tentacle
+sudo bash setup.sh tentacle
 
-# 6.2 you can also run them as deamon (Highly recommended)
-bash setup.sh          # Install and run. Should be root user or use sudo
-bash uninstall.sh      # Stop and Uninstall. Should be root user or use sudo
+# 6 Install Octl
+cd octl_v1.5.2_linux_amd64
+# then modify octl.yaml if you want (httpsNameServer, name is important)
+sudo cp octl.yaml /etc/octopoda/octl/
+sudo cp octl /usr/local/bin/
 
-# 7 Manage the Octopoda network with Octl
-./octl help     # get some help
-./octl <subcmd> <args>
+# 7 Hello World
+$ octl get nodes
+# Info: NameService client is enabled. nsAddr=10.108.30.85:3455
+# {
+#   "nodes": [
+#     {
+#       "name": "hello",
+#       "addr": "192.168.1.4",
+#       "health": "Healthy",
+#       "msg_conn": "On",
+#       "online_time": "2m42.483697064s"
+#     }
+#   ],
+#   "total": 1,
+#   "active": 1,
+#   "offline": 0
+# }
 ```
 
 # Octl Command Manual
