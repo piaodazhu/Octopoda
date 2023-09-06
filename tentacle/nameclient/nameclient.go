@@ -1,4 +1,4 @@
-package network
+package nameclient
 
 import (
 	"crypto/tls"
@@ -18,7 +18,7 @@ import (
 
 var nsAddr string
 var httpsClient *http.Client
-var brainHeartAddr, brainMsgAddr string
+var BrainHeartAddr, BrainMsgAddr string
 
 func InitNameClient() {
 	defaultBrainHeartAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.HeartbeatPort)
@@ -26,8 +26,8 @@ func InitNameClient() {
 	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
-		brainHeartAddr = defaultBrainHeartAddr
-		brainMsgAddr = defaultBrainMsgAddr
+		BrainHeartAddr = defaultBrainHeartAddr
+		BrainMsgAddr = defaultBrainMsgAddr
 		return
 	}
 
@@ -44,26 +44,6 @@ func InitNameClient() {
 		logger.Network.Fatal("pingNameServer:", err.Error())
 		return
 	}
-	// go func() {
-	// 	fails := 0
-	// 	for {
-	// 		entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
-	// 		if err != nil {
-	// 			logger.Network.Println("NameQuery error:", err.Error())
-	// 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval) * 3)
-	// 			fails++
-	// 			if fails > 10 {
-	// 				brainHeartAddr = defaultBrainHeartAddr
-	// 				brainMsgAddr = defaultBrainMsgAddr
-	// 			}
-	// 			continue
-	// 		}
-	// 		brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
-	// 		brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
-	// 		fails = 0
-	// 		time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
-	// 	}
-	// }()
 	ResolveBrain()
 	fetchTokens()
 }
@@ -72,13 +52,13 @@ func ResolveBrain() error {
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		return errors.New("name resolution not enabled")
 	}
-	entry, err := nameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
+	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".tentacleFace")
 	if err != nil {
 		logger.Network.Println("NameQuery error:", err.Error())
 		return err
 	}
-	brainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
-	brainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
+	BrainHeartAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
+	BrainMsgAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port2)
 	return nil
 }
 
@@ -123,7 +103,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func nameQuery(name string) (*message.NameEntry, error) {
+func NameQuery(name string) (*message.NameEntry, error) {
 	res, err := httpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err

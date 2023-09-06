@@ -6,6 +6,7 @@ import (
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/message"
+	"tentacle/nameclient"
 	"tentacle/service"
 	"tentacle/snp"
 	"time"
@@ -22,7 +23,7 @@ func ReadAndServe() {
 				}
 			}()
 			joinwg.Wait()
-			conn, err := net.Dial("tcp", brainMsgAddr)
+			conn, err := net.Dial("tcp", nameclient.BrainMsgAddr)
 			if err != nil {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue

@@ -92,6 +92,8 @@ func main() {
 		subcmd.SSH(args[2:])
 	case "setssh":
 		subcmd.SetSSH(args[2:])
+	case "getssh":
+		subcmd.GetSSH(args[2:])
 	case "delssh":
 		subcmd.DelSSH(args[2:])
 	case "help":

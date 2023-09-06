@@ -49,4 +49,9 @@ pakma:
   port: 3451
   root: "/var/octopoda/brain/pakma/"
   previewDuration: 120
+proxylite:
+  port: 9998
+  minMapPort: 10000
+  maxMapPort: 10010
+  freshTime: 20
 jsonFast: true
