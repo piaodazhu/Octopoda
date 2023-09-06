@@ -11,6 +11,7 @@ type ConfigModel struct {
 	Sslinfo         SslinfoModel      `mapstructure:"ssl"`
 	MailAlert       MailAlertModel    `mapstructure:"mailAlert"`
 	PakmaServer     PakmaModel        `mapstructure:"pakma"`
+	ProxyliteServer ProxyLiteModel    `mapstructure:"proxylite"`
 	JsonFast        bool              `mapstructure:"jsonFast"`
 }
 
@@ -74,4 +75,11 @@ type PakmaModel struct {
 	Root            string `mapstructure:"root"`
 	Port            uint16 `mapstructure:"port"`
 	PreviewDuration int    `mapstructure:"previewDuration"`
+}
+
+type ProxyLiteModel struct {
+	Port       uint16 `mapstructure:"port"`
+	MinMapPort uint16 `mapstructure:"minMapPort"`
+	MaxMapPort uint16 `mapstructure:"maxMapPort"`
+	FreshTime  int    `mapstructure:"freshTime"`
 }

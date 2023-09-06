@@ -193,6 +193,16 @@ usage:
 	PrintUsage("setssh")
 }
 
+func GetSSH(arglist []string) {
+	if len(arglist) != 0 {
+		goto usage
+	}
+	shell.GetSSH()
+	return
+usage:
+	PrintUsage("ssh")
+}
+
 func DelSSH(arglist []string) {
 	if len(arglist) != 1 {
 		goto usage
@@ -207,7 +217,7 @@ func SSH(arglist []string) {
 	if len(arglist) != 1 {
 		goto usage
 	}
-	shell.GetSSH(arglist[0])
+	shell.SSH(arglist[0])
 	return
 usage:
 	PrintUsage("ssh")

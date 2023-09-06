@@ -47,6 +47,7 @@ func main() {
 	network.InitNameClient()
 	network.InitTentacleFace()
 	network.WaitNodeJoin()
+	network.InitProxyServer()
 
 	if err := Run(); err != nil {
 		panic(err)

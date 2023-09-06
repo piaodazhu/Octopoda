@@ -150,14 +150,14 @@ func getIpByDevice(device string) (string, error) {
 }
 
 func getTentacleFaceIp() (string, error) {
-	if config.GlobalConfig.TentacleFace.Ip == "" {
+	if config.GlobalConfig.TentacleFace.Ip != "" {
 		return config.GlobalConfig.TentacleFace.Ip, nil
 	}
 	return getIpByDevice(config.GlobalConfig.TentacleFace.NetDevice)
 }
 
 func getOctlFaceIp() (string, error) {
-	if config.GlobalConfig.OctlFace.Ip == "" {
+	if config.GlobalConfig.OctlFace.Ip != "" {
 		return config.GlobalConfig.OctlFace.Ip, nil
 	}
 	return getIpByDevice(config.GlobalConfig.OctlFace.NetDevice)
@@ -202,6 +202,26 @@ func nameRegister(entry *message.RegisterParam) error {
 	form.Set("description", entry.Description)
 	form.Set("ttl", strconv.Itoa(entry.TTL))
 	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s/register", nsAddr), form)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	buf, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	var response message.Response
+	json.Unmarshal(buf, &response)
+	if response.Message != "OK" || res.StatusCode != 200 {
+		return fmt.Errorf(response.Message)
+	}
+	return nil
+}
+
+func nameUnregister(name string) error {
+	form := url.Values{}
+	form.Set("name", name)
+	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s/delete", nsAddr), form)
 	if err != nil {
 		return err
 	}

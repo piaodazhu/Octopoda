@@ -8,12 +8,6 @@ import (
 	"net"
 )
 
-// type Message struct {
-// 	Type int32
-// 	Len  int32
-// 	Raw  string
-// }
-
 const (
 	TypeNodeJoin = iota
 	TypeNodeJoinResponse
@@ -64,6 +58,12 @@ const (
 
 	TypePakmaCommand
 	TypePakmaCommandResponse
+
+	TypeSshRegister
+	TypeSshRegisterResponse
+
+	TypeSshUnregister
+	TypeSshUnregisterResponse
 
 	TypeUndefined
 )
@@ -118,6 +118,12 @@ var MsgTypeString map[int]string = map[int]string{
 
 	TypePakmaCommand:         "TypePakmaCommand",
 	TypePakmaCommandResponse: "TypePakmaCommandResponse",
+
+	TypeSshRegister:         "TypeSshRegister",
+	TypeSshRegisterResponse: "TypeSshRegisterResponse",
+
+	TypeSshUnregister:         "TypeSshUnregister",
+	TypeSshUnregisterResponse: "TypeSshUnregisterResponse",
 }
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

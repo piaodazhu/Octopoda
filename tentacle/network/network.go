@@ -8,7 +8,6 @@ func Run() {
 	wg.Add(1)
 	joinwg.Add(1)
 	KeepAlive()
-	// ListenAndServe()
 	ReadAndServe()
 	wg.Wait()
 }

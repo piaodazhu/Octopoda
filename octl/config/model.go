@@ -40,7 +40,7 @@ type APIs struct {
 
 	NodesInfo   string `mapstructure:"nodesInfo"`
 	NodesStatus string `mapstructure:"nodesStatus"`
-	NodesParse string `mapstructure:"nodesParse"`
+	NodesParse  string `mapstructure:"nodesParse"`
 
 	ScenarioInfo      string `mapstructure:"scenarioInfo"`
 	ScenarioVersion   string `mapstructure:"scenarioVersion"`
@@ -63,7 +63,7 @@ type APIs struct {
 
 	TaskState string `mapstructure:"taskState"`
 
-	SshInfo string `mapstructure:"sshInfo"`
+	Ssh string `mapstructure:"ssh"`
 
 	Groups string `mapstructure:"groups"`
 	Group  string `mapstructure:"group"`

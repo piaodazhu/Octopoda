@@ -6,6 +6,7 @@ import (
 	"tentacle/app"
 	"tentacle/config"
 	"tentacle/logger"
+	"tentacle/nameclient"
 	"tentacle/network"
 	"tentacle/service"
 )
@@ -36,7 +37,7 @@ func main() {
 
 	app.InitAppModel()
 
-	network.InitNameClient()
+	nameclient.InitNameClient()
 	service.InitService()
 
 	network.Run()
