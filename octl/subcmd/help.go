@@ -35,6 +35,7 @@ File:pull:octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> ap
 
 SSH:ssh:octl ssh <anyname>:octl ssh pi0
 SSH:setssh:octl setssh <anyname>:octl setssh pi0
+SSH:getssh:octl getssh:octl getssh
 SSH:delssh:octl delssh <anyname>:octl delssh pi0
 
 Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> node2> ...:octl run '{ls ~/}' pi0

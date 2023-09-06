@@ -398,6 +398,12 @@ With this subcmd we can run a command or a script on given nodes. For running a 
 
 Set SSH login information binding with a name. It will be uploaded to HttpsNameServer, so make sure HttpsNameServer is online.
 
+### getssh
+
+> `usage: octl getssh`
+
+List all SSH services in this network.
+
 ### delssh
 
 > `usage: octl delssh <name>`
