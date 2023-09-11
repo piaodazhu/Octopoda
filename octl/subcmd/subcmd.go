@@ -331,11 +331,22 @@ func Run(arglist []string) {
 	if len(arglist) < 2 {
 		goto usage
 	}
-	shell.RunTask(arglist[0], arglist[1:])
+	shell.Run(arglist[0], arglist[1:])
 	return
 usage:
 	PrintUsage("run")
 }
+
+func XRun(arglist []string) {
+	if len(arglist) < 2 {
+		goto usage
+	}
+	shell.XRun(arglist[0], arglist[1:])
+	return
+usage:
+	PrintUsage("run")
+}
+
 
 func Pakma(arglist []string) {
 	if len(arglist) < 2 {

@@ -39,6 +39,7 @@ SSH:getssh:octl getssh:octl getssh
 SSH:delssh:octl delssh <anyname>:octl delssh pi0
 
 Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> node2> ...:octl run '{ls ~/}' pi0
+Command:xrun:octl xrun [ '{<command>}' | '(<bgcommand>)' | <script> ] [-d<delayseconds>] <node1> node2> ...:octl xrun '{reboot}' pi0 pi1
 
 Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
 `

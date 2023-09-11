@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -18,10 +19,12 @@ type ScriptParams struct {
 	FileName   string
 	TargetPath string
 	FileBuf    string
+	DelayTime  int
 }
 
 func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
+	delayStr := ctx.PostForm("delayTime")
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -30,6 +33,15 @@ func RunScript(ctx *gin.Context) {
 	if script.Size == 0 || len(targetNodes) == 0 {
 		logger.Request.Println("RunScript Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
+		ctx.JSON(400, rmsg)
+		return
+	}
+
+	var delay int
+	var err error
+	if delay, err = strconv.Atoi(delayStr); err != nil {
+		logger.Request.Println("RunScript Delay Arg Error: ", err.Error())
+		rmsg.Rmsg = "ERORR: arguments: " + err.Error()
 		ctx.JSON(400, rmsg)
 		return
 	}
@@ -48,6 +60,7 @@ func RunScript(ctx *gin.Context) {
 		FileName:   script.Filename,
 		TargetPath: "scripts/",
 		FileBuf:    content,
+		DelayTime:  delay,
 	}
 	payload, _ := config.Jsoner.Marshal(&sparams)
 
@@ -65,12 +78,6 @@ func RunScript(ctx *gin.Context) {
 	for i := range nodes {
 		name := nodes[i]
 		results[i].Name = name
-		// if addr, exists := model.GetNodeAddress(name); exists {
-		// 	wg.Add(1)
-		// 	go runScript(addr, payload, &wg, &results[i].Result)
-		// } else {
-		// 	results[i].Result = "NodeNotExists"
-		// }
 		wg.Add(1)
 		go runScript(name, payload, &wg, &results[i].Result)
 	}
@@ -81,11 +88,13 @@ func RunScript(ctx *gin.Context) {
 type CommandParams struct {
 	Command    string
 	Background bool
+	DelayTime  int
 }
 
 func RunCmd(ctx *gin.Context) {
 	cmd := ctx.PostForm("command")
 	bg := ctx.PostForm("background")
+	delayStr := ctx.PostForm("delayTime")
 	var isbg bool = false
 	if len(bg) != 0 {
 		isbg = true
@@ -101,14 +110,25 @@ func RunCmd(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
+
+	var delay int
+	var err error
+	if delay, err = strconv.Atoi(delayStr); err != nil {
+		logger.Request.Println("RunScript Delay Arg Error: ", err.Error())
+		rmsg.Rmsg = "ERORR: arguments: " + err.Error()
+		ctx.JSON(400, rmsg)
+		return
+	}
+
 	cParams := CommandParams{
 		Command:    cmd,
 		Background: isbg,
+		DelayTime:  delay,
 	}
 	payload, _ := json.Marshal(cParams)
 
 	nodes := []string{}
-	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
+	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "Unmarshal:" + err.Error()
 		ctx.JSON(400, rmsg)
@@ -121,12 +141,6 @@ func RunCmd(ctx *gin.Context) {
 	for i := range nodes {
 		name := nodes[i]
 		results[i].Name = name
-		// if addr, exists := model.GetNodeAddress(name); exists {
-		// 	wg.Add(1)
-		// 	go runCmd(addr, cmd, &wg, &results[i].Result)
-		// } else {
-		// 	results[i].Result = "NodeNotExists"
-		// }
 		wg.Add(1)
 		go runCmd(name, payload, &wg, &results[i].Result)
 	}

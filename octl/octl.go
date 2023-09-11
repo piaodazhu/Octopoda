@@ -86,6 +86,8 @@ func main() {
 		subcmd.Prune(args[2:])
 	case "run":
 		subcmd.Run(args[2:])
+	case "xrun":
+		subcmd.XRun(args[2:])
 	case "pakma":
 		subcmd.Pakma(args[2:])
 	case "ssh":
