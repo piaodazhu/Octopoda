@@ -17,8 +17,10 @@ import (
 var nsAddr string
 var HttpsClient *http.Client
 var BrainAddr string
+var BrainIp string
 
 func InitClient() {
+	BrainIp = config.GlobalConfig.Brain.Ip
 	defaultBrainAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.Port)
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		output.PrintWarningf("NameService client is disabled")
@@ -46,7 +48,8 @@ func InitClient() {
 		output.PrintWarningf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
 		return
 	}
-	BrainAddr = fmt.Sprintf("%s:%d", entry.Ip, entry.Port)
+	BrainIp = entry.Ip
+	BrainAddr = fmt.Sprintf("%s:%d", BrainIp, entry.Port)
 }
 
 func initHttpsClient(caCert, cliCert, cliKey string) error {
@@ -124,6 +127,7 @@ func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
 		return err
 	}
 	defer res.Body.Close()
+	fmt.Println(sshinfo)
 	if res.StatusCode != 200 {
 		return fmt.Errorf("ssh info register rejected by server")
 	}

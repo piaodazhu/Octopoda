@@ -163,6 +163,10 @@ func getOctlFaceIp() (string, error) {
 	return getIpByDevice(config.GlobalConfig.OctlFace.NetDevice)
 }
 
+func GetOctlFaceIp() (string, error) {
+	return getOctlFaceIp()
+}
+
 func InitHttpsClient(caCert, cliCert, cliKey string) error {
 	ca, err := os.ReadFile(caCert)
 	if err != nil {

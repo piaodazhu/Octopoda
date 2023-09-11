@@ -65,6 +65,10 @@ func SetSSH(nodename string) {
 		os.Exit(0)
 	}
 
+	if _, err := nameclient.SshinfoQuery(nodename); err == nil {
+		delSSH(nodename)
+	}
+
 	// ask tentacle to register ssh service
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
@@ -108,7 +112,7 @@ func SetSSH(nodename string) {
 	output.PrintInfoln("SshinfoRegister success")
 }
 
-func DelSSH(nodename string) {
+func delSSH(nodename string) []byte {
 	defer nameclient.NameDelete(nodename, "ssh")
 	URL := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
@@ -120,7 +124,7 @@ func DelSSH(nodename string) {
 	req, err := http.NewRequest("DELETE", URL, nil)
 	if err != nil {
 		output.PrintFatalln("NewRequest: ", err)
-		return
+		return nil
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -129,7 +133,11 @@ func DelSSH(nodename string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	output.PrintJSON(raw)
+	return raw
+}
+
+func DelSSH(nodename string) {
+	output.PrintJSON(delSSH(nodename))
 }
 
 func GetSSH() {
@@ -148,30 +156,12 @@ func GetSSH() {
 }
 
 func SSH(nodename string) {
-	if nodename == "master" {
-		sshMaster()
-		return
-	}
 	sshinfo, err := nameclient.SshinfoQuery(nodename)
 	if err != nil {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
 	addr := fmt.Sprintf("%s:%d", sshinfo.Ip, sshinfo.Port)
 	dossh(addr, sshinfo.Username, sshinfo.Password)
-}
-
-func sshMaster() {
-	var username, passwd string
-	fmt.Println("Please enter its username: ")
-	fmt.Scanln(&username)
-
-	fmt.Println("Please enter its password: ")
-	pass, err := term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
-		output.PrintFatalln("ReadPassword error:", err)
-	}
-	passwd = string(pass)
-	dossh(config.GlobalConfig.Brain.Ip, username, passwd)
 }
 
 func dossh(addr, user, passwd string) {

@@ -1,10 +1,13 @@
 package api
 
 import (
+	"brain/config"
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/network"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +27,15 @@ func SshUnregister(ctx *gin.Context) {
 }
 
 func proxyCmd(ctx *gin.Context, name string, cmdType int) {
+	if name == "master" {
+		ip, _ := network.GetOctlFaceIp()
+		ctx.JSON(200, proxyMsg{
+			Code: 0,
+			Msg: "OK",
+			Data: fmt.Sprintf("%s:%d", ip, config.GlobalConfig.OctlFace.SshPort),
+		})
+		return
+	}
 	if state, ok := model.GetNodeState(name); !ok || state != model.NodeStateReady {
 		ctx.JSON(404, struct{}{})
 		return
