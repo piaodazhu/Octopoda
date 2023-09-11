@@ -148,12 +148,30 @@ func GetSSH() {
 }
 
 func SSH(nodename string) {
+	if nodename == "master" {
+		sshMaster()
+		return
+	}
 	sshinfo, err := nameclient.SshinfoQuery(nodename)
 	if err != nil {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
 	addr := fmt.Sprintf("%s:%d", sshinfo.Ip, sshinfo.Port)
 	dossh(addr, sshinfo.Username, sshinfo.Password)
+}
+
+func sshMaster() {
+	var username, passwd string
+	fmt.Println("Please enter its username: ")
+	fmt.Scanln(&username)
+
+	fmt.Println("Please enter its password: ")
+	pass, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		output.PrintFatalln("ReadPassword error:", err)
+	}
+	passwd = string(pass)
+	dossh(config.GlobalConfig.Brain.Ip, username, passwd)
 }
 
 func dossh(addr, user, passwd string) {
