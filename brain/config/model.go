@@ -29,6 +29,7 @@ type OctlFaceModel struct {
 	NetDevice string `mapstructure:"netDevice"`
 	Ip        string `mapstructure:"ip"`
 	Port      uint16 `mapstructure:"port"`
+	SshPort   uint16 `mapstructure:"sshPort"`
 }
 
 type RedisModel struct {

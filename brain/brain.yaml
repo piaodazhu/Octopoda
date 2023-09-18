@@ -14,6 +14,7 @@ tentacleFace:
 octlFace:
   netDevice: "enp0s31f6"
   port: 12345
+  sshPort: 22
   ip: "0.0.0.0"    # just one of ip and netDevice is needed
 redis:
   ip: "127.0.0.1"

@@ -11,9 +11,10 @@ import (
 	"octl/nameclient"
 	"octl/output"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/piaodazhu/proxylite"
 	"golang.org/x/crypto/ssh"
@@ -24,14 +25,6 @@ type SSHInfo struct {
 	Addr     string
 	Username string
 	Password string
-}
-
-type SSHTerminal struct {
-	Session *ssh.Session
-	exitMsg string
-	stdout  io.Reader
-	stdin   io.Writer
-	stderr  io.Reader
 }
 
 type proxyMsg struct {
@@ -63,6 +56,10 @@ func SetSSH(nodename string) {
 	if confirm != "yes" && confirm != "y" {
 		output.PrintInfoln("you cancelled setssh. Bye")
 		os.Exit(0)
+	}
+
+	if _, err := nameclient.SshinfoQuery(nodename); err == nil {
+		delSSH(nodename)
 	}
 
 	// ask tentacle to register ssh service
@@ -108,7 +105,7 @@ func SetSSH(nodename string) {
 	output.PrintInfoln("SshinfoRegister success")
 }
 
-func DelSSH(nodename string) {
+func delSSH(nodename string) []byte {
 	defer nameclient.NameDelete(nodename, "ssh")
 	URL := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
@@ -120,7 +117,7 @@ func DelSSH(nodename string) {
 	req, err := http.NewRequest("DELETE", URL, nil)
 	if err != nil {
 		output.PrintFatalln("NewRequest: ", err)
-		return
+		return nil
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -129,7 +126,11 @@ func DelSSH(nodename string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	output.PrintJSON(raw)
+	return raw
+}
+
+func DelSSH(nodename string) {
+	output.PrintJSON(delSSH(nodename))
 }
 
 func GetSSH() {
@@ -152,165 +153,67 @@ func SSH(nodename string) {
 	if err != nil {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
-	addr := fmt.Sprintf("%s:%d", sshinfo.Ip, sshinfo.Port)
-	dossh(addr, sshinfo.Username, sshinfo.Password)
+
+	dossh(sshinfo.Username, sshinfo.Ip, sshinfo.Password, sshinfo.Port)
 }
 
-func dossh(addr, user, passwd string) {
-	config := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(passwd),
-		},
+func dossh(user, ip, passwd string, port int) {
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", ip, port), &ssh.ClientConfig{
+		User:            user,
+		Auth:            []ssh.AuthMethod{ssh.Password(passwd)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	// Dial your ssh server.
-	conn, err := ssh.Dial("tcp", addr, config)
+	})
 	if err != nil {
-		log.Fatal("unable to connect: ", err)
+		log.Fatalf("SSH dial error: %s", err.Error())
 	}
-	defer conn.Close()
-
-	session, err := conn.NewSession()
-	if err != nil {
-		log.Fatal("Failed to create session: ", err)
-	}
-	defer session.Close()
-
-	// Once a Session is created, you can execute a single command on
-	// the remote side using the Run method.
-
-	err = New(conn)
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func (t *SSHTerminal) updateTerminalSize() {
-	go func() {
-		// SIGWINCH is sent to the process when the window size of the terminal has
-		// changed.
-		// sigwinchCh := make(chan os.Signal, 1)
-		// signal.Notify(sigwinchCh, syscall.SIGWINCH)
-
-		fd := int(os.Stdin.Fd())
-		termWidth, termHeight, err := term.GetSize(fd)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		// for sigwinch := range sigwinchCh {
-		for {
-			// if sigwinch == nil {
-			// 	return
-			// }
-			time.Sleep(time.Microsecond * 200)
-			currTermWidth, currTermHeight, err := term.GetSize(fd)
-
-			// Terminal size has not changed, don't do anything.
-			if currTermHeight == termHeight && currTermWidth == termWidth {
-				continue
-			}
-
-			t.Session.WindowChange(currTermHeight, currTermWidth)
-			if err != nil {
-				fmt.Printf("Unable to send window-change reqest: %s.", err)
-				continue
-			}
-
-			termWidth, termHeight = currTermWidth, currTermHeight
-		}
-	}()
-
-}
-
-func (t *SSHTerminal) interactiveSession() error {
-
-	defer func() {
-		if t.exitMsg == "" {
-			fmt.Fprintln(os.Stdout, "the connection was closed on the remote side on ", time.Now().Format(time.RFC822))
-		} else {
-			fmt.Fprintln(os.Stdout, t.exitMsg)
-		}
-	}()
-
-	fd := int(os.Stdin.Fd())
-	state, err := term.MakeRaw(fd)
-	if err != nil {
-		return err
-	}
-	defer term.Restore(fd, state)
-
-	termWidth, termHeight, err := term.GetSize(fd)
-	if err != nil {
-		return err
+	if runtime.GOOS == "windows" {
+		dossh_windows(user, ip, port)
+		return
 	}
 
-	termType := os.Getenv("TERM")
-	if termType == "" {
-		termType = "xterm-256color"
-	}
-
-	err = t.Session.RequestPty(termType, termHeight, termWidth, ssh.TerminalModes{})
-	if err != nil {
-		return err
-	}
-
-	t.updateTerminalSize()
-
-	t.stdin, err = t.Session.StdinPipe()
-	if err != nil {
-		return err
-	}
-	t.stdout, err = t.Session.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	t.stderr, _ = t.Session.StderrPipe()
-
-	go io.Copy(os.Stderr, t.stderr)
-	go io.Copy(os.Stdout, t.stdout)
-	go func() {
-		buf := make([]byte, 128)
-		for {
-			n, err := os.Stdin.Read(buf)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if n > 0 {
-				_, err = t.stdin.Write(buf[:n])
-				if err != nil {
-					fmt.Println(err)
-					t.exitMsg = err.Error()
-					return
-				}
-			}
-		}
-	}()
-
-	err = t.Session.Shell()
-	if err != nil {
-		return err
-	}
-	err = t.Session.Wait()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func New(client *ssh.Client) error {
-
+	// 建立新会话
 	session, err := client.NewSession()
 	if err != nil {
-		return err
+		log.Fatalf("new session error: %s", err.Error())
 	}
 	defer session.Close()
 
-	s := SSHTerminal{
-		Session: session,
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+	modes := ssh.TerminalModes{
+		ssh.ECHO: 1, // 禁用回显（0禁用，1启动）
+		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
 
-	return s.interactiveSession()
+	fileDescriptor := int(os.Stdin.Fd())
+	if term.IsTerminal(fileDescriptor) {
+		originalState, err := term.MakeRaw(fileDescriptor)
+		if err != nil {
+			return
+		}
+		defer term.Restore(fileDescriptor, originalState)
+
+		err = session.RequestPty("xterm-256color", 32, 160, modes)
+		if err != nil {
+			return
+		}
+	}
+
+	if err = session.Shell(); err != nil {
+		log.Fatalf("start shell error: %s", err.Error())
+	}
+	if err = session.Wait(); err != nil {
+		log.Fatalf("return error: %s", err.Error())
+	}
+}
+
+func dossh_windows(user, ip string, port int) {
+	output.PrintWarningln("Windows user have to input ssh password even if the password has been set before.")
+	cmd := exec.Command("ssh", fmt.Sprintf("%s@%s", user, ip), "-p", fmt.Sprint(port))
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }

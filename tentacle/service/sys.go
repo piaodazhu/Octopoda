@@ -20,6 +20,7 @@ type ScriptParams struct {
 	FileName   string
 	TargetPath string
 	FileBuf    string
+	DelayTime  int
 }
 
 func RunScript(conn net.Conn, raw []byte) {
@@ -33,6 +34,7 @@ func RunScript(conn net.Conn, raw []byte) {
 	// var f *os.File
 	var output []byte
 	var payload []byte
+	var runFunc func()
 
 	if err := config.Jsoner.Unmarshal(raw, &sparams); err != nil {
 		logger.Exceptions.Println(err)
@@ -40,11 +42,19 @@ func RunScript(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root)
-	if err != nil {
-		rmsg.Rmsg = err.Error()
+	runFunc = func() {
+		output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root)
+		if err != nil {
+			rmsg.Rmsg = err.Error()
+		} else {
+			rmsg.Output = string(output)
+		}
+	}
+	if sparams.DelayTime < 0 {
+		runFunc()
 	} else {
-		rmsg.Output = string(output)
+		time.AfterFunc(time.Duration(sparams.DelayTime)*time.Second, runFunc)
+		rmsg.Output = "loaded"
 	}
 
 errorout:
@@ -115,6 +125,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 type CommandParams struct {
 	Command    string
 	Background bool
+	DelayTime  int
 }
 
 func RunCmd(conn net.Conn, raw []byte) {
@@ -124,6 +135,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 	var execErr error
 	var result []byte = []byte{}
 	var payload []byte
+	var runFunc func()
 
 	cparams := CommandParams{}
 	if err := config.Jsoner.Unmarshal(raw, &cparams); err != nil {
@@ -132,40 +144,48 @@ func RunCmd(conn net.Conn, raw []byte) {
 		goto errorout
 	}
 
-	if cparams.Background {
-		scriptFile := fmt.Sprintf("%s%d.sh", config.GlobalConfig.Workspace.Root, time.Now().UnixNano())
-		content := fmt.Sprintf("(%s) &>/dev/null &", cparams.Command)
-		err := os.WriteFile(scriptFile, []byte(content), os.ModePerm)
-		if err != nil {
-			logger.Exceptions.Println("WriteFile script", err)
+	runFunc = func() {
+		if cparams.Background {
+			scriptFile := fmt.Sprintf("%s%d.sh", config.GlobalConfig.Workspace.Root, time.Now().UnixNano())
+			content := fmt.Sprintf("(%s) &>/dev/null &", cparams.Command)
+			err := os.WriteFile(scriptFile, []byte(content), os.ModePerm)
+			if err != nil {
+				logger.Exceptions.Println("WriteFile script", err)
+			}
+
+			cmd := exec.Command("/bin/bash", scriptFile)
+			cmd.Dir = config.GlobalConfig.Workspace.Root
+			cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
+
+			execErr = cmd.Run()
+			if execErr != nil {
+				logger.Exceptions.Println("Run cmd background", execErr)
+			}
+			os.Remove(scriptFile)
+		} else {
+			cmd := exec.Command("/bin/bash", "-c", cparams.Command)
+			cmd.Dir = config.GlobalConfig.Workspace.Root
+			cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
+
+			result, execErr = cmd.CombinedOutput()
+			if execErr != nil {
+				logger.Exceptions.Println("Run cmd foreground", execErr)
+			}
 		}
 
-		cmd := exec.Command("/bin/bash", scriptFile)
-		cmd.Dir = config.GlobalConfig.Workspace.Root
-		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
-
-		execErr = cmd.Run()
 		if execErr != nil {
-			logger.Exceptions.Println("Run cmd background", execErr)
-		}
-		os.Remove(scriptFile)
-	} else {
-		cmd := exec.Command("/bin/bash", "-c", cparams.Command)
-		cmd.Dir = config.GlobalConfig.Workspace.Root
-		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
-
-		result, execErr = cmd.CombinedOutput()
-		if execErr != nil {
-			logger.Exceptions.Println("Run cmd foreground", execErr)
+			rmsg.Rmsg = execErr.Error()
+		} else {
+			rmsg.Output = string(result)
 		}
 	}
 
-	if execErr != nil {
-		rmsg.Rmsg = execErr.Error()
+	if cparams.DelayTime < 0 {
+		runFunc()
 	} else {
-		rmsg.Output = string(result)
+		time.AfterFunc(time.Duration(cparams.DelayTime)*time.Second, runFunc)
+		rmsg.Output = "loaded"
 	}
-
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
 	err := message.SendMessageUnique(conn, message.TypeRunCommandResponse, snp.GenSerial(), payload)

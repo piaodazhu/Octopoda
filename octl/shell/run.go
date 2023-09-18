@@ -8,13 +8,40 @@ import (
 	"net/http"
 	"octl/config"
 	"octl/nameclient"
-	"octl/output"
 	"octl/node"
+	"octl/output"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
-func RunTask(task string, names []string) {
+func XRun(task string, params []string) {
+	delay := 0
+	names := []string{}
+	for i := range params {
+		if len(params[i]) < 3 {
+			names = append(names, params[i])
+			continue
+		}
+		switch params[i][:2] {
+		case "-d":
+			x, err := strconv.Atoi(params[i][2:])
+			if err != nil {
+				return
+			}
+			delay = x
+		default:
+			names = append(names, params[i])
+		}
+	}
+	runTask(task, names, delay)
+}
+
+func Run(task string, names []string) {
+	runTask(task, names, -1)
+}
+
+func runTask(task string, names []string, delay int) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		output.PrintFatalln(err)
@@ -39,13 +66,13 @@ func RunTask(task string, names []string) {
 		}
 	}
 	if isScript {
-		runScript(task, nodes)
+		runScript(task, nodes, delay)
 	} else {
-		runCmd(task, nodes, isBackground)
+		runCmd(task, nodes, isBackground, delay)
 	}
 }
 
-func runScript(task string, names []string) {
+func runScript(task string, names []string, delay int) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		output.PrintFatalln(err)
@@ -67,6 +94,7 @@ func runScript(task string, names []string) {
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
+	writer.WriteField("delayTime", fmt.Sprint(delay))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	fileWriter, _ := writer.CreateFormFile("script", fname)
 	io.Copy(fileWriter, f)
@@ -82,12 +110,12 @@ func runScript(task string, names []string) {
 	output.PrintJSON(raw)
 }
 
-func runCmd(task string, names []string, bg bool) {
+func runCmd(task string, names []string, bg bool, delay int) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		output.PrintFatalln(err)
 	}
-	
+
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -101,6 +129,7 @@ func runCmd(task string, names []string, bg bool) {
 	if bg {
 		writer.WriteField("background", "true")
 	}
+	writer.WriteField("delayTime", fmt.Sprint(delay))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	writer.Close()
 

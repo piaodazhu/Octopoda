@@ -57,4 +57,8 @@ func InitConfig(conf string) {
 		os.Remove(GlobalConfig.Workspace.Store)
 		os.MkdirAll(GlobalConfig.Workspace.Store, os.ModePerm)
 	}
+
+	if GlobalConfig.OctlFace.SshPort == 0 {
+		GlobalConfig.OctlFace.SshPort = 22
+	}
 }
