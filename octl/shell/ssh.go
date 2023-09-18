@@ -11,6 +11,8 @@ import (
 	"octl/nameclient"
 	"octl/output"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -151,18 +153,22 @@ func SSH(nodename string) {
 	if err != nil {
 		output.PrintFatalln("SshinfoQuery error:", err)
 	}
-	addr := fmt.Sprintf("%s:%d", sshinfo.Ip, sshinfo.Port)
-	dossh(addr, sshinfo.Username, sshinfo.Password)
+
+	dossh(sshinfo.Username, sshinfo.Ip, sshinfo.Password, sshinfo.Port)
 }
 
-func dossh(addr, user, passwd string) {
-	client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
+func dossh(user, ip, passwd string, port int) {
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", ip, port), &ssh.ClientConfig{
 		User:            user,
 		Auth:            []ssh.AuthMethod{ssh.Password(passwd)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	})
 	if err != nil {
 		log.Fatalf("SSH dial error: %s", err.Error())
+	}
+	if runtime.GOOS == "windows" {
+		dossh_windows(user, ip, port)
+		return
 	}
 
 	// 建立新会话
@@ -176,17 +182,38 @@ func dossh(addr, user, passwd string) {
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
 	modes := ssh.TerminalModes{
-		ssh.ECHO:          0,     // 禁用回显（0禁用，1启动）
+		ssh.ECHO: 1, // 禁用回显（0禁用，1启动）
 		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
-		ssh.TTY_OP_OSPEED: 14400, //output speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
-	if err = session.RequestPty("linux", 32, 160, modes); err != nil {
-		log.Fatalf("request pty error: %s", err.Error())
+
+	fileDescriptor := int(os.Stdin.Fd())
+	if term.IsTerminal(fileDescriptor) {
+		originalState, err := term.MakeRaw(fileDescriptor)
+		if err != nil {
+			return
+		}
+		defer term.Restore(fileDescriptor, originalState)
+
+		err = session.RequestPty("xterm-256color", 32, 160, modes)
+		if err != nil {
+			return
+		}
 	}
+
 	if err = session.Shell(); err != nil {
 		log.Fatalf("start shell error: %s", err.Error())
 	}
 	if err = session.Wait(); err != nil {
 		log.Fatalf("return error: %s", err.Error())
 	}
+}
+
+func dossh_windows(user, ip string, port int) {
+	output.PrintWarningln("Windows user have to input ssh password even if the password has been set before.")
+	cmd := exec.Command("ssh", fmt.Sprintf("%s@%s", user, ip), "-p", fmt.Sprint(port))
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
