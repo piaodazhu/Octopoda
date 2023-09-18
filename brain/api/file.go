@@ -62,7 +62,7 @@ func FileUpload(ctx *gin.Context) {
 	tmpPath := tmpSb.String()
 
 	// dstPath: the unpacked files will be moved under this path
-	fmt.Println("targetPath:", targetPath)
+	// fmt.Println("targetPath:", targetPath)
 	dstPath := pathFixing(targetPath, config.GlobalConfig.Workspace.Store)
 
 	os.Mkdir(tmpPath, os.ModePerm)

@@ -5,7 +5,6 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -114,7 +113,7 @@ func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *string) {
 		*result = "PakmaCommand unsupport command"
 	}
 	if valid {
-		fmt.Println(string(response), err)
+		// fmt.Println(string(response), err)
 		if err != nil {
 			logger.Exceptions.Println("Pakma request error")
 			*result = "Pakma request error"

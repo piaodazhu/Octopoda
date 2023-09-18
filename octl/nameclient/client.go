@@ -127,7 +127,6 @@ func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
 		return err
 	}
 	defer res.Body.Close()
-	fmt.Println(sshinfo)
 	if res.StatusCode != 200 {
 		return fmt.Errorf("ssh info register rejected by server")
 	}
