@@ -117,7 +117,7 @@ func FilePull(conn net.Conn, raw []byte) {
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
 	} else {
-		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+		cmd = exec.Command(shellPath, "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
 	}
 	err = cmd.Run()
 	if err != nil {
@@ -304,7 +304,7 @@ func unpackFiles(packb64 string, packName string, targetDir string) error {
 
 	// os.Mkdir(targetDir, os.ModePerm)
 	// fmt.Println(";;;;", fmt.Sprintf("cp -r %s/* %s", wpath, targetDir))
-	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s", targetDir, wpath, targetDir))
+	cmd := exec.Command(shellPath, "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s", targetDir, wpath, targetDir))
 	err = cmd.Run()
 	if err != nil {
 		logger.Exceptions.Print(err)

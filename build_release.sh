@@ -142,21 +142,6 @@ echo "Successfully build ${BUILD_NAME}" && \
 mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
 rm -rf ${BUILD_NAME}
 
-BUILD_OS=linux
-BUILD_ARCH=mips
-BUILD_ARM=
-BUILD_NAME=brain_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
-LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
-
-GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o brain .
-mkdir ${BUILD_NAME} &>/dev/null && \
-cp -r brain brain.service brain.yaml setup.sh uninstall.sh \
-      ${BUILD_NAME} &>/dev/null && \
-tar -Jcvf ${BUILD_NAME}.tar.xz ${BUILD_NAME} &>/dev/null && \
-echo "Successfully build ${BUILD_NAME}" && \
-mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
-rm -rf ${BUILD_NAME}
-
 cd ../tentacle
 
 BUILD_OS=linux
@@ -221,12 +206,12 @@ mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
 rm -rf ${BUILD_NAME}
 
 BUILD_OS=linux
-BUILD_ARCH=mips
+BUILD_ARCH=mipsle
 BUILD_ARM=
 BUILD_NAME=tentacle_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
 LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
-
-GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o tentacle .
+# This is for Xiaomi 3 Pro
+GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 GOMIPS=softfloat go build -ldflags "${LD_FLAGS}" -o tentacle .
 mkdir ${BUILD_NAME} &>/dev/null && \
 cp -r tentacle tentacle.service tentacle.yaml setup.sh uninstall.sh \
       ${BUILD_NAME} &>/dev/null && \

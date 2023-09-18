@@ -9,13 +9,14 @@ import (
 	"tentacle/nameclient"
 	"tentacle/network"
 	"tentacle/service"
+	"time"
 )
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildVersion string = "dev"
+	BuildTime    string = time.UTC.String()
+	BuildName    string = "tentacle"
+	CommitID     string = "snapshot"
 )
 
 func main() {
