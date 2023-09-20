@@ -23,6 +23,22 @@ type ScriptParams struct {
 	DelayTime  int
 }
 
+var shellPath string
+
+func init() {
+	shellPath = "/bin/bash"
+	_, err := os.Stat(shellPath)
+	if err == nil {
+		return 
+	}
+	shellPath = "/bin/sh"
+	_, err = os.Stat(shellPath)
+	if err == nil {
+		return 
+	}
+	shellPath = "sh"
+}
+
 func RunScript(conn net.Conn, raw []byte) {
 	sparams := ScriptParams{}
 	rmsg := message.Result{
@@ -97,7 +113,7 @@ func execScript(sparams *ScriptParams, dir string) ([]byte, error) {
 	// fbuf, _ := os.ReadFile(scriptFile.String())
 	// logger.Client.Println(string(fbuf))
 
-	cmd := exec.Command("/bin/bash", scriptFile.String())
+	cmd := exec.Command(shellPath, scriptFile.String())
 	cmd.Dir = dir
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(scriptDir, sparams.FileName, outputFile)...)
 
@@ -153,7 +169,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 				logger.Exceptions.Println("WriteFile script", err)
 			}
 
-			cmd := exec.Command("/bin/bash", scriptFile)
+			cmd := exec.Command(shellPath, scriptFile)
 			cmd.Dir = config.GlobalConfig.Workspace.Root
 			cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 
@@ -163,7 +179,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 			}
 			os.Remove(scriptFile)
 		} else {
-			cmd := exec.Command("/bin/bash", "-c", cparams.Command)
+			cmd := exec.Command(shellPath, "-c", cparams.Command)
 			cmd.Dir = config.GlobalConfig.Workspace.Root
 			cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 

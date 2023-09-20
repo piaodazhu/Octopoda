@@ -22,7 +22,7 @@ func NameRegister(ctx *gin.Context) {
 	}
 	err = GetNameEntryDao().Set(params.Name, entry, params.TTL)
 	if err != nil {
-		log.Println("dao.DaoSet():", err.Error())
+		// log.Println("dao.DaoSet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
@@ -54,7 +54,7 @@ func NameDelete(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		log.Println("dao.DaoDel():", err.Error())
+		// log.Println("dao.DaoDel():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
@@ -70,7 +70,7 @@ func NameQuery(ctx *gin.Context) {
 	}
 	entry, err := GetNameEntryDao().Get(key)
 	if err != nil {
-		log.Println("dao.DaoGet():", err.Error())
+		// log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
@@ -114,7 +114,7 @@ func NameList(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		log.Println("dao.DaoGet():", err.Error())
+		// log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
@@ -177,7 +177,7 @@ func DownloadConfig(ctx *gin.Context) {
 	}
 	entry, err := GetNameConfigDao().GetRange(params.Name, params.Index, params.Amount)
 	if err != nil {
-		log.Println("dao.DaoGet():", err.Error())
+		// log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
@@ -215,7 +215,7 @@ func DownloadSshInfo(ctx *gin.Context) {
 	}
 	entry, err := GetSshInfoDao().Get(key)
 	if err != nil {
-		log.Println("dao.DaoGet():", err.Error())
+		// log.Println("dao.DaoGet():", err.Error())
 		ctx.JSON(400, Response{Message: err.Error()})
 		return
 	}
