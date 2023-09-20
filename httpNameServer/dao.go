@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/redis/go-redis/v9"
 )
 
 type BaseDao struct {
 	DefaultPrefix string
-	DefaultTTL int
+	DefaultTTL    int
+	Cache         gcache.Cache
 }
 
 type NameEntryDao struct {
@@ -38,20 +41,23 @@ func DaoInit() error {
 	ctx = context.TODO()
 	namedao = &NameEntryDao{
 		BaseDao: BaseDao{
-			DefaultTTL: 5000, 
+			DefaultTTL:    5000,
 			DefaultPrefix: "NameEntry:",
+			Cache:         gcache.New(256).Build(),
 		},
 	}
 	confdao = &ConfigDao{
 		BaseDao: BaseDao{
-			DefaultTTL: 0, 
+			DefaultTTL:    0,
 			DefaultPrefix: "Config:",
+			Cache:         gcache.New(256).Build(),
 		},
 	}
 	sshdao = &SshInfoDao{
 		BaseDao: BaseDao{
-			DefaultTTL: 0, 
+			DefaultTTL:    0,
 			DefaultPrefix: "SshInfo:",
+			Cache:         gcache.New(256).Build(),
 		},
 	}
 	return rdb.Ping(ctx).Err()
@@ -71,7 +77,7 @@ func (b *BaseDao) list(pattern string) ([]string, error) {
 	pattern = b.DefaultPrefix + "*" + pattern
 	keys, err := rdb.Keys(ctx, pattern).Result()
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 	res := make([]string, len(keys))
 	for i := range keys {
@@ -82,25 +88,44 @@ func (b *BaseDao) list(pattern string) ([]string, error) {
 
 func (b *BaseDao) del(key string) error {
 	key = b.DefaultPrefix + key
-	return rdb.Del(ctx, key).Err()
+	defer b.Cache.Remove(key)
+	if err := rdb.Del(ctx, key).Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *BaseDao) set(key string, value string, ttl int) error {
 	key = b.DefaultPrefix + key
+	defer b.Cache.Remove(key)
 	if ttl == 0 {
 		ttl = b.DefaultTTL
 	} else if ttl < 0 {
 		ttl = 0
 	}
-	return rdb.Set(ctx, key, value, time.Millisecond*time.Duration(ttl)).Err()
+	if err := rdb.Set(ctx, key, value, time.Millisecond*time.Duration(ttl)).Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *BaseDao) get(key string) (string, error) {
 	key = b.DefaultPrefix + key
+	val, err := b.Cache.Get(key)
+	if err == nil {
+		value := val.(string)
+		if len(value) == 0 {
+			return "", errors.New("value not found")
+		}
+		return val.(string), nil
+	}
+
 	value, err := rdb.Get(ctx, key).Result()
 	if err != nil {
+		b.Cache.Set(key, "")
 		return "", err
 	}
+	b.Cache.Set(key, value)
 	return value, nil
 }
 

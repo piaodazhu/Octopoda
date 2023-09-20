@@ -11,15 +11,16 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildVersion string = "dev"
+	BuildTime    string = time.UTC.String()
+	BuildName    string = "httpns"
+	CommitID     string = "snapshot"
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 		fmt.Printf("Octopoda Octl\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
-	
+
 	config.InitConfig(conf)
 	logger.InitLogger(stdout)
 	if port != 0 {
