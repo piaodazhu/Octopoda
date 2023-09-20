@@ -3,6 +3,7 @@ go 1.18
 use (
 	./brain
 	./httpNameServer
+	./httpNameServer/test_cli
 	./octl
 	./pakma
 	./tentacle

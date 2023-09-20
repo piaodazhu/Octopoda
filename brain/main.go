@@ -6,6 +6,7 @@ import (
 	"brain/logger"
 	"brain/model"
 	"brain/sys"
+	"time"
 
 	"brain/network"
 	"brain/rdb"
@@ -14,10 +15,10 @@ import (
 )
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildVersion string = "dev"
+	BuildTime    string = time.UTC.String()
+	BuildName    string = "brain"
+	CommitID     string = "snapshot"
 )
 
 func main() {
