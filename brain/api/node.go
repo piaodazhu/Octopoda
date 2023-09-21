@@ -92,13 +92,29 @@ func NodeInfo(ctx *gin.Context) {
 }
 
 func NodesInfo(ctx *gin.Context) {
+	targetNodes := ctx.Query("targetNodes")
 	var nodes []*model.NodeModel
 	var ok bool
 
-	if nodes, ok = model.GetNodesInfoAll(); !ok {
-		ctx.JSON(404, struct{}{})
+	names := []string{}
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &names)
+	if err != nil {
+		ctx.JSON(400, err)
 		return
 	}
+
+	if len(names) == 0 {
+		if nodes, ok = model.GetNodesInfoAll(); !ok {
+			ctx.JSON(404, struct{}{})
+			return
+		}
+	} else {
+		if nodes, ok = model.GetNodesInfo(names); !ok {
+			ctx.JSON(404, struct{}{})
+			return
+		}
+	}
+
 	ctx.JSON(200, nodesInfoToText(nodes))
 }
 
@@ -172,12 +188,27 @@ func NodeStatus(ctx *gin.Context) {
 }
 
 func NodesState(ctx *gin.Context) {
+	targetNodes := ctx.Query("targetNodes")
 	var nodes, aliveNodes []*model.NodeModel
 	var nodesStatus NodesStatusText
 	var ok bool
 
-	if nodes, ok = model.GetNodesInfoAll(); !ok {
-		ctx.JSON(404, struct{}{})
+	names := []string{}
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &names)
+	if err != nil {
+		ctx.JSON(400, err)
+		return
+	}
+
+	if len(names) == 0 {
+		if nodes, ok = model.GetNodesInfoAll(); !ok {
+			ctx.JSON(404, struct{}{})
+		}
+	} else {
+		if nodes, ok = model.GetNodesInfo(names); !ok {
+			ctx.JSON(404, struct{}{})
+			return
+		}
 	}
 
 	for _, n := range nodes {

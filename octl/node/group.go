@@ -71,7 +71,11 @@ type GroupInfo struct {
 	Unhealthy []string `json:"unhealthy" binding:"omitempty"`
 }
 
-func GroupSet(name string, nocheck bool, nodes []string) {
+func GroupSet(name string, nocheck bool, names []string) {
+	nodes, err := NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
 	ginfo := GroupInfo{
 		Name:    name,
 		Nodes:   nodes,

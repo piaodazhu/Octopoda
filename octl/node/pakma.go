@@ -82,9 +82,23 @@ func Pakma(firstarg string, args []string) {
 		return
 	}
 
-	nodes, err := NodesParse(names)
+	names_filtered := []string{}
+	hasMaster := false 
+	for i := range names {
+		if names[i] != "master" {
+			names_filtered = append(names_filtered, names[i])
+		} else {
+			hasMaster = true
+		}
+	}
+
+	nodes, err := NodesParse(names_filtered)
 	if err != nil {
 		output.PrintFatalln(err)
+	}
+
+	if hasMaster {
+		nodes = append(nodes, "master")
 	}
 
 	URL := fmt.Sprintf("http://%s/%s%s",
