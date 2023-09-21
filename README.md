@@ -119,6 +119,9 @@ $ octl get nodes
 #   "active": 1,
 #   "offline": 0
 # }
+
+$ octl get nodes | grep name | awk '{print $2}' | sed 's/"//g' | sed -z 's/\n/ /g' | sed 's/,//g'
+# you may get: pi02 pi05 pi06 pi08
 ```
 
 # Octl Command Manual
@@ -126,7 +129,7 @@ $ octl get nodes
 ## A. Network Information
 ### GET
 
-> `usage: octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]`
+> `usage: octl get [nodes|nodes <node1> <@group1> ...|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]`
 
 With this subcmd we can get some basic information about current octopoda network, such as:
 - Basic information of all nodes or detailed information of a given node.
@@ -135,7 +138,7 @@ With this subcmd we can get some basic information about current octopoda networ
 
 ### STATUS
 
-> `usage: octl status [nodes|<node>|master]`
+> `usage: octl status [nodes|nodes <node1> <@group1> ...|node <node>|master]`
 
 With this subcmd we can get the running status of nodes or a given node, such as:
 - CPU Load.
@@ -153,7 +156,7 @@ Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be re
 
 ### GROUP
 
-> `usage: octl group [get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]`
+> `usage: octl group [get-all |get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]`
 
 With this subcmd we can create/get/query a node group, which is a set consists of multiple nodes. When calling `file distrib/spread`, `run` and writing scenarios deployment file, we can use `@GroupName` to represent multiple nodes with the group name. Its useful when the number of nodes is large. For example:
 
