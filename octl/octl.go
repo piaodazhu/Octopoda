@@ -7,13 +7,14 @@ import (
 	"octl/output"
 	"octl/subcmd"
 	"os"
+	"time"
 )
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildVersion string = "dev"
+	BuildTime    string = time.UTC.String()
+	BuildName    string = "brain"
+	CommitID     string = "snapshot"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	flag.StringVar(&conf, "c", "", "specify a configuration file")
 	flag.BoolVar(&usage, "usage", false, "print subcommand usage")
 	flag.Parse()
-	
+
 	if len(args) == 1 {
 		output.PrintInfoln("Octopoda Controlling Tool. Use '-usage', '-version', '-c'...")
 		return
@@ -43,7 +44,7 @@ func main() {
 	if conf != "" {
 		args = args[2:]
 	}
-	
+
 	config.InitConfig(conf)
 	nameclient.InitClient()
 	if nameclient.BrainAddr == "" &&
