@@ -104,13 +104,13 @@ func InitNameClient() {
 			tentacleFaceIp, err := getTentacleFaceIp()
 			if err != nil {
 				logger.Network.Println("getTentacleFaceIp", err)
-				time.Sleep(time.Second * 10)
+				// time.Sleep(time.Second * 10)
 				continue
 			}
 			octlFaceIp, err := getOctlFaceIp()
 			if err != nil {
 				logger.Network.Println("getTentacleFaceIp", err)
-				time.Sleep(time.Second * 10)
+				// time.Sleep(time.Second * 10)
 				continue
 			}
 			nameEntry1.Description = "periodical"
@@ -192,6 +192,7 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 	}
 	httpsClient = &http.Client{
 		Transport: tr,
+		Timeout: 0,
 	}
 	return nil
 }

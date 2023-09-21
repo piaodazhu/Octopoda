@@ -145,6 +145,23 @@ func GetNodesInfoAll() ([]*NodeModel, bool) {
 	return res, true
 }
 
+func GetNodesInfo(names []string) ([]*NodeModel, bool) {
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
+
+	if len(NodeMap) == 0 {
+		return nil, false
+	}
+	res := make([]*NodeModel, 0, len(names))
+	for _, name := range names {
+		if node, found := NodeMap[name]; found {
+			copynode := *node
+			res = append(res, &copynode)
+		}
+	}
+	return res, true
+}
+
 var (
 	GetConnOk     = 0
 	GetConnNoNode = 1

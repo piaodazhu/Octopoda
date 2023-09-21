@@ -29,11 +29,17 @@ func NodeInfo(name string) {
 	output.PrintJSON(raw)
 }
 
-func NodesInfo() {
-	url := fmt.Sprintf("http://%s/%s%s",
+func NodesInfo(names []string) {
+	nodes, err := NodesParse(names)
+	if err != nil {
+		output.PrintFatalln(err)
+	}
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
+	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.GlobalConfig.Api.NodesInfo,
+		string(nodes_serialized),
 	)
 	res, err := http.Get(url)
 	if err != nil {

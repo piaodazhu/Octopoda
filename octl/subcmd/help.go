@@ -15,12 +15,12 @@ type UsageEntry struct {
 var UsageList []UsageEntry
 var Usages = `
 
-Node:get:octl get [nodes|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]:octl get node pi0
-Node:status:octl status [nodes|<node>|master]:octl status nodes
+Node:get:octl get [nodes|nodes <node1> <@group1> ...|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]:octl get node pi0
+Node:status:octl status [nodes|nodes <node1> <@group1> ...|node <node>|master]:octl status nodes pi4 @group1
 Node:prune:octl prune:octl prune
 Node:log:octl log [master|<node>] [-l<maxline>] [-d<maxday>]:octl log pi0 -l50 -d2
-Node:group:octl group [get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]:group set mygroup1 pi0 pi1 pi2
-
+Node:group:octl group [get-all |get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]:group set mygroup1 pi0 pi1 pi2
+Node:groups:octl groups:(= octl group get-all)
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
 Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"
 Scenario:version:octl version [scenario <scen>|nodeapp <node> <app>@<scen>]:octl version scenario ChatScen
@@ -38,10 +38,10 @@ SSH:setssh:octl setssh <anyname>:octl setssh pi0
 SSH:getssh:octl getssh:octl getssh
 SSH:delssh:octl delssh <anyname>:octl delssh pi0
 
-Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> node2> ...:octl run '{ls ~/}' pi0
-Command:xrun:octl xrun [ '{<command>}' | '(<bgcommand>)' | <script> ] [-d<delayseconds>] <node1> node2> ...:octl xrun '{reboot}' pi0 pi1
+Command:run:octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <@group1> ...:octl run '{ls ~/}' pi0
+Command:xrun:octl xrun [ '{<command>}' | '(<bgcommand>)' | <script> ] [-d<delayseconds>] <node1> <@group1> ...:octl xrun '{reboot}' pi0 pi1
 
-Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
+Upgrade:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<group1>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 master pi0 pi1 pi2
 `
 
 func InitUsage() {

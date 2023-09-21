@@ -51,7 +51,7 @@ func Get(arglist []string) {
 	}
 	switch arglist[0] {
 	case "nodes":
-		node.NodesInfo()
+		node.NodesInfo(arglist[1:])
 	case "node":
 		if len(arglist) != 2 {
 			goto usage
@@ -90,12 +90,12 @@ usage:
 }
 
 func Status(arglist []string) {
-	if len(arglist) != 1 {
+	if len(arglist) == 0 {
 		goto usage
 	}
 	switch arglist[0] {
 	case "nodes":
-		node.NodesStatus()
+		node.NodesStatus(arglist[1:])
 	default:
 		node.NodeStatus(arglist[0])
 	}
@@ -347,7 +347,6 @@ usage:
 	PrintUsage("run")
 }
 
-
 func Pakma(arglist []string) {
 	if len(arglist) < 2 {
 		goto usage
@@ -391,4 +390,14 @@ func Group(arglist []string) {
 	return
 usage:
 	PrintUsage("group")
+}
+
+func Groups(arglist []string) {
+	if len(arglist) != 0 {
+		goto usage
+	}
+	node.GroupGetAll()
+	return
+usage:
+	PrintUsage("groups")
 }
