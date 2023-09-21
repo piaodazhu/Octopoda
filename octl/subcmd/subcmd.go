@@ -347,7 +347,6 @@ usage:
 	PrintUsage("run")
 }
 
-
 func Pakma(arglist []string) {
 	if len(arglist) < 2 {
 		goto usage
@@ -391,4 +390,14 @@ func Group(arglist []string) {
 	return
 usage:
 	PrintUsage("group")
+}
+
+func Groups(arglist []string) {
+	if len(arglist) != 0 {
+		goto usage
+	}
+	node.GroupGetAll()
+	return
+usage:
+	PrintUsage("groups")
 }

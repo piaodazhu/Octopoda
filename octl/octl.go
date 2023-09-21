@@ -65,6 +65,8 @@ func main() {
 		subcmd.Status(args[2:])
 	case "group":
 		subcmd.Group(args[2:])
+	case "groups":
+		subcmd.Groups(args[2:])
 	case "log":
 		subcmd.Log(args[2:])
 	case "fix":
