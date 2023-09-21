@@ -448,16 +448,16 @@ See an example in `./octl/example/helloWorld`. The file `deployment.yaml` define
 cd ./octl
 # SPECAIL target `prepare` will copy all of the sourcepath files to corresponding nodes, 
 # then run all scripts of target `prepare` on corresponding nodes. 
-./octl apply example/helloWorld/deployment.yaml prepare -m "Prepare a new scenario"
+./octl apply example/helloWorld prepare -m "Prepare a new scenario"
 
 # NORMAL target `start` will run all scripts of target `start` on corresponding nodes. 
-./octl apply example/helloWorld/deployment.yaml start -m "Start run a scenario"
+./octl apply example/helloWorld start -m "Start run a scenario"
 
 # NORMAL target `stop` will run all scripts of target `stop` on corresponding nodes. 
-./octl apply example/helloWorld/deployment.yaml stop -m "Stop run a scenario"
+./octl apply example/helloWorld stop -m "Stop run a scenario"
 
 # CUSTOMIZED target `date` will run all scripts of target `date` on corresponding nodes. 
-./octl apply example/helloWorld/deployment.yaml date -m "Append current date to file"
+./octl apply example/helloWorld date -m "Append current date to file"
 
 # see details of this scenario
 ./octl get scenario helloWorld
@@ -470,6 +470,7 @@ cd ./octl
 
 # SPECAIL target `purge` will run all scripts of target `purge` on corresponding nodes,
 # then remove all nodeapp directories on corresponding nodes.
-./octl apply example/helloWorld/deployment.yaml purge
+./octl apply example/helloWorld purge
 ```
 
+The nodeApps will be installed under `{tentacle.yaml:workspace.root}/app@scen` on corresponding nodes.

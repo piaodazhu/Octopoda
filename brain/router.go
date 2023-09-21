@@ -72,6 +72,7 @@ func initRouter(engine *gin.Engine) {
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
 
+		group.GET("/ssh", api.SshLoginInfo)
 		group.POST("/ssh", api.SshRegister)
 		group.DELETE("/ssh", api.SshUnregister)
 
