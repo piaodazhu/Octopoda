@@ -21,6 +21,7 @@ Node:prune:octl prune:octl prune
 Node:log:octl log [master|<node>] [-l<maxline>] [-d<maxday>]:octl log pi0 -l50 -d2
 Node:group:octl group [get-all |get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]:group set mygroup1 pi0 pi1 pi2
 Node:groups:octl groups:(= octl group get-all)
+
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
 Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"
 Scenario:version:octl version [scenario <scen>|nodeapp <node> <app>@<scen>]:octl version scenario ChatScen
