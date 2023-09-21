@@ -1,14 +1,15 @@
 package network
 
 import (
+	"fmt"
 	"net"
-	"tentacle/nameclient"
 	"os/exec"
 	"runtime"
 	"tentacle/config"
 	"tentacle/heartbeat"
 	"tentacle/logger"
 	"tentacle/message"
+	"tentacle/nameclient"
 	"tentacle/snp"
 	"time"
 )
@@ -21,6 +22,7 @@ func KeepAlive() {
 		nameclient.ResolveBrain()
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := net.Dial("tcp", nameclient.BrainHeartAddr)
+			// conn, err := dialWithDevice(nameclient.BrainHeartAddr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
@@ -28,6 +30,7 @@ func KeepAlive() {
 			} else {
 				retry = 0
 				ipstr := conn.LocalAddr().(*net.TCPAddr).IP.String()
+				fmt.Println("Make NodeJoin, LocalAddr is ", ipstr)
 				err := message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
 				if err != nil {
 					conn.Close()
