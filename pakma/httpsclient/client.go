@@ -55,6 +55,7 @@ func initHttpsClient(caCert, cliCert, cliKey string) error {
 	}
 	HttpsClient = &http.Client{
 		Transport: tr,
+		Timeout: 0,
 	}
 	return nil
 }
