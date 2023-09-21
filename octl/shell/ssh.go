@@ -182,31 +182,27 @@ func dossh(user, ip, passwd string, port int) {
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
 	modes := ssh.TerminalModes{
-		ssh.ECHO: 1, // 禁用回显（0禁用，1启动）
+		ssh.ECHO:          1,     // 禁用回显（0禁用，1启动）
 		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
 
 	fileDescriptor := int(os.Stdin.Fd())
-	if term.IsTerminal(fileDescriptor) {
-		originalState, err := term.MakeRaw(fileDescriptor)
-		if err != nil {
-			return
-		}
-		defer term.Restore(fileDescriptor, originalState)
+	originalState, err := term.MakeRaw(fileDescriptor)
+	if err != nil {
+		return
+	}
 
-		err = session.RequestPty("xterm-256color", 32, 160, modes)
-		if err != nil {
-			return
-		}
+	defer term.Restore(fileDescriptor, originalState)
+	err = session.RequestPty("xterm-256color", 32, 160, modes)
+	if err != nil {
+		return
 	}
 
 	if err = session.Shell(); err != nil {
 		log.Fatalf("start shell error: %s", err.Error())
 	}
-	if err = session.Wait(); err != nil {
-		log.Fatalf("return error: %s", err.Error())
-	}
+	session.Wait()
 }
 
 func dossh_windows(user, ip string, port int) {
