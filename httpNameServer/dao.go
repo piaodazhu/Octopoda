@@ -122,10 +122,10 @@ func (b *BaseDao) get(key string) (string, error) {
 
 	value, err := rdb.Get(ctx, key).Result()
 	if err != nil {
-		b.Cache.Set(key, "")
+		b.Cache.SetWithExpire(key, "", time.Second)
 		return "", err
 	}
-	b.Cache.Set(key, value)
+	b.Cache.SetWithExpire(key, value, time.Second)
 	return value, nil
 }
 
