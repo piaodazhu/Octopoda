@@ -10,6 +10,20 @@ import (
 	"strings"
 )
 
+func extractArg(inputlist []string, flag string) (arg string, output []string, found bool) {
+	arg, output, found = "", nil, false
+	for i := 0; i < len(inputlist); i++ {
+		if inputlist[i] == flag && i + 1 < len(inputlist) {
+			arg = inputlist[i+1]
+			found = true 
+			i++
+		} else {
+			output = append(output, inputlist[i])
+		}
+	}
+	return
+}
+
 func Create(arglist []string) {
 	if len(arglist) == 0 {
 		goto usage
@@ -29,16 +43,20 @@ func Apply(arglist []string) {
 	if len(arglist) == 0 || len(arglist) > 4 {
 		goto usage
 	}
-	if arglist[len(arglist)-2] == "-m" {
-		if len(arglist) == 3 {
-			scenario.ScenarioApply(arglist[0], "default", arglist[2])
-			return
-		} else if len(arglist) == 4 {
-			scenario.ScenarioApply(arglist[0], arglist[1], arglist[3])
-			return
-		}
-	} else if arglist[1] == "purge" {
+	if len(arglist) == 2 && arglist[1] == "purge" {
 		scenario.ScenarioApply(arglist[0], arglist[1], "")
+		return
+	} else {
+		message, arglist, hasMessage := extractArg(arglist, "-m")
+		deployment := arglist[0]
+		target := "default"
+		if !hasMessage || len(arglist) > 2 {
+			goto usage
+		}
+		if len(arglist) == 2 {
+			target = arglist[1]
+		}
+		scenario.ScenarioApply(deployment, target, message)
 		return
 	}
 usage:
@@ -151,25 +169,20 @@ usage:
 
 func Reset(arglist []string) {
 	var message, version string
+	var hasMessage, hasVersion bool
 	if len(arglist) < 6 {
 		goto usage
 	}
 
-	if arglist[len(arglist)-2] == "-m" {
-		message = arglist[len(arglist)-1]
-	} else {
+	message, arglist, hasMessage = extractArg(arglist, "-m")
+	version, arglist, hasVersion = extractArg(arglist, "-v")
+	if !hasMessage || !hasVersion {
 		goto usage
 	}
 
-	if arglist[len(arglist)-4] == "-v" {
-		version = arglist[len(arglist)-3]
-	} else {
-		goto usage
-	}
-
-	if arglist[0] == "scenario" && len(arglist) == 6 {
+	if arglist[0] == "scenario" && len(arglist) == 2 {
 		scenario.ScenarioReset(arglist[1], version, message)
-	} else if arglist[0] == "nodeapp" && len(arglist) == 7 {
+	} else if arglist[0] == "nodeapp" && len(arglist) == 3 {
 		nodeapp := arglist[2]
 		appscen := strings.Split(nodeapp, "@")
 		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
