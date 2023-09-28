@@ -16,7 +16,7 @@ import (
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.UTC.String()
+	BuildTime    string = time.Now().UTC().String()
 	BuildName    string = "brain"
 	CommitID     string = "snapshot"
 )

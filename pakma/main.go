@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"pakma/config"
 	"pakma/httpsclient"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildVersion string = "dev"
+	BuildTime    string = time.Now().UTC().String()
+	BuildName    string = "pakma"
+	CommitID     string = "snapshot"
 )
 
 func main() {
