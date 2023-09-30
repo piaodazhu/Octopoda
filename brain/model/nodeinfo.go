@@ -15,6 +15,7 @@ const (
 
 type NodeInfo struct {
 	Name      string
+	Version   string
 	Addr      string
 	State     int32
 	OnlineTs  int64
@@ -61,7 +62,7 @@ func InitNodeMap() {
 	}()
 }
 
-func StoreNode(name, addr string, conn *net.Conn) {
+func StoreNode(name, version, addr string, conn *net.Conn) {
 	var node *NodeModel
 
 	NodesLock.Lock()
@@ -82,6 +83,7 @@ func StoreNode(name, addr string, conn *net.Conn) {
 		}
 		NodeMap[name] = node
 	}
+	node.Version = version
 	node.Addr = addr
 	node.MsgConn = conn
 	node.State = NodeStateReady

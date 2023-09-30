@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"pakma/config"
 	"pakma/httpsclient"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.Now().UTC().String()
+	BuildTime    string
 	BuildName    string = "pakma"
 	CommitID     string = "snapshot"
 )

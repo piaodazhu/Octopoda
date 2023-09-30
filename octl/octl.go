@@ -7,12 +7,11 @@ import (
 	"octl/output"
 	"octl/subcmd"
 	"os"
-	"time"
 )
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.Now().UTC().String()
+	BuildTime    string
 	BuildName    string = "brain"
 	CommitID     string = "snapshot"
 )

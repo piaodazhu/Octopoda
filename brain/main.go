@@ -2,11 +2,11 @@ package main
 
 import (
 	"brain/alert"
+	"brain/buildinfo"
 	"brain/config"
 	"brain/logger"
 	"brain/model"
 	"brain/sys"
-	"time"
 
 	"brain/network"
 	"brain/rdb"
@@ -16,7 +16,7 @@ import (
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.Now().UTC().String()
+	BuildTime    string
 	BuildName    string = "brain"
 	CommitID     string = "snapshot"
 )
@@ -34,6 +34,13 @@ func main() {
 		fmt.Printf("Octopoda Brain\nbuild name:\t%s\nbuild ver:\t%s\nbuild time:\t%s\nCommit ID:\t%s\n", BuildName, BuildVersion, BuildTime, CommitID)
 		return
 	}
+
+	buildinfo.SetBuildInfo(buildinfo.BuildInfo{
+		BuildVersion: BuildVersion,
+		BuildTime:    BuildTime,
+		BuildName:    BuildName,
+		CommitID:     CommitID,
+	})
 
 	config.InitConfig(conf)
 	logger.InitLogger(stdout)

@@ -11,14 +11,13 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.Now().UTC().String()
+	BuildTime    string
 	BuildName    string = "httpns"
 	CommitID     string = "snapshot"
 )

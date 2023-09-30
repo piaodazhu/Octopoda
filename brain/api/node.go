@@ -1,6 +1,7 @@
 package api
 
 import (
+	"brain/buildinfo"
 	"brain/config"
 	"brain/logger"
 	"brain/message"
@@ -18,6 +19,7 @@ import (
 
 type NodeInfoText struct {
 	Name         string `json:"name"`
+	Version      string `json:"version"`
 	Addr         string `json:"addr"`
 	Health       string `json:"health"`
 	MsgConnState string `json:"msg_conn"`
@@ -27,15 +29,23 @@ type NodeInfoText struct {
 }
 
 type NodesInfoText struct {
+	MasterInfo   MasterInfoText  `json:"master"`
 	NodeInfoList []*NodeInfoText `json:"nodes"`
 	Total        int             `json:"total"`
 	Active       int             `json:"active"`
 	Offline      int             `json:"offline"`
 }
 
+type MasterInfoText struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Addr    string `json:"addr"`
+}
+
 func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 	res := &NodeInfoText{
 		Name: node.Name,
+		Version: node.Version,
 		Addr: node.Addr,
 	}
 	switch node.State {
@@ -59,6 +69,11 @@ func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 
 func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 	res := &NodesInfoText{
+		MasterInfo: MasterInfoText{
+			Name: config.GlobalConfig.Name,
+			Version: buildinfo.String(),
+			Addr: config.GlobalConfig.OctlFace.Ip,
+		},	
 		NodeInfoList: make([]*NodeInfoText, len(nodes)),
 	}
 	for i, node := range nodes {
