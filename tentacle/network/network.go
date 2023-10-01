@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"tentacle/config"
 	"tentacle/logger"
 )
 
@@ -28,20 +29,20 @@ func getIpByDevice(device string) (string, error) {
 	return "", fmt.Errorf("IPv4 address not found with device %s", device)
 }
 
-func dialWithDevice(addr string) (net.Conn, error) {
+func dialWithDevice(addr, dev string) (net.Conn, error) {
 	remote, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
 		logger.Network.Println("cannot resolve remote address: ", err)
 		return nil, err
 	}
 
-	localip, err := getIpByDevice("eth0")
+	localip, err := getIpByDevice(dev)
 	if err != nil {
 		logger.Network.Println("cannot get local ip: ", err)
 		return nil, err
 	}
 
-	local, err := net.ResolveTCPAddr("tcp", localip)
+	local, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", localip))
 	if err != nil {
 		logger.Network.Println("cannot resolve local address: ", err)
 		return nil, err
@@ -53,6 +54,14 @@ func dialWithDevice(addr string) (net.Conn, error) {
 		return net.Dial("tcp", addr)
 	}
 	return tcpConn, nil
+}
+
+func Dial(addr string) (net.Conn, error) {
+	dev := config.GlobalConfig.NetDevice
+	if len(dev) == 0 {
+		return net.Dial("tcp", addr)
+	}
+	return dialWithDevice(addr, dev)
 }
 
 func Run() {

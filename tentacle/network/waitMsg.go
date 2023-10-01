@@ -23,8 +23,7 @@ func ReadAndServe() {
 				}
 			}()
 			joinwg.Wait()
-			conn, err := net.Dial("tcp", nameclient.BrainMsgAddr)
-			// conn, err := dialWithDevice(nameclient.BrainMsgAddr)
+			conn, err := Dial(nameclient.BrainMsgAddr)
 			if err != nil {
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue

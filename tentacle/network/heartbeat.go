@@ -21,8 +21,7 @@ func KeepAlive() {
 	reconnect:
 		nameclient.ResolveBrain()
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
-			conn, err := net.Dial("tcp", nameclient.BrainHeartAddr)
-			// conn, err := dialWithDevice(nameclient.BrainHeartAddr)
+			conn, err := Dial(nameclient.BrainHeartAddr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
