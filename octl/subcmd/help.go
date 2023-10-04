@@ -23,6 +23,7 @@ Node:group:octl group [get-all |get <group>|del <group>|set <group> <nodes...>|s
 Node:groups:octl groups:(= octl group get-all)
 
 Scenario:create:octl create <scen> [with <app1> <app2> ...]:octl create ChatScen with alice bob
+Scenario:repo:octl repo [clone|push] <scen> [-u <username>]:octl repo clone ChatScen -u mike
 Scenario:apply:octl apply <scen> [target] -m "your message":octl apply ChatScen prepare -m "prepare my scenario"
 Scenario:version:octl version [scenario <scen>|nodeapp <node> <app>@<scen>]:octl version scenario ChatScen
 Scenario:reset:octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m "your message":octl reset scenario ChatScen -v b698 -m "back to yesterday"

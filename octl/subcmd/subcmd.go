@@ -39,6 +39,27 @@ usage:
 	PrintUsage("create")
 }
 
+func ScenRepo(arglist []string) {
+	user, arglist, found := extractArg(arglist, "-u")
+	if !found {
+		user = ""
+	}
+	if len(arglist) != 2 {
+		goto usage
+	}
+	switch arglist[0] {
+	case "clone":
+		scenario.GitClone(arglist[1], user)
+	case "push":
+		scenario.GitPush(arglist[1], user)
+	default:
+		goto usage
+	}
+	return
+usage:
+	PrintUsage("clone")
+}
+
 func Apply(arglist []string) {
 	if len(arglist) == 0 || len(arglist) > 4 {
 		goto usage

@@ -56,6 +56,8 @@ func main() {
 	switch args[1] {
 	case "create":
 		subcmd.Create(args[2:])
+	case "repo":
+		subcmd.ScenRepo(args[2:])
 	case "apply":
 		subcmd.Apply(args[2:])
 	case "get":
