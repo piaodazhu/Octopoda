@@ -173,6 +173,14 @@ Note that we can use more than one groups in arguments, or mix node names with g
 
 With this subcmd we can generate a template folder for a scenarios, which can be edited and then used for `apply` subcmd.
 
+### REPO
+
+> `usage: octl repo [clone|push] <scen> [-u <username>]`
+
+With this subcmd we can clone a scenario deployment folder from a git service, or push modification to a remote git service.
+
+Note that the git service URL and Auth information should be configured in `octl.yaml`. It is recommanded that deploying a self-hosted git service with `gogs`.
+
 ### APPLY
 
 > `usage: octl apply <scenario> [target] -m "your message"`

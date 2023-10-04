@@ -2,22 +2,25 @@ package heartbeat
 
 import (
 	"encoding/hex"
+	"tentacle/buildinfo"
 	"tentacle/config"
 	"tentacle/logger"
 )
 
 type NodeJoinInfo struct {
-	Name string `json:"name"`
-	Addr string `json:"addr"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Addr    string `json:"addr"`
 }
 
 type NodeJoinResponse struct {
-	Ts  int64 `json:"ts"`
+	Ts int64 `json:"ts"`
 }
 
 func MakeNodeJoin(addr string) []byte {
 	nodeJoinInfo := NodeJoinInfo{
 		Name: config.GlobalConfig.Name,
+		Version: buildinfo.String(),
 		Addr: addr,
 	}
 	serialized_info, err := config.Jsoner.Marshal(nodeJoinInfo)

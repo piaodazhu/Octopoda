@@ -14,7 +14,11 @@ BUILD_OS=linux
 BUILD_ARCH=amd64
 BUILD_ARM=
 BUILD_NAME=octl_${BUILD_VERSION}_${BUILD_OS}_${BUILD_ARCH}
-LD_FLAGS="-X main.BuildName=${BUILD_NAME} -X main.BuildVersion=${BUILD_VERSION} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
+# use these:
+LD_FLAGS="-X main.BuildVersion=${BUILD_VERSION} -X main.BuildName=${BUILD_NAME} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
+# or: 
+# VERSION_MSG="something-dev"
+# LD_FLAGS="-X main.BuildVersion=${VERSION_MSG} -X main.BuildName=${BUILD_NAME} -X main.BuildTime=${BUILD_TIME} -X main.CommitID=${COMMIT_SHA1}"
 
 GOOS=${BUILD_OS} GOARCH=${BUILD_ARCH} GOARM=${BUILD_ARM} CGO_ENABLED=0 go build -ldflags "${LD_FLAGS}" -o octl .
 mkdir ${BUILD_NAME} &>/dev/null && \

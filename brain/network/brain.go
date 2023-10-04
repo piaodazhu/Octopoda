@@ -77,11 +77,11 @@ func ProcessNodeJoin(conn net.Conn) {
 	_, port, _ := net.SplitHostPort(conn.LocalAddr().String())
 	if port == fmt.Sprint(config.GlobalConfig.TentacleFace.HeartbeatPort) {
 		// heartbeat connection established
-		model.StoreNode(joinRequest.Name, joinRequest.Addr, nil)
+		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, nil)
 		logger.Network.Printf("New node join, name=%s\n", joinRequest.Name)
 		startHeartbeat(conn, joinRequest.Name)
 	} else {
-		model.StoreNode(joinRequest.Name, joinRequest.Addr, &conn)
+		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, &conn)
 		logger.Network.Printf("establish msg conn, name=%s\n", joinRequest.Name)
 	}
 }

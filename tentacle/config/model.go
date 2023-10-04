@@ -2,6 +2,7 @@ package config
 
 type ConfigModel struct {
 	Name            string           `mapstructure:"name"`
+	NetDevice       string           `mapstructure:"netDevice"`
 	HttpsNameServer HttpsNsModel     `mapstructure:"httpsNameServer"`
 	Brain           BrainModel       `mapstructure:"brain"`
 	Logger          LoggerModel      `mapstructure:"logger"`

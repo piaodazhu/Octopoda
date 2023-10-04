@@ -7,12 +7,11 @@ import (
 	"octl/output"
 	"octl/subcmd"
 	"os"
-	"time"
 )
 
 var (
 	BuildVersion string = "dev"
-	BuildTime    string = time.UTC.String()
+	BuildTime    string
 	BuildName    string = "brain"
 	CommitID     string = "snapshot"
 )
@@ -57,6 +56,8 @@ func main() {
 	switch args[1] {
 	case "create":
 		subcmd.Create(args[2:])
+	case "repo":
+		subcmd.ScenRepo(args[2:])
 	case "apply":
 		subcmd.Apply(args[2:])
 	case "get":

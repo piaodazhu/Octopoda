@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	BuildVersion string
+	BuildVersion string = "dev"
 	BuildTime    string
-	BuildName    string
-	CommitID     string
+	BuildName    string = "pakma"
+	CommitID     string = "snapshot"
 )
 
 func main() {

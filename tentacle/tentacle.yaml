@@ -1,4 +1,5 @@
 name: "pi0"
+netDevice: "wlan1" # if empty, use default
 httpsNameServer:
   enable: true
   host: "10.108.30.85"
@@ -11,8 +12,6 @@ brain:
   ip: "127.0.0.1"
   heartbeatPort: 1111
   messagePort: 1112
-  
-  token: "default"
 logger:
   path: "/var/octopoda/tentacle/log/"
   namePrefix: "log"

@@ -29,25 +29,9 @@ func InitProxyServer() {
 	}
 
 	proxyliteServer.OnTunnelCreated(func(ctx *proxylite.Context) {
-		// entry := &message.RegisterParam{
-		// 	Type:        "other",
-		// 	Name:        ctx.ServiceInfo().Name,
-		// 	Ip:          octlFaceIp,
-		// 	Port:        int(ctx.ServiceInfo().Port),
-		// 	Description: ctx.ServiceInfo().Message,
-		// 	TTL:         0,
-		// }
-		// err := nameRegister(entry)
-		// if err != nil {
-		// 	logger.Exceptions.Printf("add proxylite service %s failed: %v", entry.Name, err)
-		// }
 		CompleteSshInfo(ctx.ServiceInfo().Name, octlFaceIp, ctx.ServiceInfo().Port)
 	})
 	proxyliteServer.OnTunnelDestroyed(func(ctx *proxylite.Context) {
-		// err := nameUnregister(ctx.ServiceInfo().Name)
-		// if err != nil {
-		// 	logger.Exceptions.Printf("delete proxylite service %s failed: %v", ctx.ServiceInfo().Name, err)
-		// }
 		DelSshInfo(ctx.ServiceInfo().Name)
 	})
 	go func() {
@@ -84,6 +68,32 @@ func InitProxyServer() {
 	}()
 }
 
+func ProxyServices() ([]proxylite.ServiceInfo, error) {
+	services, err := proxylite.DiscoverServices(fmt.Sprintf(":%d", config.GlobalConfig.ProxyliteServer.Port))
+	if err != nil {
+		return nil, err 
+	}
+	
+	// clean sshinfo
+	set := map[string]struct{}{}
+	for _, s := range services {
+		set[s.Name] = struct{}{}
+	}
+	itemToBeDel := []string{}
+	sshInfos.Range(func(key, value any) bool {
+		name := key.(string)
+		if _, found := set[name]; !found {
+			itemToBeDel = append(itemToBeDel, name)
+		}
+		return true 
+	})
+	for _, name := range itemToBeDel {
+		DelSshInfo(name)
+	}
+
+	return services, err
+}
+
 type SSHInfo struct {
 	Ip       string
 	Port     uint32
@@ -105,7 +115,8 @@ func CreateSshInfo(name string, username, password string) {
 }
 
 func CompleteSshInfo(name string, ip string, port uint32) {
-	if info, found := GetSshInfo(name); found {
+	if v, found := sshInfos.Load(name); found {
+		info := v.(SSHInfo)
 		info.Ip = ip
 		info.Port = port
 		sshInfos.Store(name, info)
@@ -119,7 +130,7 @@ func DelSshInfo(name string) {
 func GetSshInfo(name string) (SSHInfo, bool) {
 	if v, found := sshInfos.Load(name); found {
 		info := v.(SSHInfo)
-		if len(info.Username) == 0 {
+		if len(info.Username) == 0 || len(info.Ip) == 0 {
 			DelSshInfo(name)
 			return SSHInfo{}, false
 		}

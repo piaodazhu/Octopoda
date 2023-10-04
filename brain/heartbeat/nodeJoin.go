@@ -8,12 +8,13 @@ import (
 )
 
 type NodeJoinInfo struct {
-	Name string `json:"name"`
-	Addr string `json:"addr"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Addr    string `json:"addr"`
 }
 
 type NodeJoinResponse struct {
-	Ts  int64 `json:"ts"`
+	Ts int64 `json:"ts"`
 }
 
 func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
@@ -37,7 +38,7 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 
 func MakeNodeJoinResponse() []byte {
 	nodeJoinResponse := NodeJoinResponse{
-		Ts:  time.Now().UnixMicro(),
+		Ts: time.Now().UnixMicro(),
 	}
 	serialized_response, err := config.Jsoner.Marshal(nodeJoinResponse)
 	if err != nil {

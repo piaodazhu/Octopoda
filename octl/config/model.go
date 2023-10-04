@@ -4,6 +4,7 @@ type ConfigModel struct {
 	HttpsNameServer HttpsNsModel `mapstructure:"httpsNameServer"`
 	Brain           BrainModel   `mapstructure:"brain"`
 	Sslinfo         SslinfoModel `mapstructure:"ssl"`
+	Gitinfo         GitinfoModel `mapstructure:"git"`
 	Api             APIs         `mapstructure:"api"`
 	OutputPretty    bool         `mapstructure:"outputPretty"`
 	JsonFast        bool         `mapstructure:"jsonFast"`
@@ -27,6 +28,12 @@ type SslinfoModel struct {
 	CaCert     string `mapstructure:"caCert"`
 	ClientCert string `mapstructure:"clientCert"`
 	ClientKey  string `mapstructure:"clientKey"`
+}
+
+type GitinfoModel struct {
+	ServeUrl string `mapstructure:"serveUrl"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 type APIs struct {
