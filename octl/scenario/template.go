@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"fmt"
+	"octl/config"
 	"octl/output"
 	"os"
 	"path/filepath"
@@ -14,6 +15,17 @@ description: "A simple description about scenarios %s..."
 applications:
 `
 
+const aliasTemplete = 
+`# auto generate by octl
+group1:
+- 'node3'
+- 'node4'
+group2:
+- '@group1'
+- 'node1'
+- 'node2'
+`
+
 const appTemplate = 
 `-
   name: "%s"
@@ -22,7 +34,7 @@ const appTemplate =
   description: "A simple description about application %s..."
   nodes:
     - 'node1'
-    - 'node2'
+    - '@group1'
   script:
     -
       target: prepare
@@ -80,6 +92,12 @@ const userdefTemplate =
 echo "user-defined target" >> $OCTOPODA_OUTPUT
 `
 
+const resultTemplate = 
+`Success to create config folder of %s!
+    To deploy the scenario: octl apply %s prepare -m 'your message'.
+    You can also host this scenario (%s/%s/%s) config with git service.
+`
+
 func Create(scenario string, apps ...string) {
 	output.PrintInfoln("Generating project...")
 	err := os.Mkdir(scenario, os.ModePerm)
@@ -90,9 +108,9 @@ func Create(scenario string, apps ...string) {
 	if err != nil {
 		output.PrintFatalf("Can not calc basePath %s: %s\n", scenario, err.Error())
 	}
-	config := fmt.Sprintf(scenTemplete, scenario, scenario)
+	configFile := fmt.Sprintf(scenTemplete, scenario, scenario)
 	for _, app := range apps {
-		config += fmt.Sprintf(appTemplate, app, app, app, app)
+		configFile += fmt.Sprintf(appTemplate, app, app, app, app)
 		appfolder := basePath + "/" + app
 		err = os.Mkdir(appfolder, os.ModePerm)
 		if err != nil {
@@ -140,9 +158,17 @@ func Create(scenario string, apps ...string) {
 		}
 	}
 	deployfile := basePath + "/deployment.yaml"
-	err = os.WriteFile(deployfile, []byte(config), os.ModePerm)
+	err = os.WriteFile(deployfile, []byte(configFile), os.ModePerm)
 	if err != nil {
-		output.PrintFatalf("Can not create file %s: %s\n", deployfile, err.Error())
+		output.PrintFatalf("Can not create deployment file %s: %s\n", deployfile, err.Error())
 	}
-	output.PrintInfof("Success to create config folder of %s!\n        To deploy the scenario: octl apply %s prepare -m 'your message'\n", scenario, scenario)
+
+	aliasfile := basePath + "/alias.yaml"
+	err = os.WriteFile(aliasfile, []byte(aliasTemplete), os.ModePerm)
+	if err != nil {
+		output.PrintFatalf("Can not create alias file %s: %s\n", aliasfile, err.Error())
+	}
+
+	output.PrintInfof(resultTemplate, scenario, scenario, 
+		config.GlobalConfig.Gitinfo.ServeUrl, config.GlobalConfig.Gitinfo.Username, scenario)
 }

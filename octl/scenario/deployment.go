@@ -40,6 +40,12 @@ func ScenarioApply(scenFolder string, target string, message string) {
 		output.PrintFatalln(err.Error())
 	}
 
+	aliasFile := basePath + "/alias.yaml"
+	err = parseAliasFile(aliasFile)
+	if err != nil {
+		output.PrintFatalln(err.Error())
+	}
+
 	err = checkConfig(&configuration)
 	if err != nil {
 		fmt.Println(err)
