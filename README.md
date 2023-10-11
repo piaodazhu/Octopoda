@@ -138,7 +138,7 @@ With this subcmd we can get some basic information about current octopoda networ
 
 ### STATUS
 
-> `usage: octl status [nodes|nodes <node1> <@group1> ...|node <node>|master]`
+> `usage: octl status [nodes|nodes <node1> <@group1> ...|node <node>|brain]`
 
 With this subcmd we can get the running status of nodes or a given node, such as:
 - CPU Load.
@@ -148,9 +148,9 @@ With this subcmd we can get the running status of nodes or a given node, such as
 
 ### LOG
 
-> `usage: octl log [<node>|master] [-l<maxline>] [-d<maxday>]`
+> `usage: octl log [<node>|brain] [-l<maxline>] [-d<maxday>]`
 
-With this subcmd we can get the running log of master or a given node. The argument `l` means max lines need to be read, and argument `d` means max days before today need to be read.
+With this subcmd we can get the running log of brain or a given node. The argument `l` means max lines need to be read, and argument `d` means max days before today need to be read.
 
 Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be return.
 
@@ -364,13 +364,13 @@ There is no need to run this subcmd in most cases, because fix will also be peri
 
 > `usage: octl upload <localFileOrDir> <targetDir>`
 
-With this subcmd we can upload a file or a whole directory to the storage of master. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
+With this subcmd we can upload a file or a whole directory to the storage of brain. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
 
 ### SPREAD
 
-> `usage: octl spread <masterFileOrDir> <targetDir> <node1> <node2> ...`
+> `usage: octl spread <brainFileOrDir> <targetDir> <node1> <node2> ...`
 
-With this subcmd we can spread a file or a whole directory from the master's storage to the given nodes' storage. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
+With this subcmd we can spread a file or a whole directory from the brain's storage to the given nodes' storage. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
 
 
 ### DISTRIB
@@ -383,15 +383,15 @@ With this subcmd we can distribute a file or a whole directory to the given node
 
 ### TREE
 
-> `octl tree [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] [SubDir]`
+> `octl tree [store [brain|<node>]|log [<node>|brain]|nodeapp <node> <app>@<scen>] [SubDir]`
 
-With this subcmd we can get all files information under `SubDir` on master or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. Current Octopoda not support print this files like a tree, it list all files instead. 
+With this subcmd we can get all files information under `SubDir` on brain or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. Current Octopoda not support print this files like a tree, it list all files instead. 
 
 ### PULL
 
-> `octl pull [store [master|<node>]|log [<node>|master]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`
+> `octl pull [store [brain|<node>]|log [<node>|brain]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`
 
-With this subcmd we can pull file or directory from under `SubDir` from master or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. 
+With this subcmd we can pull file or directory from under `SubDir` from brain or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. 
 
 ## E. Script Execution
 
@@ -439,15 +439,15 @@ Fast script to generate keys and certificates for CA, server and client.
 
 ## H. Online Upgrade - Pakma
 
-> `usage: octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<master>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]`
+> `usage: octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<brain>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]`
 
 Pakma is a localhost http service to support tentacle/brain online upgrade, downgrade. So far, HttpsNameServer must be enabled to provide [release package](https://github.com/piaodazhu/Octopoda/releases).
 
 Pakma's basic mechanism is **stable-(upgrade)-preview-(confirm/cancel/timeout)-stable**. If the upgraded version of tentacle/brain can not work well, pakma will automatically rollback it to the old stable version after 2 minites timeout.
 
-- example1: octl pakma install 1.5.1 master pi0 pi1 pi2   (first upgrade, use install)
-- example2: octl pakma state master pi0 pi1 pi2
-- example3: octl pakma upgrade 1.5.1 master pi0 pi1 pi2   (after first upgrade, use upgrade)
+- example1: octl pakma install 1.5.1 brain pi0 pi1 pi2   (first upgrade, use install)
+- example2: octl pakma state brain pi0 pi1 pi2
+- example3: octl pakma upgrade 1.5.1 brain pi0 pi1 pi2   (after first upgrade, use upgrade)
 
 # Scenario Example
 See an example in `./octl/example/helloWorld`. The file `deployment.yaml` defines scenario called `helloWorld`. This scenario consists of 3 application, running on 2 nodes, with some targets. You can manage `helloWorld` scenario with octl:

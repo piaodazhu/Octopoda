@@ -47,7 +47,7 @@ func PakmaCmd(ctx *gin.Context) {
 		name := nodes[i]
 		results[i].Name = name
 		wg.Add(1)
-		if name == "master" {
+		if name == "brain" {
 			go pakmaLocal(params, &wg, &results[i].Result)
 		} else {
 			go pakmaRemote(name, payload, &wg, &results[i].Result)

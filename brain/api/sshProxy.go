@@ -22,7 +22,7 @@ func SshLoginInfo(ctx *gin.Context) {
 	name := ctx.Query("name")
 	if info, found := network.GetSshInfo(name); found {
 		ctx.JSON(200, info)
-		return 
+		return
 	}
 	ctx.JSON(404, struct{}{})
 }
@@ -34,7 +34,7 @@ func SshRegister(ctx *gin.Context) {
 	if len(name) == 0 || len(username) == 0 {
 		ctx.JSON(400, proxyMsg{
 			Code: -1,
-			Msg: "ERR",
+			Msg:  "ERR",
 			Data: "invalid arguments",
 		})
 		return
@@ -43,7 +43,7 @@ func SshRegister(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(404, proxyMsg{
 			Code: -1,
-			Msg: "ERR",
+			Msg:  "ERR",
 			Data: fmt.Sprintf("cannot get proxy services: %s", err.Error()),
 		})
 		return
@@ -54,7 +54,7 @@ func SshRegister(ctx *gin.Context) {
 		if name == s.Name {
 			ctx.JSON(400, proxyMsg{
 				Code: -1,
-				Msg: "ERR",
+				Msg:  "ERR",
 				Data: fmt.Sprintf("service %s already exists", name),
 			})
 			return
@@ -74,14 +74,14 @@ func SshUnregister(ctx *gin.Context) {
 }
 
 func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
-	if name == "master" {
+	if name == "brain" {
 		ip, _ := network.GetOctlFaceIp()
 		if cmdType == message.TypeSshRegister {
 			network.CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
 		}
 		ctx.JSON(200, proxyMsg{
 			Code: 0,
-			Msg: "OK",
+			Msg:  "OK",
 			Data: fmt.Sprintf("%s:%d", ip, config.GlobalConfig.OctlFace.SshPort),
 		})
 		return true
@@ -89,7 +89,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	if state, ok := model.GetNodeState(name); !ok || state != model.NodeStateReady {
 		ctx.JSON(404, proxyMsg{
 			Code: -1,
-			Msg: "ERR",
+			Msg:  "ERR",
 			Data: fmt.Sprintf("node %s not found", name),
 		})
 		return false
@@ -99,8 +99,8 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		logger.Comm.Println(message.MsgTypeString[cmdType], err)
 		ctx.JSON(500, proxyMsg{
 			Code: -1,
-			Msg: "ERR",
-			Data: fmt.Sprintf("master request %s error", name),
+			Msg:  "ERR",
+			Data: fmt.Sprintf("brain request %s error", name),
 		})
 		return false
 	}
@@ -111,7 +111,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		logger.Comm.Println("proxyMsg Unmarshal", err)
 		ctx.JSON(500, proxyMsg{
 			Code: -1,
-			Msg: "ERR",
+			Msg:  "ERR",
 			Data: fmt.Sprintf("proxyMsg Unmarshal error: %s", err),
 		})
 		return false

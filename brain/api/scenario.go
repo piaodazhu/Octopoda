@@ -117,7 +117,7 @@ func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("Unmarshal", err)
-		*result = "MasterError"
+		*result = "BrainError"
 		return
 	}
 	if rmsg.Rmsg != "OK" {
@@ -283,7 +283,7 @@ func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("Unmarshal", err)
-		*result = "MasterError"
+		*result = "BrainError"
 		return
 	}
 	*result = rmsg.Rmsg

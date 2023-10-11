@@ -83,12 +83,12 @@ func Pakma(firstarg string, args []string) {
 	}
 
 	names_filtered := []string{}
-	hasMaster := false 
+	hasBrain := false
 	for i := range names {
-		if names[i] != "master" {
+		if names[i] != "brain" {
 			names_filtered = append(names_filtered, names[i])
 		} else {
-			hasMaster = true
+			hasBrain = true
 		}
 	}
 
@@ -97,8 +97,8 @@ func Pakma(firstarg string, args []string) {
 		output.PrintFatalln(err)
 	}
 
-	if hasMaster {
-		nodes = append(nodes, "master")
+	if hasBrain {
+		nodes = append(nodes, "brain")
 	}
 
 	URL := fmt.Sprintf("http://%s/%s%s",

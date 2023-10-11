@@ -29,14 +29,14 @@ type NodeInfoText struct {
 }
 
 type NodesInfoText struct {
-	MasterInfo   MasterInfoText  `json:"master"`
+	BrainInfo    BrainInfoText   `json:"brain"`
 	NodeInfoList []*NodeInfoText `json:"nodes"`
 	Total        int             `json:"total"`
 	Active       int             `json:"active"`
 	Offline      int             `json:"offline"`
 }
 
-type MasterInfoText struct {
+type BrainInfoText struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	Addr    string `json:"addr"`
@@ -44,9 +44,9 @@ type MasterInfoText struct {
 
 func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 	res := &NodeInfoText{
-		Name: node.Name,
+		Name:    node.Name,
 		Version: node.Version,
-		Addr: node.Addr,
+		Addr:    node.Addr,
 	}
 	switch node.State {
 	case 0:
@@ -69,11 +69,11 @@ func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 
 func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 	res := &NodesInfoText{
-		MasterInfo: MasterInfoText{
-			Name: config.GlobalConfig.Name,
+		BrainInfo: BrainInfoText{
+			Name:    config.GlobalConfig.Name,
 			Version: buildinfo.String(),
-			Addr: config.GlobalConfig.OctlFace.Ip,
-		},	
+			Addr:    config.GlobalConfig.OctlFace.Ip,
+		},
 		NodeInfoList: make([]*NodeInfoText, len(nodes)),
 	}
 	for i, node := range nodes {
@@ -178,7 +178,7 @@ func NodeStatus(ctx *gin.Context) {
 		return
 	}
 	var status model.Status
-	if name == "master" {
+	if name == "brain" {
 		ctx.JSON(200, statusToText(sys.LocalStatus()))
 		return
 	}
