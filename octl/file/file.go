@@ -323,7 +323,7 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	result := Result{}
 	finfo := FilePullParams{}
 	if res.StatusCode == 200 {
-		// get the file info structure from master
+		// get the file info structure from brain
 		err = config.Jsoner.Unmarshal(msg, &result)
 		if err != nil {
 			output.PrintFatalln(err.Error())

@@ -222,7 +222,7 @@ func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, resul
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("UnmarshalNodeStatus", err)
-		*result = "MasterError"
+		*result = "BrainError"
 		return
 	}
 	// logger.Tentacle.Print(rmsg.Rmsg)
@@ -255,7 +255,7 @@ func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, resul
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("UnmarshalNodeStatus", err)
-		*result = "MasterError"
+		*result = "BrainError"
 		return
 	}
 	// *result = string(rmsg.Output)

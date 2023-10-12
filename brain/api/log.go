@@ -44,7 +44,7 @@ func NodeLog(ctx *gin.Context) {
 		Logs:          []string{},
 	}
 
-	if name == "master" {
+	if name == "brain" {
 		readLogs(&lparams)
 	} else {
 		ok := readLogsRemote(name, &lparams)

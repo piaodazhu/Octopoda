@@ -2,12 +2,7 @@ package scenario
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"octl/config"
-	"octl/nameclient"
 	"octl/node"
-	"octl/output"
 	"os"
 )
 
@@ -82,8 +77,14 @@ func checkConfig(config *ScenarioConfigModel) error {
 		// for _, node := range app.Nodes {
 		// 	nodeset[node] = struct{}{}
 		// }
+		app.Nodes, err = expandAlias(app.Nodes)
+		if err != nil {
+			return err
+		}
+
 		app.Nodes, err = node.NodesParse(app.Nodes)
 		if err != nil {
+			// TODO: make the error infomation clear
 			return ErrInvalidNode{}
 		}
 
@@ -160,40 +161,40 @@ type NodesInfoText struct {
 	Offline      int             `json:"offline"`
 }
 
-func checkNodes(nodeset map[string]struct{}) bool {
-	// get all nodes in the cluster
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
-		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodesInfo,
-	)
-	res, err := http.Get(url)
-	if err != nil {
-		output.PrintFatalln("Get")
-	}
-	defer res.Body.Close()
-	raw, _ := io.ReadAll(res.Body)
-	nodesInfo := NodesInfoText{}
-	err = config.Jsoner.Unmarshal(raw, &nodesInfo)
-	if err != nil {
-		output.PrintFatalln(err.Error())
-	}
-	// fmt.Println(nodes)
-	// fmt.Println(nodes)
-	// put them into a set
-	nodes := nodesInfo.NodeInfoList
-	nodemap := map[string]struct{}{}
-	for i := range nodes {
-		if nodes[i].Health == "Healthy" {
-			nodemap[nodes[i].Name] = struct{}{}
-		}
-	}
+// func checkNodes(nodeset map[string]struct{}) bool {
+// 	// get all nodes in the cluster
+// 	url := fmt.Sprintf("http://%s/%s%s",
+// 		nameclient.BrainAddr,
+// 		config.GlobalConfig.Brain.ApiPrefix,
+// 		config.GlobalConfig.Api.NodesInfo,
+// 	)
+// 	res, err := http.Get(url)
+// 	if err != nil {
+// 		output.PrintFatalln("Get")
+// 	}
+// 	defer res.Body.Close()
+// 	raw, _ := io.ReadAll(res.Body)
+// 	nodesInfo := NodesInfoText{}
+// 	err = config.Jsoner.Unmarshal(raw, &nodesInfo)
+// 	if err != nil {
+// 		output.PrintFatalln(err.Error())
+// 	}
+// 	// fmt.Println(nodes)
+// 	// fmt.Println(nodes)
+// 	// put them into a set
+// 	nodes := nodesInfo.NodeInfoList
+// 	nodemap := map[string]struct{}{}
+// 	for i := range nodes {
+// 		if nodes[i].Health == "Healthy" {
+// 			nodemap[nodes[i].Name] = struct{}{}
+// 		}
+// 	}
 
-	// check nodeset: is all nodename in that set?
-	for node := range nodeset {
-		if _, ok := nodemap[node]; !ok {
-			return false
-		}
-	}
-	return true
-}
+// 	// check nodeset: is all nodename in that set?
+// 	for node := range nodeset {
+// 		if _, ok := nodemap[node]; !ok {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }

@@ -285,7 +285,7 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("UnmarshalRmsg", err)
-		*result = "MasterError"
+		*result = "BrainError"
 		return
 	}
 	if rmsg.Rmsg != "OK" {
@@ -340,7 +340,7 @@ func (e ErrNetworkError) Error() string { return fmt.Sprintf("Network error: %s\
 
 func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 	var pathsb strings.Builder
-	if name == "master" {
+	if name == "brain" {
 		switch pathtype {
 		case "store":
 			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
@@ -528,8 +528,8 @@ func FilePull(ctx *gin.Context) {
 		return
 	}
 
-	// pull master file?
-	if name == "master" {
+	// pull brain file?
+	if name == "brain" {
 		var pathsb strings.Builder
 		switch pathtype {
 		case "store":

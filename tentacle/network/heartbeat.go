@@ -23,7 +23,7 @@ func KeepAlive() {
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := Dial(nameclient.BrainHeartAddr)
 			if err != nil {
-				logger.Network.Print("Cannot connect to master. retry = ", retry, err)
+				logger.Network.Print("Cannot connect to brain. retry = ", retry, err)
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				retry++
 			} else {
@@ -69,7 +69,7 @@ func KeepAlive() {
 			}
 		}
 
-		logger.Network.Print("Cannot connect to master.")
+		logger.Network.Print("Cannot connect to brain.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
 			exec.Command("reboot").Run()
 			wg.Done()

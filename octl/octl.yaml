@@ -15,9 +15,9 @@ ssl:
   clientCert: "./cert/client.pem"
   clientKey: "./cert/client.key"
 git:
-  serveUrl: "http://192.168.3.168:3000"
-  username: "lab101"
-  password: "network123"
+  serveUrl: "http://10.108.30.85:3000"
+  username: "testuser"
+  password: "testpass"
 jsonFast: true
 outputPretty: true
 api:  
