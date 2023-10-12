@@ -40,7 +40,9 @@ func GitPush(repo, user string) {
 		output.PrintFatalln(err)
 	}
 	workTree.Add(".")
-	workTree.Commit("default msg", &git.CommitOptions{})
+	workTree.Commit("default msg", &git.CommitOptions{
+		AllowEmptyCommits: false,
+	})
 	remote, err := repository.CreateRemote(&gitconf.RemoteConfig{
 		Name: "origin",
 		URLs: []string{remoteUrl},
