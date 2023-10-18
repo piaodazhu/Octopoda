@@ -6,6 +6,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/network"
 	"brain/rdb"
 	"brain/sys"
 	"encoding/json"
@@ -68,11 +69,12 @@ func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 }
 
 func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
+	octlFaceIp, _ := network.GetOctlFaceIp()
 	res := &NodesInfoText{
 		BrainInfo: BrainInfoText{
 			Name:    config.GlobalConfig.Name,
 			Version: buildinfo.String(),
-			Addr:    config.GlobalConfig.OctlFace.Ip,
+			Addr:    octlFaceIp,
 		},
 		NodeInfoList: make([]*NodeInfoText, len(nodes)),
 	}
