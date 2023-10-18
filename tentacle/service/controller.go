@@ -12,7 +12,7 @@ func InitService() {
 }
 
 func HandleMessage(conn net.Conn) error {
-	mtype, raw, err := message.RecvMessageUnique(conn)
+	mtype, _, raw, err := message.RecvMessageUnique(conn) // TODO : same serial should be maintained
 	if err != nil {
 		logger.Comm.Println(err)
 		return err

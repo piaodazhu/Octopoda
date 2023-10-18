@@ -36,7 +36,7 @@ func ReadAndServe() {
 				continue
 			}
 
-			_, raw, err := message.RecvMessageUnique(conn)
+			_, _, raw, err := message.RecvMessageUnique(conn)
 			if err != nil {
 				conn.Close()
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))

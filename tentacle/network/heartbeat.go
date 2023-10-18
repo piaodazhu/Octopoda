@@ -37,7 +37,7 @@ func KeepAlive() {
 					goto reconnect
 				}
 
-				_, raw, err := message.RecvMessageUnique(conn)
+				_, _, raw, err := message.RecvMessageUnique(conn)
 				if err != nil {
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
@@ -91,7 +91,7 @@ func LoopHeartbeat(conn net.Conn, randNum uint32) error {
 			return err
 		}
 
-		mtype, raw, err := message.RecvMessageUnique(conn)
+		mtype, _, raw, err := message.RecvMessageUnique(conn)
 		if err != nil || mtype != message.TypeHeartbeatResponse {
 			return err
 		}

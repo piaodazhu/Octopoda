@@ -23,7 +23,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum u
 
 	for {
 		health = true
-		mtype, msg, err = message.RecvMessageUnique(conn)
+		mtype, _, msg, err = message.RecvMessageUnique(conn)
 		if err != nil || mtype != message.TypeHeartbeat {
 			logger.Network.Print(err) // TODO who?
 			health = false

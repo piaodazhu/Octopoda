@@ -54,7 +54,7 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func ProcessNodeJoin(conn net.Conn) {
-	mtype, msg, err := message.RecvMessageUnique(conn)
+	mtype, _, msg, err := message.RecvMessageUnique(conn)
 	if err != nil || mtype != message.TypeNodeJoin {
 		logger.Comm.Print(err, message.TypeNodeJoin)
 		conn.Close()

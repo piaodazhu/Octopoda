@@ -57,7 +57,7 @@ retry:
 		retryCnt--
 		goto retry
 	}
-	rtype, resbuf, err = message.RecvMessageUnique(*conn)
+	rtype, _, resbuf, err = message.RecvMessageUnique(*conn)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "),
 		name, ", ", message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", RecvMessageUnique(conn is nil?", conn == nil, "): ",
