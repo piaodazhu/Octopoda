@@ -14,14 +14,15 @@ type NodeJoinInfo struct {
 }
 
 type NodeJoinResponse struct {
-	Ts int64 `json:"ts"`
+	Ts     int64  `json:"ts"`
+	NewNum uint32 `json:"new_num"`
 }
 
 func MakeNodeJoin(addr string) []byte {
 	nodeJoinInfo := NodeJoinInfo{
-		Name: config.GlobalConfig.Name,
+		Name:    config.GlobalConfig.Name,
 		Version: buildinfo.String(),
-		Addr: addr,
+		Addr:    addr,
 	}
 	serialized_info, err := config.Jsoner.Marshal(nodeJoinInfo)
 	if err != nil {

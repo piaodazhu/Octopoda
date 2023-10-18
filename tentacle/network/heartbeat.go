@@ -59,7 +59,7 @@ func KeepAlive() {
 					// goto reconnect
 				}
 
-				err = LoopHeartbeat(conn)
+				err = LoopHeartbeat(conn, joinResponse.NewNum)
 				if err != nil {
 					logger.Network.Print(err)
 					conn.Close()
@@ -82,11 +82,11 @@ func KeepAlive() {
 	}()
 }
 
-func LoopHeartbeat(conn net.Conn) error {
+func LoopHeartbeat(conn net.Conn, randNum uint32) error {
 	joinwg.Done()
 	defer joinwg.Add(1)
 	for {
-		err := message.SendMessageUnique(conn, message.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat("ping"))
+		err := message.SendMessageUnique(conn, message.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat(randNum))
 		if err != nil {
 			return err
 		}
@@ -99,6 +99,7 @@ func LoopHeartbeat(conn net.Conn) error {
 		if err != nil || response.Msg != "pong" {
 			return err
 		}
+		randNum = response.NewNum
 
 		time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.SendInterval))
 	}

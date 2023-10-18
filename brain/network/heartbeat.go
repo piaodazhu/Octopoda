@@ -14,30 +14,31 @@ import (
 	"time"
 )
 
-func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn) {
+func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum uint32) {
 	var mtype int
 	var msg []byte
 	var health bool
-	var hbinfo heartbeat.HeartBeatInfo
+	var hbinfo heartbeat.HeartBeatRequest
 	var err error
 
 	for {
 		health = true
 		mtype, msg, err = message.RecvMessageUnique(conn)
 		if err != nil || mtype != message.TypeHeartbeat {
-			logger.Network.Print(err)
+			logger.Network.Print(err) // TODO who?
 			health = false
 			goto reportstate
 		}
 
 		hbinfo, err = heartbeat.ParseHeartbeat(msg)
-		if err != nil || hbinfo.Msg != "ping" {
-			logger.Network.Print(err)
+		if err != nil || hbinfo.Num != randNum {
+			logger.Network.Println(err)
 			health = false
 			goto reportstate
 		}
 
-		err = message.SendMessageUnique(conn, message.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse("pong"))
+		randNum = snp.GenSerial()
+		err = message.SendMessageUnique(conn, message.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
 		if err != nil {
 			logger.Network.Print(err)
 			health = false
@@ -58,13 +59,13 @@ closeconnection:
 	conn.Close()
 }
 
-func startHeartbeat(conn net.Conn, name string) {
+func startHeartbeat(conn net.Conn, name string, randNum uint32) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
 	hbStartTime := time.Now()
 
 	hbchan := make(chan bool)
 	ctx, cancel := context.WithCancel(context.Background())
-	go ProcessHeartbeat(ctx, hbchan, conn)
+	go ProcessHeartbeat(ctx, hbchan, conn, randNum)
 	for {
 		select {
 		case hbstate := <-hbchan:
