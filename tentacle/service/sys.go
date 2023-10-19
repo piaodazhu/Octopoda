@@ -12,7 +12,6 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 	"time"
 )
 
@@ -29,17 +28,17 @@ func init() {
 	shellPath = "/bin/bash"
 	_, err := os.Stat(shellPath)
 	if err == nil {
-		return 
+		return
 	}
 	shellPath = "/bin/sh"
 	_, err = os.Stat(shellPath)
 	if err == nil {
-		return 
+		return
 	}
 	shellPath = "sh"
 }
 
-func RunScript(conn net.Conn, raw []byte) {
+func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
 	sparams := ScriptParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -75,7 +74,7 @@ func RunScript(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeRunScriptResponse send error")
 	}
@@ -144,7 +143,7 @@ type CommandParams struct {
 	DelayTime  int
 }
 
-func RunCmd(conn net.Conn, raw []byte) {
+func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -204,7 +203,7 @@ func RunCmd(conn net.Conn, raw []byte) {
 	}
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err := message.SendMessageUnique(conn, message.TypeRunCommandResponse, snp.GenSerial(), payload)
+	err := message.SendMessageUnique(conn, message.TypeRunCommandResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeRunCommandResponse send error")
 	}

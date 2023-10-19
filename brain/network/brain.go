@@ -82,7 +82,7 @@ func ProcessNodeJoin(conn net.Conn) {
 		logger.Network.Printf("New node join, name=%s\n", joinRequest.Name)
 		startHeartbeat(conn, joinRequest.Name, randNum)
 	} else {
-		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, &conn)
+		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, conn)
 		logger.Network.Printf("establish msg conn, name=%s\n", joinRequest.Name)
 	}
 }

@@ -8,12 +8,11 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 	"time"
 )
 
-func AppsInfo(conn net.Conn, raw []byte) {
-	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, snp.GenSerial(), app.Digest())
+func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {
+	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, serialNum, app.Digest())
 	if err != nil {
 		logger.Comm.Println("AppsInfo send error")
 	}
@@ -36,7 +35,7 @@ type AppDeployParams struct {
 	Script string
 }
 
-func AppCreate(conn net.Conn, raw []byte) {
+func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 	acParams := &AppCreateParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -102,13 +101,13 @@ func AppCreate(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppCreate send error")
 	}
 }
 
-func AppDeploy(conn net.Conn, raw []byte) {
+func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 	adParams := &AppDeployParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -187,7 +186,7 @@ func AppDeploy(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppDeploy send error")
 	}
@@ -198,7 +197,7 @@ type AppDeleteParams struct {
 	Scenario string
 }
 
-func AppDelete(conn net.Conn, raw []byte) {
+func AppDelete(conn net.Conn, serialNum uint32, raw []byte) {
 	adParams := &AppDeleteParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -227,7 +226,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")
 	}

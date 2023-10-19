@@ -23,9 +23,11 @@ type NodeInfo struct {
 	ActiveTs  int64
 }
 
+
 type NodeModel struct {
 	NodeInfo
-	MsgConn *net.Conn
+	// MsgConn *net.Conn
+	ConnInfo
 }
 
 type Status struct {
@@ -55,6 +57,7 @@ func InitNodeMap() {
 				if node.State == NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().UnixMilli() {
 					// logger.Tentacle.Print("MarkDeadNode", nodename)
 					node.State = NodeStateDead
+					node.ConnInfo.Close()
 				}
 			}
 			NodesLock.Unlock()
@@ -62,7 +65,7 @@ func InitNodeMap() {
 	}()
 }
 
-func StoreNode(name, version, addr string, conn *net.Conn) {
+func StoreNode(name, version, addr string, conn net.Conn) {
 	var node *NodeModel
 
 	NodesLock.Lock()
@@ -70,8 +73,9 @@ func StoreNode(name, version, addr string, conn *net.Conn) {
 
 	if n, found := NodeMap[name]; found {
 		node = n
-		if n.MsgConn != nil {
-			(*n.MsgConn).Close()
+		if conn != nil {
+			node.ConnInfo.Fresh(conn)
+			node.ConnInfo.StartReceive()
 		}
 	} else {
 		info := NodeInfo{
@@ -79,15 +83,18 @@ func StoreNode(name, version, addr string, conn *net.Conn) {
 		}
 		node = &NodeModel{
 			NodeInfo: info,
+			ConnInfo: CreateConnInfo(conn),
 			// Applist:   []*AppModel{},
 		}
 		NodeMap[name] = node
 	}
-	node.Version = version
-	node.Addr = addr
-	node.MsgConn = conn
-	node.State = NodeStateReady
-	node.OnlineTs = time.Now().UnixMilli()
+
+	if conn == nil { // 只对于heartbeat通道做状态设置
+		node.Version = version
+		node.Addr = addr
+		node.State = NodeStateDisconn // 必须心跳后才能认为上线
+		node.OnlineTs = time.Now().UnixMilli()
+	}
 }
 
 func UpdateNode(name string) bool {
@@ -141,7 +148,9 @@ func GetNodesInfoAll() ([]*NodeModel, bool) {
 	}
 	res := make([]*NodeModel, 0, len(NodeMap))
 	for _, val := range NodeMap {
-		copynode := *val
+		copynode := NodeModel{}
+		copynode.NodeInfo = val.NodeInfo
+		copynode.ConnInfo.ConnState = val.ConnInfo.ConnState
 		res = append(res, &copynode)
 	}
 	return res, true
@@ -157,7 +166,9 @@ func GetNodesInfo(names []string) ([]*NodeModel, bool) {
 	res := make([]*NodeModel, 0, len(names))
 	for _, name := range names {
 		if node, found := NodeMap[name]; found {
-			copynode := *node
+			copynode := NodeModel{}
+			copynode.NodeInfo = node.NodeInfo
+			copynode.ConnInfo.ConnState = node.ConnInfo.ConnState
 			res = append(res, &copynode)
 		}
 	}
@@ -170,26 +181,25 @@ var (
 	GetConnNoConn = 2
 )
 
-func GetNodeMsgConn(name string) (*net.Conn, int) {
+func GetNodeMsgConn(name string) (*ConnInfo, int) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if !found {
 		return nil, GetConnNoNode
 	}
-	if node.MsgConn == nil {
+	if node.ConnState == "Off" {
 		return nil, GetConnNoConn
 	}
-	return node.MsgConn, GetConnOk
+	return &node.ConnInfo, GetConnOk
 }
 
 func ResetNodeMsgConn(name string) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
-	if found && node.MsgConn != nil {
-		(*node.MsgConn).Close()
-		node.MsgConn = nil
+	if found {
+		node.Close()
 	}
 }
 

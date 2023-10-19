@@ -60,11 +60,7 @@ func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 		res.Health = "Offline"
 		res.OfflineTime = time.Since(time.UnixMilli(node.OfflineTs)).String()
 	}
-	if node.MsgConn == nil {
-		res.MsgConnState = "Off"
-	} else {
-		res.MsgConnState = "On"
-	}
+	res.MsgConnState = node.ConnState
 	return res
 }
 

@@ -8,7 +8,6 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 	"time"
 )
 
@@ -18,7 +17,7 @@ type LogParams struct {
 	Logs          []string
 }
 
-func NodeLog(conn net.Conn, raw []byte) {
+func NodeLog(conn net.Conn, serialNum uint32, raw []byte) {
 	lparams := LogParams{}
 	config.Jsoner.Unmarshal(raw, &lparams)
 	if lparams.MaxLines <= 0 {
@@ -32,7 +31,7 @@ func NodeLog(conn net.Conn, raw []byte) {
 
 	response, _ := config.Jsoner.Marshal(&lparams)
 
-	err := message.SendMessageUnique(conn, message.TypeNodeLogResponse, snp.GenSerial(), response)
+	err := message.SendMessageUnique(conn, message.TypeNodeLogResponse, serialNum, response)
 	if err != nil {
 		logger.Comm.Print("NodeLog")
 	}

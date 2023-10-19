@@ -6,10 +6,9 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 )
 
-func AppLatestVersion(conn net.Conn, raw []byte) {
+func AppLatestVersion(conn net.Conn, serialNum uint32, raw []byte) {
 	aParams := AppBasic{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte
@@ -21,13 +20,13 @@ func AppLatestVersion(conn net.Conn, raw []byte) {
 		payload, _ = config.Jsoner.Marshal(&v)
 	}
 
-	err = message.SendMessageUnique(conn, message.TypeAppLatestVersionResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppLatestVersionResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppLatestVersion send error")
 	}
 }
 
-func AppVersions(conn net.Conn, raw []byte) {
+func AppVersions(conn net.Conn, serialNum uint32, raw []byte) {
 	aParams := AppBasic{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte
@@ -37,7 +36,7 @@ func AppVersions(conn net.Conn, raw []byte) {
 	} else {
 		payload = app.Versions(aParams.Name, aParams.Scenario)
 	}
-	err = message.SendMessageUnique(conn, message.TypeAppVersionResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppVersionResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppVersion send error")
 	}
@@ -49,7 +48,7 @@ type AppResetParams struct {
 	Mode        string
 }
 
-func AppReset(conn net.Conn, raw []byte) {
+func AppReset(conn net.Conn, serialNum uint32, raw []byte) {
 	arParams := &AppResetParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -84,7 +83,7 @@ func AppReset(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppResetResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppResetResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppReset send error")
 	}

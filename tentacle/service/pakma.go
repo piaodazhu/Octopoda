@@ -9,7 +9,6 @@ import (
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 	"unicode"
 )
 
@@ -127,7 +126,7 @@ func checkVersion(version string) bool {
 	return true
 }
 
-func PakmaCommand(conn net.Conn, raw []byte) {
+func PakmaCommand(conn net.Conn, serialNum uint32, raw []byte) {
 	rmsg := message.Result{
 		Rmsg: "OK",
 	}
@@ -184,7 +183,7 @@ func PakmaCommand(conn net.Conn, raw []byte) {
 		payload, _ = config.Jsoner.Marshal(&rmsg)
 	}
 errorout:
-	err = message.SendMessageUnique(conn, message.TypePakmaCommandResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypePakmaCommandResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("PakmaCommand service error")
 	}

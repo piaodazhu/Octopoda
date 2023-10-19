@@ -4,7 +4,6 @@ import (
 	"net"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
 )
 
 func InitService() {
@@ -12,7 +11,7 @@ func InitService() {
 }
 
 func HandleMessage(conn net.Conn) error {
-	mtype, _, raw, err := message.RecvMessageUnique(conn) // TODO : same serial should be maintained
+	mtype, serialNum, raw, err := message.RecvMessageUnique(conn)
 	if err != nil {
 		logger.Comm.Println(err)
 		return err
@@ -25,43 +24,43 @@ func HandleMessage(conn net.Conn) error {
 	// this function next time, message.RecvMessageUnique(conn) will return error.
 	switch mtype {
 	case message.TypeNodeStatus:
-		NodeStatus(conn, raw)
+		NodeStatus(conn, serialNum, raw)
 	case message.TypeFilePush:
-		FilePush(conn, raw)
+		FilePush(conn, serialNum, raw)
 	case message.TypeFilePull:
-		FilePull(conn, raw)
+		FilePull(conn, serialNum, raw)
 	case message.TypeFileTree:
-		FileTree(conn, raw)
+		FileTree(conn, serialNum, raw)
 
 	case message.TypeNodeLog:
-		NodeLog(conn, raw)
+		NodeLog(conn, serialNum, raw)
 	case message.TypeRunCommand:
-		RunCmd(conn, raw)
+		RunCmd(conn, serialNum, raw)
 	case message.TypeRunScript:
-		RunScript(conn, raw)
+		RunScript(conn, serialNum, raw)
 
 	case message.TypeAppCreate:
-		AppCreate(conn, raw)
+		AppCreate(conn, serialNum, raw)
 	case message.TypeAppDelete:
-		AppDelete(conn, raw)
+		AppDelete(conn, serialNum, raw)
 	case message.TypeAppDeploy:
-		AppDeploy(conn, raw)
+		AppDeploy(conn, serialNum, raw)
 	case message.TypeAppVersion:
-		AppVersions(conn, raw)
+		AppVersions(conn, serialNum, raw)
 	case message.TypeAppsInfo:
-		AppsInfo(conn, raw)
+		AppsInfo(conn, serialNum, raw)
 	case message.TypeAppReset:
-		AppReset(conn, raw)
+		AppReset(conn, serialNum, raw)
 	case message.TypeAppLatestVersion:
-		AppLatestVersion(conn, raw)
+		AppLatestVersion(conn, serialNum, raw)
 	case message.TypePakmaCommand:
-		PakmaCommand(conn, raw)
+		PakmaCommand(conn, serialNum, raw)
 	case message.TypeSshRegister:
-		SshRegister(conn, raw)
+		SshRegister(conn, serialNum, raw)
 	case message.TypeSshUnregister:
-		SshUnregister(conn, raw)
+		SshUnregister(conn, serialNum, raw)
 	default:
-		message.SendMessageUnique(conn, message.TypeUndefined, snp.GenSerial(), []byte{})
+		message.SendMessageUnique(conn, message.TypeUndefined, serialNum, []byte{})
 		logger.Comm.Println("unsupported protocol")
 	}
 	return nil
