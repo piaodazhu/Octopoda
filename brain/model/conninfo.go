@@ -115,6 +115,10 @@ func (c *ConnInfo) WaitMsg(serialNum uint32) (*ConnMsg, bool) {
 		mchan := value.(chan *ConnMsg)
 		// fmt.Println("[DEBUG] waiting...: ", serialNum)
 		msg := <-mchan
+		if msg == nil {
+			// fmt.Println("[DEBUG] wait canceled: ", serialNum)
+			return nil, false
+		}
 		// fmt.Println("[DEBUG] wait done: ", msg)
 		return msg, true
 	}

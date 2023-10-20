@@ -31,8 +31,7 @@ retry:
 	connInfo, rcode = GetNodeMsgConn(name)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
 		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
-		"retry=", 3-retryCnt, ", GetNodeMsgConn(", name, "): conn is nil?",
-		connInfo.Conn == nil, ", rcode=", rcode))
+		"retry=", 3-retryCnt, ", GetNodeMsgConn(", name, "): rcode=", rcode))
 	if rcode == GetConnNoNode {
 		return nil, fmt.Errorf("node %s not exists", name)
 	} else if rcode == GetConnNoConn {

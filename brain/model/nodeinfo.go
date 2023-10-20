@@ -189,7 +189,7 @@ func GetNodeMsgConn(name string) (*ConnInfo, int) {
 		return nil, GetConnNoNode
 	}
 	if node.ConnState == "Off" {
-		return nil, GetConnNoConn
+		return &node.ConnInfo, GetConnNoConn
 	}
 	return &node.ConnInfo, GetConnOk
 }
