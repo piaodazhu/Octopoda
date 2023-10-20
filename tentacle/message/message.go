@@ -65,6 +65,15 @@ const (
 	TypeSshUnregister
 	TypeSshUnregisterResponse
 
+	TypeWaitTask
+	TypeWaitTaskResponse
+
+	TypeQueryTask
+	TypeQueryTaskResponse
+
+	TypeListTasks
+	TypeListTasksResponse
+
 	TypeUndefined
 )
 
@@ -124,6 +133,15 @@ var MsgTypeString map[int]string = map[int]string{
 
 	TypeSshUnregister:         "TypeSshUnregister",
 	TypeSshUnregisterResponse: "TypeSshUnregisterResponse",
+
+	TypeWaitTask:         "TypeWaitTask",
+	TypeWaitTaskResponse: "TypeWaitTaskResponse",
+
+	TypeQueryTask:         "TypeQueryTask",
+	TypeQueryTaskResponse: "TypeQueryTaskResponse",
+
+	TypeListTasks:         "TypeListTasks",
+	TypeListTasksResponse: "TypeListTasksResponse",
 }
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {

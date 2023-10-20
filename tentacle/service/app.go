@@ -146,7 +146,7 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 		TargetPath: "scripts/",
 		FileBuf:    adParams.Script,
 	}
-	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname)
+	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname, nil)
 	rmsg.Output = string(output)
 
 	if err != nil {
