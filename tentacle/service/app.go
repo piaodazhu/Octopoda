@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"tentacle/app"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/message"
-	"tentacle/snp"
+	"tentacle/task"
 	"time"
 )
 
-func AppsInfo(conn net.Conn, raw []byte) {
-	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, snp.GenSerial(), app.Digest())
+func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {
+	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, serialNum, app.Digest())
 	if err != nil {
 		logger.Comm.Println("AppsInfo send error")
 	}
@@ -36,160 +37,198 @@ type AppDeployParams struct {
 	Script string
 }
 
-func AppCreate(conn net.Conn, raw []byte) {
-	acParams := &AppCreateParams{}
-	rmsg := message.Result{
-		Rmsg: "OK",
-	}
-	rmsg.Modified = false
-	var payload []byte
-	var ok bool
-	var fullname string
-	var version app.Version
-	// os.WriteFile("./dump", raw, os.ModePerm)
-	// logger.Client.Println(len(raw))
-
-	err := config.Jsoner.Unmarshal(raw, acParams)
-	if err != nil {
-		logger.Exceptions.Println(err)
-		rmsg.Rmsg = "Invalid Params"
-		goto errorout
-	}
-	fullname = acParams.Name + "@" + acParams.Scenario
-
-	// is exists?
-	if ok = app.Exists(acParams.Name, acParams.Scenario); !ok {
-		if !app.Create(acParams.Name, acParams.Scenario, acParams.Description) {
-			logger.Exceptions.Println("app.Create")
-			rmsg.Rmsg = "Failed Create App"
-			goto errorout
+func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
+	acParams := AppCreateParams{}
+	if err := config.Jsoner.Unmarshal(raw, &acParams); err != nil {
+		logger.Exceptions.Println("invalid arguments: ", err)
+		// SNED BACK
+		err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppCreateResponse send error")
 		}
-		if !app.GitCreate(fullname) {
-			logger.Exceptions.Println("app.GitCreate")
-			rmsg.Rmsg = "Failed Init the Repo"
-			goto errorout
+		return
+	}
+
+	var utaskFunc func() *message.Result
+	var ucancelFunc func()
+
+	utaskFunc = func() *message.Result {
+		rmsg := message.Result{
+			Rmsg: "OK",
 		}
-	}
-	// unpack files
-	err = unpackFilesNoWrap(acParams.FilePack, config.GlobalConfig.Workspace.Root+fullname)
-	if err != nil {
-		logger.Exceptions.Println("unpack Files")
-		rmsg.Rmsg = err.Error()
-		goto errorout
-	}
-	// commit
-	version, err = app.GitCommit(fullname, acParams.Message)
-	if err != nil {
-		logger.Exceptions.Println("app.GitCommit")
-		if _, ok := err.(app.EmptyCommitError); ok {
-			rmsg.Rmsg = "OK: No Change"
-			rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
-		} else {
+		rmsg.Modified = false
+		fullname := acParams.Name + "@" + acParams.Scenario
+		var version app.Version
+
+		// is exists?
+		if !app.Exists(acParams.Name, acParams.Scenario) {
+			if !app.Create(acParams.Name, acParams.Scenario, acParams.Description) {
+				logger.Exceptions.Println("app.Create")
+				rmsg.Rmsg = "Failed Create App"
+				return &rmsg
+			}
+			if !app.GitCreate(fullname) {
+				logger.Exceptions.Println("app.GitCreate")
+				rmsg.Rmsg = "Failed Init the Repo"
+				return &rmsg
+			}
+		}
+		// unpack files
+		err := unpackFilesNoWrap(acParams.FilePack, config.GlobalConfig.Workspace.Root+fullname)
+		if err != nil {
+			logger.Exceptions.Println("unpack Files")
 			rmsg.Rmsg = err.Error()
+			return &rmsg
 		}
-		goto errorout
+		// commit
+		version, err = app.GitCommit(fullname, acParams.Message)
+		if err != nil {
+			logger.Exceptions.Println("app.GitCommit")
+			if _, ok := err.(app.EmptyCommitError); ok {
+				rmsg.Rmsg = "OK: No Change"
+				rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
+			} else {
+				rmsg.Rmsg = err.Error()
+			}
+			return &rmsg
+		}
+
+		// update nodeApps
+		if !app.Update(acParams.Name, acParams.Scenario, version) {
+			logger.Exceptions.Println("app.Update")
+			rmsg.Rmsg = "Faild to update app version"
+		}
+		rmsg.Rmsg = "OK"
+		rmsg.Version = version.Hash
+		rmsg.Modified = true
+		app.Save()
+		return &rmsg
 	}
 
-	// update nodeApps
-	ok = app.Update(acParams.Name, acParams.Scenario, version)
-	if !ok {
-		logger.Exceptions.Println("app.Update")
-		rmsg.Rmsg = "Faild to update app version"
+	ucancelFunc = func() {
+		// TODO: 不好控制回滚，状态太复杂
+		// 肯定不会阻塞，所以这里只是一个假Kill
 	}
-	rmsg.Rmsg = "OK"
-	rmsg.Version = version.Hash
-	rmsg.Modified = true
-	app.Save()
-errorout:
-	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, snp.GenSerial(), payload)
+
+	brief := fmt.Sprintf("%s@%s(%s)", acParams.Name, acParams.Scenario, acParams.Description)
+	taskId, err := task.TaskManager.CreateTask(brief, utaskFunc, ucancelFunc)
 	if err != nil {
-		logger.Comm.Println("AppCreate send error")
+		// ERROR
+		logger.Exceptions.Println("cannot create task: ", err)
+		err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppCreateResponse send error")
+		}
+		return
+	}
+	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte(taskId))
+	if err != nil {
+		logger.Comm.Println("TypeAppCreateResponse send error")
 	}
 }
 
-func AppDeploy(conn net.Conn, raw []byte) {
-	adParams := &AppDeployParams{}
-	rmsg := message.Result{
-		Rmsg: "OK",
-	}
-	rmsg.Modified = false
-	var output, payload []byte
-	var ok bool
-	var sparams ScriptParams
-	var fullname string
-	var version app.Version
-
-	err := config.Jsoner.Unmarshal(raw, adParams)
-	if err != nil {
-		logger.Exceptions.Println(err)
-		rmsg.Rmsg = "Invalid Params"
-		goto errorout
-	}
-	fullname = adParams.Name + "@" + adParams.Scenario
-
-	// is new?
-	if ok = app.Exists(adParams.Name, adParams.Scenario); !ok {
-		if !app.Create(adParams.Name, adParams.Scenario, adParams.Description) {
-			logger.Exceptions.Println("app.Create")
-			rmsg.Rmsg = "Failed Create App"
-			goto errorout
+func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
+	adParams := AppDeployParams{}
+	if err := config.Jsoner.Unmarshal(raw, &adParams); err != nil {
+		logger.Exceptions.Println("invalid arguments: ", err)
+		// SNED BACK
+		err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppDeployResponse send error")
 		}
-		if !app.GitCreate(fullname) {
-			logger.Exceptions.Println("app.GitCreate")
-			rmsg.Rmsg = "Failed Init the Repo"
-			goto errorout
+		return
+	}
+
+	var utaskFunc func() *message.Result
+	var ucancelFunc func()
+	cmdChan := make(chan *exec.Cmd, 1)
+
+	utaskFunc = func() *message.Result {
+		rmsg := message.Result{
+			Rmsg: "OK",
 		}
-	}
-	// run script
-	sparams = ScriptParams{
-		FileName:   fmt.Sprintf("script_%s.sh", time.Now().Format("2006_01_02_15_04")),
-		TargetPath: "scripts/",
-		FileBuf:    adParams.Script,
-	}
-	output, err = execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname)
-	rmsg.Output = string(output)
+		rmsg.Modified = false
+		fullname := adParams.Name + "@" + adParams.Scenario
+		var version app.Version
 
-	if err != nil {
-		logger.Exceptions.Println("execScript")
-		rmsg.Rmsg = err.Error()
-		goto errorout
-	}
+		// is new?
+		if !app.Exists(adParams.Name, adParams.Scenario) {
+			if !app.Create(adParams.Name, adParams.Scenario, adParams.Description) {
+				logger.Exceptions.Println("app.Create")
+				rmsg.Rmsg = "Failed Create App"
+				return &rmsg
+			}
+			if !app.GitCreate(fullname) {
+				logger.Exceptions.Println("app.GitCreate")
+				rmsg.Rmsg = "Failed Init the Repo"
+				return &rmsg
+			}
+		}
+		// run script
+		sparams := ScriptParams{
+			FileName:   fmt.Sprintf("script_%s.sh", time.Now().Format("2006_01_02_15_04")),
+			TargetPath: "scripts/",
+			FileBuf:    adParams.Script,
+		}
+		output, err := execScript(&sparams, config.GlobalConfig.Workspace.Root+fullname, cmdChan)
+		rmsg.Output = string(output)
 
-	// append a dummy file
-	err = appendDummyFile(fullname)
-	if err != nil {
-		logger.Exceptions.Println("append dummy file", err)
-	}
-
-	// commit
-	version, err = app.GitCommit(fullname, adParams.Message)
-	if err != nil {
-		if _, ok := err.(app.EmptyCommitError); ok {
-			rmsg.Rmsg = "OK: No Change"
-			rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
-		} else {
+		if err != nil {
+			logger.Exceptions.Println("execScript")
 			rmsg.Rmsg = err.Error()
-			logger.Exceptions.Println("app.GitCommit")
+			return &rmsg
 		}
-		goto errorout
+
+		// append a dummy file
+		err = appendDummyFile(fullname)
+		if err != nil {
+			logger.Exceptions.Println("append dummy file", err)
+		}
+
+		// commit
+		version, err = app.GitCommit(fullname, adParams.Message)
+		if err != nil {
+			if _, ok := err.(app.EmptyCommitError); ok {
+				rmsg.Rmsg = "OK: No Change"
+				rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
+			} else {
+				rmsg.Rmsg = err.Error()
+				logger.Exceptions.Println("app.GitCommit")
+			}
+			return &rmsg
+		}
+
+		// update nodeApps
+		if !app.Update(adParams.Name, adParams.Scenario, version) {
+			logger.Exceptions.Println("app.Update")
+			rmsg.Rmsg = "Faild to update app version"
+		}
+
+		rmsg.Version = version.Hash
+		rmsg.Modified = true
+		app.Save()
+		return &rmsg
 	}
 
-	// update nodeApps
-	ok = app.Update(adParams.Name, adParams.Scenario, version)
-	if !ok {
-		logger.Exceptions.Println("app.Update")
-		rmsg.Rmsg = "Faild to update app version"
+	ucancelFunc = func() {
+		cmd := <-cmdChan
+		cmd.Process.Kill()
 	}
 
-	rmsg.Version = version.Hash
-	rmsg.Modified = true
-	app.Save()
-errorout:
-	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, snp.GenSerial(), payload)
+	brief := fmt.Sprintf("%s@%s(%s)", adParams.Name, adParams.Scenario, adParams.Description)
+	taskId, err := task.TaskManager.CreateTask(brief, utaskFunc, ucancelFunc)
 	if err != nil {
-		logger.Comm.Println("AppDeploy send error")
+		// ERROR
+		logger.Exceptions.Println("cannot create task: ", err)
+		err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppDeployResponse send error")
+		}
+		return
+	}
+	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte(taskId))
+	if err != nil {
+		logger.Comm.Println("TypeAppDeployResponse send error")
 	}
 }
 
@@ -198,7 +237,7 @@ type AppDeleteParams struct {
 	Scenario string
 }
 
-func AppDelete(conn net.Conn, raw []byte) {
+func AppDelete(conn net.Conn, serialNum uint32, raw []byte) {
 	adParams := &AppDeleteParams{}
 	rmsg := message.Result{
 		Rmsg: "OK",
@@ -227,7 +266,7 @@ func AppDelete(conn net.Conn, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")
 	}

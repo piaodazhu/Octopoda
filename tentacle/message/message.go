@@ -65,6 +65,18 @@ const (
 	TypeSshUnregister
 	TypeSshUnregisterResponse
 
+	TypeWaitTask
+	TypeWaitTaskResponse
+
+	TypeCancelTask
+	TypeCancelTaskResponse
+
+	TypeQueryTask
+	TypeQueryTaskResponse
+
+	TypeListTasks
+	TypeListTasksResponse
+
 	TypeUndefined
 )
 
@@ -124,6 +136,18 @@ var MsgTypeString map[int]string = map[int]string{
 
 	TypeSshUnregister:         "TypeSshUnregister",
 	TypeSshUnregisterResponse: "TypeSshUnregisterResponse",
+
+	TypeWaitTask:         "TypeWaitTask",
+	TypeWaitTaskResponse: "TypeWaitTaskResponse",
+
+	TypeCancelTask:         "TypeCancelTask",
+	TypeCancelTaskResponse: "TypeCancelTaskResponse",
+
+	TypeQueryTask:         "TypeQueryTask",
+	TypeQueryTaskResponse: "TypeQueryTaskResponse",
+
+	TypeListTasks:         "TypeListTasks",
+	TypeListTasksResponse: "TypeListTasksResponse",
 }
 
 func SendMessage(conn net.Conn, mtype int, raw []byte) error {
@@ -212,7 +236,7 @@ func SendMessageUnique(conn net.Conn, mtype int, serial uint32, raw []byte) erro
 	return nil
 }
 
-func RecvMessageUnique(conn net.Conn) (int, []byte, error) {
+func RecvMessageUnique(conn net.Conn) (int, uint32, []byte, error) {
 	Len := 0
 	Buf := make([]byte, 16)
 
@@ -220,7 +244,7 @@ func RecvMessageUnique(conn net.Conn) (int, []byte, error) {
 	for Offset < 16 {
 		n, err := conn.Read(Buf[Offset:])
 		if err != nil {
-			return 0, nil, err
+			return 0, 0, nil, err
 		}
 		Offset += n
 	}
@@ -234,18 +258,18 @@ func RecvMessageUnique(conn net.Conn) (int, []byte, error) {
 	for Offset < Len {
 		n, err := conn.Read(Buf[Offset:])
 		if err != nil {
-			return 0, nil, err
+			return 0, 0, nil, err
 		}
 
 		Offset += n
 	}
 	Buf, err := security.AesDecrypt(Buf, TokenSerial)
 	if err != nil {
-		return 0, nil, err
+		return 0, 0, nil, err
 	}
 	serial := binary.LittleEndian.Uint32(Buf[0:])
 	if !snp.CheckSerial(serial) {
-		return 0, nil, fmt.Errorf("duplicated message")
+		return 0, 0, nil, fmt.Errorf("duplicated message")
 	}
-	return mtype, Buf[4:], nil
+	return mtype, serial, Buf[4:], nil
 }

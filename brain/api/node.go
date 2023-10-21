@@ -6,6 +6,7 @@ import (
 	"brain/logger"
 	"brain/message"
 	"brain/model"
+	"brain/network"
 	"brain/rdb"
 	"brain/sys"
 	"encoding/json"
@@ -59,20 +60,17 @@ func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
 		res.Health = "Offline"
 		res.OfflineTime = time.Since(time.UnixMilli(node.OfflineTs)).String()
 	}
-	if node.MsgConn == nil {
-		res.MsgConnState = "Off"
-	} else {
-		res.MsgConnState = "On"
-	}
+	res.MsgConnState = node.ConnState
 	return res
 }
 
 func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
+	octlFaceIp, _ := network.GetOctlFaceIp()
 	res := &NodesInfoText{
 		BrainInfo: BrainInfoText{
 			Name:    config.GlobalConfig.Name,
 			Version: buildinfo.String(),
-			Addr:    config.GlobalConfig.OctlFace.Ip,
+			Addr:    octlFaceIp,
 		},
 		NodeInfoList: make([]*NodeInfoText, len(nodes)),
 	}

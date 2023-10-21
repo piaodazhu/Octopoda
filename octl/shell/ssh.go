@@ -79,7 +79,7 @@ func SetSSH(nodename string) {
 		output.PrintFatalln("Unmarshal proxyMsg: ", err)
 	}
 	if pmsg.Code != 0 {
-		output.PrintJSON(pmsg)
+		output.PrintInfoln(pmsg)
 		return
 	}
 	output.PrintInfoln("SshinfoRegister success")

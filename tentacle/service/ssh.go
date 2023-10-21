@@ -6,7 +6,6 @@ import (
 	"tentacle/logger"
 	"tentacle/message"
 	"tentacle/proxy"
-	"tentacle/snp"
 )
 
 type proxyMsg struct {
@@ -15,7 +14,7 @@ type proxyMsg struct {
 	Data string
 }
 
-func SshRegister(conn net.Conn, raw []byte) {
+func SshRegister(conn net.Conn, serialNum uint32, raw []byte) {
 	msg := proxyMsg{
 		Code: 0,
 		Msg:  "OK",
@@ -32,13 +31,13 @@ func SshRegister(conn net.Conn, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&msg)
-	err = message.SendMessageUnique(conn, message.TypeSshRegisterResponse, snp.GenSerial(), payload)
+	err = message.SendMessageUnique(conn, message.TypeSshRegisterResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeSshRegisterResponse send error")
 	}
 }
 
-func SshUnregister(conn net.Conn, raw []byte) {
+func SshUnregister(conn net.Conn, serialNum uint32, raw []byte) {
 	msg := proxyMsg{
 		Code: 0,
 		Msg:  "OK",
@@ -48,7 +47,7 @@ func SshUnregister(conn net.Conn, raw []byte) {
 	proxy.UnregisterSshService()
 
 	payload, _ = config.Jsoner.Marshal(&msg)
-	err := message.SendMessageUnique(conn, message.TypeSshUnregisterResponse, snp.GenSerial(), payload)
+	err := message.SendMessageUnique(conn, message.TypeSshUnregisterResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeSshUnregisterResponse send error")
 	}

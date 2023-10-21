@@ -50,6 +50,7 @@ api:
 
   runCmd: "/run/cmd"
   runScript: "/run/script"
+  runCancel: "/run/cancel"
 
   ssh: "/ssh"
   

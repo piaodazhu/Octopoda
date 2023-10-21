@@ -14,7 +14,8 @@ type NodeJoinInfo struct {
 }
 
 type NodeJoinResponse struct {
-	Ts int64 `json:"ts"`
+	Ts  int64  `json:"ts"`
+	NewNum uint32 `json:"new_num"`
 }
 
 func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
@@ -36,9 +37,10 @@ func ParseNodeJoin(raw []byte) (NodeJoinInfo, error) {
 	return info, nil
 }
 
-func MakeNodeJoinResponse() []byte {
+func MakeNodeJoinResponse(randNum uint32) []byte {
 	nodeJoinResponse := NodeJoinResponse{
-		Ts: time.Now().UnixMicro(),
+		Ts:  time.Now().UnixMicro(),
+		NewNum: randNum,
 	}
 	serialized_response, err := config.Jsoner.Marshal(nodeJoinResponse)
 	if err != nil {

@@ -21,7 +21,7 @@ var startTime time.Time
 func InitTentacleFace() {
 	startTime = time.Now()
 	var err error
-	
+
 	addr1 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.HeartbeatPort)
 	heartbeatListener, err = net.Listen("tcp", addr1)
 	if err != nil {
@@ -54,7 +54,7 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func ProcessNodeJoin(conn net.Conn) {
-	mtype, msg, err := message.RecvMessageUnique(conn)
+	mtype, _, msg, err := message.RecvMessageUnique(conn)
 	if err != nil || mtype != message.TypeNodeJoin {
 		logger.Comm.Print(err, message.TypeNodeJoin)
 		conn.Close()
@@ -67,7 +67,8 @@ func ProcessNodeJoin(conn net.Conn) {
 		return
 	}
 
-	err = message.SendMessageUnique(conn, message.TypeNodeJoinResponse, snp.GenSerial(), heartbeat.MakeNodeJoinResponse())
+	randNum := snp.GenSerial()
+	err = message.SendMessageUnique(conn, message.TypeNodeJoinResponse, snp.GenSerial(), heartbeat.MakeNodeJoinResponse(randNum))
 	if err != nil {
 		logger.Network.Print(err)
 		conn.Close()
@@ -79,9 +80,9 @@ func ProcessNodeJoin(conn net.Conn) {
 		// heartbeat connection established
 		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, nil)
 		logger.Network.Printf("New node join, name=%s\n", joinRequest.Name)
-		startHeartbeat(conn, joinRequest.Name)
+		startHeartbeat(conn, joinRequest.Name, randNum)
 	} else {
-		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, &conn)
+		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, conn)
 		logger.Network.Printf("establish msg conn, name=%s\n", joinRequest.Name)
 	}
 }

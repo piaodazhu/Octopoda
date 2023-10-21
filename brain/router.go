@@ -71,6 +71,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/run/script", api.RunScript)
 		group.POST("/run/cmd", api.RunCmd)
+		group.POST("/run/cancel", api.CancelRun)
 
 		group.GET("/ssh", api.SshLoginInfo)
 		group.POST("/ssh", api.SshRegister)

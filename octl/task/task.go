@@ -25,10 +25,12 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 		taskid,
 	)
 	// fmt.Fprintf(os.Stdout, "PROCESSING  ")
-	s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
-	s.Prefix = prefix
-	s.Start()
-	defer s.Stop()
+	if prefix != "" {
+		s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
+		s.Prefix = prefix
+		s.Start()
+		defer s.Stop()
+	}
 
 	time.Sleep(time.Millisecond * 100)
 	for {
@@ -44,12 +46,17 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 		}
 
 		if res.StatusCode == 200 {
-			fmt.Println("  [DONE]")
+			if prefix != "" {
+				fmt.Println("  [DONE]")
+			}
 			return msg, nil
 		} else if res.StatusCode == 202 {
 			time.Sleep(time.Second * 1)
 		} else {
-			fmt.Println("  [FAILED]")
+			if prefix != "" {
+				fmt.Println("  [FAILED]")
+			}
+
 			return nil, ErrWaitTask{res.StatusCode, string(msg)}
 		}
 	}

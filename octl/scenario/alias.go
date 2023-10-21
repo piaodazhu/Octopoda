@@ -14,7 +14,7 @@ func parseAliasFile(filename string) error {
 	aliasMap = map[string][]string{}
 	aliasFile, err := os.Open(filename)
 	if err != nil {
-		if err == os.ErrNotExist {
+		if os.IsNotExist(err) {
 			return nil
 		}
 		return err

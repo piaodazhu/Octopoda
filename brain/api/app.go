@@ -6,11 +6,8 @@ import (
 	"brain/message"
 	"brain/model"
 
-	"brain/rdb"
 	"encoding/base64"
-	"fmt"
 	"io"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -80,11 +77,7 @@ func AppPrepare(ctx *gin.Context) {
 		return
 	}
 
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
-	}
+	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(202, taskid)
 
 	// async processing
@@ -99,23 +92,9 @@ func AppPrepare(ctx *gin.Context) {
 			},
 			content,
 		}
-		// payload, _ := config.Jsoner.Marshal(&acParams)
-
-		// check target nodes
-		// spread tar file
-		results := make([]CommitResults, len(nodes))
-		var wg sync.WaitGroup
 
 		for i := range nodes {
-			name := nodes[i]
-			results[i].Name = name
-			wg.Add(1)
-			go createApp(name, &acParams, &wg, &results[i].Result)
-		}
-		wg.Wait()
-		// logger.Brain.Println(results)
-		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Exceptions.Print("TaskMarkDone")
+			go createApp(taskid, nodes[i], &acParams)
 		}
 	}()
 }
@@ -166,11 +145,7 @@ func AppDeploy(ctx *gin.Context) {
 		return
 	}
 
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
-	}
+	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(202, taskid)
 
 	// async processing
@@ -185,89 +160,41 @@ func AppDeploy(ctx *gin.Context) {
 			},
 			content,
 		}
-		// payload, _ := config.Jsoner.Marshal(&adParams)
-
-		// check target nodes
-		// run scripts
-		results := make([]CommitResults, len(nodes))
-		var wg sync.WaitGroup
-
 		for i := range nodes {
-			name := nodes[i]
-			results[i].Name = name
-			wg.Add(1)
-			go deployApp(name, &adParams, &wg, &results[i].Result)
-		}
-		wg.Wait()
-		// logger.Brain.Println(results)
-		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Exceptions.Print("TaskMarkDone Error")
+			go deployApp(taskid, nodes[i], &adParams)
 		}
 	}()
 }
 
-func createApp(name string, acParams *AppCreateParams, wg *sync.WaitGroup, result *string) {
-	defer wg.Done()
-	*result = "UnknownError"
-
+func createApp(taskid string, name string, acParams *AppCreateParams) {
 	payload, _ := config.Jsoner.Marshal(acParams)
-	raw, err := model.Request(name, message.TypeAppCreate, payload)
+	rmsg, err := runAndWait(taskid, name, payload, message.TypeAppCreate)
 	if err != nil {
-		logger.Comm.Println("TypeAppCreateResponse", err)
-		*result = "TypeAppCreateResponse"
 		return
 	}
-
-	var rmsg message.Result
-	err = config.Jsoner.Unmarshal(raw, &rmsg)
-	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeStatus", err)
-		*result = "BrainError"
-		return
-	}
-	// logger.Tentacle.Print(rmsg.Rmsg)
-	// *result = rmsg.Rmsg
-	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
-
 	// update scenario version
 	success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, name, rmsg.Version, rmsg.Modified)
 	if success {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
-		logger.Exceptions.Print("Failed: AddScenNodeApp")
-		*result = "Failed: AddScenNodeApp"
+		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
+		// *result = "Failed: AddScenNodeApp"
 	}
 }
 
-func deployApp(name string, adParams *AppDeployParams, wg *sync.WaitGroup, result *string) {
-	defer wg.Done()
-	*result = "UnknownError"
-
+func deployApp(taskid string, name string, adParams *AppDeployParams) {
 	payload, _ := config.Jsoner.Marshal(adParams)
-	raw, err := model.Request(name, message.TypeAppDeploy, payload)
+	rmsg, err := runAndWait(taskid, name, payload, message.TypeAppDeploy)
 	if err != nil {
-		logger.Comm.Println("TypeAppDeployResponse", err)
-		*result = "TypeAppDeployResponse"
 		return
 	}
-
-	var rmsg message.Result
-	err = config.Jsoner.Unmarshal(raw, &rmsg)
-	if err != nil {
-		logger.Exceptions.Println("UnmarshalNodeStatus", err)
-		*result = "BrainError"
-		return
-	}
-	// *result = string(rmsg.Output)
-	// *result = rmsg.Output
-	*result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
 
 	// update scenario version
 	success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
 	if success {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
-		logger.Exceptions.Print("Failed: AddScenNodeApp")
-		*result = "Failed: AddScenNodeApp"
+		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, adParams.Name, adParams.Scenario)
+		// *result = "Failed: AddScenNodeApp"
 	}
 }
