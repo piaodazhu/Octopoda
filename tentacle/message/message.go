@@ -68,6 +68,9 @@ const (
 	TypeWaitTask
 	TypeWaitTaskResponse
 
+	TypeCancelTask
+	TypeCancelTaskResponse
+
 	TypeQueryTask
 	TypeQueryTaskResponse
 
@@ -136,6 +139,9 @@ var MsgTypeString map[int]string = map[int]string{
 
 	TypeWaitTask:         "TypeWaitTask",
 	TypeWaitTaskResponse: "TypeWaitTaskResponse",
+
+	TypeCancelTask:         "TypeCancelTask",
+	TypeCancelTaskResponse: "TypeCancelTaskResponse",
 
 	TypeQueryTask:         "TypeQueryTask",
 	TypeQueryTaskResponse: "TypeQueryTaskResponse",

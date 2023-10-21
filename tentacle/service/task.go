@@ -13,6 +13,9 @@ func TaskWaitResult(conn net.Conn, serialNum uint32, raw []byte) {
 	result, found := task.TaskManager.WaitTask(string(raw))
 	if !found {
 		logger.Exceptions.Print("TaskWaitState input invalid taskId: ", string(raw))
+	}
+
+	if result == nil {
 		result = &message.Result{
 			Rcode: -2,
 			Rmsg: "Canceled",
@@ -43,5 +46,14 @@ func TaskListAll(conn net.Conn, serialNum uint32, raw []byte) {
 	err := message.SendMessageUnique(conn, message.TypeListTasksResponse, serialNum, serialized)
 	if err != nil {
 		logger.Comm.Println("TaskListAll service error")
+	}
+}
+
+func TaskCancel(conn net.Conn, serialNum uint32, raw []byte) {
+	tasks := task.TaskManager.CancelTask(string(raw))
+	serialized, _ := config.Jsoner.Marshal(&tasks)
+	err := message.SendMessageUnique(conn, message.TypeCancelTaskResponse, serialNum, serialized)
+	if err != nil {
+		logger.Comm.Println("TaskCancel service error")
 	}
 }

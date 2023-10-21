@@ -63,6 +63,8 @@ func HandleMessage(conn net.Conn) error {
 			SshUnregister(conn, serialNum, raw)
 		case message.TypeWaitTask:
 			TaskWaitResult(conn, serialNum, raw)
+		case message.TypeCancelTask:
+			TaskCancel(conn, serialNum, raw)
 		case message.TypeQueryTask:
 			TaskQueryState(conn, serialNum, raw)
 		case message.TypeListTasks:

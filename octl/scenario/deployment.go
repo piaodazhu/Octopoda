@@ -9,11 +9,14 @@ import (
 	"octl/config"
 	"octl/nameclient"
 	"octl/output"
+	"octl/shell"
 	"octl/task"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/mholt/archiver/v3"
@@ -144,22 +147,39 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			output.PrintFatalln("post")
 		}
 		// defer res.Body.Close()
-		msg, err := io.ReadAll(res.Body)
+		taskid, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
 			output.PrintFatalln("ReadAll")
 		}
 
+		sigChan := make(chan os.Signal, 1)
+		shouldStop := false
+		go func(tid string) {
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			_, sigCaptured := <-sigChan
+			if sigCaptured {
+				shell.RunCancel(tid)
+				shouldStop = true
+			}
+		}(string(taskid))
+
+
 		if res.StatusCode != 202 {
-			output.PrintFatalln("Request submit error: " + string(msg))
+			output.PrintFatalln("Request submit error: " + string(taskid))
 			return
 		}
-		results, err := task.WaitTask("PROCESSING...", string(msg))
+		results, err := task.WaitTask("PROCESSING...", string(taskid))
 		if err != nil {
 			output.PrintFatalln("Task processing error: " + err.Error())
 			return
 		}
 		output.PrintJSON(results)
+
+		signal.Stop(sigChan)
+		if shouldStop {
+			output.PrintFatalln("cancel and exit")
+		}
 	}
 	// update this scenario
 	err = ScenarioUpdate(configuration.Name, message)
@@ -265,22 +285,38 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			output.PrintFatalln("DoRequest")
 		}
 
-		msg, err := io.ReadAll(res.Body)
+		taskid, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		if err != nil {
 			output.PrintFatalln("ReadAll")
 		}
 
+		sigChan := make(chan os.Signal, 1)
+		shouldStop := false
+		go func(tid string) {
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			_, sigCaptured := <-sigChan
+			if sigCaptured {
+				shell.RunCancel(tid)
+				shouldStop = true
+			}
+		}(string(taskid))
+
 		if res.StatusCode != 202 {
-			fmt.Println("Request submit error: ", string(msg))
+			fmt.Println("Request submit error: ", string(taskid))
 			return
 		}
-		results, err := task.WaitTask("PROCESSING...", string(msg))
+		results, err := task.WaitTask("PROCESSING...", string(taskid))
 		if err != nil {
 			fmt.Println("Task processing error: ", err.Error())
 			return
 		}
 		output.PrintJSON(results)
+		
+		signal.Stop(sigChan)
+		if shouldStop {
+			output.PrintFatalln("cancel and exit")
+		}
 	}
 
 	// update this scenario

@@ -2,7 +2,7 @@ package api
 
 import (
 	"brain/message"
-	"brain/rdb"
+	"brain/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,25 +18,19 @@ func TaskState(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
-	code, result := rdb.TaskQuery(taskid)
-	switch code {
-	case rdb.TaskFinished:
-		rdb.TaskDelete(taskid)
-		ctx.Data(200, "application/json", []byte(result))
-		return
-	case rdb.TaskFailed:
-		rdb.TaskDelete(taskid)
-		ctx.Data(204, "application/json", []byte(result))
-		return
-	case rdb.TaskProcessing:
+
+	// ONLY FOR HACK. NO CANCEL!!!
+	if !model.BrainTaskManager.IsTaskDone(taskid) {
 		rmsg.Rmsg = "TaskProcessing"
 		rcode = 202
-	case rdb.TaskNotFound:
-		rmsg.Rmsg = "TaskNotFound"
-		rcode = 404
-	case rdb.TaskDbError:
-		rmsg.Rmsg = "TaskDbError"
-		rcode = 500
+		ctx.JSON(rcode, rmsg)
+		return
 	}
-	ctx.JSON(rcode, rmsg)
+	rlist := model.BrainTaskManager.DeleteTask(taskid)
+	results := []*BasicNodeResults{}
+	for i := range rlist {
+		results = append(results, rlist[i].(*BasicNodeResults))
+	}
+	ctx.JSON(rcode, results)
+	return
 }

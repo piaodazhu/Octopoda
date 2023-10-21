@@ -148,7 +148,7 @@ func (tm *taskManager) WaitTask(taskId string) (*message.Result, bool) {
 	res := <- task.result
 	tm.FinishTasks.Delete(taskId)
 	
-	return res, task.State == StateFinished
+	return res, true
 }
 
 

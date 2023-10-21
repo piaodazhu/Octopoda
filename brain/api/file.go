@@ -148,6 +148,7 @@ type FileSpreadParams struct {
 
 type BasicNodeResults struct {
 	Name   string
+	Emsg   string
 	Result string
 }
 
