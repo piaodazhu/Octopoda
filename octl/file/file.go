@@ -82,7 +82,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.FileUpload,
+		config.API_FileUpload,
 	)
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
@@ -129,7 +129,7 @@ func SpreadFile(FileOrDir string, targetPath string, names []string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.FileSpread,
+		config.API_FileSpread,
 	)
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
@@ -228,7 +228,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.FileDistrib,
+		config.API_FileDistrib,
 	)
 
 	res, err := http.Post(url, contentType, &bodyBuffer)
@@ -257,7 +257,7 @@ func ListAllFile(pathtype string, node string, subdir string) {
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&subdir=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.FileTree,
+		config.API_FileTree,
 		pathtype,
 		node,
 		subdir,
@@ -305,7 +305,7 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.FilePull,
+		config.API_FilePull,
 		pathtype,
 		node,
 		fileOrDir,

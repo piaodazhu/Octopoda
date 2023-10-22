@@ -138,7 +138,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 		url := fmt.Sprintf("http://%s/%s%s",
 			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
-			config.GlobalConfig.Api.ScenarioAppCreate,
+			config.API_ScenarioAppCreate,
 		)
 
 		client := http.Client{Timeout: 0}
@@ -250,7 +250,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 		url := fmt.Sprintf("http://%s/%s%s",
 			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
-			config.GlobalConfig.Api.ScenarioAppDepoly,
+			config.API_ScenarioAppDeploy,
 		)
 
 		// res, err := http.Post(url, contentType, &bodyBuffer)
@@ -384,7 +384,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 		url := fmt.Sprintf("http://%s/%s%s",
 			nameclient.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
-			config.GlobalConfig.Api.ScenarioAppDepoly,
+			config.API_ScenarioAppDeploy,
 		)
 
 		req, err := http.NewRequest("POST", url, &bodyBuffer)
@@ -451,7 +451,7 @@ func ScenarioCreate(name, description string) error {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioInfo,
+		config.API_ScenarioInfo,
 	)
 
 	body := &bytes.Buffer{}
@@ -477,7 +477,7 @@ func ScenarioUpdate(name, message string) error {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioUpdate,
+		config.API_ScenarioUpdate,
 	)
 
 	body := &bytes.Buffer{}
@@ -503,7 +503,7 @@ func ScenarioDelete(name string) error {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioInfo,
+		config.API_ScenarioInfo,
 		name,
 	)
 

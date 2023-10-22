@@ -93,7 +93,7 @@ func runScript(runtask string, names []string, delay int) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunScript,
+		config.API_RunScript,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	body := &bytes.Buffer{}
@@ -135,7 +135,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunCmd,
+		config.API_RunCmd,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
@@ -175,7 +175,7 @@ func RunCancel(taskid string) {
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunCancel,
+		config.API_RunCancel,
 	)
 	values := url.Values{}
 	values.Add("taskid", taskid)

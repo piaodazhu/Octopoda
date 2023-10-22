@@ -13,7 +13,7 @@ func NodeStatus(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeStatus,
+		config.API_NodeStatus,
 		name,
 	)
 	res, err := http.Get(url)
@@ -35,7 +35,7 @@ func NodesStatus(names []string) {
 	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodesStatus,
+		config.API_NodesStatus,
 		string(nodes_serialized),
 	)
 	res, err := http.Get(url)

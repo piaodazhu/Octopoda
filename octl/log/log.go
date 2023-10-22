@@ -41,7 +41,7 @@ func NodeLog(name string, params []string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeLog,
+		config.API_NodeLog,
 		name,
 		maxlines,
 		maxdaysbefore,

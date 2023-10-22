@@ -21,7 +21,7 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.TaskState,
+		config.API_TaskState,
 		taskid,
 	)
 	// fmt.Fprintf(os.Stdout, "PROCESSING  ")

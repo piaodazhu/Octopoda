@@ -60,7 +60,7 @@ func SetSSH(nodename string) {
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 	)
 	values := url.Values{}
 	values.Add("name", nodename)
@@ -89,7 +89,7 @@ func delSSH(nodename string) []byte {
 	URL := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 		nodename,
 	)
 
@@ -131,7 +131,7 @@ func SSH(nodename string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 		nodename,
 	)
 	res, err := http.Get(url)

@@ -15,7 +15,7 @@ func NodeAppsInfo(node string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeApps,
+		config.API_NodeApps,
 		node,
 	)
 	res, err := http.Get(url)
@@ -32,7 +32,7 @@ func NodeAppInfo(node, app, scenario string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeAppVersion,
+		config.API_NodeAppVersion,
 		node,
 		app,
 		scenario,
@@ -51,7 +51,7 @@ func NodeAppReset(node, app, scenario, version, message string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeAppVersion,
+		config.API_NodeAppVersion,
 	)
 
 	body := &bytes.Buffer{}

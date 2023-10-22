@@ -15,7 +15,7 @@ func ScenariosInfo() {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenariosInfo,
+		config.API_ScenariosInfo,
 	)
 	res, err := http.Get(url)
 	if err != nil {
@@ -31,7 +31,7 @@ func ScenarioInfo(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioInfo,
+		config.API_ScenarioInfo,
 		name,
 	)
 	res, err := http.Get(url)
@@ -48,7 +48,7 @@ func ScenarioFix(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioFix,
+		config.API_ScenarioFix,
 		name,
 	)
 	res, err := http.Get(url)
@@ -65,7 +65,7 @@ func ScenarioVersion(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioVersion,
+		config.API_ScenarioVersion,
 		name,
 	)
 	res, err := http.Get(url)
@@ -82,7 +82,7 @@ func ScenarioReset(name string, version string, message string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.ScenarioVersion,
+		config.API_ScenarioVersion,
 		name,
 	)
 

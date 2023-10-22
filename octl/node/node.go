@@ -16,7 +16,7 @@ func NodeInfo(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeInfo,
+		config.API_NodeInfo,
 		name,
 	)
 	res, err := http.Get(url)
@@ -38,7 +38,7 @@ func NodesInfo(names []string) {
 	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodesInfo,
+		config.API_NodesInfo,
 		string(nodes_serialized),
 	)
 	res, err := http.Get(url)
@@ -55,7 +55,7 @@ func NodePrune() {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodePrune,
+		config.API_NodePrune,
 	)
 	res, err := http.Get(url)
 	if err != nil {
@@ -71,7 +71,7 @@ func NodesParse(names []string) ([]string, error) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodesParse,
+		config.API_NodesParse,
 	)
 	res, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {

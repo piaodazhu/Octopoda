@@ -15,7 +15,7 @@ func GroupGetAll() {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Groups,
+		config.API_Groups,
 	)
 	res, err := http.Get(url)
 	if err != nil {
@@ -30,7 +30,7 @@ func GroupGet(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 		name,
 	)
 	res, err := http.Get(url)
@@ -46,7 +46,7 @@ func GroupDel(name string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 		name,
 	)
 	req, err := http.NewRequest("DELETE", url, nil)
@@ -86,7 +86,7 @@ func GroupSet(name string, nocheck bool, names []string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 	)
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {

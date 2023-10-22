@@ -104,7 +104,7 @@ func Pakma(firstarg string, args []string) {
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Pakma,
+		config.API_Pakma,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
