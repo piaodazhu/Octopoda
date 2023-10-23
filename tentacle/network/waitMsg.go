@@ -3,12 +3,12 @@ package network
 import (
 	"fmt"
 	"net"
+	"protocols"
+	"protocols/snp"
 	"tentacle/config"
 	"tentacle/heartbeat"
-	"tentacle/message"
 	"tentacle/nameclient"
 	"tentacle/service"
-	"tentacle/snp"
 	"time"
 )
 
@@ -29,14 +29,14 @@ func ReadAndServe() {
 				continue
 			}
 			ipstr := conn.LocalAddr().(*net.TCPAddr).IP.String()
-			err = message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
+			err = protocols.SendMessageUnique(conn, protocols.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
 			if err != nil {
 				conn.Close()
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 				continue
 			}
 
-			_, _, raw, err := message.RecvMessageUnique(conn)
+			_, _, raw, err := protocols.RecvMessageUnique(conn)
 			if err != nil {
 				conn.Close()
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))

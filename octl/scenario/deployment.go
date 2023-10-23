@@ -164,7 +164,6 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) {
 			}
 		}(string(taskid))
 
-
 		if res.StatusCode != 202 {
 			output.PrintFatalln("Request submit error: " + string(taskid))
 			return
@@ -312,7 +311,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) {
 			return
 		}
 		output.PrintJSON(results)
-		
+
 		signal.Stop(sigChan)
 		if shouldStop {
 			output.PrintFatalln("cancel and exit")
@@ -442,10 +441,6 @@ func ScenarioPurge(configuration *ScenarioConfigModel) {
 	}
 }
 
-type ErrDupScenario struct{}
-
-func (ErrDupScenario) Error() string { return "ErrDupScenario" }
-
 func ScenarioCreate(name, description string) error {
 	fmt.Println(">> create scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s",
@@ -467,7 +462,7 @@ func ScenarioCreate(name, description string) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return ErrDupScenario{}
+		return fmt.Errorf("scenario %s already exists", name)
 	}
 	return nil
 }

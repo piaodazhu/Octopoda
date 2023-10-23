@@ -6,9 +6,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"protocols"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
 	"unicode"
 )
 
@@ -127,7 +127,7 @@ func checkVersion(version string) bool {
 }
 
 func PakmaCommand(conn net.Conn, serialNum uint32, raw []byte) {
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	var params PakmaParams
@@ -183,7 +183,7 @@ func PakmaCommand(conn net.Conn, serialNum uint32, raw []byte) {
 		payload, _ = config.Jsoner.Marshal(&rmsg)
 	}
 errorout:
-	err = message.SendMessageUnique(conn, message.TypePakmaCommandResponse, serialNum, payload)
+	err = protocols.SendMessageUnique(conn, protocols.TypePakmaCommandResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("PakmaCommand service error")
 	}

@@ -12,25 +12,13 @@ import (
 	"octl/output"
 	"os"
 	"os/exec"
+	"protocols"
 	"runtime"
 
 	"github.com/piaodazhu/proxylite"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
 )
-
-type SSHInfo struct {
-	Ip       string
-	Port     uint32
-	Username string
-	Password string
-}
-
-type proxyMsg struct {
-	Code int
-	Msg  string
-	Data string
-}
 
 func SetSSH(nodename string) {
 	// set username and password
@@ -74,7 +62,7 @@ func SetSSH(nodename string) {
 	raw, _ := io.ReadAll(res.Body)
 
 	// get mapped ip:port from response
-	pmsg := proxyMsg{}
+	pmsg := protocols.ProxyMsg{}
 	if err := json.Unmarshal(raw, &pmsg); err != nil {
 		output.PrintFatalln("Unmarshal proxyMsg: ", err)
 	}
@@ -143,7 +131,7 @@ func SSH(nodename string) {
 		output.PrintFatalln("ssh info of this node not found:", nodename)
 	}
 	raw, _ := io.ReadAll(res.Body)
-	info := SSHInfo{}
+	info := protocols.SSHInfo{}
 	if err = json.Unmarshal(raw, &info); err != nil {
 		output.PrintFatalln("Unmarshal:", err)
 	}

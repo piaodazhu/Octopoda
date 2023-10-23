@@ -1,10 +1,10 @@
-package message
+package protocols
 
 type Result struct {
 	// Result code. Reserved
 	Rcode int
 
-	// Result message. OK, or Error Reason
+	// Result msg string. OK, or Error Reason
 	Rmsg string
 
 	// For script or command execution. Script output.

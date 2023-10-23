@@ -3,8 +3,6 @@ package network
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
-	"brain/security"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -14,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"protocols"
+	"protocols/security"
 	"strconv"
 	"time"
 )
@@ -46,7 +46,7 @@ func InitNameClient() {
 
 	retry := 6
 	success := false
-	var nameEntry1, nameEntry2 *message.RegisterParam
+	var nameEntry1, nameEntry2 *protocols.RegisterParam
 	for retry > 0 {
 		tentacleFaceIp, err := getTentacleFaceIp()
 		if err != nil {
@@ -64,7 +64,7 @@ func InitNameClient() {
 		}
 
 		// first report to ns
-		nameEntry1 = &message.RegisterParam{
+		nameEntry1 = &protocols.RegisterParam{
 			Type:        "brain",
 			Name:        config.GlobalConfig.Name + ".tentacleFace",
 			Ip:          tentacleFaceIp,
@@ -73,7 +73,7 @@ func InitNameClient() {
 			Description: "first update since running",
 			TTL:         0,
 		}
-		nameEntry2 = &message.RegisterParam{
+		nameEntry2 = &protocols.RegisterParam{
 			Type:        "brain",
 			Name:        config.GlobalConfig.Name + ".octlFace",
 			Ip:          octlFaceIp,
@@ -192,12 +192,12 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 	}
 	httpsClient = &http.Client{
 		Transport: tr,
-		Timeout: 0,
+		Timeout:   0,
 	}
 	return nil
 }
 
-func nameRegister(entry *message.RegisterParam) error {
+func nameRegister(entry *protocols.RegisterParam) error {
 	form := url.Values{}
 	form.Set("name", entry.Name)
 	form.Set("ip", entry.Ip)
@@ -215,27 +215,7 @@ func nameRegister(entry *message.RegisterParam) error {
 	if err != nil {
 		return err
 	}
-	var response message.Response
-	json.Unmarshal(buf, &response)
-	if response.Message != "OK" || res.StatusCode != 200 {
-		return fmt.Errorf(response.Message)
-	}
-	return nil
-}
-
-func nameUnregister(name string) error {
-	form := url.Values{}
-	form.Set("name", name)
-	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s/delete", nsAddr), form)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response message.Response
+	var response protocols.Response
 	json.Unmarshal(buf, &response)
 	if response.Message != "OK" || res.StatusCode != 200 {
 		return fmt.Errorf(response.Message)
@@ -255,7 +235,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func GetToken() (*message.Tokens, error) {
+func GetToken() (*protocols.Tokens, error) {
 	res, err := httpsClient.Get(fmt.Sprintf("https://%s/tokens", nsAddr))
 	if err != nil {
 		return nil, err
@@ -268,7 +248,7 @@ func GetToken() (*message.Tokens, error) {
 	if err != nil {
 		return nil, err
 	}
-	tks := &message.Tokens{}
+	tks := &protocols.Tokens{}
 	err = json.Unmarshal(raw, tks)
 	if err != nil {
 		return nil, err

@@ -3,13 +3,13 @@ package api
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"protocols"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +26,7 @@ func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
 	delayStr := ctx.PostForm("delayTime")
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -84,7 +84,7 @@ func RunScript(ctx *gin.Context) {
 }
 
 func runScript(taskid string, name string, payload []byte) {
-	runAndWait(taskid, name, payload, message.TypeRunScript)
+	runAndWait(taskid, name, payload, protocols.TypeRunScript)
 }
 
 type CommandParams struct {
@@ -102,7 +102,7 @@ func RunCmd(ctx *gin.Context) {
 		isbg = true
 	}
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -149,23 +149,23 @@ func RunCmd(ctx *gin.Context) {
 }
 
 func runCmd(taskid string, name string, payload []byte) {
-	runAndWait(taskid, name, payload, message.TypeRunCommand)
+	runAndWait(taskid, name, payload, protocols.TypeRunCommand)
 }
 
-func runAndWait(taskid string, name string, payload []byte, rtype int) (*message.Result, error) {
+func runAndWait(taskid string, name string, payload []byte, rtype int) (*protocols.Result, error) {
 	var rstr string
 	result := BasicNodeResults{
 		Name: name,
 		Emsg: "OK",
 	}
 
-	if rtype == message.TypeRunScript {
+	if rtype == protocols.TypeRunScript {
 		rstr = "script"
-	} else if rtype == message.TypeRunCommand {
+	} else if rtype == protocols.TypeRunCommand {
 		rstr = "command"
-	} else if rtype == message.TypeAppCreate {
+	} else if rtype == protocols.TypeAppCreate {
 		rstr = "createApp"
-	} else if rtype == message.TypeAppDeploy {
+	} else if rtype == protocols.TypeAppDeploy {
 		rstr = "deployApp"
 	} else {
 		logger.Comm.Println("unsupported rtype in runAndWait: ", rtype)
@@ -186,7 +186,7 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*message
 	model.BrainTaskManager.AddSubTask(taskid, subtask_id, &result)
 	defer model.BrainTaskManager.DoneSubTask(taskid, subtask_id, &result)
 
-	raw, err := model.Request(name, message.TypeWaitTask, subid)
+	raw, err := model.Request(name, protocols.TypeWaitTask, subid)
 	if err != nil || len(raw) == 0 {
 		emsg := fmt.Sprintf("Send %s wait task request error: %v", rstr, err)
 		logger.Comm.Println(emsg)
@@ -194,7 +194,7 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*message
 		return nil, errors.New(result.Emsg)
 	}
 
-	var rmsg message.Result
+	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		emsg := fmt.Sprintf("unmarshal %s response error: %v", rstr, err)
@@ -219,7 +219,7 @@ func CancelRun(ctx *gin.Context) {
 }
 
 func cancelNodeRun(subtaskid, name string) {
-	raw, err := model.Request(name, message.TypeCancelTask, []byte(subtaskid))
+	raw, err := model.Request(name, protocols.TypeCancelTask, []byte(subtaskid))
 	if err != nil || len(raw) == 0 {
 		emsg := fmt.Sprintf("Send cancel task to %s:%s request error: %v", name, subtaskid, err)
 		logger.Comm.Println(emsg)

@@ -10,12 +10,6 @@ import (
 	"strconv"
 )
 
-// type LogParams struct {
-// 	MaxLines      int
-// 	MaxDaysBefore int
-// 	Logs          []string
-// }
-
 func NodeLog(name string, params []string) {
 	maxlines, maxdaysbefore := 30, 0
 	for i := range params {
@@ -53,6 +47,5 @@ func NodeLog(name string, params []string) {
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	// fmt.Print(string(raw))
 	output.PrintJSON(raw)
 }

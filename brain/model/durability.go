@@ -3,7 +3,7 @@ package model
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
+	"protocols"
 
 	"io"
 	"os"
@@ -127,7 +127,7 @@ func Fix(name string) error {
 		}
 
 		payload, _ := config.Jsoner.Marshal(&aParams)
-		raw, err := Request(curNodeApps[i].NodeName, message.TypeAppLatestVersion, payload)
+		raw, err := Request(curNodeApps[i].NodeName, protocols.TypeAppLatestVersion, payload)
 		if err != nil {
 			return ErrorNodeAppError{}
 		}

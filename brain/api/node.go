@@ -4,13 +4,13 @@ import (
 	"brain/buildinfo"
 	"brain/config"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
 	"brain/network"
 	"brain/rdb"
 	"brain/sys"
 	"encoding/json"
 	"fmt"
+	"protocols"
 	"sort"
 	"sync"
 	"time"
@@ -184,7 +184,7 @@ func NodeStatus(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
+	raw, err := model.Request(name, protocols.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeStatus", err)
 		ctx.JSON(404, struct{}{})
@@ -269,7 +269,7 @@ func getNodeStatus(name string, channel chan<- model.Status, wg *sync.WaitGroup)
 	var err error
 	var raw []byte
 
-	raw, err = model.Request(name, message.TypeNodeStatus, []byte{})
+	raw, err = model.Request(name, protocols.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("getNodeStatus", err)
 		goto sendres

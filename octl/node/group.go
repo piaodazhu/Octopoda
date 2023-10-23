@@ -9,6 +9,7 @@ import (
 	"octl/config"
 	"octl/nameclient"
 	"octl/output"
+	"protocols"
 )
 
 func GroupGetAll() {
@@ -60,23 +61,12 @@ func GroupDel(name string) {
 	defer res.Body.Close()
 }
 
-type GroupInfo struct {
-	Name  string   `json:"name" binding:"required"`
-	Nodes []string `json:"nodes" binding:"required"`
-	// NoCheck can be in request
-	NoCheck bool `json:"nocheck" binding:"omitempty"`
-
-	// Size and Unhealthy will be in response
-	Size      int      `json:"size" binding:"omitempty"`
-	Unhealthy []string `json:"unhealthy" binding:"omitempty"`
-}
-
 func GroupSet(name string, nocheck bool, names []string) {
 	nodes, err := NodesParse(names)
 	if err != nil {
 		output.PrintFatalln(err)
 	}
-	ginfo := GroupInfo{
+	ginfo := protocols.GroupInfo{
 		Name:    name,
 		Nodes:   nodes,
 		NoCheck: nocheck,

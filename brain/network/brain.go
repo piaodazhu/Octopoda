@@ -4,9 +4,9 @@ import (
 	"brain/config"
 	"brain/heartbeat"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
-	"brain/snp"
+	"protocols"
+	"protocols/snp"
 	"time"
 
 	"fmt"
@@ -54,9 +54,9 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func ProcessNodeJoin(conn net.Conn) {
-	mtype, _, msg, err := message.RecvMessageUnique(conn)
-	if err != nil || mtype != message.TypeNodeJoin {
-		logger.Comm.Print(err, message.TypeNodeJoin)
+	mtype, _, msg, err := protocols.RecvMessageUnique(conn)
+	if err != nil || mtype != protocols.TypeNodeJoin {
+		logger.Comm.Print(err, protocols.TypeNodeJoin)
 		conn.Close()
 		return
 	}
@@ -68,7 +68,7 @@ func ProcessNodeJoin(conn net.Conn) {
 	}
 
 	randNum := snp.GenSerial()
-	err = message.SendMessageUnique(conn, message.TypeNodeJoinResponse, snp.GenSerial(), heartbeat.MakeNodeJoinResponse(randNum))
+	err = protocols.SendMessageUnique(conn, protocols.TypeNodeJoinResponse, snp.GenSerial(), heartbeat.MakeNodeJoinResponse(randNum))
 	if err != nil {
 		logger.Network.Print(err)
 		conn.Close()

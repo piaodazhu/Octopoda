@@ -9,11 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"protocols"
 	"runtime"
 	"strings"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
 	"time"
 
 	"github.com/mholt/archiver/v3"
@@ -48,7 +48,7 @@ func pathFixing(path string, base string) string {
 }
 
 func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -70,7 +70,7 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 
 errorout:
 	payload, _ := config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeFilePushResponse, serialNum, payload)
+	err = protocols.SendMessageUnique(conn, protocols.TypeFilePushResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("FilePush send error")
 	}
@@ -139,7 +139,7 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 
 	payload, _ = json.Marshal(&fileinfo)
 errorout:
-	err = message.SendMessageUnique(conn, message.TypeFilePullResponse, serialNum, payload)
+	err = protocols.SendMessageUnique(conn, protocols.TypeFilePullResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("FilePull send error")
 	}
@@ -168,7 +168,7 @@ func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
 
 	res = allFiles(pathsb.String())
 errorout:
-	err = message.SendMessageUnique(conn, message.TypeFileTreeResponse, serialNum, res)
+	err = protocols.SendMessageUnique(conn, protocols.TypeFileTreeResponse, serialNum, res)
 	if err != nil {
 		logger.Comm.Println("FileTree send error")
 	}

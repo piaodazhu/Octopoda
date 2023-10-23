@@ -5,16 +5,16 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"protocols"
 	"tentacle/app"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
 	"tentacle/task"
 	"time"
 )
 
 func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {
-	err := message.SendMessageUnique(conn, message.TypeAppsInfoResponse, serialNum, app.Digest())
+	err := protocols.SendMessageUnique(conn, protocols.TypeAppsInfoResponse, serialNum, app.Digest())
 	if err != nil {
 		logger.Comm.Println("AppsInfo send error")
 	}
@@ -42,18 +42,18 @@ func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 	if err := config.Jsoner.Unmarshal(raw, &acParams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
-		err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppCreateResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeAppCreateResponse send error")
 		}
 		return
 	}
 
-	var utaskFunc func() *message.Result
+	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()
 
-	utaskFunc = func() *message.Result {
-		rmsg := message.Result{
+	utaskFunc = func() *protocols.Result {
+		rmsg := protocols.Result{
 			Rmsg: "OK",
 		}
 		rmsg.Modified = false
@@ -115,13 +115,13 @@ func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 	if err != nil {
 		// ERROR
 		logger.Exceptions.Println("cannot create task: ", err)
-		err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppCreateResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeAppCreateResponse send error")
 		}
 		return
 	}
-	err = message.SendMessageUnique(conn, message.TypeAppCreateResponse, serialNum, []byte(taskId))
+	err = protocols.SendMessageUnique(conn, protocols.TypeAppCreateResponse, serialNum, []byte(taskId))
 	if err != nil {
 		logger.Comm.Println("TypeAppCreateResponse send error")
 	}
@@ -132,19 +132,19 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 	if err := config.Jsoner.Unmarshal(raw, &adParams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
-		err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppDeployResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeAppDeployResponse send error")
 		}
 		return
 	}
 
-	var utaskFunc func() *message.Result
+	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()
 	cmdChan := make(chan *exec.Cmd, 1)
 
-	utaskFunc = func() *message.Result {
-		rmsg := message.Result{
+	utaskFunc = func() *protocols.Result {
+		rmsg := protocols.Result{
 			Rmsg: "OK",
 		}
 		rmsg.Modified = false
@@ -220,13 +220,13 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 	if err != nil {
 		// ERROR
 		logger.Exceptions.Println("cannot create task: ", err)
-		err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppDeployResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeAppDeployResponse send error")
 		}
 		return
 	}
-	err = message.SendMessageUnique(conn, message.TypeAppDeployResponse, serialNum, []byte(taskId))
+	err = protocols.SendMessageUnique(conn, protocols.TypeAppDeployResponse, serialNum, []byte(taskId))
 	if err != nil {
 		logger.Comm.Println("TypeAppDeployResponse send error")
 	}
@@ -239,7 +239,7 @@ type AppDeleteParams struct {
 
 func AppDelete(conn net.Conn, serialNum uint32, raw []byte) {
 	adParams := &AppDeleteParams{}
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	var payload []byte
@@ -266,7 +266,7 @@ func AppDelete(conn net.Conn, serialNum uint32, raw []byte) {
 	app.Save()
 errorout:
 	payload, _ = config.Jsoner.Marshal(&rmsg)
-	err = message.SendMessageUnique(conn, message.TypeAppDeleteResponse, serialNum, payload)
+	err = protocols.SendMessageUnique(conn, protocols.TypeAppDeleteResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppDelete send error")
 	}

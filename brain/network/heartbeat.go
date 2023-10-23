@@ -5,12 +5,12 @@ import (
 	"brain/config"
 	"brain/heartbeat"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
-	"brain/snp"
 	"context"
 	"fmt"
 	"net"
+	"protocols"
+	"protocols/snp"
 	"time"
 )
 
@@ -23,8 +23,8 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum u
 
 	for {
 		health = true
-		mtype, _, msg, err = message.RecvMessageUnique(conn)
-		if err != nil || mtype != message.TypeHeartbeat {
+		mtype, _, msg, err = protocols.RecvMessageUnique(conn)
+		if err != nil || mtype != protocols.TypeHeartbeat {
 			logger.Network.Print(err) // TODO who?
 			health = false
 			goto reportstate
@@ -38,7 +38,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum u
 		}
 
 		randNum = snp.GenSerial()
-		err = message.SendMessageUnique(conn, message.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
+		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
 		if err != nil {
 			logger.Network.Print(err)
 			health = false

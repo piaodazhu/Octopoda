@@ -1,15 +1,15 @@
 package api
 
 import (
-	"brain/message"
 	"brain/model"
+	"protocols"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TaskState(ctx *gin.Context) {
 	taskid := ctx.Query("taskid")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	rcode := 200

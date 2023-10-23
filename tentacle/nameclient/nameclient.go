@@ -9,10 +9,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"protocols"
+	"protocols/security"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
-	"tentacle/security"
 	"time"
 )
 
@@ -87,7 +87,7 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 	}
 	httpsClient = &http.Client{
 		Transport: tr,
-		Timeout: 0,
+		Timeout:   0,
 	}
 	return nil
 }
@@ -104,7 +104,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func NameQuery(name string) (*message.NameEntry, error) {
+func NameQuery(name string) (*protocols.NameEntry, error) {
 	res, err := httpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func NameQuery(name string) (*message.NameEntry, error) {
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("NameQuery status code = %d", res.StatusCode)
 	}
-	var response message.Response
+	var response protocols.Response
 	err = json.Unmarshal(buf, &response)
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func NameQuery(name string) (*message.NameEntry, error) {
 	return response.NameEntry, nil
 }
 
-func GetToken() (*message.Tokens, error) {
+func GetToken() (*protocols.Tokens, error) {
 	res, err := httpsClient.Get(fmt.Sprintf("https://%s/tokens", nsAddr))
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func GetToken() (*message.Tokens, error) {
 	if err != nil {
 		return nil, err
 	}
-	tks := &message.Tokens{}
+	tks := &protocols.Tokens{}
 	err = json.Unmarshal(raw, tks)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,8 @@
 package model
 
 import (
-	"brain/message"
 	"net"
+	"protocols"
 	"sync"
 )
 
@@ -69,7 +69,7 @@ func (c *ConnInfo) StartReceive() {
 			if conn == nil {
 				return
 			}
-			mtype, serialNum, raw, err := message.RecvMessageUnique(conn)
+			mtype, serialNum, raw, err := protocols.RecvMessageUnique(conn)
 			if err != nil {
 				// TODO error reason
 				// fmt.Println("[DEBUG] receive error: ", err)

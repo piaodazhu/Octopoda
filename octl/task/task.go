@@ -11,12 +11,6 @@ import (
 	"github.com/briandowns/spinner"
 )
 
-type ErrWaitTask struct {
-	status  int
-	message string
-}
-
-func (e ErrWaitTask) Error() string { return fmt.Sprintf("[%d] %s\n", e.status, e.message) }
 func WaitTask(prefix string, taskid string) ([]byte, error) {
 	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
 		nameclient.BrainAddr,
@@ -24,7 +18,6 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 		config.API_TaskState,
 		taskid,
 	)
-	// fmt.Fprintf(os.Stdout, "PROCESSING  ")
 	if prefix != "" {
 		s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
 		s.Prefix = prefix
@@ -56,8 +49,7 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 			if prefix != "" {
 				fmt.Println("  [FAILED]")
 			}
-
-			return nil, ErrWaitTask{res.StatusCode, string(msg)}
+			return nil, fmt.Errorf("wait task error. http statuscode=%d, response=%s", res.StatusCode, string(msg))
 		}
 	}
 }

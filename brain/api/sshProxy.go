@@ -3,11 +3,11 @@ package api
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
 	"brain/network"
 	"encoding/json"
 	"fmt"
+	"protocols"
 
 	"github.com/gin-gonic/gin"
 )
@@ -61,14 +61,14 @@ func SshRegister(ctx *gin.Context) {
 		}
 	}
 	network.CreateSshInfo(name, username, password)
-	if !proxyCmd(ctx, name, message.TypeSshRegister) { // 不成功就删除
+	if !proxyCmd(ctx, name, protocols.TypeSshRegister) { // 不成功就删除
 		network.DelSshInfo(name)
 	}
 }
 
 func SshUnregister(ctx *gin.Context) {
 	name := ctx.Query("name")
-	if proxyCmd(ctx, name, message.TypeSshUnregister) { // 成功就删除
+	if proxyCmd(ctx, name, protocols.TypeSshUnregister) { // 成功就删除
 		network.DelSshInfo(name)
 	}
 }
@@ -76,7 +76,7 @@ func SshUnregister(ctx *gin.Context) {
 func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	if name == "brain" {
 		ip, _ := network.GetOctlFaceIp()
-		if cmdType == message.TypeSshRegister {
+		if cmdType == protocols.TypeSshRegister {
 			network.CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
 		}
 		ctx.JSON(200, proxyMsg{
@@ -96,7 +96,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	}
 	raw, err := model.Request(name, cmdType, []byte{})
 	if err != nil {
-		logger.Comm.Println(message.MsgTypeString[cmdType], err)
+		logger.Comm.Println(protocols.MsgTypeString[cmdType], err)
 		ctx.JSON(500, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",

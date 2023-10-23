@@ -1,4 +1,4 @@
-package message
+package protocols
 
 type NameEntry struct {
 	RegisterParam
@@ -39,26 +39,11 @@ type ConfigQueryParam struct {
 	Amount int    `form:"amount" json:"amount" binding:"required,gte=1"`
 }
 
-type SshInfo struct {
-	SshInfoUploadParam
-	TimeStamp int64 `json:"ts"`
-}
-
-type SshInfoUploadParam struct {
-	Type     string `form:"type" json:"type" binding:"oneof=brain tentacle octl other"`
-	Name     string `form:"name" json:"name" binding:"required,min=2"`
-	Username string `form:"username" json:"username" binding:"required"`
-	Ip       string `form:"ip" json:"ip" binding:"required,ip"`
-	Port     int    `form:"port" json:"port" binding:"required,gte=1,lte=65535"`
-	Password string `form:"password" json:"password" binding:"required"`
-}
-
 type Response struct {
 	Message   string         `json:"msg,omitempty"`
 	NameEntry *NameEntry     `json:"entry,omitempty"`
 	NameList  []string       `json:"list,omitempty"`
 	RawConfig []*ConfigEntry `json:"conflist,omitempty"`
-	SshInfo   *SshInfo       `json:"sshinfo,omitempty"`
 }
 
 type ApiStat struct {

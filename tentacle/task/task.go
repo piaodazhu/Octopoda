@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"protocols"
 	"sort"
 	"sync"
-	"tentacle/message"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,12 +29,12 @@ type TaskInfo struct {
 type Task struct {
 	TaskInfo
 
-	result chan *message.Result
+	result     chan *protocols.Result
 	cancelFunc func()
 	ctx        context.Context
 }
 
-type UserTaskFunc func() *message.Result
+type UserTaskFunc func() *protocols.Result
 type UserCancelFunc func()
 
 func emptyFunc() {}
@@ -67,7 +67,7 @@ func (tm *taskManager) CreateTask(brief string, utask UserTaskFunc, ucancel User
 			State:       StatePending,
 			CreatedTime: time.Now(),
 		},
-		result: make(chan *message.Result, 1),
+		result: make(chan *protocols.Result, 1),
 	}
 
 	for { // 如果Id冲突，则必须重新生成
@@ -96,7 +96,7 @@ func (tm *taskManager) CreateTask(brief string, utask UserTaskFunc, ucancel User
 		ucancel()
 	}
 
-	result := make(chan *message.Result, 1)
+	result := make(chan *protocols.Result, 1)
 	go func() {
 		res := utask() // utask必须是用户可cancel的，否则这个goroutine无法结束
 		result <- res
@@ -105,7 +105,7 @@ func (tm *taskManager) CreateTask(brief string, utask UserTaskFunc, ucancel User
 
 	// 上下两个goroutine的关系备注：下面的goroutine退出要么utask执行完，要么ctx调用了取消，都一定会意味着上面的goroutine能正常退出
 	go func() {
-		var res *message.Result
+		var res *protocols.Result
 		select {
 		case res = <-result:
 			// done
@@ -136,21 +136,20 @@ func (tm *taskManager) CancelTask(taskId string) bool {
 }
 
 // 阻塞等待结果，如果任务被取消则返回false
-func (tm *taskManager) WaitTask(taskId string) (*message.Result, bool) {
+func (tm *taskManager) WaitTask(taskId string) (*protocols.Result, bool) {
 	var task *Task
 	if value, found := tm.FinishTasks.Load(taskId); found {
 		task = value.(*Task)
 	} else if value, found := tm.PendingTasks.Load(taskId); found {
 		task = value.(*Task)
 	} else {
-		return nil, false 
+		return nil, false
 	}
-	res := <- task.result
+	res := <-task.result
 	tm.FinishTasks.Delete(taskId)
-	
+
 	return res, true
 }
-
 
 // -- READ-ONLY --
 

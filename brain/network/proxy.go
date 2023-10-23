@@ -3,8 +3,8 @@ package network
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
 	"fmt"
+	"protocols"
 	"sync"
 	"time"
 
@@ -42,7 +42,7 @@ func InitProxyServer() {
 	}()
 
 	// register self
-	nameEntry := &message.RegisterParam{
+	nameEntry := &protocols.RegisterParam{
 		Type:        "other",
 		Name:        config.GlobalConfig.Name + ".proxyliteFace",
 		Ip:          tentacleFaceIp,
@@ -71,9 +71,9 @@ func InitProxyServer() {
 func ProxyServices() ([]proxylite.ServiceInfo, error) {
 	services, err := proxylite.DiscoverServices(fmt.Sprintf(":%d", config.GlobalConfig.ProxyliteServer.Port))
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
-	
+
 	// clean sshinfo
 	set := map[string]struct{}{}
 	for _, s := range services {
@@ -85,7 +85,7 @@ func ProxyServices() ([]proxylite.ServiceInfo, error) {
 		if _, found := set[name]; !found {
 			itemToBeDel = append(itemToBeDel, name)
 		}
-		return true 
+		return true
 	})
 	for _, name := range itemToBeDel {
 		DelSshInfo(name)

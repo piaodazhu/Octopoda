@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"octl/config"
 	"octl/output"
 	"os"
-	"strconv"
+	"protocols"
 )
 
 var nsAddr string
@@ -93,7 +92,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func NameQuery(name string) (*NameEntry, error) {
+func NameQuery(name string) (*protocols.NameEntry, error) {
 	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err
@@ -106,74 +105,10 @@ func NameQuery(name string) (*NameEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var response Response
+	var response protocols.Response
 	err = json.Unmarshal(buf, &response)
 	if err != nil {
 		return nil, err
 	}
 	return response.NameEntry, nil
-}
-
-func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
-	form := url.Values{}
-	form.Set("name", sshinfo.Name)
-	form.Set("ip", sshinfo.Ip)
-	form.Set("port", strconv.Itoa(sshinfo.Port))
-	form.Set("type", sshinfo.Type)
-	form.Set("username", sshinfo.Username)
-	form.Set("password", sshinfo.Password)
-	res, err := HttpsClient.PostForm(fmt.Sprintf("https://%s/sshinfo", nsAddr), form)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return fmt.Errorf("ssh info register rejected by server")
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	return nil
-}
-
-func SshinfoQuery(name string) (*SshInfo, error) {
-	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/sshinfo?name=%s", nsAddr, name))
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("ssh info not found")
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	return response.SshInfo, nil
-}
-
-func NameDelete(name string, scope string) error {
-	form := url.Values{}
-	form.Set("name", name)
-	form.Set("scope", scope)
-	res, err := HttpsClient.PostForm(fmt.Sprintf("https://%s/delete", nsAddr), form)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return fmt.Errorf("ssh info not found")
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	return nil
 }

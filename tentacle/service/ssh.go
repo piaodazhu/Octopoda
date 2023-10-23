@@ -2,9 +2,9 @@ package service
 
 import (
 	"net"
+	"protocols"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
 	"tentacle/proxy"
 )
 
@@ -31,7 +31,7 @@ func SshRegister(conn net.Conn, serialNum uint32, raw []byte) {
 
 errorout:
 	payload, _ = config.Jsoner.Marshal(&msg)
-	err = message.SendMessageUnique(conn, message.TypeSshRegisterResponse, serialNum, payload)
+	err = protocols.SendMessageUnique(conn, protocols.TypeSshRegisterResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeSshRegisterResponse send error")
 	}
@@ -47,7 +47,7 @@ func SshUnregister(conn net.Conn, serialNum uint32, raw []byte) {
 	proxy.UnregisterSshService()
 
 	payload, _ = config.Jsoner.Marshal(&msg)
-	err := message.SendMessageUnique(conn, message.TypeSshUnregisterResponse, serialNum, payload)
+	err := protocols.SendMessageUnique(conn, protocols.TypeSshUnregisterResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("TypeSshUnregisterResponse send error")
 	}

@@ -2,10 +2,10 @@ package api
 
 import (
 	"brain/config"
-	"brain/message"
 	"brain/model"
 	"bufio"
 	"os"
+	"protocols"
 	"strconv"
 	"strings"
 	"time"
@@ -106,7 +106,7 @@ func readLogs(params *LogParams) {
 
 func readLogsRemote(name string, params *LogParams) bool {
 	query, _ := config.Jsoner.Marshal(params)
-	answer, err := model.Request(name, message.TypeNodeLog, query)
+	answer, err := model.Request(name, protocols.TypeNodeLog, query)
 	if err != nil {
 		return false
 	}

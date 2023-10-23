@@ -3,8 +3,8 @@ package api
 import (
 	"brain/config"
 	"brain/logger"
-	"brain/message"
 	"brain/model"
+	"protocols"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +12,7 @@ import (
 func NodeAppsInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -22,7 +22,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 		return
 	}
 
-	raw, err := model.Request(name, message.TypeAppsInfo, []byte{})
+	raw, err := model.Request(name, protocols.TypeAppsInfo, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"
@@ -34,7 +34,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 
 func NodeAppVersion(ctx *gin.Context) {
 	var name, app, scen string
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -52,7 +52,7 @@ func NodeAppVersion(ctx *gin.Context) {
 		Scenario: scen,
 	}
 	payload, _ := config.Jsoner.Marshal(aParams)
-	raw, err := model.Request(name, message.TypeAppVersion, payload)
+	raw, err := model.Request(name, protocols.TypeAppVersion, payload)
 	if err != nil {
 		logger.Comm.Println("NodeAppVersion", err)
 		rmsg.Rmsg = "NodeAppVersion"
@@ -64,7 +64,7 @@ func NodeAppVersion(ctx *gin.Context) {
 
 func NodeAppReset(ctx *gin.Context) {
 	var name, app, scen, version, msg string
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -88,7 +88,7 @@ func NodeAppReset(ctx *gin.Context) {
 		VersionHash: version,
 	}
 	payload, _ := config.Jsoner.Marshal(arParams)
-	raw, err := model.Request(name, message.TypeAppReset, payload)
+	raw, err := model.Request(name, protocols.TypeAppReset, payload)
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"
@@ -96,7 +96,7 @@ func NodeAppReset(ctx *gin.Context) {
 		return
 	}
 
-	var result message.Result
+	var result protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &result)
 	if err != nil {
 		logger.Exceptions.Println("NodeAppReset Unmarshal", err)

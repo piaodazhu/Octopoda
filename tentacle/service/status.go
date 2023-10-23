@@ -3,10 +3,10 @@ package service
 import (
 	"fmt"
 	"net"
+	"protocols"
 	"sync"
 	"tentacle/config"
 	"tentacle/logger"
-	"tentacle/message"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -54,7 +54,7 @@ func NodeStatus(conn net.Conn, serialNum uint32, raw []byte) {
 	state.LocalTime = time.Now()
 	stateLock.RUnlock()
 	serialized_info, _ := config.Jsoner.Marshal(&state)
-	err := message.SendMessageUnique(conn, message.TypeNodeStatusResponse, serialNum, serialized_info)
+	err := protocols.SendMessageUnique(conn, protocols.TypeNodeStatusResponse, serialNum, serialized_info)
 	if err != nil {
 		logger.Comm.Println("NodeStatus service error")
 	}
