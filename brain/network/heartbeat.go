@@ -18,7 +18,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum u
 	var mtype int
 	var msg []byte
 	var health bool
-	var hbinfo heartbeat.HeartBeatRequest
+	var hbinfo protocols.HeartBeatRequest
 	var err error
 
 	for {

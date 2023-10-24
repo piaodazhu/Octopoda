@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"tentacle/app"
-	"tentacle/buildinfo"
+	"protocols/buildinfo"
 	"tentacle/config"
 	"tentacle/logger"
 	"tentacle/nameclient"

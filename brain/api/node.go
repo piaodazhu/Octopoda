@@ -1,7 +1,7 @@
 package api
 
 import (
-	"brain/buildinfo"
+	"protocols/buildinfo"
 	"brain/config"
 	"brain/logger"
 	"brain/model"

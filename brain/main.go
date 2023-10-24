@@ -2,11 +2,11 @@ package main
 
 import (
 	"brain/alert"
-	"brain/buildinfo"
 	"brain/config"
 	"brain/logger"
 	"brain/model"
 	"brain/sys"
+	"protocols/buildinfo"
 
 	"brain/network"
 	"brain/rdb"

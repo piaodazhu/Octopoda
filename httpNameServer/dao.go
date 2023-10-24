@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"protocols"
 	"time"
 
 	"github.com/bluele/gcache"
@@ -141,17 +142,17 @@ func (b *BaseDao) getrange(key string, index, amount int) ([]string, error) {
 
 // NameEntryDao
 
-func (n *NameEntryDao) Set(key string, entry NameEntry, ttl int) error {
+func (n *NameEntryDao) Set(key string, entry protocols.NameEntry, ttl int) error {
 	raw, _ := json.Marshal(entry)
 	return n.set(key, string(raw), ttl)
 }
 
-func (n *NameEntryDao) Get(key string) (*NameEntry, error) {
+func (n *NameEntryDao) Get(key string) (*protocols.NameEntry, error) {
 	value, err := n.get(key)
 	if err != nil {
 		return nil, err
 	}
-	res := &NameEntry{}
+	res := &protocols.NameEntry{}
 	err = json.Unmarshal([]byte(value), res)
 	if err != nil {
 		return nil, err
@@ -169,19 +170,19 @@ func (n *NameEntryDao) List(pattern string) ([]string, error) {
 
 // ConfigDao
 
-func (c *ConfigDao) Append(key string, config ConfigEntry) error {
+func (c *ConfigDao) Append(key string, config protocols.ConfigEntry) error {
 	raw, _ := json.Marshal(config)
 	return c.append(key, string(raw))
 }
 
-func (c *ConfigDao) GetRange(key string, index, amount int) ([]*ConfigEntry, error) {
+func (c *ConfigDao) GetRange(key string, index, amount int) ([]*protocols.ConfigEntry, error) {
 	value, err := c.getrange(key, index, amount)
 	if err != nil {
 		return nil, err
 	}
-	res := []*ConfigEntry{}
+	res := []*protocols.ConfigEntry{}
 	for _, conf := range value {
-		var item ConfigEntry
+		var item protocols.ConfigEntry
 		err = json.Unmarshal([]byte(conf), &item)
 		if err != nil {
 			return nil, err
@@ -201,17 +202,17 @@ func (c *ConfigDao) List(pattern string) ([]string, error) {
 
 // SshInfoDao
 
-func (s *SshInfoDao) Set(key string, ssh SshInfo, ttl int) error {
+func (s *SshInfoDao) Set(key string, ssh protocols.SshInfo, ttl int) error {
 	raw, _ := json.Marshal(ssh)
 	return s.set(key, string(raw), ttl)
 }
 
-func (s *SshInfoDao) Get(key string) (*SshInfo, error) {
+func (s *SshInfoDao) Get(key string) (*protocols.SshInfo, error) {
 	value, err := s.get(key)
 	if err != nil {
 		return nil, err
 	}
-	res := &SshInfo{}
+	res := &protocols.SshInfo{}
 	err = json.Unmarshal([]byte(value), res)
 	if err != nil {
 		return nil, err

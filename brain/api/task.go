@@ -32,5 +32,4 @@ func TaskState(ctx *gin.Context) {
 		results = append(results, rlist[i].(*BasicNodeResults))
 	}
 	ctx.JSON(rcode, results)
-	return
 }

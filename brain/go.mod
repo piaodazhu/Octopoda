@@ -11,7 +11,6 @@ require (
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/shirou/gopsutil/v3 v3.23.5
 	github.com/spf13/viper v1.15.0
-	github.com/wumansgy/goEncrypt v1.1.0
 	golang.org/x/time v0.1.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )

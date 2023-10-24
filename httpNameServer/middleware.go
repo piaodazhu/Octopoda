@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"httpns/logger"
+	"protocols"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,13 +30,13 @@ func OctopodaLogger() gin.HandlerFunc {
 
 func StatsMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var stats *ApiStat
+		var stats *protocols.ApiStat
 		var exists bool
 		key := fmt.Sprintf("%s[%s]", c.Request.URL.Path, c.Request.Method)
 		if stats, exists = summary.ApiStats[key]; exists {
 			stats.Requests++
 		} else {
-			stats = &ApiStat{Requests: 1}
+			stats = &protocols.ApiStat{Requests: 1}
 			summary.ApiStats[key] = stats
 		}
 		summary.TotalRequests++

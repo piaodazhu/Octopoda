@@ -10,7 +10,6 @@ require (
 	github.com/piaodazhu/proxylite v0.3.1
 	github.com/shirou/gopsutil/v3 v3.23.5
 	github.com/spf13/viper v1.15.0
-	github.com/wumansgy/goEncrypt v1.1.0
 )
 
 require (
