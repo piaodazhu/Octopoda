@@ -2,8 +2,8 @@ go 1.18
 
 use (
 	./brain
-	./httpNameServer
-	./httpNameServer/test_cli
+	./httpns
+	./httpns/test_cli
 	./octl
 	./pakma
 	./protocols
