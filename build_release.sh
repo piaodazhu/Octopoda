@@ -224,7 +224,7 @@ echo "Successfully build ${BUILD_NAME}" && \
 mv ${BUILD_NAME}.tar.xz ../dist/ &>/dev/null && \
 rm -rf ${BUILD_NAME}
 
-cd ../httpNameServer
+cd ../httpns
 
 BUILD_OS=linux
 BUILD_ARCH=amd64
