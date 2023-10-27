@@ -4,6 +4,7 @@ use (
 	./brain
 	./httpns
 	./httpns/test_cli
+	./modtest
 	./octl
 	./pakma
 	./protocols
