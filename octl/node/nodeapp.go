@@ -6,9 +6,9 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 )
 
 func NodeAppsInfo(node string) (string, error) {

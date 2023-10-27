@@ -1,9 +1,9 @@
 package heartbeat
 
 import (
-	"brain/config"
-	"brain/logger"
-	"protocols"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func MakeHeartbeat(num uint32) []byte {

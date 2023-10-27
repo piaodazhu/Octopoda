@@ -2,7 +2,7 @@ package scenario
 
 import (
 	"fmt"
-	"octl/node"
+	"github.com/piaodazhu/Octopoda/octl/node"
 	"os"
 	"strings"
 )

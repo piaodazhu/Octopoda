@@ -1,10 +1,11 @@
 package model
 
 import (
-	"brain/config"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
 )
 
 const (
@@ -22,7 +23,6 @@ type NodeInfo struct {
 	OfflineTs int64
 	ActiveTs  int64
 }
-
 
 type NodeModel struct {
 	NodeInfo

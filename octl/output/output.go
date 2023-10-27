@@ -3,7 +3,7 @@ package output
 import (
 	"errors"
 	"fmt"
-	"octl/config"
+	"github.com/piaodazhu/Octopoda/octl/config"
 	"os"
 	"strings"
 

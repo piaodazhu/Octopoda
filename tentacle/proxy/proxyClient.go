@@ -3,9 +3,9 @@ package proxy
 import (
 	"errors"
 	"fmt"
-	"tentacle/config"
-	"tentacle/nameclient"
 
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
 	"github.com/piaodazhu/proxylite"
 )
 

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
-	"octl/node"
-	"octl/output"
-	"octl/task"
-	"protocols"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func SpreadFile(FileOrDir string, targetPath string, names []string) (string, error) {

@@ -2,11 +2,11 @@ package sdk
 
 import (
 	"errors"
-	"octl/config"
-	"octl/file"
-	"octl/nameclient"
-	"octl/node"
-	"octl/shell"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/file"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/shell"
 )
 
 var initalized bool = false

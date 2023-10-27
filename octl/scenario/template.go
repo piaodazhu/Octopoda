@@ -2,8 +2,8 @@ package scenario
 
 import (
 	"fmt"
-	"octl/config"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"os"
 	"path/filepath"
 )

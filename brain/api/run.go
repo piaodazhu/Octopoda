@@ -1,18 +1,18 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"protocols"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type ScriptParams struct {

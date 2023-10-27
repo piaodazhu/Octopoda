@@ -2,10 +2,11 @@ package service
 
 import (
 	"net"
-	"protocols"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/task"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
 
 // Must return a task struct

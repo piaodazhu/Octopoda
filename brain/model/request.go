@@ -1,13 +1,14 @@
 package model
 
 import (
-	"brain/alert"
 	"errors"
 	"fmt"
-	"protocols"
-	"protocols/snp"
 	"strings"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/alert"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
 func Request(name string, mtype int, payload []byte) ([]byte, error) {

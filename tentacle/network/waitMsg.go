@@ -2,14 +2,15 @@ package network
 
 import (
 	"net"
-	"protocols"
-	"protocols/snp"
-	"tentacle/config"
-	"tentacle/heartbeat"
-	"tentacle/logger"
-	"tentacle/nameclient"
-	"tentacle/service"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/heartbeat"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
+	"github.com/piaodazhu/Octopoda/tentacle/service"
 )
 
 func ReadAndServe() {

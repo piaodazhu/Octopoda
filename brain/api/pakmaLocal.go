@@ -1,13 +1,13 @@
 package api
 
 import (
-	"brain/config"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-
 	"unicode"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
 )
 
 func pakmaState() ([]byte, error) {

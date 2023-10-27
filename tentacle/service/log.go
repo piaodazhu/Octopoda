@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"net"
 	"os"
-	"protocols"
 	"strings"
-	"tentacle/config"
-	"tentacle/logger"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 type LogParams struct {

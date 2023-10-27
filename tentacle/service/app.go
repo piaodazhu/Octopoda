@@ -5,12 +5,13 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"protocols"
-	"tentacle/app"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/task"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/app"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
 
 func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {

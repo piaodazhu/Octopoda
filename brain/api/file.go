@@ -1,22 +1,22 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"brain/rdb"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"protocols"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mholt/archiver/v3"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type FileParams struct {

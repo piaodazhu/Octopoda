@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"pakma/config"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/pakma/config"
 )
 
 // path: brain_v1.3.0_linux_amd64

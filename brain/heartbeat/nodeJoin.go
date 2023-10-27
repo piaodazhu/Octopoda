@@ -1,11 +1,12 @@
 package heartbeat
 
 import (
-	"brain/config"
-	"brain/logger"
 	"encoding/hex"
-	"protocols"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func ParseNodeJoin(raw []byte) (protocols.NodeJoinInfo, error) {

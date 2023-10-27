@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
-	"protocols"
-	"protocols/snp"
 	"runtime"
-	"tentacle/config"
-	"tentacle/heartbeat"
-	"tentacle/logger"
-	"tentacle/nameclient"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/heartbeat"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
 )
 
 func KeepAlive() {

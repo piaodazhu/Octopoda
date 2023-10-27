@@ -1,4 +1,4 @@
-module pakma
+module github.com/piaodazhu/Octopoda/pakma
 
 go 1.18
 

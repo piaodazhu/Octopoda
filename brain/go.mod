@@ -1,4 +1,4 @@
-module brain
+module github.com/piaodazhu/Octopoda/brain
 
 go 1.18
 

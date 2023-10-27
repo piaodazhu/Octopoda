@@ -1,12 +1,13 @@
 package sys
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"

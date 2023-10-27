@@ -6,10 +6,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"protocols"
-	"tentacle/config"
-	"tentacle/logger"
 	"unicode"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func pakmaState() ([]byte, error) {

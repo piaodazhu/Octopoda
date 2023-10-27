@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 	"net"
-	"protocols"
+	"github.com/piaodazhu/Octopoda/protocols"
 	"strings"
 	"sync"
 )

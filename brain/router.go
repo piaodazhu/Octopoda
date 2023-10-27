@@ -1,13 +1,15 @@
 package main
 
 import (
-	"brain/api"
-	"brain/config"
-	"brain/logger"
-	"brain/model"
 	"fmt"
-	"protocols"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/api"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"

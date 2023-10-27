@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	"protocols"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func NameRegister(ctx *gin.Context) {

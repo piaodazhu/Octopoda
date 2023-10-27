@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"httpns/logger"
-	"protocols"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/httpns/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func OctopodaLogger() gin.HandlerFunc {

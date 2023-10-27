@@ -9,14 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"protocols"
 	"runtime"
 	"strings"
-	"tentacle/config"
-	"tentacle/logger"
 	"time"
 
 	"github.com/mholt/archiver/v3"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 type FileParams struct {

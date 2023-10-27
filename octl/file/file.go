@@ -3,7 +3,7 @@ package file
 import (
 	"encoding/base64"
 	"fmt"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"os"
 	"os/exec"
 	"path/filepath"

@@ -1,15 +1,15 @@
 package model
 
 import (
-	"brain/config"
-	"brain/logger"
-	"protocols"
-
 	"io"
 	"os"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 var Busy int32

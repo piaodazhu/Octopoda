@@ -9,11 +9,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"protocols"
-	"protocols/security"
-	"tentacle/config"
-	"tentacle/logger"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/security"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 var nsAddr string

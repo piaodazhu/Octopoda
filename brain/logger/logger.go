@@ -6,24 +6,25 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"brain/config"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
 )
 
-var Request	*log.Logger
-var Comm	*log.Logger
-var Network 	*log.Logger
-var Exceptions 	*log.Logger
-var SysInfo 	*log.Logger
+var Request *log.Logger
+var Comm *log.Logger
+var Network *log.Logger
+var Exceptions *log.Logger
+var SysInfo *log.Logger
 
 var wg sync.WaitGroup
 
 func InitLogger(stdout bool) {
-	Request	   = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
-	Comm 	   = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
-	Network    = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
+	Request = log.New(nil, "[ Request  ]", log.LstdFlags|log.Lshortfile)
+	Comm = log.New(nil, "[   Comm   ]", log.LstdFlags|log.Lshortfile)
+	Network = log.New(nil, "[ Network  ]", log.LstdFlags|log.Lshortfile)
 	Exceptions = log.New(nil, "[Exceptions]", log.LstdFlags|log.Lshortfile)
-	SysInfo    = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
+	SysInfo = log.New(nil, "[ SysInfo  ]", log.LstdFlags|log.Lshortfile)
 
 	var sb strings.Builder
 	sb.WriteString(config.GlobalConfig.Logger.Path)
@@ -59,7 +60,7 @@ func logController(prefix string, stdout bool) {
 			} else {
 				writer = io.MultiWriter(f)
 			}
-			
+
 			Request.SetOutput(writer)
 			Comm.SetOutput(writer)
 			Network.SetOutput(writer)

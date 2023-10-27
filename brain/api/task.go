@@ -1,10 +1,9 @@
 package api
 
 import (
-	"brain/model"
-	"protocols"
-
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func TaskState(ctx *gin.Context) {

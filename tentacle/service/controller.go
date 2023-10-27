@@ -2,8 +2,9 @@ package service
 
 import (
 	"net"
-	"protocols"
-	"tentacle/logger"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func InitService() {

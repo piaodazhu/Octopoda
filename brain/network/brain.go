@@ -1,13 +1,14 @@
 package network
 
 import (
-	"brain/config"
-	"brain/heartbeat"
-	"brain/logger"
-	"brain/model"
-	"protocols"
-	"protocols/snp"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/heartbeat"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 
 	"fmt"
 	"net"

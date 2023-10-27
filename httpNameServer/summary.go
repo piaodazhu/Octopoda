@@ -1,10 +1,10 @@
 package main
 
 import (
-	"protocols"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 var summary *protocols.Summary

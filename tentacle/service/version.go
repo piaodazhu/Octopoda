@@ -2,10 +2,11 @@ package service
 
 import (
 	"net"
-	"protocols"
-	"tentacle/app"
-	"tentacle/config"
-	"tentacle/logger"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/app"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func AppLatestVersion(conn net.Conn, serialNum uint32, raw []byte) {

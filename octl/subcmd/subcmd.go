@@ -2,11 +2,11 @@ package subcmd
 
 import (
 	"fmt"
-	"octl/file"
-	"octl/log"
-	"octl/node"
-	"octl/scenario"
-	"octl/shell"
+	"github.com/piaodazhu/Octopoda/octl/file"
+	"github.com/piaodazhu/Octopoda/octl/log"
+	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/scenario"
+	"github.com/piaodazhu/Octopoda/octl/shell"
 	"strings"
 )
 

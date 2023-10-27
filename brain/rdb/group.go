@@ -1,8 +1,8 @@
 package rdb
 
 import (
-	"brain/config"
-	"brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"context"
 )
 

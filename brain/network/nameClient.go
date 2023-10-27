@@ -1,8 +1,6 @@
 package network
 
 import (
-	"brain/config"
-	"brain/logger"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -12,10 +10,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"protocols"
-	"protocols/security"
 	"strconv"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/security"
 )
 
 var nsAddr string

@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"protocols/security"
-	"protocols/snp"
+	"github.com/piaodazhu/Octopoda/protocols/security"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
 const (

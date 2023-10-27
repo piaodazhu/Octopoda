@@ -1,13 +1,13 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"protocols"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func ScenarioCreate(ctx *gin.Context) {

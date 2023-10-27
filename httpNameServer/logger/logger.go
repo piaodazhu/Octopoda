@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"httpns/config"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/httpns/config"
 )
 
 var Request *log.Logger

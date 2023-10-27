@@ -1,21 +1,21 @@
 package api
 
 import (
-	"protocols/buildinfo"
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"brain/network"
-	"brain/rdb"
-	"brain/sys"
 	"encoding/json"
 	"fmt"
-	"protocols"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
+	"github.com/piaodazhu/Octopoda/brain/sys"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
 type NodeInfoText struct {

@@ -1,12 +1,13 @@
 package network
 
 import (
-	"brain/config"
-	"brain/logger"
 	"fmt"
-	"protocols"
 	"sync"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/piaodazhu/proxylite"
 )

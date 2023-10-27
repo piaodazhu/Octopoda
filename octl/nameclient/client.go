@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"octl/config"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"os"
-	"protocols"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 var nsAddr string

@@ -2,8 +2,8 @@ package scenario
 
 import (
 	"fmt"
-	"octl/config"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/output"
 
 	"github.com/go-git/go-git/v5"
 	gitconf "github.com/go-git/go-git/v5/config"

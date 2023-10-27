@@ -1,15 +1,14 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"protocols"
-
 	"encoding/base64"
 	"io"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type AppBasic struct {

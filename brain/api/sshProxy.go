@@ -1,15 +1,15 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"brain/network"
 	"encoding/json"
 	"fmt"
-	"protocols"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type proxyMsg struct {

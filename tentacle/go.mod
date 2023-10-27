@@ -1,4 +1,4 @@
-module tentacle
+module github.com/piaodazhu/Octopoda/tentacle
 
 go 1.18
 

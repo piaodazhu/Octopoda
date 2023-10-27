@@ -1,9 +1,9 @@
 package heartbeat
 
 import (
-	"protocols"
-	"tentacle/config"
-	"tentacle/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func MakeHeartbeat(num uint32) []byte {

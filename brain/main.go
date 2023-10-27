@@ -1,17 +1,17 @@
 package main
 
 import (
-	"brain/alert"
-	"brain/config"
-	"brain/logger"
-	"brain/model"
-	"brain/sys"
-	"protocols/buildinfo"
-
-	"brain/network"
-	"brain/rdb"
 	"flag"
 	"fmt"
+
+	"github.com/piaodazhu/Octopoda/brain/alert"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
+	"github.com/piaodazhu/Octopoda/brain/sys"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
 var (

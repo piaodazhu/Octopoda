@@ -2,10 +2,10 @@ package heartbeat
 
 import (
 	"encoding/hex"
-	"protocols"
-	"protocols/buildinfo"
-	"tentacle/config"
-	"tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
 func MakeNodeJoin(addr string) []byte {

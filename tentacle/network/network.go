@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"tentacle/config"
-	"tentacle/logger"
+
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 var wg, joinwg sync.WaitGroup
@@ -47,7 +48,7 @@ func dialWithDevice(addr, dev string) (net.Conn, error) {
 		logger.Network.Println("cannot resolve local address: ", err)
 		return nil, err
 	}
-	
+
 	tcpConn, err := net.DialTCP("tcp", local, remote)
 	if err != nil {
 		// fall back to dail

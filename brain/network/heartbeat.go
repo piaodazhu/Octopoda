@@ -1,17 +1,18 @@
 package network
 
 import (
-	"brain/alert"
-	"brain/config"
-	"brain/heartbeat"
-	"brain/logger"
-	"brain/model"
 	"context"
 	"fmt"
 	"net"
-	"protocols"
-	"protocols/snp"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/alert"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/heartbeat"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
 func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum uint32) {

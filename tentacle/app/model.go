@@ -5,9 +5,10 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"tentacle/config"
-	"tentacle/logger"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 type Version struct {

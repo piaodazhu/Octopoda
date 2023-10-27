@@ -7,13 +7,14 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"protocols"
 	"strings"
 	"syscall"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/task"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
 
 type ScriptParams struct {

@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"tentacle/config"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/tentacle/config"
 )
 
 var Request *log.Logger

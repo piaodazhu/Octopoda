@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
-	"octl/subcmd"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/subcmd"
 	"os"
 )
 
