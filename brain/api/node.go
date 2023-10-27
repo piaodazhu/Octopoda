@@ -78,7 +78,7 @@ func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 		res.Total++
 		if node.State == 0 {
 			res.Active++
-		} else if node.State == 2 {
+		} else if node.State == 2 || node.ConnState != "On" {
 			res.Offline++
 		}
 		res.NodeInfoList[i] = nodeInfoToText(node)

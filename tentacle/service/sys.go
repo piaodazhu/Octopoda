@@ -164,9 +164,8 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 
 			if execErr != nil {
 				rmsg.Rmsg = execErr.Error()
-			} else {
-				rmsg.Output = string(result)
 			}
+			rmsg.Output = string(result)
 		}
 
 		if cparams.DelayTime < 0 {

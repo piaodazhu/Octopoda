@@ -18,6 +18,7 @@ var (
 )
 
 func main() {
+	output.EnableColor()
 	subcmd.InitUsage()
 	args := os.Args
 	var conf string
