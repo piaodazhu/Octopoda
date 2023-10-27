@@ -9,11 +9,12 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/message"
-	"tentacle/task"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
 
 type ScriptParams struct {
@@ -76,10 +77,10 @@ func execScript(sparams *ScriptParams, dir string, cmdChan chan *exec.Cmd) ([]by
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(scriptDir, sparams.FileName, outputFile)...)
 
 	if cmdChan != nil {
-		cmdChan <- cmd 
+		cmdChan <- cmd
 		close(cmdChan)
 	}
-	
+
 	scriptErr := cmd.Run()
 	if scriptErr != nil {
 		logger.Exceptions.Println("Run cmd", err)
@@ -113,14 +114,14 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 	if err := config.Jsoner.Unmarshal(raw, &cparams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
-		err = message.SendMessageUnique(conn, message.TypeRunCommandResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunCommandResponse send error")
 		}
 		return
 	}
 
-	var utaskFunc func() *message.Result
+	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()
 	var cmd *exec.Cmd
 	var scriptFile string
@@ -143,8 +144,8 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 	}
 
-	utaskFunc = func() *message.Result {
-		rmsg := message.Result{
+	utaskFunc = func() *protocols.Result {
+		rmsg := protocols.Result{
 			Rmsg: "OK",
 		}
 		var execErr error
@@ -161,14 +162,13 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 					logger.Exceptions.Println("Run cmd foreground", execErr)
 				}
 			}
-	
+
 			if execErr != nil {
 				rmsg.Rmsg = execErr.Error()
-			} else {
-				rmsg.Output = string(result)
 			}
+			rmsg.Output = string(result)
 		}
-	
+
 		if cparams.DelayTime < 0 {
 			runFunc()
 		} else {
@@ -190,13 +190,13 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 	if err != nil {
 		// ERROR
 		logger.Exceptions.Println("cannot create task: ", err)
-		err = message.SendMessageUnique(conn, message.TypeRunCommandResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunCommandResponse send error")
 		}
 		return
 	}
-	err = message.SendMessageUnique(conn, message.TypeRunCommandResponse, serialNum, []byte(taskId))
+	err = protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte(taskId))
 	if err != nil {
 		logger.Comm.Println("TypeRunCommandResponse send error")
 	}
@@ -206,20 +206,20 @@ func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
 	sparams := ScriptParams{}
 	if err := config.Jsoner.Unmarshal(raw, &sparams); err != nil {
 		logger.Exceptions.Println(err)
-		err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunScriptResponse send error")
 		}
 		return
 	}
 
-	var utaskFunc func() *message.Result
+	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()
 	cmdChan := make(chan *exec.Cmd, 1)
 	var delayTimer *time.Timer = nil
 
-	utaskFunc = func() *message.Result {
-		rmsg := message.Result{
+	utaskFunc = func() *protocols.Result {
+		rmsg := protocols.Result{
 			Rmsg: "OK",
 		}
 		runFunc := func() {
@@ -240,7 +240,7 @@ func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 
 	ucancelFunc = func() {
-		cmd := <- cmdChan
+		cmd := <-cmdChan
 		cmd.Process.Kill()
 		if delayTimer != nil {
 			delayTimer.Stop()
@@ -251,13 +251,13 @@ func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
 	if err != nil {
 		// ERROR
 		logger.Exceptions.Println("cannot create task: ", err)
-		err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, serialNum, []byte{})
+		err = protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunScriptResponse send error")
 		}
 		return
 	}
-	err = message.SendMessageUnique(conn, message.TypeRunScriptResponse, serialNum, []byte(taskId))
+	err = protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte(taskId))
 	if err != nil {
 		logger.Comm.Println("TypeRunCommandResponse send error")
 	}

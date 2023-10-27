@@ -1,4 +1,4 @@
-module httpns
+module github.com/piaodazhu/Octopoda/httpns
 
 go 1.12
 

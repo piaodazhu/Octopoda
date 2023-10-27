@@ -1,15 +1,15 @@
 package model
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-
 	"io"
 	"os"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 var Busy int32
@@ -127,7 +127,7 @@ func Fix(name string) error {
 		}
 
 		payload, _ := config.Jsoner.Marshal(&aParams)
-		raw, err := Request(curNodeApps[i].NodeName, message.TypeAppLatestVersion, payload)
+		raw, err := Request(curNodeApps[i].NodeName, protocols.TypeAppLatestVersion, payload)
 		if err != nil {
 			return ErrorNodeAppError{}
 		}

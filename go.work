@@ -6,5 +6,6 @@ use (
 	./httpNameServer/test_cli
 	./octl
 	./pakma
+	./protocols
 	./tentacle
 )

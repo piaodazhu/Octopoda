@@ -1,14 +1,14 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
 	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func PakmaCmd(ctx *gin.Context) {
@@ -20,7 +20,7 @@ func PakmaCmd(ctx *gin.Context) {
 
 	targetNodes := ctx.PostForm("targetNodes")
 
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -61,7 +61,7 @@ func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *string
 	defer wg.Done()
 	*result = "UnknownError"
 
-	raw, err := model.Request(name, message.TypePakmaCommand, payload)
+	raw, err := model.Request(name, protocols.TypePakmaCommand, payload)
 	if err != nil {
 		logger.Comm.Println("Request", err)
 		*result = "Request error"

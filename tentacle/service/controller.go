@@ -2,8 +2,9 @@ package service
 
 import (
 	"net"
-	"tentacle/logger"
-	"tentacle/message"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func InitService() {
@@ -11,66 +12,66 @@ func InitService() {
 }
 
 func HandleMessage(conn net.Conn) error {
-	mtype, serialNum, raw, err := message.RecvMessageUnique(conn)
+	mtype, serialNum, raw, err := protocols.RecvMessageUnique(conn)
 	if err != nil {
 		logger.Comm.Println(err)
 		return err
 	}
 
 	go func() {
-		if mtype != message.TypeAppLatestVersion {
-			logger.Comm.Print(">> Receive Command: ", message.MsgTypeString[mtype])
+		if mtype != protocols.TypeAppLatestVersion {
+			logger.Comm.Print(">> Receive Command: ", protocols.MsgTypeString[mtype])
 		}
 
 		// If connect is broken in following process, then when we entering
-		// this function next time, message.RecvMessageUnique(conn) will return error.
+		// this function next time, protocols.RecvMessageUnique(conn) will return error.
 		switch mtype {
-		case message.TypeNodeStatus:
+		case protocols.TypeNodeStatus:
 			NodeStatus(conn, serialNum, raw)
-		case message.TypeFilePush:
+		case protocols.TypeFilePush:
 			FilePush(conn, serialNum, raw)
-		case message.TypeFilePull:
+		case protocols.TypeFilePull:
 			FilePull(conn, serialNum, raw)
-		case message.TypeFileTree:
+		case protocols.TypeFileTree:
 			FileTree(conn, serialNum, raw)
 
-		case message.TypeNodeLog:
+		case protocols.TypeNodeLog:
 			NodeLog(conn, serialNum, raw)
-		case message.TypeRunCommand:
+		case protocols.TypeRunCommand:
 			RunCmd(conn, serialNum, raw)
-		case message.TypeRunScript:
+		case protocols.TypeRunScript:
 			RunScript(conn, serialNum, raw)
 
-		case message.TypeAppCreate:
+		case protocols.TypeAppCreate:
 			AppCreate(conn, serialNum, raw)
-		case message.TypeAppDelete:
+		case protocols.TypeAppDelete:
 			AppDelete(conn, serialNum, raw)
-		case message.TypeAppDeploy:
+		case protocols.TypeAppDeploy:
 			AppDeploy(conn, serialNum, raw)
-		case message.TypeAppVersion:
+		case protocols.TypeAppVersion:
 			AppVersions(conn, serialNum, raw)
-		case message.TypeAppsInfo:
+		case protocols.TypeAppsInfo:
 			AppsInfo(conn, serialNum, raw)
-		case message.TypeAppReset:
+		case protocols.TypeAppReset:
 			AppReset(conn, serialNum, raw)
-		case message.TypeAppLatestVersion:
+		case protocols.TypeAppLatestVersion:
 			AppLatestVersion(conn, serialNum, raw)
-		case message.TypePakmaCommand:
+		case protocols.TypePakmaCommand:
 			PakmaCommand(conn, serialNum, raw)
-		case message.TypeSshRegister:
+		case protocols.TypeSshRegister:
 			SshRegister(conn, serialNum, raw)
-		case message.TypeSshUnregister:
+		case protocols.TypeSshUnregister:
 			SshUnregister(conn, serialNum, raw)
-		case message.TypeWaitTask:
+		case protocols.TypeWaitTask:
 			TaskWaitResult(conn, serialNum, raw)
-		case message.TypeCancelTask:
+		case protocols.TypeCancelTask:
 			TaskCancel(conn, serialNum, raw)
-		case message.TypeQueryTask:
+		case protocols.TypeQueryTask:
 			TaskQueryState(conn, serialNum, raw)
-		case message.TypeListTasks:
+		case protocols.TypeListTasks:
 			TaskQueryState(conn, serialNum, raw)
 		default:
-			message.SendMessageUnique(conn, message.TypeUndefined, serialNum, []byte{})
+			protocols.SendMessageUnique(conn, protocols.TypeUndefined, serialNum, []byte{})
 			logger.Comm.Println("unsupported protocol")
 		}
 	}()

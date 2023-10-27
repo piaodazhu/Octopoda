@@ -4,19 +4,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"strconv"
 )
 
-// type LogParams struct {
-// 	MaxLines      int
-// 	MaxDaysBefore int
-// 	Logs          []string
-// }
-
-func NodeLog(name string, params []string) {
+func NodeLog(name string, params []string) (string, error) {
 	maxlines, maxdaysbefore := 30, 0
 	for i := range params {
 		if len(params[i]) < 3 {
@@ -26,13 +20,13 @@ func NodeLog(name string, params []string) {
 		case "-l":
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
-				return
+				return "invalid args", err
 			}
 			maxlines = x
 		case "-d":
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
-				return
+				return "invalid args", err
 			}
 			maxdaysbefore = x
 		default:
@@ -41,18 +35,20 @@ func NodeLog(name string, params []string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeLog,
+		config.API_NodeLog,
 		name,
 		maxlines,
 		maxdaysbefore,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	// fmt.Print(string(raw))
 	output.PrintJSON(raw)
+	return string(raw), nil
 }

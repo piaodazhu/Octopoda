@@ -7,30 +7,18 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"os"
 	"os/exec"
+	"github.com/piaodazhu/Octopoda/protocols"
 	"runtime"
 
 	"github.com/piaodazhu/proxylite"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
 )
-
-type SSHInfo struct {
-	Ip       string
-	Port     uint32
-	Username string
-	Password string
-}
-
-type proxyMsg struct {
-	Code int
-	Msg  string
-	Data string
-}
 
 func SetSSH(nodename string) {
 	// set username and password
@@ -60,7 +48,7 @@ func SetSSH(nodename string) {
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 	)
 	values := url.Values{}
 	values.Add("name", nodename)
@@ -74,7 +62,7 @@ func SetSSH(nodename string) {
 	raw, _ := io.ReadAll(res.Body)
 
 	// get mapped ip:port from response
-	pmsg := proxyMsg{}
+	pmsg := protocols.ProxyMsg{}
 	if err := json.Unmarshal(raw, &pmsg); err != nil {
 		output.PrintFatalln("Unmarshal proxyMsg: ", err)
 	}
@@ -89,7 +77,7 @@ func delSSH(nodename string) []byte {
 	URL := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 		nodename,
 	)
 
@@ -131,7 +119,7 @@ func SSH(nodename string) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Ssh,
+		config.API_Ssh,
 		nodename,
 	)
 	res, err := http.Get(url)
@@ -143,7 +131,7 @@ func SSH(nodename string) {
 		output.PrintFatalln("ssh info of this node not found:", nodename)
 	}
 	raw, _ := io.ReadAll(res.Body)
-	info := SSHInfo{}
+	info := protocols.SSHInfo{}
 	if err = json.Unmarshal(raw, &info); err != nil {
 		output.PrintFatalln("Unmarshal:", err)
 	}

@@ -1,8 +1,10 @@
 package model
 
 import (
-	"brain/message"
+	"fmt"
 	"net"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"strings"
 	"sync"
 )
 
@@ -69,7 +71,7 @@ func (c *ConnInfo) StartReceive() {
 			if conn == nil {
 				return
 			}
-			mtype, serialNum, raw, err := message.RecvMessageUnique(conn)
+			mtype, serialNum, raw, err := protocols.RecvMessageUnique(conn)
 			if err != nil {
 				// TODO error reason
 				// fmt.Println("[DEBUG] receive error: ", err)
@@ -110,20 +112,38 @@ func (c *ConnInfo) NotifyMsg(msg ConnMsg) bool {
 	return false
 }
 
-func (c *ConnInfo) WaitMsg(serialNum uint32) (*ConnMsg, bool) {
+func (c *ConnInfo) WaitMsg(serialNum uint32) (msg *ConnMsg, ok bool) {
+	debug_waitmsg := strings.Builder{}
+	defer func() {
+		debug_waitmsg.WriteByte('\n')
+		if !ok {
+			fmt.Println(debug_waitmsg.String())
+		}
+	} ()
+
+	debug_waitmsg.WriteString(fmt.Sprintf("serialNum %d--> ", serialNum))
 	if value, exist := c.Messages.Load(serialNum); exist {
 		mchan := value.(chan *ConnMsg)
 		// fmt.Println("[DEBUG] waiting...: ", serialNum)
-		msg := <-mchan
+		debug_waitmsg.WriteString("Waiting --> ")
+		msg = <-mchan
 		if msg == nil {
 			// fmt.Println("[DEBUG] wait canceled: ", serialNum)
-			return nil, false
+			debug_waitmsg.WriteString("msg is nil --> ")
+			ok = false
+			return
 		}
 		// fmt.Println("[DEBUG] wait done: ", msg)
-		return msg, true
+		debug_waitmsg.WriteString("msg get! --> ")
+		ok = true
+		return
 	}
 	// fmt.Println("[DEBUG] wait failed: ", serialNum)
-	return nil, false
+	debug_waitmsg.WriteString("serailNum not found --> ")
+
+	msg = nil 
+	ok = false
+	return
 }
 
 // It may be attacked by flooding...

@@ -6,77 +6,78 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-func GroupGetAll() {
+func GroupGetAll() (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Groups,
+		config.API_Groups,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func GroupGet(name string) {
+func GroupGet(name string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 		name,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func GroupDel(name string) {
+func GroupDel(name string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 		name,
 	)
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
-		output.PrintFatalln(err)
+		emsg := "http delete error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil || res.StatusCode != 200 {
 		output.PrintFatalln("DELETE, status=", res.StatusCode)
 	}
 	defer res.Body.Close()
+	return "OK", nil
 }
 
-type GroupInfo struct {
-	Name  string   `json:"name" binding:"required"`
-	Nodes []string `json:"nodes" binding:"required"`
-	// NoCheck can be in request
-	NoCheck bool `json:"nocheck" binding:"omitempty"`
-
-	// Size and Unhealthy will be in response
-	Size      int      `json:"size" binding:"omitempty"`
-	Unhealthy []string `json:"unhealthy" binding:"omitempty"`
-}
-
-func GroupSet(name string, nocheck bool, names []string) {
+func GroupSet(name string, nocheck bool, names []string) (string, error) {
 	nodes, err := NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
-	ginfo := GroupInfo{
+	ginfo := protocols.GroupInfo{
 		Name:    name,
 		Nodes:   nodes,
 		NoCheck: nocheck,
@@ -86,11 +87,13 @@ func GroupSet(name string, nocheck bool, names []string) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.Group,
+		config.API_Group,
 	)
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		output.PrintFatalln("POST")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -99,4 +102,5 @@ func GroupSet(name string, nocheck bool, names []string) {
 	} else {
 		output.PrintFatalln(string(raw))
 	}
+	return string(raw), nil
 }

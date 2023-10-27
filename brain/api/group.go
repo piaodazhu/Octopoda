@@ -1,11 +1,11 @@
 package api
 
 import (
-	"brain/model"
-	"brain/rdb"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
 )
 
 type GroupInfo struct {

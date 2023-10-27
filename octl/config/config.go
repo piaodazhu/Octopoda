@@ -1,17 +1,19 @@
 package config
 
 import (
+	"errors"
+
 	"github.com/spf13/viper"
 )
 
 var GlobalConfig ConfigModel
 
-func InitConfig(conf string) {
+func InitConfig(conf string) error {
 	if conf != "" {
 		viper.SetConfigFile(conf)
 		err := viper.ReadInConfig()
 		if err != nil {
-			panic("cannot read config <" + conf + ">: " + err.Error())
+			return errors.New("cannot read config <" + conf + ">: " + err.Error())
 		}
 	} else {
 		viper.SetConfigName("octl")
@@ -20,13 +22,13 @@ func InitConfig(conf string) {
 		viper.AddConfigPath("./")
 		err := viper.ReadInConfig()
 		if err != nil {
-			panic("cannot read config because " + err.Error())
+			return errors.New("cannot read config because " + err.Error())
 		}
 	}
-	
+
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
-		panic("cannot unmarshal config because " + err.Error())
+		return errors.New("cannot unmarshal config because " + err.Error())
 	}
 
 	if GlobalConfig.JsonFast {
@@ -34,4 +36,5 @@ func InitConfig(conf string) {
 	} else {
 		setStdJsoner()
 	}
+	return nil
 }

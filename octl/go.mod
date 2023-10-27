@@ -1,4 +1,4 @@
-module octl
+module github.com/piaodazhu/Octopoda/octl
 
 go 1.18
 

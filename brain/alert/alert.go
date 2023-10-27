@@ -1,10 +1,10 @@
 package alert
 
 import (
-	"brain/config"
-	"brain/logger"
 	"crypto/tls"
 
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"gopkg.in/gomail.v2"
 )
 

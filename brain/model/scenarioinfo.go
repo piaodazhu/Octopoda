@@ -1,12 +1,13 @@
 package model
 
 import (
-	"brain/logger"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/logger"
 
 	"github.com/google/uuid"
 )

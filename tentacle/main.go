@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"tentacle/app"
-	"tentacle/buildinfo"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/nameclient"
-	"tentacle/network"
-	"tentacle/service"
+	"github.com/piaodazhu/Octopoda/tentacle/app"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
+	"github.com/piaodazhu/Octopoda/tentacle/network"
+	"github.com/piaodazhu/Octopoda/tentacle/service"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
 var (

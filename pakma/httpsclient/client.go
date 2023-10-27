@@ -7,7 +7,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"pakma/config"
+
+	"github.com/piaodazhu/Octopoda/pakma/config"
 )
 
 var nsAddr string
@@ -55,7 +56,7 @@ func initHttpsClient(caCert, cliCert, cliKey string) error {
 	}
 	HttpsClient = &http.Client{
 		Transport: tr,
-		Timeout: 0,
+		Timeout:   0,
 	}
 	return nil
 }

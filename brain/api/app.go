@@ -1,15 +1,14 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
-
 	"encoding/base64"
 	"io"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type AppBasic struct {
@@ -38,7 +37,7 @@ func AppPrepare(ctx *gin.Context) {
 	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	files, err := ctx.FormFile("files")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -106,7 +105,7 @@ func AppDeploy(ctx *gin.Context) {
 	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	file, err := ctx.FormFile("script")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -168,7 +167,7 @@ func AppDeploy(ctx *gin.Context) {
 
 func createApp(taskid string, name string, acParams *AppCreateParams) {
 	payload, _ := config.Jsoner.Marshal(acParams)
-	rmsg, err := runAndWait(taskid, name, payload, message.TypeAppCreate)
+	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCreate)
 	if err != nil {
 		return
 	}
@@ -184,7 +183,7 @@ func createApp(taskid string, name string, acParams *AppCreateParams) {
 
 func deployApp(taskid string, name string, adParams *AppDeployParams) {
 	payload, _ := config.Jsoner.Marshal(adParams)
-	rmsg, err := runAndWait(taskid, name, payload, message.TypeAppDeploy)
+	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppDeploy)
 	if err != nil {
 		return
 	}

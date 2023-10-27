@@ -5,12 +5,13 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"httpns/config"
-	"httpns/logger"
 	"log"
 	"net"
 	"net/http"
 	"os"
+
+	"github.com/piaodazhu/Octopoda/httpns/config"
+	"github.com/piaodazhu/Octopoda/httpns/logger"
 
 	"github.com/gin-gonic/gin"
 )

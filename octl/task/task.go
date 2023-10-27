@@ -4,28 +4,22 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"time"
 
 	"github.com/briandowns/spinner"
 )
 
-type ErrWaitTask struct {
-	status  int
-	message string
-}
-
-func (e ErrWaitTask) Error() string { return fmt.Sprintf("[%d] %s\n", e.status, e.message) }
 func WaitTask(prefix string, taskid string) ([]byte, error) {
 	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.TaskState,
+		config.API_TaskState,
 		taskid,
 	)
-	// fmt.Fprintf(os.Stdout, "PROCESSING  ")
-	if prefix != "" {
+	if output.IsSpinnerEnabled() {
 		s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
 		s.Prefix = prefix
 		s.Start()
@@ -47,17 +41,16 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 
 		if res.StatusCode == 200 {
 			if prefix != "" {
-				fmt.Println("  [DONE]")
+				output.PrintInfoln("  [DONE]")
 			}
 			return msg, nil
 		} else if res.StatusCode == 202 {
 			time.Sleep(time.Second * 1)
 		} else {
 			if prefix != "" {
-				fmt.Println("  [FAILED]")
+				output.PrintInfoln("  [FAILED]")
 			}
-
-			return nil, ErrWaitTask{res.StatusCode, string(msg)}
+			return nil, fmt.Errorf("wait task error. http statuscode=%d, response=%s", res.StatusCode, string(msg))
 		}
 	}
 }

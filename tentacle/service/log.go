@@ -5,10 +5,11 @@ import (
 	"net"
 	"os"
 	"strings"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/message"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 type LogParams struct {
@@ -31,7 +32,7 @@ func NodeLog(conn net.Conn, serialNum uint32, raw []byte) {
 
 	response, _ := config.Jsoner.Marshal(&lparams)
 
-	err := message.SendMessageUnique(conn, message.TypeNodeLogResponse, serialNum, response)
+	err := protocols.SendMessageUnique(conn, protocols.TypeNodeLogResponse, serialNum, response)
 	if err != nil {
 		logger.Comm.Print("NodeLog")
 	}

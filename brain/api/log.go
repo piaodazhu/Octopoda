@@ -1,9 +1,6 @@
 package api
 
 import (
-	"brain/config"
-	"brain/message"
-	"brain/model"
 	"bufio"
 	"os"
 	"strconv"
@@ -11,6 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type LogParams struct {
@@ -106,7 +106,7 @@ func readLogs(params *LogParams) {
 
 func readLogsRemote(name string, params *LogParams) bool {
 	query, _ := config.Jsoner.Marshal(params)
-	answer, err := model.Request(name, message.TypeNodeLog, query)
+	answer, err := model.Request(name, protocols.TypeNodeLog, query)
 	if err != nil {
 		return false
 	}

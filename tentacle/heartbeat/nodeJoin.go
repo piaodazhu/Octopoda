@@ -2,24 +2,14 @@ package heartbeat
 
 import (
 	"encoding/hex"
-	"tentacle/buildinfo"
-	"tentacle/config"
-	"tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
-type NodeJoinInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Addr    string `json:"addr"`
-}
-
-type NodeJoinResponse struct {
-	Ts     int64  `json:"ts"`
-	NewNum uint32 `json:"new_num"`
-}
-
 func MakeNodeJoin(addr string) []byte {
-	nodeJoinInfo := NodeJoinInfo{
+	nodeJoinInfo := protocols.NodeJoinInfo{
 		Name:    config.GlobalConfig.Name,
 		Version: buildinfo.String(),
 		Addr:    addr,
@@ -36,20 +26,20 @@ func MakeNodeJoin(addr string) []byte {
 	return encBuffer
 }
 
-func ParseNodeJoinResponse(raw []byte) (NodeJoinResponse, error) {
+func ParseNodeJoinResponse(raw []byte) (protocols.NodeJoinResponse, error) {
 	decBuffer := make([]byte, hex.DecodedLen(len(raw)))
 	_, err := hex.Decode(decBuffer, raw)
 	if err != nil {
 		logger.Exceptions.Print(err)
-		return NodeJoinResponse{}, err
+		return protocols.NodeJoinResponse{}, err
 	}
 
 	buffer := decBuffer
-	response := NodeJoinResponse{}
+	response := protocols.NodeJoinResponse{}
 	err = config.Jsoner.Unmarshal(buffer, &response)
 	if err != nil {
 		logger.Exceptions.Print(err)
-		return NodeJoinResponse{}, err
+		return protocols.NodeJoinResponse{}, err
 	}
 	return response, nil
 }

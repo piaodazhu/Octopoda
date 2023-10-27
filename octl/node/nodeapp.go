@@ -6,52 +6,58 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 )
 
-func NodeAppsInfo(node string) {
+func NodeAppsInfo(node string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeApps,
+		config.API_NodeApps,
 		node,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func NodeAppInfo(node, app, scenario string) {
+func NodeAppInfo(node, app, scenario string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeAppVersion,
+		config.API_NodeAppVersion,
 		node,
 		app,
 		scenario,
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func NodeAppReset(node, app, scenario, version, message string) {
+func NodeAppReset(node, app, scenario, version, message string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.NodeAppVersion,
+		config.API_NodeAppVersion,
 	)
 
 	body := &bytes.Buffer{}
@@ -66,10 +72,13 @@ func NodeAppReset(node, app, scenario, version, message string) {
 
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
-		output.PrintFatalln("Post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }

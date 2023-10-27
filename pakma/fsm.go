@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"pakma/config"
-	"pakma/httpsclient"
 	"sync"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/pakma/config"
+	"github.com/piaodazhu/Octopoda/pakma/httpsclient"
 )
 
 var PakmaError error

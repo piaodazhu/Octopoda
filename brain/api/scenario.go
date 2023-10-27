@@ -1,19 +1,19 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func ScenarioCreate(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	description := ctx.PostForm("description")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	if len(name) == 0 || len(description) == 0 {
@@ -32,7 +32,7 @@ func ScenarioCreate(ctx *gin.Context) {
 func ScenarioUpdate(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	msg := ctx.PostForm("message")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	if len(name) == 0 || len(msg) == 0 {
@@ -58,7 +58,7 @@ type AppDeleteParams struct {
 func ScenarioDelete(ctx *gin.Context) {
 	// This is not so simple. Should delete all apps of a scenario in this function
 	name := ctx.Query("name")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	if len(name) == 0 {
@@ -107,13 +107,13 @@ func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *string) 
 	defer wg.Done()
 	*result = "UnknownError"
 
-	raw, err := model.Request(name, message.TypeAppDelete, payload)
+	raw, err := model.Request(name, protocols.TypeAppDelete, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppDeleteResponse", err)
 		*result = "TypeAppDeleteResponse"
 		return
 	}
-	var rmsg message.Result
+	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("Unmarshal", err)
@@ -131,7 +131,7 @@ func ScenarioInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
 	var scen *model.ScenarioInfo
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	if name, ok = ctx.GetQuery("name"); !ok {
@@ -150,7 +150,7 @@ func ScenarioInfo(ctx *gin.Context) {
 func ScenariosInfo(ctx *gin.Context) {
 	var scens []model.ScenarioDigest
 	var ok bool
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -166,7 +166,7 @@ func ScenarioVersion(ctx *gin.Context) {
 	var versions []model.BasicVersionModel
 	var name string
 	var ok bool
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -189,7 +189,7 @@ func ScenarioReset(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	prefix := ctx.PostForm("version")
 	msg := ctx.PostForm("message")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -273,13 +273,13 @@ func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	raw, err := model.Request(name, message.TypeAppReset, payload)
+	raw, err := model.Request(name, protocols.TypeAppReset, payload)
 	if err != nil {
 		logger.Comm.Println("TypeAppResetResponse", err)
 		*result = "TypeAppResetResponse"
 		return
 	}
-	var rmsg message.Result
+	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("Unmarshal", err)
@@ -292,7 +292,7 @@ func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 func ScenarioFix(ctx *gin.Context) {
 	var name string
 	var ok bool
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 

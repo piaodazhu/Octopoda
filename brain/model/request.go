@@ -1,13 +1,14 @@
 package model
 
 import (
-	"brain/alert"
-	"brain/message"
-	"brain/snp"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/alert"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
 func Request(name string, mtype int, payload []byte) ([]byte, error) {
@@ -30,7 +31,7 @@ func Request(name string, mtype int, payload []byte) ([]byte, error) {
 retry:
 	connInfo, rcode = GetNodeMsgConn(name)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
+		protocols.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", GetNodeMsgConn(", name, "): rcode=", rcode))
 	if rcode == GetConnNoNode {
 		return nil, fmt.Errorf("node %s not exists", name)
@@ -47,11 +48,11 @@ retry:
 		serialNum = snp.GenSerial()
 	}
 
-	err = message.SendMessageUnique(connInfo.Conn, mtype, serialNum, payload)
+	err = protocols.SendMessageUnique(connInfo.Conn, mtype, serialNum, payload)
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "), name, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
+		protocols.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", SendMessageUnique(conn is nil?", connInfo.Conn == nil, ", ",
-		message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]), "): err=", err))
+		protocols.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]), "): err=", err))
 	if err != nil {
 		ResetNodeMsgConn(name)
 		if retryCnt == 0 {
@@ -74,11 +75,11 @@ retry:
 
 	rtype, resbuf = connMsg.Mtype, connMsg.Raw
 	trace = append(trace, fmt.Sprint(time.Now().Format("01-02 15:04:05 "),
-		name, ", ", message.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
+		name, ", ", protocols.MsgTypeString[mtype], ", ", string(payload[:min(len(payload), 100)]),
 		"retry=", 3-retryCnt, ", RecvMessageUnique(conn is nil?", connInfo.Conn == nil, "): ",
-		message.MsgTypeString[rtype], ", ", string(resbuf), ", ", err))
+		protocols.MsgTypeString[rtype], ", ", string(resbuf), ", ", err))
 	if rtype != mtype+1 {
-		return nil, fmt.Errorf("node %s send malformed response. (%s->%s)", name, message.MsgTypeString[mtype], message.MsgTypeString[rtype])
+		return nil, fmt.Errorf("node %s send malformed response. (%s->%s)", name, protocols.MsgTypeString[mtype], protocols.MsgTypeString[rtype])
 	}
 	return resbuf, nil
 }

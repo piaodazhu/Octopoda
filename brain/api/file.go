@@ -1,11 +1,6 @@
 package api
 
 import (
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
-	"brain/rdb"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -17,6 +12,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mholt/archiver/v3"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type FileParams struct {
@@ -50,7 +50,7 @@ func pathFixing(path string, base string) string {
 func FileUpload(ctx *gin.Context) {
 	tarfile, _ := ctx.FormFile("tarfile")
 	targetPath := ctx.PostForm("targetPath")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -156,7 +156,7 @@ type BasicNodeResults struct {
 func FileSpread(ctx *gin.Context) {
 	var fsParams FileSpreadParams
 	err := ctx.ShouldBind(&fsParams)
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -276,13 +276,13 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 	defer wg.Done()
 	*result = "UnknownError"
 
-	raw, err := model.Request(name, message.TypeFilePush, payload)
+	raw, err := model.Request(name, protocols.TypeFilePush, payload)
 	if err != nil {
 		logger.Comm.Println("TypeFilePushResponse", err)
 		*result = "TypeFilePushResponse"
 		return
 	}
-	var rmsg message.Result
+	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("UnmarshalRmsg", err)
@@ -298,7 +298,7 @@ func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
 }
 
 func FileTree(ctx *gin.Context) {
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	name, ok := ctx.GetQuery("name")
@@ -358,7 +358,7 @@ func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
 		PathType:   pathtype,
 		TargetPath: subdir,
 	})
-	raw, err := model.Request(name, message.TypeFileTree, params)
+	raw, err := model.Request(name, protocols.TypeFileTree, params)
 	if err != nil {
 		logger.Comm.Print("FileTree")
 		return nil, ErrNetworkError{node: name}
@@ -421,7 +421,7 @@ func FileDistrib(ctx *gin.Context) {
 	packName := packfiles.Filename
 	targetPath := ctx.PostForm("targetPath")
 	targetNodes := ctx.PostForm("targetNodes")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
@@ -507,7 +507,7 @@ func b64Encode(raw []byte) string {
 }
 
 func FilePull(ctx *gin.Context) {
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	name, ok := ctx.GetQuery("name")
@@ -576,7 +576,7 @@ func FilePull(ctx *gin.Context) {
 			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
-		raw, err := model.Request(name, message.TypeFilePull, params)
+		raw, err := model.Request(name, protocols.TypeFilePull, params)
 		if err != nil {
 			logger.Comm.Print("TypeFilePullResponse")
 			rmsg.Rmsg = ErrNetworkError{node: name}.Error()

@@ -1,13 +1,15 @@
 package main
 
 import (
-	"brain/api"
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
 	"fmt"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/api"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
@@ -79,7 +81,6 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/pakma", api.PakmaCmd)
 
-		
 		group.POST("/group", api.GroupSetGroup)
 		group.GET("/group", api.GroupGetGroup)
 		group.DELETE("/group", api.GroupDeleteGroup)
@@ -113,7 +114,7 @@ func OctopodaLogger() gin.HandlerFunc {
 func BusyBlocker() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !model.CheckReady() {
-			c.AbortWithStatusJSON(503, message.Result{
+			c.AbortWithStatusJSON(503, protocols.Result{
 				Rcode: -1,
 				Rmsg:  "Server Busy",
 			})

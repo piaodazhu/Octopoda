@@ -2,13 +2,13 @@ package app
 
 import (
 	"os"
-	"tentacle/config"
-	"tentacle/logger"
 	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 // must support rollback
@@ -31,13 +31,13 @@ func GitReset(app string, hash string, mode string) error {
 
 	err = wt.Reset(&git.ResetOptions{
 		Commit: plumbing.NewHash(hash),
-		Mode: git.HardReset,
+		Mode:   git.HardReset,
 	})
 	if err != nil {
 		// failed, rollback
 		wt.Reset(&git.ResetOptions{
 			Commit: hashbackup,
-			Mode: git.HardReset,
+			Mode:   git.HardReset,
 		})
 		return err
 	}
@@ -115,7 +115,7 @@ func gitLogs(app string, N int) ([]Version, error) {
 		logger.Exceptions.Print("git.PlainOpen:", err.Error())
 		return nil, err
 	}
-	
+
 	iter, err := repo.Log(&git.LogOptions{
 		All: true,
 	})
@@ -124,7 +124,7 @@ func gitLogs(app string, N int) ([]Version, error) {
 		return nil, err
 	}
 	defer iter.Close()
-	
+
 	v := []Version{}
 	for i := 0; i < N; i++ {
 		cmt, err := iter.Next()
@@ -134,12 +134,12 @@ func gitLogs(app string, N int) ([]Version, error) {
 		v = append(v, Version{
 			Time: cmt.Committer.When.Unix(),
 			Hash: cmt.Hash.String(),
-			Msg: cmt.Message,
+			Msg:  cmt.Message,
 		})
 	}
-	
+
 	// reverse logs: commit time asc
-	i, j := 0, len(v) - 1
+	i, j := 0, len(v)-1
 	for i < j {
 		v[i], v[j] = v[j], v[i]
 		i++

@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
-	"octl/config"
-	"octl/nameclient"
-	"octl/output"
-	"octl/subcmd"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/subcmd"
 	"os"
 )
 
+// Build Information
 var (
 	BuildVersion string = "dev"
 	BuildTime    string
@@ -17,12 +18,15 @@ var (
 )
 
 func main() {
+	output.EnableColor()
+	output.EnableSpinner()
+	
 	subcmd.InitUsage()
 	args := os.Args
 	var conf string
 	var askver bool
 	var usage bool
-	flag.BoolVar(&askver, "version", false, "tell version number")
+	flag.BoolVar(&askver, "version", false, "tell version info")
 	flag.StringVar(&conf, "c", "", "specify a configuration file")
 	flag.BoolVar(&usage, "usage", false, "print subcommand usage")
 	flag.Parse()
@@ -44,15 +48,14 @@ func main() {
 		args = args[2:]
 	}
 
-	config.InitConfig(conf)
-	nameclient.InitClient()
-	if nameclient.BrainAddr == "" &&
-		args[1] != "ssh" &&
-		args[1] != "setssh" &&
-		args[1] != "delssh" &&
-		args[1] != "help" {
-		output.PrintFatalln("could not resolve brain address.")
+	if err := config.InitConfig(conf); err != nil {
+		panic(err)
 	}
+	
+	if err := nameclient.InitClient(); err != nil {
+		panic(err)
+	}
+
 	switch args[1] {
 	case "create":
 		subcmd.Create(args[2:])

@@ -1,30 +1,31 @@
 package network
 
 import (
-	"brain/alert"
-	"brain/config"
-	"brain/heartbeat"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
-	"brain/snp"
 	"context"
 	"fmt"
 	"net"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/brain/alert"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/heartbeat"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
 func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum uint32) {
 	var mtype int
 	var msg []byte
 	var health bool
-	var hbinfo heartbeat.HeartBeatRequest
+	var hbinfo protocols.HeartBeatRequest
 	var err error
 
 	for {
 		health = true
-		mtype, _, msg, err = message.RecvMessageUnique(conn)
-		if err != nil || mtype != message.TypeHeartbeat {
+		mtype, _, msg, err = protocols.RecvMessageUnique(conn)
+		if err != nil || mtype != protocols.TypeHeartbeat {
 			logger.Network.Print(err) // TODO who?
 			health = false
 			goto reportstate
@@ -38,7 +39,7 @@ func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum u
 		}
 
 		randNum = snp.GenSerial()
-		err = message.SendMessageUnique(conn, message.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
+		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
 		if err != nil {
 			logger.Network.Print(err)
 			health = false

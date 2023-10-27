@@ -9,7 +9,7 @@ type BuildInfo struct {
 	CommitID     string
 }
 
-var binfo BuildInfo 
+var binfo BuildInfo
 
 func SetBuildInfo(buildinfo BuildInfo) {
 	binfo = buildinfo

@@ -1,14 +1,6 @@
 package api
 
 import (
-	"brain/buildinfo"
-	"brain/config"
-	"brain/logger"
-	"brain/message"
-	"brain/model"
-	"brain/network"
-	"brain/rdb"
-	"brain/sys"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -16,6 +8,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
+	"github.com/piaodazhu/Octopoda/brain/sys"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
 type NodeInfoText struct {
@@ -78,7 +78,7 @@ func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
 		res.Total++
 		if node.State == 0 {
 			res.Active++
-		} else if node.State == 2 {
+		} else if node.State == 2 || node.ConnState != "On" {
 			res.Offline++
 		}
 		res.NodeInfoList[i] = nodeInfoToText(node)
@@ -184,7 +184,7 @@ func NodeStatus(ctx *gin.Context) {
 		ctx.JSON(404, struct{}{})
 		return
 	}
-	raw, err := model.Request(name, message.TypeNodeStatus, []byte{})
+	raw, err := model.Request(name, protocols.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeStatus", err)
 		ctx.JSON(404, struct{}{})
@@ -269,7 +269,7 @@ func getNodeStatus(name string, channel chan<- model.Status, wg *sync.WaitGroup)
 	var err error
 	var raw []byte
 
-	raw, err = model.Request(name, message.TypeNodeStatus, []byte{})
+	raw, err = model.Request(name, protocols.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("getNodeStatus", err)
 		goto sendres

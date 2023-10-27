@@ -2,10 +2,11 @@ package service
 
 import (
 	"net"
-	"tentacle/config"
-	"tentacle/logger"
-	"tentacle/message"
-	"tentacle/task"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
 
 // Must return a task struct
@@ -16,13 +17,13 @@ func TaskWaitResult(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 
 	if result == nil {
-		result = &message.Result{
+		result = &protocols.Result{
 			Rcode: -2,
-			Rmsg: "Canceled",
+			Rmsg:  "Canceled",
 		}
 	}
 	serialized, _ := config.Jsoner.Marshal(result)
-	err := message.SendMessageUnique(conn, message.TypeWaitTaskResponse, serialNum, serialized)
+	err := protocols.SendMessageUnique(conn, protocols.TypeWaitTaskResponse, serialNum, serialized)
 	if err != nil {
 		logger.Comm.Println("TaskWaitState service error")
 	}
@@ -34,7 +35,7 @@ func TaskQueryState(conn net.Conn, serialNum uint32, raw []byte) {
 		logger.Exceptions.Print("TaskQueryState input invalid taskId: ", string(raw))
 	}
 	serialized, _ := config.Jsoner.Marshal(&task)
-	err := message.SendMessageUnique(conn, message.TypeQueryTaskResponse, serialNum, serialized)
+	err := protocols.SendMessageUnique(conn, protocols.TypeQueryTaskResponse, serialNum, serialized)
 	if err != nil {
 		logger.Comm.Println("TaskQueryState service error")
 	}
@@ -43,7 +44,7 @@ func TaskQueryState(conn net.Conn, serialNum uint32, raw []byte) {
 func TaskListAll(conn net.Conn, serialNum uint32, raw []byte) {
 	tasks := task.TaskManager.ListTasks()
 	serialized, _ := config.Jsoner.Marshal(&tasks)
-	err := message.SendMessageUnique(conn, message.TypeListTasksResponse, serialNum, serialized)
+	err := protocols.SendMessageUnique(conn, protocols.TypeListTasksResponse, serialNum, serialized)
 	if err != nil {
 		logger.Comm.Println("TaskListAll service error")
 	}
@@ -52,7 +53,7 @@ func TaskListAll(conn net.Conn, serialNum uint32, raw []byte) {
 func TaskCancel(conn net.Conn, serialNum uint32, raw []byte) {
 	tasks := task.TaskManager.CancelTask(string(raw))
 	serialized, _ := config.Jsoner.Marshal(&tasks)
-	err := message.SendMessageUnique(conn, message.TypeCancelTaskResponse, serialNum, serialized)
+	err := protocols.SendMessageUnique(conn, protocols.TypeCancelTaskResponse, serialNum, serialized)
 	if err != nil {
 		logger.Comm.Println("TaskCancel service error")
 	}

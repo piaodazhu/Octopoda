@@ -1,15 +1,14 @@
 package api
 
 import (
-	"brain/message"
-	"brain/model"
-
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 func TaskState(ctx *gin.Context) {
 	taskid := ctx.Query("taskid")
-	rmsg := message.Result{
+	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 	rcode := 200
@@ -32,5 +31,4 @@ func TaskState(ctx *gin.Context) {
 		results = append(results, rlist[i].(*BasicNodeResults))
 	}
 	ctx.JSON(rcode, results)
-	return
 }

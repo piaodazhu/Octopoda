@@ -5,13 +5,14 @@ import (
 	"net"
 	"os/exec"
 	"runtime"
-	"tentacle/config"
-	"tentacle/heartbeat"
-	"tentacle/logger"
-	"tentacle/message"
-	"tentacle/nameclient"
-	"tentacle/snp"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/snp"
+	"github.com/piaodazhu/Octopoda/tentacle/config"
+	"github.com/piaodazhu/Octopoda/tentacle/heartbeat"
+	"github.com/piaodazhu/Octopoda/tentacle/logger"
+	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
 )
 
 func KeepAlive() {
@@ -30,14 +31,14 @@ func KeepAlive() {
 				retry = 0
 				ipstr := conn.LocalAddr().(*net.TCPAddr).IP.String()
 				fmt.Println("Make NodeJoin, LocalAddr is ", ipstr)
-				err := message.SendMessageUnique(conn, message.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
+				err := protocols.SendMessageUnique(conn, protocols.TypeNodeJoin, snp.GenSerial(), heartbeat.MakeNodeJoin(ipstr))
 				if err != nil {
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}
 
-				_, _, raw, err := message.RecvMessageUnique(conn)
+				_, _, raw, err := protocols.RecvMessageUnique(conn)
 				if err != nil {
 					conn.Close()
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
@@ -86,13 +87,13 @@ func LoopHeartbeat(conn net.Conn, randNum uint32) error {
 	joinwg.Done()
 	defer joinwg.Add(1)
 	for {
-		err := message.SendMessageUnique(conn, message.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat(randNum))
+		err := protocols.SendMessageUnique(conn, protocols.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat(randNum))
 		if err != nil {
 			return err
 		}
 
-		mtype, _, raw, err := message.RecvMessageUnique(conn)
-		if err != nil || mtype != message.TypeHeartbeatResponse {
+		mtype, _, raw, err := protocols.RecvMessageUnique(conn)
+		if err != nil || mtype != protocols.TypeHeartbeatResponse {
 			return err
 		}
 		response, err := heartbeat.ParseHeartbeatResponse(raw)

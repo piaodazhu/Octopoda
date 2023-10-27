@@ -1,22 +1,13 @@
 package heartbeat
 
 import (
-	"brain/config"
-	"brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-type HeartBeatRequest struct {
-	Msg string `json:"msg"` // reserved for future usage
-	Num uint32 `json:"num"`
-}
-
-type HeartBeatResponse struct {
-	Msg    string `json:"msg"` // reserved for future usage
-	NewNum uint32 `json:"new_num"`
-}
-
 func MakeHeartbeat(num uint32) []byte {
-	hbInfo := HeartBeatRequest{
+	hbInfo := protocols.HeartBeatRequest{
 		Msg: "ping",
 		Num: num,
 	}
@@ -29,8 +20,8 @@ func MakeHeartbeat(num uint32) []byte {
 	return serialized_info
 }
 
-func ParseHeartbeat(raw []byte) (HeartBeatRequest, error) {
-	info := HeartBeatRequest{}
+func ParseHeartbeat(raw []byte) (protocols.HeartBeatRequest, error) {
+	info := protocols.HeartBeatRequest{}
 	err := config.Jsoner.Unmarshal(raw, &info)
 	if err != nil {
 		logger.Network.Print(err)
@@ -40,8 +31,8 @@ func ParseHeartbeat(raw []byte) (HeartBeatRequest, error) {
 }
 
 func MakeHeartbeatResponse(newNum uint32) []byte {
-	hbInfo := HeartBeatResponse{
-		Msg: "pong",
+	hbInfo := protocols.HeartBeatResponse{
+		Msg:    "pong",
 		NewNum: newNum,
 	}
 
@@ -53,8 +44,8 @@ func MakeHeartbeatResponse(newNum uint32) []byte {
 	return serialized_info
 }
 
-func ParseHeartbeatResponse(raw []byte) (HeartBeatResponse, error) {
-	rsp := HeartBeatResponse{}
+func ParseHeartbeatResponse(raw []byte) (protocols.HeartBeatResponse, error) {
+	rsp := protocols.HeartBeatResponse{}
 	err := config.Jsoner.Unmarshal(raw, &rsp)
 	if err != nil {
 		logger.Network.Print(err)

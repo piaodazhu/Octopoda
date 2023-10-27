@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"pakma/config"
-	"pakma/httpsclient"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/pakma/config"
+	"github.com/piaodazhu/Octopoda/pakma/httpsclient"
 )
 
 var (

@@ -1,12 +1,35 @@
 package output
 
 import (
+	"errors"
 	"fmt"
-	"octl/config"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"os"
 	"strings"
 
 	"github.com/tidwall/pretty"
 )
+
+var enableColor bool
+var enablePrint bool
+var enableSpinner bool
+
+func EnablePrint() {
+	enablePrint = true
+}
+
+func EnableColor() {
+	enablePrint = true
+	enableColor = true
+}
+
+func EnableSpinner() {
+	enableSpinner = true
+}
+
+func IsSpinnerEnabled() bool {
+	return enableSpinner
+}
 
 var replacer *strings.Replacer
 
@@ -22,16 +45,29 @@ func init() {
 		`\"`, `"`,
 		`\'`, `'`,
 	)
+
+	enableColor = false
+	enablePrint = false
+	enableSpinner = false
 }
 
 func PrintJSON(message interface{}) {
+	if !enablePrint {
+		return
+	}
 	if config.GlobalConfig.OutputPretty {
 		switch msg := message.(type) {
 		case string:
-			s := pretty.Color(pretty.Pretty([]byte(msg)), nil)
+			s := pretty.Pretty([]byte(msg))
+			if enableColor {
+				s = pretty.Color(s, nil)
+			}
 			fmt.Println(replacer.Replace(string(s)))
 		case []byte:
-			s := pretty.Color(pretty.Pretty(msg), nil)
+			s := pretty.Pretty(msg)
+			if enableColor {
+				s = pretty.Color(s, nil)
+			}
 			fmt.Println(replacer.Replace(string(s)))
 		default:
 			PrintFatalln("unsupported message type")
@@ -48,28 +84,88 @@ func PrintJSON(message interface{}) {
 	}
 }
 
+const (
+	template_YELLOW = "\033[1;33m%s\033[0m"
+	template_GREEN  = "\033[1;32m%s\033[0m"
+	template_RED    = "\033[1;31m%s\033[0m"
+)
+
+func printFatal(message string) {
+	msg := fmt.Sprintf("[FATAL] %s", message)
+	if enableColor {
+		msg = fmt.Sprintf(template_RED, msg)
+	}
+	fmt.Println(msg)
+}
+
+func printWarn(message string) {
+	msg := fmt.Sprintf("[WARN] %s", message)
+	if enableColor {
+		msg = fmt.Sprintf(template_YELLOW, msg)
+	}
+	fmt.Println(msg)
+}
+
+func printInfo(message string) {
+	msg := fmt.Sprintf("[INFO] %s", message)
+	if enableColor {
+		msg = fmt.Sprintf(template_GREEN, msg)
+	}
+	fmt.Println(msg)
+}
+
+
 func PrintFatalf(format string, args ...interface{}) {
-	fmt.Printf("\033[1;31mFatal Error: %s\033[0m\n", fmt.Sprintf(format, args...))
-	panic(0)
+	if !enablePrint {
+		return
+	}
+	printFatal(fmt.Sprintf(format, args...))
+	os.Exit(1)
 }
 
 func PrintFatalln(args ...interface{}) {
-	fmt.Printf("\033[1;31mFatal Error: %s\033[0m\n", fmt.Sprint(args...))
-	panic(0)
+	if !enablePrint {
+		return
+	}
+	printFatal(fmt.Sprint(args...))
+	os.Exit(1)
 }
 
 func PrintInfof(format string, args ...interface{}) {
-	fmt.Printf("\033[1;32mInfo: %s\033[0m\n", fmt.Sprintf(format, args...))
+	if !enablePrint {
+		return
+	}
+	printInfo(fmt.Sprintf(format, args...))
 }
 
 func PrintInfoln(args ...interface{}) {
-	fmt.Printf("\033[1;32mInfo: %s\033[0m\n", fmt.Sprint(args...))
+	if !enablePrint {
+		return
+	}
+	printInfo(fmt.Sprint(args...))
 }
 
 func PrintWarningf(format string, args ...interface{}) {
-	fmt.Printf("\033[1;33mWarning: %s\033[0m\n", fmt.Sprintf(format, args...))
+	if !enablePrint {
+		return
+	}
+	printWarn(fmt.Sprintf(format, args...))
 }
 
 func PrintWarningln(args ...interface{}) {
-	fmt.Printf("\033[1;33mWarning: %s\033[0m\n", fmt.Sprint(args...))
+	if !enablePrint {
+		return
+	}
+	printWarn(fmt.Sprint(args...))
+}
+
+
+func PrintPanicf(format string, args ...interface{}) {
+	err := fmt.Errorf(format, args...)
+	panic(err)
+}
+
+func PrintPanicln(args ...interface{}) {
+	err := errors.New(fmt.Sprint(args...))
+	panic(err)
 }

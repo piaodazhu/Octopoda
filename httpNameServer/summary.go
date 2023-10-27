@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-var summary *Summary
+var summary *protocols.Summary
 
 func ServiceInit() {
-	summary = &Summary{
+	summary = &protocols.Summary{
 		TotalRequests: 0,
 		Since:         time.Now().UnixMilli(),
-		ApiStats:      map[string]*ApiStat{},
+		ApiStats:      map[string]*protocols.ApiStat{},
 	}
 }
 

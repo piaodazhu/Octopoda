@@ -2,16 +2,17 @@ package shell
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"octl/config"
-	"octl/nameclient"
-	"octl/node"
-	"octl/output"
-	"octl/task"
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/task"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,7 +20,7 @@ import (
 	"syscall"
 )
 
-func XRun(runtask string, params []string) {
+func XRun(runtask string, params []string) (string, error) {
 	delay := 0
 	names := []string{}
 	for i := range params {
@@ -31,24 +32,26 @@ func XRun(runtask string, params []string) {
 		case "-d":
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
-				return
+				return "invalid args", err
 			}
 			delay = x
 		default:
 			names = append(names, params[i])
 		}
 	}
-	runTask(runtask, names, delay)
+	return runTask(runtask, names, delay)
 }
 
-func Run(runtask string, names []string) {
-	runTask(runtask, names, -1)
+func Run(runtask string, names []string) (string, error) {
+	return runTask(runtask, names, -1)
 }
 
-func runTask(runtask string, names []string, delay int) {
+func runTask(runtask string, names []string, delay int) (string, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 
 	isScript := true
@@ -59,24 +62,28 @@ func runTask(runtask string, names []string, delay int) {
 			isBackground = false
 			runtask = runtask[1 : len(runtask)-1]
 		} else {
-			return
+			emsg := fmt.Sprintf("runtask=%s invalid.", runtask)
+			output.PrintFatalln(emsg)
+			return emsg, errors.New(emsg)
 		}
 	} else if runtask[0] == '(' {
 		if len(runtask) > 2 && runtask[len(runtask)-1] == ')' {
 			isScript = false
 			runtask = runtask[1 : len(runtask)-1]
 		} else {
-			return
+			emsg := fmt.Sprintf("runtask=%s invalid.", runtask)
+			output.PrintFatalln(emsg)
+			return emsg, errors.New(emsg)
 		}
 	}
 	if isScript {
-		runScript(runtask, nodes, delay)
+		return runScript(runtask, nodes, delay)
 	} else {
-		runCmd(runtask, nodes, isBackground, delay)
+		return runCmd(runtask, nodes, isBackground, delay)
 	}
 }
 
-func runScript(runtask string, names []string, delay int) {
+func runScript(runtask string, names []string, delay int) (string, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		output.PrintFatalln(err)
@@ -84,8 +91,9 @@ func runScript(runtask string, names []string, delay int) {
 
 	f, err := os.OpenFile(runtask, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		fmt.Println(runtask, " is not a script")
-		return
+		emsg := fmt.Sprintf(runtask, " is not a script.")
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer f.Close()
 	fname := filepath.Base(runtask)
@@ -93,7 +101,7 @@ func runScript(runtask string, names []string, delay int) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunScript,
+		config.API_RunScript,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	body := &bytes.Buffer{}
@@ -106,7 +114,9 @@ func runScript(runtask string, names []string, delay int) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		output.PrintFatalln("Post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 
@@ -120,22 +130,26 @@ func runScript(runtask string, names []string, delay int) {
 
 	results, err := task.WaitTask("", string(taskid))
 	if err != nil {
-		output.PrintFatalln("Task processing error: " + err.Error())
-		return
+		emsg := "Task processing error: " + err.Error()
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	output.PrintJSON(results)
+	return string(results), nil
 }
 
-func runCmd(runtask string, names []string, bg bool, delay int) {
+func runCmd(runtask string, names []string, bg bool, delay int) (string, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunCmd,
+		config.API_RunCmd,
 	)
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 
@@ -151,7 +165,9 @@ func runCmd(runtask string, names []string, bg bool, delay int) {
 
 	res, err := http.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
-		output.PrintFatalln("Post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 
@@ -165,23 +181,25 @@ func runCmd(runtask string, names []string, bg bool, delay int) {
 
 	results, err := task.WaitTask("", string(taskid))
 	if err != nil {
-		output.PrintFatalln("Task processing error: " + err.Error())
-		return
+		emsg := "Task processing error: " + err.Error()
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	output.PrintJSON(results)
+	return string(results), nil
 }
 
 func RunCancel(taskid string) {
 	URL := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.GlobalConfig.Api.RunCancel,
+		config.API_RunCancel,
 	)
 	values := url.Values{}
 	values.Add("taskid", taskid)
 	res, err := http.PostForm(URL, values)
 	if err != nil {
-		output.PrintFatalln("Post for runCancel")
+		output.PrintFatalln("runCancel http post error.")
 	}
 	res.Body.Close()
 }
