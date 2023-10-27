@@ -12,7 +12,7 @@ import (
 	"octl/output"
 )
 
-func NodeInfo(name string) {
+func NodeInfo(name string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -21,18 +21,23 @@ func NodeInfo(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func NodesInfo(names []string) {
+func NodesInfo(names []string) (string, error) {
 	nodes, err := NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
@@ -43,15 +48,18 @@ func NodesInfo(names []string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func NodePrune() {
+func NodePrune() (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -59,9 +67,12 @@ func NodePrune() {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	res.Body.Close()
+	return "OK", nil
 }
 
 func NodesParse(names []string) ([]string, error) {
@@ -75,7 +86,8 @@ func NodesParse(names []string) ([]string, error) {
 	)
 	res, err := http.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
-		output.PrintFatalln("Get")
+		output.PrintFatalln("nodeparse post")
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -85,6 +97,7 @@ func NodesParse(names []string) ([]string, error) {
 		err := json.Unmarshal(raw, &nodes)
 		if err != nil {
 			output.PrintFatalln(err)
+			return nil, err
 		}
 		return nodes, nil
 	} else {

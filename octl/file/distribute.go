@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -20,10 +21,12 @@ import (
 	"github.com/mholt/archiver/v3"
 )
 
-func DistribFile(localFileOrDir string, targetPath string, names []string) {
+func DistribFile(localFileOrDir string, targetPath string, names []string) (string, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 
 	if targetPath == "." {
@@ -46,7 +49,9 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) {
 	}
 	err = cmd.Run()
 	if err != nil {
-		output.PrintFatalln("Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String())
+		msg := "Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String()
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 	defer os.RemoveAll(wrapName)
 
@@ -55,13 +60,17 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) {
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
-		output.PrintFatalln("Archive")
+		msg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s).", wrapName, packName)
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		output.PrintFatalln("err")
+		msg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm).", packName)
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 	defer f.Close()
 
@@ -86,22 +95,29 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) {
 
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		output.PrintFatalln("post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		output.PrintFatalln("ReadAll")
+		emsg := "http read body."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 
 	if res.StatusCode != 202 {
-		output.PrintFatalln("Request submit error: " + string(msg))
-		return
+		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
-		output.PrintFatalln("Task processing error: " + err.Error())
-		return
+		emsg := "Task processing error: " + err.Error()
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	output.PrintJSON(results)
+	return string(results), nil
 }

@@ -1,6 +1,7 @@
 package file
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,9 +12,11 @@ import (
 	"protocols"
 )
 
-func PullFile(pathtype string, node string, fileOrDir string, targetdir string) {
+func PullFile(pathtype string, node string, fileOrDir string, targetdir string) (string, error) {
 	if len(node) == 0 || node[0] == '@' {
-		output.PrintFatalln("command pull not support node group")
+		emsg := "command pull not support node group"
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
 		nameclient.BrainAddr,
@@ -25,12 +28,16 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
 	if err != nil {
-		output.PrintFatalln("ReadAll")
+		emsg := "http read body."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 
 	result := protocols.Result{}
@@ -39,27 +46,34 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		// get the file info structure from brain
 		err = config.Jsoner.Unmarshal(msg, &result)
 		if err != nil {
-			output.PrintFatalln(err.Error())
+			emsg := "config.Jsoner.Unmarshal(msg, &result)."
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 
 		// marshal the file info
 		err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
 		if err != nil {
-			output.PrintFatalln(err.Error())
+			emsg := "config.Jsoner.Unmarshal([]byte(result.Output), &finfo)."
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 
 		// unpack result.Output
 		err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
 		if err != nil {
-			output.PrintFatalln(err.Error())
+			emsg := "unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)."
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 		output.PrintInfoln("Success")
 	} else if res.StatusCode == 202 {
 		// have to wait
 		resultmsg, err := task.WaitTask("PULLING...", string(msg))
 		if err != nil {
-			output.PrintFatalln("Task processing error: " + err.Error())
-			return
+			emsg := "Task processing error: " + err.Error()
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 		config.Jsoner.Unmarshal(resultmsg, &result)
 		if len(result.Output) == 0 {
@@ -68,12 +82,16 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 			// marshal the file info
 			err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
 			if err != nil {
-				output.PrintFatalln(err.Error())
+				emsg := "config.Jsoner.Unmarshal([]byte(result.Output), &finfo)."
+				output.PrintFatalln(emsg, err)
+				return emsg, err
 			}
 			// unpack result.Output
 			err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
 			if err != nil {
-				output.PrintFatalln(err.Error())
+				emsg := "unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)."
+				output.PrintFatalln(emsg, err)
+				return emsg, err
 			}
 			output.PrintInfoln("Success")
 		}
@@ -81,4 +99,5 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		// some error
 		output.PrintJSON(msg)
 	}
+	return "OK", nil
 }

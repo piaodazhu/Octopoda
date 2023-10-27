@@ -18,13 +18,13 @@ var HttpsClient *http.Client
 var BrainAddr string
 var BrainIp string
 
-func InitClient() {
+func InitClient() error {
 	BrainIp = config.GlobalConfig.Brain.Ip
 	defaultBrainAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.Port)
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		output.PrintWarningf("NameService client is disabled")
 		BrainAddr = defaultBrainAddr
-		return
+		return nil
 	}
 
 	BrainAddr = ""
@@ -33,22 +33,24 @@ func InitClient() {
 	// init https client
 	err := initHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ClientCert, config.GlobalConfig.Sslinfo.ClientKey)
 	if err != nil {
-		output.PrintFatalln("InitHttpsClient:", err.Error())
-		return
+		emsg := "InitHttpsClient:" + err.Error()
+		output.PrintFatalln(emsg)
+		return err
 	}
 	err = pingNameServer()
 	if err != nil {
 		output.PrintFatalf("Could not ping NameServer: %s (%s)", nsAddr, err.Error())
-		return
+		return err
 	}
 
 	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".octlFace")
 	if err != nil {
 		output.PrintWarningf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
-		return
+		return err
 	}
 	BrainIp = entry.Ip
 	BrainAddr = fmt.Sprintf("%s:%d", BrainIp, entry.Port)
+	return nil
 }
 
 func initHttpsClient(caCert, cliCert, cliKey string) error {

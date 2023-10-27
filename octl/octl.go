@@ -19,6 +19,8 @@ var (
 
 func main() {
 	output.EnableColor()
+	output.EnableSpinner()
+	
 	subcmd.InitUsage()
 	args := os.Args
 	var conf string
@@ -46,8 +48,13 @@ func main() {
 		args = args[2:]
 	}
 
-	config.InitConfig(conf)
-	nameclient.InitClient()
+	if err := config.InitConfig(conf); err != nil {
+		panic(err)
+	}
+	
+	if err := nameclient.InitClient(); err != nil {
+		panic(err)
+	}
 
 	switch args[1] {
 	case "create":

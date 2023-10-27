@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,10 +14,12 @@ import (
 	"protocols"
 )
 
-func SpreadFile(FileOrDir string, targetPath string, names []string) {
+func SpreadFile(FileOrDir string, targetPath string, names []string) (string, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 
 	fsParams := &protocols.FileSpreadParams{
@@ -34,22 +37,29 @@ func SpreadFile(FileOrDir string, targetPath string, names []string) {
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
-		output.PrintFatalln("Post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		output.PrintFatalln("ReadAll")
+		emsg := "http read body."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 
 	if res.StatusCode != 202 {
-		output.PrintFatalln("Request submit error: " + string(msg))
-		return
+		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 	results, err := task.WaitTask("SPREADING...", string(msg))
 	if err != nil {
-		output.PrintFatalln("Task processing error: " + err.Error())
-		return
+		emsg := "Task processing error: " + err.Error()
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	output.PrintJSON(results)
+	return string(results), nil
 }

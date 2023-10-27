@@ -1,6 +1,7 @@
 package node
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 
 const timefmt string = "2006-01-02@15:04:05"
 
-func Pakma(firstarg string, args []string) {
+func Pakma(firstarg string, args []string) (string, error) {
 	var subcmd string = firstarg
 	var version string = ""
 	var names []string
@@ -32,27 +33,33 @@ func Pakma(firstarg string, args []string) {
 			timestr = args[i][2:]
 			_, err := time.Parse(timefmt, timestr)
 			if err != nil {
-				output.PrintFatalf("pakma subcmd: invalid timestr (should be like %s)", timefmt)
-				return
+				emsg := fmt.Sprintf("pakma subcmd: invalid timestr (should be like %s).", timefmt)
+				output.PrintFatalln(emsg, err)
+				return emsg, err
 			}
 			END--
 		case "-l":
 			limit = args[i][2:]
 			x, err := strconv.Atoi(limit)
 			if err != nil || x <= 0 {
-				output.PrintFatalf("pakma subcmd: invalid limit (should be int >0)")
-				return
+				emsg := "pakma subcmd: invalid limit (should be int >0)"
+				output.PrintFatalln(emsg, err)
+				return emsg, err
 			}
 			END--
 		default:
 		}
 	}
 	if END != len(args) && firstarg != "history" {
-		output.PrintFatalln("only packma history support -t and -l")
+		emsg := "only packma history support -t and -l"
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 
 	if len(args) < 1 {
-		output.PrintFatalln("not any node is specified")
+		emsg := "not any node is specified"
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 
 	switch firstarg {
@@ -60,8 +67,9 @@ func Pakma(firstarg string, args []string) {
 		fallthrough // same process as upgrade
 	case "upgrade":
 		if len(args) < 2 {
-			output.PrintFatalln("not any node is specified")
-			return
+			emsg := "not any node is specified"
+			output.PrintFatalln(emsg)
+			return emsg, errors.New(emsg)
 		}
 		version = args[0]
 		names = args[1:]
@@ -78,8 +86,9 @@ func Pakma(firstarg string, args []string) {
 	case "history":
 		names = args[:END]
 	default:
-		output.PrintFatalln("pakma subcommand not support: ", firstarg)
-		return
+		emsg := fmt.Sprintf("pakma subcommand not support: %s.", firstarg)
+		output.PrintFatalln(emsg)
+		return emsg, errors.New(emsg)
 	}
 
 	names_filtered := []string{}
@@ -94,7 +103,9 @@ func Pakma(firstarg string, args []string) {
 
 	nodes, err := NodesParse(names_filtered)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 
 	if hasBrain {
@@ -118,19 +129,23 @@ func Pakma(firstarg string, args []string) {
 		if checkVersion(version) {
 			values.Set("version", version)
 		} else {
-			output.PrintFatalln("pakma invalid version number (right example: 1.4.1): ", version)
-			return
+			emsg := fmt.Sprintf("pakma invalid version number (right example: 1.4.1): %s.", version)
+			output.PrintFatalln(emsg)
+			return emsg, errors.New(emsg)
 		}
 	}
 
 	res, err := http.PostForm(URL, values)
 	if err != nil {
-		output.PrintFatalln("Post")
+		emsg := "http post error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
+	return string(raw), err
 }
 
 func checkVersion(version string) bool {

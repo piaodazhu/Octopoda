@@ -12,6 +12,7 @@ import (
 
 var enableColor bool
 var enablePrint bool
+var enableSpinner bool
 
 func EnablePrint() {
 	enablePrint = true
@@ -20,6 +21,14 @@ func EnablePrint() {
 func EnableColor() {
 	enablePrint = true
 	enableColor = true
+}
+
+func EnableSpinner() {
+	enableSpinner = true
+}
+
+func IsSpinnerEnabled() bool {
+	return enableSpinner
 }
 
 var replacer *strings.Replacer
@@ -39,6 +48,7 @@ func init() {
 
 	enableColor = false
 	enablePrint = false
+	enableSpinner = false
 }
 
 func PrintJSON(message interface{}) {

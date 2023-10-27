@@ -9,7 +9,7 @@ import (
 	"octl/output"
 )
 
-func ListAllFile(pathtype string, node string, subdir string) {
+func ListAllFile(pathtype string, node string, subdir string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&subdir=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -20,12 +20,17 @@ func ListAllFile(pathtype string, node string, subdir string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	msg, err := io.ReadAll(res.Body)
 	if err != nil {
-		output.PrintFatalln("ReadAll")
+		emsg := "http read body."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	output.PrintJSON(msg)
+	return string(msg), nil
 }

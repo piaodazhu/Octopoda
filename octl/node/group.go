@@ -12,7 +12,7 @@ import (
 	"protocols"
 )
 
-func GroupGetAll() {
+func GroupGetAll() (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -20,14 +20,17 @@ func GroupGetAll() {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func GroupGet(name string) {
+func GroupGet(name string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -36,14 +39,17 @@ func GroupGet(name string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
+	return string(raw), nil
 }
 
-func GroupDel(name string) {
+func GroupDel(name string) (string, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -52,19 +58,24 @@ func GroupDel(name string) {
 	)
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
-		output.PrintFatalln(err)
+		emsg := "http delete error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil || res.StatusCode != 200 {
 		output.PrintFatalln("DELETE, status=", res.StatusCode)
 	}
 	defer res.Body.Close()
+	return "OK", nil
 }
 
-func GroupSet(name string, nocheck bool, names []string) {
+func GroupSet(name string, nocheck bool, names []string) (string, error) {
 	nodes, err := NodesParse(names)
 	if err != nil {
-		output.PrintFatalln(err)
+		msg := "node parse."
+		output.PrintFatalln(msg, err)
+		return msg, err
 	}
 	ginfo := protocols.GroupInfo{
 		Name:    name,
@@ -80,7 +91,9 @@ func GroupSet(name string, nocheck bool, names []string) {
 	)
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		output.PrintFatalln("POST")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -89,4 +102,5 @@ func GroupSet(name string, nocheck bool, names []string) {
 	} else {
 		output.PrintFatalln(string(raw))
 	}
+	return string(raw), nil
 }

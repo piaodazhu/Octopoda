@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func NodeLog(name string, params []string) {
+func NodeLog(name string, params []string) (string, error) {
 	maxlines, maxdaysbefore := 30, 0
 	for i := range params {
 		if len(params[i]) < 3 {
@@ -20,13 +20,13 @@ func NodeLog(name string, params []string) {
 		case "-l":
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
-				return
+				return "invalid args", err
 			}
 			maxlines = x
 		case "-d":
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
-				return
+				return "invalid args", err
 			}
 			maxdaysbefore = x
 		default:
@@ -42,10 +42,13 @@ func NodeLog(name string, params []string) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		output.PrintFatalln("Get")
+		emsg := "http get error."
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
+	return string(raw), nil
 }

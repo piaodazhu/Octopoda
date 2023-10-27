@@ -10,7 +10,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-func GitClone(repo, user string) {
+func GitClone(repo, user string) (string, error) {
 	remoteUrl := makeRemoteUrl(repo, user)
 	_, err := git.PlainClone(repo, false, &git.CloneOptions{
 		URL: remoteUrl,
@@ -20,24 +20,32 @@ func GitClone(repo, user string) {
 		},
 	})
 	if err != nil {
-		output.PrintFatalln(err)
+		emsg := "git.PlainClone()"
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	} else {
-		output.PrintInfoln("CLONE DONE!")
+		info := "CLONE DONE!"
+		output.PrintInfoln(info)
+		return info, nil
 	}
 }
 
-func GitPush(repo, user string) {
+func GitPush(repo, user string) (string, error) {
 	remoteUrl := makeRemoteUrl(repo, user)
 	repository, err := git.PlainOpen(repo)
 	if err != nil {
 		repository, err = git.PlainInit(repo, false)
 		if err != nil {
-			output.PrintFatalln(err)
+			emsg := "git.PlainInit()"
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 	}
 	workTree, err := repository.Worktree()
 	if err != nil {
-		output.PrintFatalln(err)
+		emsg := "repository.Worktree()"
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	}
 	workTree.Add(".")
 	workTree.Commit("default msg", &git.CommitOptions{
@@ -50,7 +58,9 @@ func GitPush(repo, user string) {
 	if err != nil {
 		remote, err = repository.Remote("origin")
 		if err != nil {
-			output.PrintFatalln(err)
+			emsg := "repository.Remote()"
+			output.PrintFatalln(emsg, err)
+			return emsg, err
 		}
 	}
 
@@ -61,9 +71,13 @@ func GitPush(repo, user string) {
 		},
 	})
 	if err != nil {
-		output.PrintFatalln(err)
+		emsg := "remote.Push()"
+		output.PrintFatalln(emsg, err)
+		return emsg, err
 	} else {
-		output.PrintInfoln("PUSH REMOTE DONE!")
+		info := "PUSH REMOTE DONE!"
+		output.PrintInfoln(info)
+		return info, nil
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"octl/config"
 	"octl/nameclient"
+	"octl/output"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -18,7 +19,7 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 		config.API_TaskState,
 		taskid,
 	)
-	if prefix != "" {
+	if output.IsSpinnerEnabled() {
 		s := spinner.New(spinner.CharSets[7], 200*time.Millisecond)
 		s.Prefix = prefix
 		s.Start()
@@ -40,14 +41,14 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 
 		if res.StatusCode == 200 {
 			if prefix != "" {
-				fmt.Println("  [DONE]")
+				output.PrintInfoln("  [DONE]")
 			}
 			return msg, nil
 		} else if res.StatusCode == 202 {
 			time.Sleep(time.Second * 1)
 		} else {
 			if prefix != "" {
-				fmt.Println("  [FAILED]")
+				output.PrintInfoln("  [FAILED]")
 			}
 			return nil, fmt.Errorf("wait task error. http statuscode=%d, response=%s", res.StatusCode, string(msg))
 		}
