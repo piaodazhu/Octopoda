@@ -27,7 +27,7 @@ octl/example/nipKmod
 dist
 dump.rdb
 ca
-httpns
+httpns/httpns
 httpnc
 *_test.yaml
 pakma_brain
