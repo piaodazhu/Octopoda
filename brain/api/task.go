@@ -26,9 +26,9 @@ func TaskState(ctx *gin.Context) {
 		return
 	}
 	rlist := model.BrainTaskManager.DeleteTask(taskid)
-	results := []*BasicNodeResults{}
+	results := []*protocols.ExecutionResults{}
 	for i := range rlist {
-		results = append(results, rlist[i].(*BasicNodeResults))
+		results = append(results, rlist[i].(*protocols.ExecutionResults))
 	}
 	ctx.JSON(rcode, results)
 }

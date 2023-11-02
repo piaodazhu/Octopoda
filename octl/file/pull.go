@@ -40,34 +40,10 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		return emsg, err
 	}
 
-	result := protocols.Result{}
+	fileResults := []protocols.ExecutionResults{}
 	finfo := protocols.FilePullParams{}
-	if res.StatusCode == 200 {
-		// get the file info structure from brain
-		err = config.Jsoner.Unmarshal(msg, &result)
-		if err != nil {
-			emsg := "config.Jsoner.Unmarshal(msg, &result)."
-			output.PrintFatalln(emsg, err)
-			return emsg, err
-		}
 
-		// marshal the file info
-		err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
-		if err != nil {
-			emsg := "config.Jsoner.Unmarshal([]byte(result.Output), &finfo)."
-			output.PrintFatalln(emsg, err)
-			return emsg, err
-		}
-
-		// unpack result.Output
-		err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
-		if err != nil {
-			emsg := "unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)."
-			output.PrintFatalln(emsg, err)
-			return emsg, err
-		}
-		output.PrintInfoln("Success")
-	} else if res.StatusCode == 202 {
+	if res.StatusCode == 202 {
 		// have to wait
 		resultmsg, err := task.WaitTask("PULLING...", string(msg))
 		if err != nil {
@@ -75,14 +51,19 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 			output.PrintFatalln(emsg, err)
 			return emsg, err
 		}
-		config.Jsoner.Unmarshal(resultmsg, &result)
-		if len(result.Output) == 0 {
+		err = config.Jsoner.Unmarshal(resultmsg, &fileResults)
+		if err != nil {
+			emsg := "result unmarshal error: " + err.Error()
+			output.PrintFatalln(emsg, err)
+			return emsg, err
+		}
+		if len(fileResults) != 1 || len(fileResults[0].Result) == 0 {
 			output.PrintJSON(resultmsg)
 		} else {
 			// marshal the file info
-			err = config.Jsoner.Unmarshal([]byte(result.Output), &finfo)
+			err = config.Jsoner.Unmarshal([]byte(fileResults[0].Result), &finfo)
 			if err != nil {
-				emsg := "config.Jsoner.Unmarshal([]byte(result.Output), &finfo)."
+				emsg := "config.Jsoner.Unmarshal([]byte(fileResults[0].Result), &finfo)."
 				output.PrintFatalln(emsg, err)
 				return emsg, err
 			}
@@ -99,5 +80,6 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		// some error
 		output.PrintJSON(msg)
 	}
+	
 	return "OK", nil
 }

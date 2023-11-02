@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -40,7 +41,7 @@ func PakmaCmd(ctx *gin.Context) {
 	}
 
 	payload, _ := config.Jsoner.Marshal(&params)
-	results := make([]BasicNodeResults, len(nodes))
+	results := make([]protocols.ExecutionResults, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {
@@ -48,31 +49,33 @@ func PakmaCmd(ctx *gin.Context) {
 		results[i].Name = name
 		wg.Add(1)
 		if name == "brain" {
-			go pakmaLocal(params, &wg, &results[i].Result)
+			go pakmaLocal(params, &wg, &results[i])
 		} else {
-			go pakmaRemote(name, payload, &wg, &results[i].Result)
+			go pakmaRemote(name, payload, &wg, &results[i])
 		}
 	}
 	wg.Wait()
 	ctx.JSON(200, results)
 }
 
-func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *string) {
+func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
 	defer wg.Done()
-	*result = "UnknownError"
+	result.Code = protocols.ExecOK
 
 	raw, err := model.Request(name, protocols.TypePakmaCommand, payload)
 	if err != nil {
-		logger.Comm.Println("Request", err)
-		*result = "Request error"
+		emsg := fmt.Sprintf("Request error %v", err)
+		logger.Comm.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		return
 	}
-	*result = string(raw)
+	result.Result = string(raw)
 }
 
-func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *string) {
+func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
 	defer wg.Done()
-	*result = "UnknownError"
+	result.Code = protocols.ExecOK
 
 	var response []byte
 	var err error
@@ -82,16 +85,20 @@ func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *string) {
 	case "install":
 		if !checkVersion(params.Version) {
 			valid = false
-			logger.Exceptions.Println("PakmaCommand invalid version")
-			*result = "PakmaCommand invalid version"
+			emsg := "PakmaCommand invalid version"
+			logger.Exceptions.Println(emsg)
+			result.Code = protocols.ExecCommunicationError
+			result.CommunicationErrorMsg = emsg
 			break
 		}
 		response, err = pakmaInstall(params.Version)
 	case "upgrade":
 		if !checkVersion(params.Version) {
 			valid = false
-			logger.Exceptions.Println("PakmaCommand invalid version")
-			*result = "PakmaCommand invalid version"
+			emsg := "PakmaCommand invalid version"
+			logger.Exceptions.Println(emsg)
+			result.Code = protocols.ExecCommunicationError
+			result.CommunicationErrorMsg = emsg
 			break
 		}
 		response, err = pakmaUpgrade(params.Version)
@@ -109,16 +116,20 @@ func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *string) {
 		response, err = pakmaHistory(params.Time, params.Limit)
 	default:
 		valid = false
-		logger.Exceptions.Println("PakmaCommand unsupport command")
-		*result = "PakmaCommand unsupport command"
+		emsg := "PakmaCommand unsupport command"
+		logger.Exceptions.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 	}
 	if valid {
 		// fmt.Println(string(response), err)
 		if err != nil {
-			logger.Exceptions.Println("Pakma request error")
-			*result = "Pakma request error"
+			emsg := "Pakma request error"
+			logger.Exceptions.Println(emsg)
+			result.Code = protocols.ExecCommunicationError
+			result.CommunicationErrorMsg = emsg
 		} else {
-			*result = string(response)
+			result.Result = string(response)
 		}
 	}
 }

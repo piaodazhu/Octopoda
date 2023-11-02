@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,6 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
-	"github.com/piaodazhu/Octopoda/brain/rdb"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -100,61 +98,47 @@ func FileUpload(ctx *gin.Context) {
 	tmpDst.Close()
 	src.Close()
 
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
-	}
+	taskid := model.BrainTaskManager.CreateTask(1)
 	ctx.String(202, taskid)
-
+	
 	go func() {
+		result := protocols.ExecutionResults{
+			Name:   "brain",
+			Code:   protocols.ExecOK,
+			Result: "OK",
+		}
+
 		archiver.DefaultZip.OverwriteExisting = true
 		err = archiver.DefaultZip.Unarchive(tmpSb.String(), tmpPath)
 		defer os.RemoveAll(tmpPath)
 
 		if err != nil {
-			logger.Exceptions.Println("Unarchive")
-			rmsg.Rmsg = "Unarchive:" + err.Error()
-			// ctx.JSON(403, rmsg)
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
+			emsg := fmt.Sprintf("unarchive %s to %s err:%v", tmpSb.String(), tmpPath, err)
+			result.Code = protocols.ExecProcessError
+			result.CommunicationErrorMsg = emsg
+			model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
 			return
 		}
 
 		cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s %s", dstPath, tmpExtDir.String(), dstPath))
 		err = cmd.Run()
 		if err != nil {
-			logger.Exceptions.Println("cp -r")
-			rmsg.Rmsg = "cp -r error:" + fmt.Sprintf("cp -r %s %s", tmpExtDir.String(), dstPath)
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
+			emsg := fmt.Sprintf("copy %s to %s err:%v", tmpExtDir.String(), dstPath, err)
+			result.Code = protocols.ExecProcessError
+			result.CommunicationErrorMsg = emsg
+			model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
 			return
 		}
 
-		// ctx.JSON(200, rmsg)
-		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
-			logger.Exceptions.Print("TaskMarkDone Error")
-		}
+		subtaskid := model.TaskIdGen()
+		model.BrainTaskManager.AddSubTask(taskid, subtaskid, &result)
+		model.BrainTaskManager.DoneSubTask(taskid, subtaskid, &result)
 	}()
-}
-
-type FileSpreadParams struct {
-	TargetPath  string
-	FileOrDir   string
-	TargetNodes []string
-}
-
-type BasicNodeResults struct {
-	Name   string
-	Emsg   string
-	Result string
 }
 
 // need fix
 func FileSpread(ctx *gin.Context) {
-	var fsParams FileSpreadParams
+	var fsParams protocols.FileSpreadParams
 	err := ctx.ShouldBind(&fsParams)
 	rmsg := protocols.Result{
 		Rmsg: "OK",
@@ -177,123 +161,83 @@ func FileSpread(ctx *gin.Context) {
 	if fsParams.TargetPath == "/" || fsParams.TargetPath == "./" {
 		fsParams.TargetPath = ""
 	}
-	// else if fsParams.TargetPath[len(fsParams.TargetPath)-1] != '/' {
-	// 	logger.Exceptions.Println("Invalid targetPath")
-	// 	rmsg.Rmsg = "Invalid targetPath:" + fsParams.TargetPath
-	// 	ctx.JSON(400, rmsg)
-	// 	return
-	// }
-
-	// var sb strings.Builder
-	// sb.WriteString(config.GlobalConfig.Workspace.Store)
-	// sb.WriteString(fsParams.FileOrDir)
-	// fname := sb.String()
 
 	fname := pathFixing(fsParams.FileOrDir, config.GlobalConfig.Workspace.Store)
-	// fmt.Println(fname, "----")
-
-	// we dont check because fname may be a pattern
-	// _, err = os.Stat(fname)
-	// if err != nil {
-	// 	logger.Exceptions.Println("FileOrDir Not Found")
-	// 	rmsg.Rmsg = "FileOrDir Not Found:" + err.Error()
-	// 	ctx.JSON(403, rmsg)
-	// 	return
-	// }
-
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
+	wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
+	os.Mkdir(wrapName, os.ModePerm)
+	cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", fname, wrapName))
+	err = cmd.Run()
+	if err != nil {
+		emsg := fmt.Sprintf("error when file %s to %s: %v", fname, wrapName, err)
+		logger.Exceptions.Print(emsg)
+		rmsg.Rmsg = emsg
+		ctx.JSON(500, rmsg)
+		return
 	}
+	defer os.RemoveAll(wrapName)
+
+	packName := fmt.Sprintf("%s.zip", wrapName)
+	archiver.DefaultZip.OverwriteExisting = true
+	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
+	if err != nil {
+		emsg := fmt.Sprintf("error archive %s to %s: %v", wrapName, packName, err)
+		logger.Exceptions.Print(emsg)
+		rmsg.Rmsg = emsg
+		ctx.JSON(500, rmsg)
+		return
+	}
+
+	raw, _ := os.ReadFile(packName)
+	os.Remove(packName)
+
+	content := base64.RawStdEncoding.EncodeToString(raw)
+	finfo := FileParams{
+		PackName:   packName,
+		TargetPath: fsParams.TargetPath,
+		FileBuf:    content,
+	}
+	payload, _ := config.Jsoner.Marshal(&finfo)
+
+	taskid := model.BrainTaskManager.CreateTask(len(fsParams.TargetNodes))
 	ctx.String(202, taskid)
 
 	go func() {
-		// if fname[len(fname)-1] == '/' {
-		// 	fname = fname + "."
-		// }
-
-		// packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-		// // err = exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(fname), filepath.Base(fname)).Run()
-		// archiver.DefaultZip.OverwriteExisting = true
-		// err = archiver.DefaultZip.Archive([]string{fname}, packName)
-
-		wrapName := fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
-		os.Mkdir(wrapName, os.ModePerm)
-		cmd := exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", fname, wrapName))
-		err := cmd.Run()
-		if err != nil {
-			logger.Exceptions.Print("Wrap files: " + fname + "-->" + wrapName + " | " + cmd.String())
-		}
-		defer os.RemoveAll(wrapName)
-
-		packName := fmt.Sprintf("%s.zip", wrapName)
-		// err := exec.Command("tar", "-cf", tarName, "-C", filepath.Dir(localFileOrDir), filepath.Base(localFileOrDir)).Run()
-		// if err != nil {
-		// 	output.PrintFatal("cmd.Run")
-		// }
-		archiver.DefaultZip.OverwriteExisting = true
-		err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
-		if err != nil {
-			logger.Exceptions.Println("Archive")
-			rmsg.Rmsg = "Archive:" + err.Error()
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
-			return
-		}
-
-		raw, _ := os.ReadFile(packName)
-		os.Remove(packName)
-
-		content := base64.RawStdEncoding.EncodeToString(raw)
-		finfo := FileParams{
-			PackName:   packName,
-			TargetPath: fsParams.TargetPath,
-			FileBuf:    content,
-		}
-		payload, _ := config.Jsoner.Marshal(&finfo)
-
-		// check target nodes
-		// spread file
-		results := make([]BasicNodeResults, len(fsParams.TargetNodes))
-		var wg sync.WaitGroup
-
 		for i := range fsParams.TargetNodes {
-			name := fsParams.TargetNodes[i]
-			results[i].Name = name
-			wg.Add(1)
-			go pushFile(name, payload, &wg, &results[i].Result)
-		}
-		wg.Wait()
-		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Exceptions.Print("TaskMarkDone Error")
+			go pushFile(taskid, fsParams.TargetNodes[i], payload)
 		}
 	}()
 }
 
-func pushFile(name string, payload []byte, wg *sync.WaitGroup, result *string) {
-	defer wg.Done()
-	*result = "UnknownError"
+func pushFile(taskid string, name string, payload []byte) {
+	result := protocols.ExecutionResults{
+		Name: name,
+		Code: protocols.ExecOK,
+	}
+	subtask_id := model.TaskIdGen() // just random
+	model.BrainTaskManager.AddSubTask(taskid, subtask_id, &result)
+	defer model.BrainTaskManager.DoneSubTask(taskid, subtask_id, &result)
 
 	raw, err := model.Request(name, protocols.TypeFilePush, payload)
 	if err != nil {
 		logger.Comm.Println("TypeFilePushResponse", err)
-		*result = "TypeFilePushResponse"
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = "TypeFilePushResponse"
 		return
 	}
 	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
 		logger.Exceptions.Println("UnmarshalRmsg", err)
-		*result = "BrainError"
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = "BrainError"
 		return
 	}
 	if rmsg.Rmsg != "OK" {
+		result.Code = protocols.ExecProcessError
+		result.ProcessErrorMsg = rmsg.Rmsg
 		logger.Exceptions.Print(rmsg.Rmsg)
-		*result = rmsg.Rmsg
 	} else {
-		*result = "OK"
+		result.Result = "OK"
 	}
 }
 
@@ -320,8 +264,6 @@ func FileTree(ctx *gin.Context) {
 		ctx.JSON(404, rmsg)
 		return
 	}
-	// rmsg.Output = string(raw) //  marshal?
-	// ctx.JSON(200, rmsg)
 	ctx.Data(200, "application/json", raw)
 }
 
@@ -447,43 +389,21 @@ func FileDistrib(ctx *gin.Context) {
 		ctx.JSON(400, rmsg)
 		return
 	}
-
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
+	content := b64Encode(raw)
+	// content := base64.RawStdEncoding.EncodeToString(raw)
+	finfo := FileParams{
+		PackName:   packName,
+		TargetPath: targetPath,
+		FileBuf:    content,
 	}
+	payload, _ := config.Jsoner.Marshal(&finfo)
+
+	taskid := model.BrainTaskManager.CreateTask(1)
 	ctx.String(202, taskid)
 
 	go func() {
-		content := b64Encode(raw)
-		// content := base64.RawStdEncoding.EncodeToString(raw)
-		finfo := FileParams{
-			PackName:   packName,
-			TargetPath: targetPath,
-			FileBuf:    content,
-		}
-		payload, _ := config.Jsoner.Marshal(&finfo)
-
-		// check target nodes
-		// spread file
-		results := make([]BasicNodeResults, len(nodes))
-		var wg sync.WaitGroup
-
 		for i := range nodes {
-			name := nodes[i]
-			results[i].Name = name
-			// if addr, exists := model.GetNodeAddress(name); exists {
-
-			// } else {
-			// 	results[i].Result = "NodeNotExists"
-			// }
-			wg.Add(1)
-			go pushFile(name, payload, &wg, &results[i].Result)
-		}
-		wg.Wait()
-		if !rdb.TaskMarkDone(taskid, results, 3600) {
-			logger.Exceptions.Print("TaskMarkDone Error")
+			go pushFile(taskid, nodes[i], payload)
 		}
 	}()
 }
@@ -562,43 +482,42 @@ func FilePull(ctx *gin.Context) {
 		return
 	}
 
-	// fast return
-	taskid := rdb.TaskIdGen()
-	if !rdb.TaskNew(taskid, 3600) {
-		logger.Exceptions.Print("TaskNew")
-		ctx.JSON(500, rmsg)
-		return
-	}
+	taskid := model.BrainTaskManager.CreateTask(1)
 	ctx.String(202, taskid)
 
 	go func() {
+		result := protocols.ExecutionResults{
+			Name: name,
+			Code: protocols.ExecOK,
+		}
+
 		params, _ := config.Jsoner.Marshal(&FileParams{
 			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
 		raw, err := model.Request(name, protocols.TypeFilePull, params)
 		if err != nil {
-			logger.Comm.Print("TypeFilePullResponse")
-			rmsg.Rmsg = ErrNetworkError{node: name}.Error()
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
+			emsg := fmt.Sprintf("Send filepull request: %v", err)
+			logger.Comm.Println(emsg)
+			result.Code = protocols.ExecProcessError
+			result.ProcessErrorMsg = emsg
+			model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
 			return
 		}
 
 		if len(raw) == 0 {
-			rmsg.Rmsg = "file or path not found"
-			logger.Exceptions.Print("file or path not found")
-			if !rdb.TaskMarkFailed(taskid, rmsg, 3600) {
-				logger.Exceptions.Print("TaskMarkFailed Error")
-			}
+			emsg := "file or path not found"
+			logger.Comm.Println(emsg)
+			result.Code = protocols.ExecProcessError
+			result.ProcessErrorMsg = emsg
+			model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
 			return
 		}
 
-		rmsg.Output = string(raw)
-		if !rdb.TaskMarkDone(taskid, rmsg, 3600) {
-			logger.Exceptions.Print("TaskMarkDone Error")
-		}
+		result.Result = string(raw)
+		subtask_id := model.TaskIdGen()
+		model.BrainTaskManager.AddSubTask(taskid, subtask_id, &result)
+		defer model.BrainTaskManager.DoneSubTask(taskid, subtask_id, &result)
 	}()
 }
 
@@ -636,24 +555,3 @@ func loadFile(packName string) string {
 	}
 	return filebufb64.String()
 }
-
-// func encodeBuf(buf []byte) string {
-// 	var bufb64 strings.Builder
-
-// 	// prepare enough buffer capacity
-// 	bufb64.Grow(base64.RawStdEncoding.EncodedLen(len(buf)))
-
-// 	// read and encode to base64
-// 	Offset := 0
-// 	Len := len(buf)
-// 	ChunkSize := 4096 * 4
-// 	for Offset < Len {
-// 		end := Offset + ChunkSize
-// 		if end > Len {
-// 			end = Len
-// 		}
-// 		bufb64.WriteString(base64.RawStdEncoding.EncodeToString(buf[Offset:end]))
-// 		Offset += ChunkSize
-// 	}
-// 	return bufb64.String()
-// }

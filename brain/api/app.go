@@ -28,8 +28,6 @@ type AppDeployParams struct {
 	Script string
 }
 
-type CommitResults BasicNodeResults
-
 func AppPrepare(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
 	scenario := ctx.PostForm("scenario")
