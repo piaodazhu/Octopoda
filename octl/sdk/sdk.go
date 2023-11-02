@@ -30,7 +30,7 @@ func NodeInfo(name string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -44,7 +44,7 @@ func NodesInfo(names []string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -58,7 +58,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) (resu
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -72,7 +72,7 @@ func Run(runstask string, names []string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -86,7 +86,7 @@ func XRun(runstask string, names []string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -100,7 +100,7 @@ func GroupGetAll() (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -114,7 +114,7 @@ func GroupGet(name string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -128,7 +128,7 @@ func GroupSet(name string, nocheck bool, names []string) (result string, err err
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
@@ -142,7 +142,7 @@ func GroupDel(name string) (result string, err error) {
 		return
 	}
 	defer func() {
-		if panicErr := recover(); err != nil {
+		if panicErr := recover(); panicErr != nil {
 			err = panicErr.(error)
 		}
 	} ()
