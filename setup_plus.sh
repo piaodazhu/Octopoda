@@ -21,12 +21,12 @@ fi
 
 NAME=$1
 INSTALL_ARCH=arm
-INSTALL_VERSION=v1.5.2
+INSTALL_VERSION=v1.6.5
 OUTPUT_DIR=./installers/
 
 HTTPNS_URL=https://10.108.30.85:3455/release
-CERTGEN_SCRIPT=./httpNameServer/CertGen.sh
-CACERT_DIR=./httpNameServer/ca
+CERTGEN_SCRIPT=./httpns/CertGen.sh
+CACERT_DIR=./httpns/ca
 
 # prepare scripts and keys
 WORK_DIR=${OUTPUT_DIR}/installer_$NAME

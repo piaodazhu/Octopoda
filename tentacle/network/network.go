@@ -40,13 +40,15 @@ func dialWithDevice(addr, dev string) (net.Conn, error) {
 	localip, err := getIpByDevice(dev)
 	if err != nil {
 		logger.Network.Println("cannot get local ip: ", err)
-		return nil, err
+		// fall back to dail
+		return net.Dial("tcp", addr)
 	}
 
 	local, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", localip))
 	if err != nil {
 		logger.Network.Println("cannot resolve local address: ", err)
-		return nil, err
+		// fall back to dail
+		return net.Dial("tcp", addr)
 	}
 
 	tcpConn, err := net.DialTCP("tcp", local, remote)

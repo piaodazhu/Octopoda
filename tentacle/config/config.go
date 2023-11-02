@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 
 	"github.com/spf13/viper"
@@ -30,6 +31,14 @@ func InitConfig(conf string) {
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
 		panic("cannot unmarshal config because " + err.Error())
+	}
+
+	// auto detect
+	if GlobalConfig.Name == "" {
+		GlobalConfig.Name, err = os.Hostname()
+		if err != nil {
+			GlobalConfig.Name = fmt.Sprintf("Node-%d", rand.Int())
+		}
 	}
 
 	// JSON iterator

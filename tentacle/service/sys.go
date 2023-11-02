@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -148,25 +150,71 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 		rmsg := protocols.Result{
 			Rmsg: "OK",
 		}
-		var execErr error
-		var result []byte = []byte{}
 		runFunc := func() {
 			if cparams.Background {
-				execErr = cmd.Run()
+				execErr := cmd.Run()
 				if execErr != nil {
 					logger.Exceptions.Println("Run cmd background", execErr)
+					rmsg.Rmsg = execErr.Error()
 				}
 			} else {
-				result, execErr = cmd.CombinedOutput()
-				if execErr != nil {
-					logger.Exceptions.Println("Run cmd foreground", execErr)
+				// TODO test this
+				stdoutPipe, err := cmd.StdoutPipe()
+				if err != nil {
+					emsg := fmt.Sprintf("Run cmd foreground error when open stdout pipe: %v", err)
+					logger.Exceptions.Println(emsg)
+					rmsg.Rmsg = emsg
+					return
 				}
-			}
+				defer stdoutPipe.Close()
 
-			if execErr != nil {
-				rmsg.Rmsg = execErr.Error()
+				stderrPipe, err := cmd.StderrPipe()
+				if err != nil {
+					emsg := fmt.Sprintf("Run cmd foreground error when open stderr pipe: %v", err)
+					logger.Exceptions.Println(emsg)
+					rmsg.Rmsg = emsg
+					return
+				}
+				defer stderrPipe.Close()
+
+				var stdoutSb, stderrSb strings.Builder
+
+				wg := sync.WaitGroup{}
+				wg.Add(2)
+				go func() {
+					defer wg.Done()
+					scanner := bufio.NewScanner(stdoutPipe)
+					for scanner.Scan() {
+						stdoutSb.WriteString(scanner.Text())
+						stdoutSb.WriteByte('\n')
+					}
+				}()
+				go func() {
+					defer wg.Done()
+					scanner := bufio.NewScanner(stderrPipe)
+					for scanner.Scan() {
+						stderrSb.WriteString(scanner.Text())
+						stderrSb.WriteByte('\n')
+					}
+				}()
+
+				if err := cmd.Start(); err != nil {
+					emsg := fmt.Sprintf("Run cmd foreground error when start(): %v", err)
+					logger.Exceptions.Println(emsg)
+					rmsg.Rmsg = emsg
+					return
+				}
+
+				wg.Wait()
+				if err := cmd.Wait(); err != nil {
+					emsg := fmt.Sprintf("Run cmd foreground error when wait(): %v", err)
+					logger.Exceptions.Println(emsg)
+					rmsg.Rmsg = emsg
+					rmsg.Output = stderrSb.String()
+					return
+				}
+				rmsg.Output = stdoutSb.String()
 			}
-			rmsg.Output = string(result)
 		}
 
 		if cparams.DelayTime < 0 {
