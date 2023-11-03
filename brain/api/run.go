@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ func RunScript(ctx *gin.Context) {
 	if script.Size == 0 || len(targetNodes) == 0 {
 		logger.Request.Println("RunScript Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -42,14 +43,14 @@ func RunScript(ctx *gin.Context) {
 	if delay, err = strconv.Atoi(delayStr); err != nil {
 		logger.Request.Println("RunScript Delay Arg Error: ", err.Error())
 		rmsg.Rmsg = "ERORR: arguments: " + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	f, err := script.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	defer f.Close()
@@ -68,12 +69,12 @@ func RunScript(ctx *gin.Context) {
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "ERROR: targetNodes"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {
@@ -109,7 +110,7 @@ func RunCmd(ctx *gin.Context) {
 	if len(cmd) == 0 || len(targetNodes) == 0 {
 		logger.Request.Println("RunCmd Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -118,7 +119,7 @@ func RunCmd(ctx *gin.Context) {
 	if delay, err = strconv.Atoi(delayStr); err != nil {
 		logger.Request.Println("RunScript Delay Arg Error: ", err.Error())
 		rmsg.Rmsg = "ERORR: arguments: " + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -133,12 +134,12 @@ func RunCmd(ctx *gin.Context) {
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "Unmarshal:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {
@@ -154,9 +155,9 @@ func runCmd(taskid string, name string, payload []byte) {
 
 func runAndWait(taskid string, name string, payload []byte, rtype int) (*protocols.Result, error) {
 	var rstr string
-	result := BasicNodeResults{
+	result := protocols.ExecutionResults{
 		Name: name,
-		Emsg: "OK",
+		Code: protocols.ExecOK,
 	}
 
 	if rtype == protocols.TypeRunScript {
@@ -169,18 +170,20 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 		rstr = "deployApp"
 	} else {
 		logger.Comm.Println("unsupported rtype in runAndWait: ", rtype)
-		result.Emsg = "unsupported rtype"
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = "unsupported rtype"
 		model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
-		return nil, errors.New(result.Emsg)
+		return nil, errors.New(result.CommunicationErrorMsg)
 	}
 
 	subid, err := model.Request(name, rtype, payload)
 	if err != nil || len(subid) == 0 {
 		emsg := fmt.Sprintf("Send %s request: %v", rstr, err)
 		logger.Comm.Println(emsg)
-		result.Emsg = emsg
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		model.BrainTaskManager.AddFailedSubTask(taskid, model.TaskIdGen(), &result)
-		return nil, errors.New(result.Emsg)
+		return nil, errors.New(emsg)
 	}
 	subtask_id := string(subid)
 	model.BrainTaskManager.AddSubTask(taskid, subtask_id, &result)
@@ -190,8 +193,9 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 	if err != nil || len(raw) == 0 {
 		emsg := fmt.Sprintf("Send %s wait task request error: %v", rstr, err)
 		logger.Comm.Println(emsg)
-		result.Emsg = emsg
-		return nil, errors.New(result.Emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
+		return nil, errors.New(emsg)
 	}
 
 	var rmsg protocols.Result
@@ -199,10 +203,16 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 	if err != nil {
 		emsg := fmt.Sprintf("unmarshal %s response error: %v", rstr, err)
 		logger.Comm.Println(emsg)
-		result.Emsg = emsg
-		return nil, errors.New(result.Emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
+		return nil, errors.New(emsg)
 	}
-	result.Result = fmt.Sprintf("[%s]\n%s", rmsg.Rmsg, rmsg.Output)
+
+	if rmsg.Rmsg != "OK" {
+		result.Code = protocols.ExecProcessError
+		result.ProcessErrorMsg = rmsg.Rmsg
+	}
+	result.Result = rmsg.Output
 	return &rmsg, nil
 }
 
@@ -213,7 +223,7 @@ func CancelRun(ctx *gin.Context) {
 	plist := model.BrainTaskManager.PendingList(taskid)
 	for i := range plist {
 		subtaskid := plist[i].SubTaskId
-		name := plist[i].Result.(*BasicNodeResults).Name
+		name := plist[i].Result.(*protocols.ExecutionResults).Name
 		go cancelNodeRun(subtaskid, name)
 	}
 }

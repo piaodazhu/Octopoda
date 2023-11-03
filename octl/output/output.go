@@ -1,11 +1,13 @@
 package output
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/piaodazhu/Octopoda/octl/config"
 	"os"
 	"strings"
+
+	"github.com/piaodazhu/Octopoda/octl/config"
 
 	"github.com/tidwall/pretty"
 )
@@ -70,7 +72,12 @@ func PrintJSON(message interface{}) {
 			}
 			fmt.Println(replacer.Replace(string(s)))
 		default:
-			PrintFatalln("unsupported message type")
+			raw, _ := json.Marshal(msg)
+			s := pretty.Pretty(raw)
+			if enableColor {
+				s = pretty.Color(s, nil)
+			}
+			fmt.Println(string(s))
 		}
 	} else {
 		switch msg := message.(type) {
@@ -79,7 +86,8 @@ func PrintJSON(message interface{}) {
 		case []byte:
 			fmt.Print(string(msg))
 		default:
-			PrintFatalln("unsupported message type")
+			raw, _ := json.Marshal(msg)
+			fmt.Println(string(raw))
 		}
 	}
 }

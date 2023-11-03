@@ -7,13 +7,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
+	"runtime"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
-	"os"
-	"os/exec"
 	"github.com/piaodazhu/Octopoda/protocols"
-	"runtime"
 
 	"github.com/piaodazhu/proxylite"
 	"golang.org/x/crypto/ssh"
@@ -127,7 +128,7 @@ func SSH(nodename string) {
 		output.PrintFatalln("Get")
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		output.PrintFatalln("ssh info of this node not found:", nodename)
 	}
 	raw, _ := io.ReadAll(res.Body)

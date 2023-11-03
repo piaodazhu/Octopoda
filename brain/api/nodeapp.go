@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
@@ -17,7 +19,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack node name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -25,7 +27,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.Data(200, "application/json", raw)
@@ -42,7 +44,7 @@ func NodeAppVersion(ctx *gin.Context) {
 	scen = ctx.Query("scenario")
 	if len(name) == 0 || len(app) == 0 || len(scen) == 0 {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -55,7 +57,7 @@ func NodeAppVersion(ctx *gin.Context) {
 	if err != nil {
 		logger.Comm.Println("NodeAppVersion", err)
 		rmsg.Rmsg = "NodeAppVersion"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.Data(200, "application/json", raw)
@@ -74,7 +76,7 @@ func NodeAppReset(ctx *gin.Context) {
 	msg = ctx.PostForm("message")
 	if len(name) == 0 || len(app) == 0 || len(scen) == 0 || len(version) == 0 || len(msg) == 0 {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -91,7 +93,7 @@ func NodeAppReset(ctx *gin.Context) {
 	if err != nil {
 		logger.Comm.Println("NodeAppsInfo", err)
 		rmsg.Rmsg = "NodeAppsInfo"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -100,12 +102,12 @@ func NodeAppReset(ctx *gin.Context) {
 	if err != nil {
 		logger.Exceptions.Println("NodeAppReset Unmarshal", err)
 		rmsg.Rmsg = "NodeApp Result:" + err.Error()
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 		return
 	}
 	if result.Rmsg != "OK" {
 		logger.Exceptions.Println("NodeAppReset", err)
-		ctx.JSON(404, result)
+		ctx.JSON(http.StatusNotFound, result)
 		return
 	}
 
@@ -114,13 +116,13 @@ func NodeAppReset(ctx *gin.Context) {
 	if !success {
 		logger.Exceptions.Print("Failed: AddScenNodeApp")
 		rmsg.Rmsg = "AddScenNodeApp"
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 	}
 	modified, success := model.UpdateScenario(scen, msg)
 	if !success {
 		logger.Exceptions.Print("Failed: UpdateScenario")
 		rmsg.Rmsg = "UpdateScenario"
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 	}
 	rmsg.Modified = modified
 	ctx.JSON(200, result)

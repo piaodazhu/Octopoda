@@ -7,18 +7,18 @@ import (
 
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
-	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-var nodeStatus model.Status
+var nodeStatus protocols.Status
 var stateLock sync.RWMutex
 
 func InitNodeStatus() {
-	nodeStatus = model.Status{
+	nodeStatus = protocols.Status{
 		Name:      config.GlobalConfig.Name,
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),
@@ -34,7 +34,7 @@ func InitNodeStatus() {
 	go maintainStatus()
 }
 
-func LocalStatus() model.Status {
+func LocalStatus() protocols.Status {
 	stateLock.RLock()
 	state := nodeStatus
 	state.LocalTime = time.Now()

@@ -1,18 +1,22 @@
 package task
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
-	"time"
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/briandowns/spinner"
 )
 
-func WaitTask(prefix string, taskid string) ([]byte, error) {
+func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error) {
 	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -39,12 +43,20 @@ func WaitTask(prefix string, taskid string) ([]byte, error) {
 			return nil, err
 		}
 
-		if res.StatusCode == 200 {
+		if res.StatusCode == http.StatusOK {
 			if prefix != "" {
 				output.PrintInfoln("  [DONE]")
 			}
-			return msg, nil
-		} else if res.StatusCode == 202 {
+
+			results := []protocols.ExecutionResults{}
+			err = json.Unmarshal(msg, &results)
+			if err != nil {
+				emsg := "res unmarshal error: " + err.Error()
+				output.PrintFatalln(emsg)
+				return nil, errors.New(emsg)
+			}
+			return results, nil
+		} else if res.StatusCode == http.StatusAccepted {
 			time.Sleep(time.Second * 1)
 		} else {
 			if prefix != "" {

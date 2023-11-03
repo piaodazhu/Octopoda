@@ -52,5 +52,10 @@ func GroupExist(name string) bool {
 }
 
 func GroupGetAll() []string {
-	return rdb.Keys(context.TODO(), "group:*").Val()
+	keys := rdb.Keys(context.TODO(), "group:*").Val()
+	groups := []string{}
+	for _, key := range keys {
+		groups = append(groups, key[len("group:"):])
+	}
+	return groups
 }

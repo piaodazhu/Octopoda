@@ -2,10 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
-	"sort"
+	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -18,219 +16,116 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
-type NodeInfoText struct {
-	Name         string `json:"name"`
-	Version      string `json:"version"`
-	Addr         string `json:"addr"`
-	Health       string `json:"health"`
-	MsgConnState string `json:"msg_conn"`
-	OnlineTime   string `json:"online_time,omitempty"`
-	OfflineTime  string `json:"offline_time,omitempty"`
-	LastOnline   string `json:"last_active,omitempty"`
-}
-
-type NodesInfoText struct {
-	BrainInfo    BrainInfoText   `json:"brain"`
-	NodeInfoList []*NodeInfoText `json:"nodes"`
-	Total        int             `json:"total"`
-	Active       int             `json:"active"`
-	Offline      int             `json:"offline"`
-}
-
-type BrainInfoText struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Addr    string `json:"addr"`
-}
-
-func nodeInfoToText(node *model.NodeModel) *NodeInfoText {
-	res := &NodeInfoText{
-		Name:    node.Name,
-		Version: node.Version,
-		Addr:    node.Addr,
-	}
-	switch node.State {
-	case 0:
-		res.Health = "Healthy"
-		res.OnlineTime = time.Since(time.UnixMilli(node.OnlineTs)).String()
-	case 1:
-		res.Health = "Disconnect"
-		res.LastOnline = time.UnixMilli(node.ActiveTs).Format("2006-01-02 15:04:05")
-	case 2:
-		res.Health = "Offline"
-		res.OfflineTime = time.Since(time.UnixMilli(node.OfflineTs)).String()
-	}
-	res.MsgConnState = node.ConnState
-	return res
-}
-
-func nodesInfoToText(nodes []*model.NodeModel) *NodesInfoText {
-	octlFaceIp, _ := network.GetOctlFaceIp()
-	res := &NodesInfoText{
-		BrainInfo: BrainInfoText{
-			Name:    config.GlobalConfig.Name,
-			Version: buildinfo.String(),
-			Addr:    octlFaceIp,
-		},
-		NodeInfoList: make([]*NodeInfoText, len(nodes)),
-	}
-	for i, node := range nodes {
-		res.Total++
-		if node.State == 0 {
-			res.Active++
-		} else if node.State == 2 || node.ConnState != "On" {
-			res.Offline++
-		}
-		res.NodeInfoList[i] = nodeInfoToText(node)
-	}
-	sort.Slice(res.NodeInfoList, func(i, j int) bool {
-		return res.NodeInfoList[i].Name < res.NodeInfoList[j].Name
-	})
-	return res
-}
-
 func NodeInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
-	var node *model.NodeModel
+	var node protocols.NodeInfo
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
 	if node, ok = model.GetNodeInfoByName(name); !ok {
-		ctx.JSON(404, struct{}{})
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
-	ctx.JSON(200, nodeInfoToText(node))
+	ctx.JSON(200, node)
 }
 
 func NodesInfo(ctx *gin.Context) {
 	targetNodes := ctx.Query("targetNodes")
-	var nodes []*model.NodeModel
-	var ok bool
-
 	names := []string{}
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &names)
 	if err != nil {
-		ctx.JSON(400, err)
+		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
 
+	octlFaceIp, _ := network.GetOctlFaceIp()
+	nodes := protocols.NodesInfo{
+		BrainName:    config.GlobalConfig.Name,
+		BrainVersion: buildinfo.String(),
+		BrainAddr:    octlFaceIp,
+	}
+	var ok bool
+
 	if len(names) == 0 {
-		if nodes, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(404, struct{}{})
+		if nodes.InfoList, ok = model.GetNodesInfoAll(); !ok {
+			ctx.JSON(http.StatusNotFound, struct{}{})
 			return
 		}
 	} else {
-		if nodes, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(404, struct{}{})
+		if nodes.InfoList, ok = model.GetNodesInfo(names); !ok {
+			ctx.JSON(http.StatusNotFound, struct{}{})
 			return
 		}
 	}
 
-	ctx.JSON(200, nodesInfoToText(nodes))
-}
-
-type StatusText struct {
-	Name         string `json:"name"`
-	Platform     string `json:"platform"`
-	CpuCores     int    `json:"cpu_cores"`
-	LocalTime    string `json:"local_time"`
-	CpuLoadShort string `json:"cpu_average1"`
-	CpuLoadLong  string `json:"cpu_average10"`
-	MemUsage     string `json:"memory_usage"`
-	DiskUsage    string `json:"disk_usage"`
-}
-
-type NodesStatusText struct {
-	NodesStatusList []*StatusText `json:"nodes"`
-	AvrCpuLoad      string        `json:"average_cpuload"`
-	AvrMemoryUsage  string        `json:"average_memoryusage"`
-	AvrDiskUsage    string        `json:"average_diskusage"`
-}
-
-func statusToText(status model.Status) StatusText {
-	return StatusText{
-		Name:         status.Name,
-		Platform:     status.Platform,
-		CpuCores:     status.CpuCores,
-		LocalTime:    status.LocalTime.Format("2006-01-02 15:04:05"),
-		CpuLoadShort: fmt.Sprintf("%5.1f%%", status.CpuLoadShort),
-		CpuLoadLong:  fmt.Sprintf("%5.1f%%", status.CpuLoadLong),
-		MemUsage: fmt.Sprintf("%5.1f%%: (%.2fGB / %.2fGB)",
-			float64(status.MemUsed*100)/float64(status.MemTotal),
-			float64(status.MemUsed)/1073741824,
-			float64(status.MemTotal)/1073741824),
-		DiskUsage: fmt.Sprintf("%5.1f%%: (%.2fGB / %.2fGB)",
-			float64(status.DiskUsed*100)/float64(status.DiskTotal),
-			float64(status.DiskUsed)/1073741824,
-			float64(status.DiskTotal)/1073741824),
-	}
+	ctx.JSON(200, nodes)
 }
 
 func NodeStatus(ctx *gin.Context) {
 	var name string
 	var ok bool
 	if name, ok = ctx.GetQuery("name"); !ok {
-		ctx.JSON(404, struct{}{})
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
-	var status model.Status
+	var status protocols.Status
 	if name == "brain" {
-		ctx.JSON(200, statusToText(sys.LocalStatus()))
+		ctx.JSON(200, sys.LocalStatus())
 		return
 	}
-	if state, ok := model.GetNodeState(name); !ok || state != model.NodeStateReady {
-		ctx.JSON(404, struct{}{})
+	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
 	raw, err := model.Request(name, protocols.TypeNodeStatus, []byte{})
 	if err != nil {
 		logger.Comm.Println("NodeStatus", err)
-		ctx.JSON(404, struct{}{})
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
 
 	err = json.Unmarshal(raw, &status)
 	if err != nil {
 		logger.Comm.Println("NodeStatus Unmarshal", err)
-		ctx.JSON(404, struct{}{})
+		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
-	ctx.JSON(200, statusToText(status))
+	ctx.JSON(200, status)
 }
 
 func NodesState(ctx *gin.Context) {
 	targetNodes := ctx.Query("targetNodes")
-	var nodes, aliveNodes []*model.NodeModel
-	var nodesStatus NodesStatusText
+	var nodes, aliveNodes []protocols.NodeInfo
+	var nodesStatus protocols.NodesStatus
 	var ok bool
 
 	names := []string{}
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &names)
 	if err != nil {
-		ctx.JSON(400, err)
+		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
 
 	if len(names) == 0 {
 		if nodes, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(404, struct{}{})
+			ctx.JSON(http.StatusNotFound, struct{}{})
 		}
 	} else {
 		if nodes, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(404, struct{}{})
+			ctx.JSON(http.StatusNotFound, struct{}{})
 			return
 		}
 	}
 
 	for _, n := range nodes {
-		if n.State == model.NodeStateReady {
+		if n.State == protocols.NodeStateReady {
 			aliveNodes = append(aliveNodes, n)
 		}
 	}
 
-	channel := make(chan model.Status, len(aliveNodes))
+	channel := make(chan protocols.Status, len(aliveNodes))
 	var wg sync.WaitGroup
 	wg.Add(len(aliveNodes))
 	for _, node := range aliveNodes {
@@ -239,33 +134,16 @@ func NodesState(ctx *gin.Context) {
 	wg.Wait()
 	close(channel)
 
-	var cpu_load_sum float64 = 0.0
-	var mem_used_sum, mem_tot_sum uint64 = 0, 0
-	var disk_used_sum, disk_tot_sum uint64 = 0, 0
-
 	for v := range channel {
-		text := statusToText(v)
-		nodesStatus.NodesStatusList = append(nodesStatus.NodesStatusList, &text)
-		cpu_load_sum += v.CpuLoadLong
-		mem_used_sum += v.MemUsed
-		mem_tot_sum += v.MemTotal
-		disk_used_sum += v.DiskUsed
-		disk_tot_sum += v.DiskTotal
+		nodesStatus.StatusList = append(nodesStatus.StatusList, v)
 	}
-	nodesStatus.AvrCpuLoad = fmt.Sprintf("%5.1f%%", cpu_load_sum/float64(len(aliveNodes)))
-	nodesStatus.AvrMemoryUsage = fmt.Sprintf("%5.1f%%", float64(mem_used_sum*100)/float64(mem_tot_sum))
-	nodesStatus.AvrDiskUsage = fmt.Sprintf("%5.1f%%", float64(disk_used_sum*100)/float64(disk_tot_sum))
-
-	sort.Slice(nodesStatus.NodesStatusList, func(i, j int) bool {
-		return nodesStatus.NodesStatusList[i].Name < nodesStatus.NodesStatusList[j].Name
-	})
 
 	ctx.JSON(200, nodesStatus)
 }
 
-func getNodeStatus(name string, channel chan<- model.Status, wg *sync.WaitGroup) {
+func getNodeStatus(name string, channel chan<- protocols.Status, wg *sync.WaitGroup) {
 	defer wg.Done()
-	var state model.Status
+	var state protocols.Status
 	var err error
 	var raw []byte
 
@@ -293,7 +171,7 @@ func NodePrune(ctx *gin.Context) {
 func NodesParse(ctx *gin.Context) {
 	names := []string{}
 	if err := ctx.Bind(&names); err != nil {
-		ctx.JSON(400, err)
+		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
 	nodeSet := map[string]struct{}{}
@@ -308,7 +186,7 @@ func NodesParse(ctx *gin.Context) {
 		if name[0] == '@' {
 			res, ok := rdb.GroupGet(name[1:])
 			if !ok || len(res) == 0 {
-				ctx.String(400, "invalid group %s", name[1:])
+				ctx.String(http.StatusBadRequest, "invalid group %s", name[1:])
 				return
 			}
 			for _, node := range res {
@@ -316,8 +194,8 @@ func NodesParse(ctx *gin.Context) {
 			}
 		} else {
 			res, ok := model.GetNodeState(name)
-			if !ok || res != model.NodeStateReady {
-				ctx.String(400, "invalid node %s", name)
+			if !ok || res != protocols.NodeStateReady {
+				ctx.String(http.StatusBadRequest, "invalid node %s", name)
 				return
 			}
 			nodeSet[name] = struct{}{}

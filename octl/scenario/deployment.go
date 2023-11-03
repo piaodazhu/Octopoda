@@ -7,11 +7,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
-	"github.com/piaodazhu/Octopoda/octl/output"
-	"github.com/piaodazhu/Octopoda/octl/shell"
-	"github.com/piaodazhu/Octopoda/octl/task"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,6 +14,12 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/shell"
+	"github.com/piaodazhu/Octopoda/octl/task"
 
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
@@ -199,7 +200,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 			}
 		}(string(taskid))
 
-		if res.StatusCode != 202 {
+		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error status=%d. ", res.StatusCode)
 			output.PrintFatalln(emsg)
 			return emsg, errors.New(emsg)
@@ -351,7 +352,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 			}
 		}(string(taskid))
 
-		if res.StatusCode != 202 {
+		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error status=%d. ", res.StatusCode)
 			output.PrintFatalln(emsg)
 			return emsg, errors.New(emsg)
@@ -487,7 +488,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) (string, error) {
 			return emsg, err
 		}
 
-		if res.StatusCode != 202 {
+		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
 			output.PrintFatalln(emsg)
 			return emsg, errors.New(emsg)
@@ -533,7 +534,7 @@ func ScenarioCreate(name, description string) (string, error) {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("scenario %s already exists, status=%d.", name, res.StatusCode)
 		output.PrintFatalln(emsg)
 		return emsg, errors.New(emsg)

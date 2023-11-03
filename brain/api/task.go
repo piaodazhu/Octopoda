@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/protocols"
@@ -11,24 +13,24 @@ func TaskState(ctx *gin.Context) {
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
-	rcode := 200
+	rcode := http.StatusOK
 	if len(taskid) == 0 {
 		rmsg.Rmsg = "Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	// ONLY FOR HACK. NO CANCEL!!!
 	if !model.BrainTaskManager.IsTaskDone(taskid) {
 		rmsg.Rmsg = "TaskProcessing"
-		rcode = 202
+		rcode = http.StatusAccepted
 		ctx.JSON(rcode, rmsg)
 		return
 	}
 	rlist := model.BrainTaskManager.DeleteTask(taskid)
-	results := []*BasicNodeResults{}
+	results := []*protocols.ExecutionResults{}
 	for i := range rlist {
-		results = append(results, rlist[i].(*BasicNodeResults))
+		results = append(results, rlist[i].(*protocols.ExecutionResults))
 	}
 	ctx.JSON(rcode, results)
 }

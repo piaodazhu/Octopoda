@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -18,12 +20,12 @@ func ScenarioCreate(ctx *gin.Context) {
 	}
 	if len(name) == 0 || len(description) == 0 {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	if !model.AddScenario(name, description) {
 		rmsg.Rmsg = "ERROR: Scenario Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, rmsg)
@@ -37,13 +39,13 @@ func ScenarioUpdate(ctx *gin.Context) {
 	}
 	if len(name) == 0 || len(msg) == 0 {
 		rmsg.Rmsg = "Lack scenario name or message"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	modified, ok := model.UpdateScenario(name, msg)
 	if !ok {
 		rmsg.Rmsg = "ERROR: UpdateScenario"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	rmsg.Modified = modified
@@ -63,14 +65,14 @@ func ScenarioDelete(ctx *gin.Context) {
 	}
 	if len(name) == 0 {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -79,7 +81,7 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	// check target nodes
 	// delete app
-	results := make([]BasicNodeResults, len(dlist))
+	results := make([]protocols.ExecutionResults, len(dlist))
 	var wg sync.WaitGroup
 
 	for i := range dlist {
@@ -94,7 +96,7 @@ func ScenarioDelete(ctx *gin.Context) {
 		nodename := dlist[i].NodeName
 
 		wg.Add(1)
-		go deleteApp(nodename, payload, &wg, &results[i].Result)
+		go deleteApp(nodename, payload, &wg, &results[i])
 	}
 	wg.Wait()
 
@@ -103,28 +105,32 @@ func ScenarioDelete(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
+func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
 	defer wg.Done()
-	*result = "UnknownError"
+	result.Code = protocols.ExecOK
 
 	raw, err := model.Request(name, protocols.TypeAppDelete, payload)
 	if err != nil {
-		logger.Comm.Println("TypeAppDeleteResponse", err)
-		*result = "TypeAppDeleteResponse"
+		emsg := fmt.Sprintf("Send TypeAppDeleteResponse request error: %v", err)
+		logger.Comm.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		return
 	}
 	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("Unmarshal", err)
-		*result = "BrainError"
+		emsg := fmt.Sprintf("unmarshal response error: %v", err)
+		logger.Comm.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		return
 	}
 	if rmsg.Rmsg != "OK" {
-		*result = "NodeError:" + rmsg.Rmsg
-	} else {
-		*result = "OK"
+		result.Code = protocols.ExecProcessError
+		result.ProcessErrorMsg = rmsg.Rmsg
 	}
+	result.Result = rmsg.Output
 }
 
 func ScenarioInfo(ctx *gin.Context) {
@@ -136,12 +142,12 @@ func ScenarioInfo(ctx *gin.Context) {
 	}
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	if scen, ok = model.GetScenarioInfoByName(name); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, scen)
@@ -156,7 +162,7 @@ func ScenariosInfo(ctx *gin.Context) {
 
 	if scens, ok = model.GetScenariosDigestAll(); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, scens)
@@ -172,7 +178,7 @@ func ScenarioVersion(ctx *gin.Context) {
 
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack Name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	versions = model.GetScenarioVersionByName(name)
@@ -195,14 +201,14 @@ func ScenarioReset(ctx *gin.Context) {
 
 	if len(name) == 0 || len(msg) == 0 || len(prefix) < 2 || len(prefix) > 40 {
 		rmsg.Rmsg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -223,12 +229,12 @@ func ScenarioReset(ctx *gin.Context) {
 	}
 	if len(version) == 0 {
 		rmsg.Rmsg = "ERROR: Version Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	if ambiguity {
 		rmsg.Rmsg = "ERROR: Version Ambiguity"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -237,7 +243,7 @@ func ScenarioReset(ctx *gin.Context) {
 	rlist := model.GetNodeApps(name, version)
 
 	// check target nodes
-	results := make([]BasicNodeResults, len(rlist))
+	results := make([]protocols.ExecutionResults, len(rlist))
 	var wg sync.WaitGroup
 
 	for i := range rlist {
@@ -260,7 +266,7 @@ func ScenarioReset(ctx *gin.Context) {
 		// node name
 		nodename := rlist[i].NodeName
 		wg.Add(1)
-		go resetApp(nodename, payload, &wg, &results[i].Result)
+		go resetApp(nodename, payload, &wg, &results[i])
 	}
 	wg.Wait()
 
@@ -269,24 +275,28 @@ func ScenarioReset(ctx *gin.Context) {
 	ctx.JSON(200, results)
 }
 
-func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *string) {
+func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
 	defer wg.Done()
-	*result = "UnknownError"
+	result.Code = protocols.ExecOK
 
 	raw, err := model.Request(name, protocols.TypeAppReset, payload)
 	if err != nil {
-		logger.Comm.Println("TypeAppResetResponse", err)
-		*result = "TypeAppResetResponse"
+		emsg := fmt.Sprintf("Request error %v", err)
+		logger.Comm.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		return
 	}
 	var rmsg protocols.Result
 	err = config.Jsoner.Unmarshal(raw, &rmsg)
 	if err != nil {
-		logger.Exceptions.Println("Unmarshal", err)
-		*result = "BrainError"
+		emsg := fmt.Sprintf("Brain unmarshal error %v", err)
+		logger.Comm.Println(emsg)
+		result.Code = protocols.ExecCommunicationError
+		result.CommunicationErrorMsg = emsg
 		return
 	}
-	*result = rmsg.Rmsg
+	result.Result = rmsg.Rmsg
 }
 
 func ScenarioFix(ctx *gin.Context) {
@@ -298,13 +308,13 @@ func ScenarioFix(ctx *gin.Context) {
 
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	err := model.Fix(name)
 	if err != nil {
 		rmsg.Rmsg = "Fix:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 	}
 	ctx.JSON(200, rmsg)
 }

@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-func NodeInfo(name string) (string, error) {
+func NodeInfo(name string) (*protocols.NodeInfo, error) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -21,23 +23,36 @@ func NodeInfo(name string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	output.PrintJSON(raw)
-	return string(raw), nil
+	if res.StatusCode != http.StatusOK {
+		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
+	}
+
+	info := protocols.NodeInfo{}
+	err = json.Unmarshal(raw, &info)
+	if err != nil {
+		emsg := "res unmarshal error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
+	}
+	output.PrintJSON(info.ToText())
+	return &info, nil
 }
 
-func NodesInfo(names []string) (string, error) {
+func NodesInfo(names []string) (*protocols.NodesInfo, error) {
 	nodes, err := NodesParse(names)
 	if err != nil {
-		msg := "node parse."
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := "node parse." + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
@@ -48,18 +63,32 @@ func NodesInfo(names []string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error." + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
-	output.PrintJSON(raw)
-	return string(raw), nil
+	if res.StatusCode != http.StatusOK {
+		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
+	}
+
+	info := protocols.NodesInfo{}
+	err = json.Unmarshal(raw, &info)
+	if err != nil {
+		emsg := "res unmarshal error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
+	}
+	output.PrintJSON(info.ToText())
+
+	return &info, nil
 }
 
-func NodePrune() (string, error) {
+func NodePrune() error {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -67,12 +96,12 @@ func NodePrune() (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return errors.New(emsg)
 	}
 	res.Body.Close()
-	return "OK", nil
+	return nil
 }
 
 func NodesParse(names []string) ([]string, error) {
@@ -92,7 +121,7 @@ func NodesParse(names []string) ([]string, error) {
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
-	if res.StatusCode == 200 {
+	if res.StatusCode == http.StatusOK {
 		nodes := []string{}
 		err := json.Unmarshal(raw, &nodes)
 		if err != nil {

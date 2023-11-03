@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"io"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -28,8 +29,6 @@ type AppDeployParams struct {
 	Script string
 }
 
-type CommitResults BasicNodeResults
-
 func AppPrepare(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
 	scenario := ctx.PostForm("scenario")
@@ -43,13 +42,13 @@ func AppPrepare(ctx *gin.Context) {
 
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -57,14 +56,14 @@ func AppPrepare(ctx *gin.Context) {
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	multipart, err := files.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -72,12 +71,12 @@ func AppPrepare(ctx *gin.Context) {
 	multipart.Close()
 	if err != nil {
 		rmsg.Rmsg = "ReadAll:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {
@@ -111,13 +110,13 @@ func AppDeploy(ctx *gin.Context) {
 
 	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -125,14 +124,14 @@ func AppDeploy(ctx *gin.Context) {
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	multipart, err := file.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	defer multipart.Close()
@@ -140,12 +139,12 @@ func AppDeploy(ctx *gin.Context) {
 	raw, err := io.ReadAll(multipart)
 	if err != nil {
 		rmsg.Rmsg = "ReadAll:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {

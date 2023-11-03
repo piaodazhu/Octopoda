@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,7 @@ func NameRegister(ctx *gin.Context) {
 	err := ctx.ShouldBind(&params)
 	if err != nil {
 		log.Println("ctx.ShouldBind():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 
@@ -24,7 +25,7 @@ func NameRegister(ctx *gin.Context) {
 	err = GetNameEntryDao().Set(params.Name, entry, params.TTL)
 	if err != nil {
 		// log.Println("dao.DaoSet():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK"})
@@ -34,7 +35,7 @@ func NameDelete(ctx *gin.Context) {
 	key, ok := ctx.GetPostForm("name")
 	if !ok {
 		log.Println("ctx.GetQuery(): no name")
-		ctx.JSON(400, protocols.Response{Message: "no name"})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: "no name"})
 		return
 	}
 	scope, ok := ctx.GetPostForm("scope")
@@ -51,12 +52,12 @@ func NameDelete(ctx *gin.Context) {
 		err = GetSshInfoDao().Del(key)
 	default:
 		log.Println("ctx.GetQuery(): invalid scope")
-		ctx.JSON(404, protocols.Response{Message: "invalid scope"})
+		ctx.JSON(http.StatusNotFound, protocols.Response{Message: "invalid scope"})
 		return
 	}
 	if err != nil {
 		// log.Println("dao.DaoDel():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK"})
@@ -66,13 +67,13 @@ func NameQuery(ctx *gin.Context) {
 	key, ok := ctx.GetQuery("name")
 	if !ok {
 		log.Println("ctx.GetQuery(): no name")
-		ctx.JSON(400, protocols.Response{Message: "no name"})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: "no name"})
 		return
 	}
 	entry, err := GetNameEntryDao().Get(key)
 	if err != nil {
 		// log.Println("dao.DaoGet():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK", NameEntry: entry})
@@ -83,7 +84,7 @@ func NameList(ctx *gin.Context) {
 	err := ctx.ShouldBindQuery(&params)
 	if err != nil {
 		log.Println("ctx.ShouldBindQuery():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 
@@ -116,7 +117,7 @@ func NameList(ctx *gin.Context) {
 
 	if err != nil {
 		// log.Println("dao.DaoGet():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK", NameList: entry})
@@ -127,7 +128,7 @@ func UploadConfig(ctx *gin.Context) {
 	err := ctx.ShouldBind(&params)
 	if err != nil {
 		log.Println("ctx.ShouldBind():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 
@@ -141,14 +142,14 @@ func UploadConfig(ctx *gin.Context) {
 		err = GetNameConfigDao().Del(params.Name)
 		if err != nil {
 			log.Println("NameConfigDao.Del():", err.Error())
-			ctx.JSON(400, protocols.Response{Message: err.Error()})
+			ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 			return
 		}
 	case "reset":
 		err = GetNameConfigDao().Del(params.Name)
 		if err != nil {
 			log.Println("NameConfigDao.Del():", err.Error())
-			ctx.JSON(400, protocols.Response{Message: err.Error()})
+			ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 			return
 		}
 		fallthrough // reset need to clear then append
@@ -157,12 +158,12 @@ func UploadConfig(ctx *gin.Context) {
 		err = GetNameConfigDao().Append(params.Name, entry)
 		if err != nil {
 			log.Println("NameConfigDao.Append():", err.Error())
-			ctx.JSON(400, protocols.Response{Message: err.Error()})
+			ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 			return
 		}
 	default:
 		log.Println("NameConfigDao.???():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK"})
@@ -173,13 +174,13 @@ func DownloadConfig(ctx *gin.Context) {
 	err := ctx.ShouldBindQuery(&params)
 	if err != nil {
 		log.Println("ctx.ShouldBindQuery():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	entry, err := GetNameConfigDao().GetRange(params.Name, params.Index, params.Amount)
 	if err != nil {
 		// log.Println("dao.DaoGet():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK", RawConfig: entry})
@@ -190,7 +191,7 @@ func UploadSshInfo(ctx *gin.Context) {
 	err := ctx.ShouldBind(&params)
 	if err != nil {
 		log.Println("ctx.ShouldBind():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 
@@ -201,7 +202,7 @@ func UploadSshInfo(ctx *gin.Context) {
 	err = GetSshInfoDao().Set(params.Name, entry, 0)
 	if err != nil {
 		log.Println("SshInfoDao.Set():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK"})
@@ -211,13 +212,13 @@ func DownloadSshInfo(ctx *gin.Context) {
 	key, ok := ctx.GetQuery("name")
 	if !ok {
 		log.Println("ctx.GetQuery(): no name")
-		ctx.JSON(400, protocols.Response{Message: "no name"})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: "no name"})
 		return
 	}
 	entry, err := GetSshInfoDao().Get(key)
 	if err != nil {
 		// log.Println("dao.DaoGet():", err.Error())
-		ctx.JSON(400, protocols.Response{Message: err.Error()})
+		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
 	ctx.JSON(200, protocols.Response{Message: "OK", SshInfo: entry})

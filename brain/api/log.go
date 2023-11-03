@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ type LogParams struct {
 func NodeLog(ctx *gin.Context) {
 	name, ok := ctx.GetQuery("name")
 	if !ok {
-		ctx.Status(404)
+		ctx.Status(http.StatusNotFound)
 		return
 	}
 	maxlines, maxdaysbefore := 0, 0
@@ -49,7 +50,7 @@ func NodeLog(ctx *gin.Context) {
 	} else {
 		ok := readLogsRemote(name, &lparams)
 		if !ok {
-			ctx.Status(404)
+			ctx.Status(http.StatusNotFound)
 			return
 		}
 	}

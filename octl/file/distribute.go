@@ -7,26 +7,28 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
-	"github.com/piaodazhu/Octopoda/octl/node"
-	"github.com/piaodazhu/Octopoda/octl/output"
-	"github.com/piaodazhu/Octopoda/octl/task"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
 
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/protocols"
+
 	"github.com/mholt/archiver/v3"
 )
 
-func DistribFile(localFileOrDir string, targetPath string, names []string) (string, error) {
+func DistribFile(localFileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, error) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
-		msg := "node parse."
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := "node parse error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 
 	if targetPath == "." {
@@ -49,9 +51,9 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) (stri
 	}
 	err = cmd.Run()
 	if err != nil {
-		msg := "Wrap files: " + srcPath + "-->" + wrapName + " | " + cmd.String()
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := fmt.Sprintf("warp files %s to %s error: %s", srcPath, wrapName, err.Error())
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	defer os.RemoveAll(wrapName)
 
@@ -60,17 +62,17 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) (stri
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
-		msg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s).", wrapName, packName)
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s) error: %s", wrapName, packName, err.Error())
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	defer os.Remove(packName)
 
 	f, err := os.OpenFile(packName, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		msg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm).", packName)
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm) errors: %s", packName, err.Error())
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	defer f.Close()
 
@@ -95,29 +97,29 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) (stri
 
 	res, err := http.Post(url, contentType, &bodyBuffer)
 	if err != nil {
-		emsg := "http post error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http post error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		emsg := "http read body."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http read body: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 
-	if res.StatusCode != 202 {
-		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
+	if res.StatusCode != http.StatusAccepted {
+		emsg := fmt.Sprintf("http request error msg=%s, status=%d.", msg, res.StatusCode)
 		output.PrintFatalln(emsg)
-		return emsg, errors.New(emsg)
+		return nil, errors.New(emsg)
 	}
 	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		output.PrintFatalln(emsg)
+		return nil, errors.New(emsg)
 	}
 	output.PrintJSON(results)
-	return string(results), nil
+	return results, nil
 }
