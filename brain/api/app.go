@@ -76,7 +76,7 @@ func AppPrepare(ctx *gin.Context) {
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {
@@ -144,7 +144,7 @@ func AppDeploy(ctx *gin.Context) {
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {

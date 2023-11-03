@@ -98,7 +98,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	raw, err := model.Request(name, cmdType, []byte{})
 	if err != nil {
 		logger.Comm.Println(protocols.MsgTypeString[cmdType], err)
-		ctx.JSON(500, proxyMsg{
+		ctx.JSON(http.StatusInternalServerError, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("brain request %s error", name),
@@ -110,7 +110,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	err = json.Unmarshal(raw, &pmsg)
 	if err != nil {
 		logger.Comm.Println("proxyMsg Unmarshal", err)
-		ctx.JSON(500, proxyMsg{
+		ctx.JSON(http.StatusInternalServerError, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("proxyMsg Unmarshal error: %s", err),
@@ -121,7 +121,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		ctx.JSON(200, pmsg)
 		return true
 	} else {
-		ctx.JSON(500, pmsg)
+		ctx.JSON(http.StatusInternalServerError, pmsg)
 		return false
 	}
 }

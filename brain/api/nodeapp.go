@@ -102,7 +102,7 @@ func NodeAppReset(ctx *gin.Context) {
 	if err != nil {
 		logger.Exceptions.Println("NodeAppReset Unmarshal", err)
 		rmsg.Rmsg = "NodeApp Result:" + err.Error()
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 		return
 	}
 	if result.Rmsg != "OK" {
@@ -116,13 +116,13 @@ func NodeAppReset(ctx *gin.Context) {
 	if !success {
 		logger.Exceptions.Print("Failed: AddScenNodeApp")
 		rmsg.Rmsg = "AddScenNodeApp"
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 	}
 	modified, success := model.UpdateScenario(scen, msg)
 	if !success {
 		logger.Exceptions.Print("Failed: UpdateScenario")
 		rmsg.Rmsg = "UpdateScenario"
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 	}
 	rmsg.Modified = modified
 	ctx.JSON(200, result)

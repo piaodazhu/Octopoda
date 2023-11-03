@@ -77,7 +77,7 @@ func FileUpload(ctx *gin.Context) {
 		} else if tmpSb.String()[i] == '/' {
 			logger.Exceptions.Println("tmpExtDir")
 			rmsg.Rmsg = "bad tmpExtDir:" + tmpSb.String()
-			ctx.JSON(403, rmsg)
+			ctx.JSON(http.StatusBadRequest, rmsg)
 			return
 		}
 	}
@@ -87,7 +87,7 @@ func FileUpload(ctx *gin.Context) {
 	if err != nil {
 		logger.Exceptions.Println("FileCreate")
 		rmsg.Rmsg = "FileCreate:" + err.Error()
-		ctx.JSON(403, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 
 		os.RemoveAll(tmpPath)
 		return
@@ -100,7 +100,7 @@ func FileUpload(ctx *gin.Context) {
 	src.Close()
 
 	taskid := model.BrainTaskManager.CreateTask(1)
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
 		result := protocols.ExecutionResults{
@@ -148,7 +148,7 @@ func FileSpread(ctx *gin.Context) {
 	if err != nil {
 		logger.Exceptions.Println("FileCreate")
 		rmsg.Rmsg = "FileCreate:" + err.Error()
-		ctx.JSON(403, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -172,7 +172,7 @@ func FileSpread(ctx *gin.Context) {
 		emsg := fmt.Sprintf("error when file %s to %s: %v", fname, wrapName, err)
 		logger.Exceptions.Print(emsg)
 		rmsg.Rmsg = emsg
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 		return
 	}
 	defer os.RemoveAll(wrapName)
@@ -184,7 +184,7 @@ func FileSpread(ctx *gin.Context) {
 		emsg := fmt.Sprintf("error archive %s to %s: %v", wrapName, packName, err)
 		logger.Exceptions.Print(emsg)
 		rmsg.Rmsg = emsg
-		ctx.JSON(500, rmsg)
+		ctx.JSON(http.StatusInternalServerError, rmsg)
 		return
 	}
 
@@ -200,7 +200,7 @@ func FileSpread(ctx *gin.Context) {
 	payload, _ := config.Jsoner.Marshal(&finfo)
 
 	taskid := model.BrainTaskManager.CreateTask(len(fsParams.TargetNodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
 		for i := range fsParams.TargetNodes {
@@ -400,7 +400,7 @@ func FileDistrib(ctx *gin.Context) {
 	payload, _ := config.Jsoner.Marshal(&finfo)
 
 	taskid := model.BrainTaskManager.CreateTask(1)
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
 		for i := range nodes {
@@ -474,7 +474,7 @@ func FilePull(ctx *gin.Context) {
 		packName := packFile(pathsb.String())
 		if packName == "" {
 			rmsg.Rmsg = "Error when packing files"
-			ctx.JSON(500, rmsg)
+			ctx.JSON(http.StatusInternalServerError, rmsg)
 			return
 		}
 		defer os.Remove(packName)
@@ -484,7 +484,7 @@ func FilePull(ctx *gin.Context) {
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(1)
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
 		result := protocols.ExecutionResults{

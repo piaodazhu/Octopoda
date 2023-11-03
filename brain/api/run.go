@@ -74,7 +74,7 @@ func RunScript(ctx *gin.Context) {
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {
@@ -139,7 +139,7 @@ func RunCmd(ctx *gin.Context) {
 	}
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
-	ctx.String(202, taskid)
+	ctx.String(http.StatusAccepted, taskid)
 
 	// async processing
 	go func() {

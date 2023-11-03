@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/api"
@@ -90,7 +91,7 @@ func initRouter(engine *gin.Engine) {
 }
 
 func NotImpl(ctx *gin.Context) {
-	ctx.JSON(501, struct{}{})
+	ctx.JSON(http.StatusNotImplemented, struct{}{})
 }
 
 func OctopodaLogger() gin.HandlerFunc {
@@ -114,7 +115,7 @@ func OctopodaLogger() gin.HandlerFunc {
 func BusyBlocker() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !model.CheckReady() {
-			c.AbortWithStatusJSON(503, protocols.Result{
+			c.AbortWithStatusJSON(http.StatusServiceUnavailable, protocols.Result{
 				Rcode: -1,
 				Rmsg:  "Server Busy",
 			})
