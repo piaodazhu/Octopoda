@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync"
 
@@ -28,7 +29,7 @@ func PakmaCmd(ctx *gin.Context) {
 	if params.Command == "" || len(targetNodes) == 0 {
 		logger.Request.Println("PakmaCmd Args Error")
 		rmsg.Rmsg = "ERORR: arguments"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -36,7 +37,7 @@ func PakmaCmd(ctx *gin.Context) {
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "ERROR: targetNodes"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 

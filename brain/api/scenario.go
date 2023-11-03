@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -19,12 +20,12 @@ func ScenarioCreate(ctx *gin.Context) {
 	}
 	if len(name) == 0 || len(description) == 0 {
 		rmsg.Rmsg = "ERROR: Wrong Args"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	if !model.AddScenario(name, description) {
 		rmsg.Rmsg = "ERROR: Scenario Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, rmsg)
@@ -38,13 +39,13 @@ func ScenarioUpdate(ctx *gin.Context) {
 	}
 	if len(name) == 0 || len(msg) == 0 {
 		rmsg.Rmsg = "Lack scenario name or message"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	modified, ok := model.UpdateScenario(name, msg)
 	if !ok {
 		rmsg.Rmsg = "ERROR: UpdateScenario"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	rmsg.Modified = modified
@@ -64,14 +65,14 @@ func ScenarioDelete(ctx *gin.Context) {
 	}
 	if len(name) == 0 {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -128,7 +129,7 @@ func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocol
 	if rmsg.Rmsg != "OK" {
 		result.Code = protocols.ExecProcessError
 		result.ProcessErrorMsg = rmsg.Rmsg
-	} 
+	}
 	result.Result = rmsg.Output
 }
 
@@ -141,12 +142,12 @@ func ScenarioInfo(ctx *gin.Context) {
 	}
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	if scen, ok = model.GetScenarioInfoByName(name); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, scen)
@@ -161,7 +162,7 @@ func ScenariosInfo(ctx *gin.Context) {
 
 	if scens, ok = model.GetScenariosDigestAll(); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.JSON(200, scens)
@@ -177,7 +178,7 @@ func ScenarioVersion(ctx *gin.Context) {
 
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack Name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	versions = model.GetScenarioVersionByName(name)
@@ -200,14 +201,14 @@ func ScenarioReset(ctx *gin.Context) {
 
 	if len(name) == 0 || len(msg) == 0 || len(prefix) < 2 || len(prefix) > 40 {
 		rmsg.Rmsg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	// must exists
 	if _, exists := model.GetScenarioInfoByName(name); !exists {
 		rmsg.Rmsg = "ERROR: Scenario Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -228,12 +229,12 @@ func ScenarioReset(ctx *gin.Context) {
 	}
 	if len(version) == 0 {
 		rmsg.Rmsg = "ERROR: Version Not Exists"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	if ambiguity {
 		rmsg.Rmsg = "ERROR: Version Ambiguity"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 
@@ -307,13 +308,13 @@ func ScenarioFix(ctx *gin.Context) {
 
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	err := model.Fix(name)
 	if err != nil {
 		rmsg.Rmsg = "Fix:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 	}
 	ctx.JSON(200, rmsg)
 }

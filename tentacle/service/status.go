@@ -14,25 +14,11 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-type Status struct {
-	Name      string
-	Platform  string
-	CpuCores  int
-	LocalTime time.Time
-
-	CpuLoadShort float64
-	CpuLoadLong  float64
-	MemUsed      uint64
-	MemTotal     uint64
-	DiskUsed     uint64
-	DiskTotal    uint64
-}
-
-var nodeStatus Status
+var nodeStatus protocols.Status
 var stateLock sync.RWMutex
 
 func initNodeStatus() {
-	nodeStatus = Status{
+	nodeStatus = protocols.Status{
 		Name:      config.GlobalConfig.Name,
 		Platform:  GetCpuInfo(),
 		CpuCores:  GetCpuCores(),

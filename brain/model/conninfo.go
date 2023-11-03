@@ -3,9 +3,10 @@ package model
 import (
 	"fmt"
 	"net"
-	"github.com/piaodazhu/Octopoda/protocols"
 	"strings"
 	"sync"
+
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type ConnMsg struct {
@@ -15,20 +16,20 @@ type ConnMsg struct {
 }
 
 type ConnInfo struct {
-	ConnState string
-	Conn      net.Conn
-	Messages  sync.Map
+	ConnStatePtr *string
+	Conn         net.Conn
+	Messages     sync.Map
 }
 
-func CreateConnInfo(conn net.Conn) ConnInfo {
-	connState := "On"
+func CreateConnInfo(conn net.Conn, connStatePtr *string) ConnInfo {
+	*connStatePtr = "On"
 	if conn == nil {
-		connState = "Off"
+		*connStatePtr = "Off"
 	}
 	return ConnInfo{
-		Conn:      conn,
-		ConnState: connState,
-		Messages:  sync.Map{},
+		Conn:         conn,
+		ConnStatePtr: connStatePtr,
+		Messages:     sync.Map{},
 	}
 }
 
@@ -37,7 +38,7 @@ func (c *ConnInfo) Close() {
 		c.Conn.Close()
 		c.Conn = nil
 	}
-	c.ConnState = "Off"
+	*(c.ConnStatePtr) = "Off"
 
 	pendingList := []uint32{}
 	c.Messages.Range(func(key, value any) bool {
@@ -57,9 +58,9 @@ func (c *ConnInfo) Fresh(conn net.Conn) {
 	c.Close()
 	c.Conn = conn
 	if c.Conn == nil {
-		c.ConnState = "Off"
+		*(c.ConnStatePtr) = "Off"
 	} else {
-		c.ConnState = "On"
+		*(c.ConnStatePtr) = "On"
 	}
 }
 
@@ -119,7 +120,7 @@ func (c *ConnInfo) WaitMsg(serialNum uint32) (msg *ConnMsg, ok bool) {
 		if !ok {
 			fmt.Println(debug_waitmsg.String())
 		}
-	} ()
+	}()
 
 	debug_waitmsg.WriteString(fmt.Sprintf("serialNum %d--> ", serialNum))
 	if value, exist := c.Messages.Load(serialNum); exist {
@@ -141,7 +142,7 @@ func (c *ConnInfo) WaitMsg(serialNum uint32) (msg *ConnMsg, ok bool) {
 	// fmt.Println("[DEBUG] wait failed: ", serialNum)
 	debug_waitmsg.WriteString("serailNum not found --> ")
 
-	msg = nil 
+	msg = nil
 	ok = false
 	return
 }

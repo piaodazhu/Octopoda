@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +42,7 @@ func StatsMiddleWare() gin.HandlerFunc {
 		}
 		summary.TotalRequests++
 		c.Next()
-		if c.Writer.Status() == 200 {
+		if c.Writer.Status() == http.StatusOK {
 			stats.Success++
 		}
 	}

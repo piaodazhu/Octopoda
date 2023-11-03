@@ -218,7 +218,7 @@ func nameRegister(entry *protocols.RegisterParam) error {
 	}
 	var response protocols.Response
 	json.Unmarshal(buf, &response)
-	if response.Message != "OK" || res.StatusCode != 200 {
+	if response.Message != "OK" || res.StatusCode != http.StatusOK {
 		return fmt.Errorf(response.Message)
 	}
 	return nil
@@ -230,7 +230,7 @@ func pingNameServer() error {
 		return err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("cannot Ping https Nameserver")
 	}
 	return nil
@@ -242,7 +242,7 @@ func GetToken() (*protocols.Tokens, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("cannot get token from Nameserver")
 	}
 	raw, err := io.ReadAll(res.Body)

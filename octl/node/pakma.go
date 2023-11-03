@@ -103,9 +103,9 @@ func Pakma(firstarg string, args []string) (string, error) {
 
 	nodes, err := NodesParse(names_filtered)
 	if err != nil {
-		msg := "node parse."
-		output.PrintFatalln(msg, err)
-		return msg, err
+		emsg := "node parse error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return "", errors.New(emsg)
 	}
 
 	if hasBrain {

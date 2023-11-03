@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -100,7 +101,7 @@ func FileUpload(ctx *gin.Context) {
 
 	taskid := model.BrainTaskManager.CreateTask(1)
 	ctx.String(202, taskid)
-	
+
 	go func() {
 		result := protocols.ExecutionResults{
 			Name:   "brain",
@@ -248,20 +249,20 @@ func FileTree(ctx *gin.Context) {
 	name, ok := ctx.GetQuery("name")
 	if !ok {
 		rmsg.Rmsg = "Lack name"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	pathtype, ok := ctx.GetQuery("pathtype")
 	if !ok {
 		rmsg.Rmsg = "Lack pathtype"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	subdir, _ := ctx.GetQuery("subdir")
 	raw, err := getFileTree(pathtype, name, subdir)
 	if err != nil {
 		rmsg.Rmsg = err.Error()
-		ctx.JSON(404, rmsg)
+		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.Data(200, "application/json", raw)
@@ -371,14 +372,14 @@ func FileDistrib(ctx *gin.Context) {
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
 	multipart, err := packfiles.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	defer multipart.Close()
@@ -386,7 +387,7 @@ func FileDistrib(ctx *gin.Context) {
 	raw, err := io.ReadAll(multipart)
 	if err != nil {
 		rmsg.Rmsg = "ReadAll:" + err.Error()
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	content := b64Encode(raw)
@@ -433,19 +434,19 @@ func FilePull(ctx *gin.Context) {
 	name, ok := ctx.GetQuery("name")
 	if !ok {
 		rmsg.Rmsg = "Lack name"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	pathtype, ok := ctx.GetQuery("pathtype")
 	if !ok {
 		rmsg.Rmsg = "Lack pathtype"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 	fileOrDir, ok := ctx.GetQuery("fileOrDir")
 	if !ok {
 		rmsg.Rmsg = "Lack fileOrDir"
-		ctx.JSON(400, rmsg)
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -459,14 +460,14 @@ func FilePull(ctx *gin.Context) {
 			pathsb.WriteString(config.GlobalConfig.Logger.Path)
 		default:
 			rmsg.Rmsg = ErrInvalidPathType{pathtype: pathtype, node: name}.Error()
-			ctx.JSON(400, rmsg)
+			ctx.JSON(http.StatusBadRequest, rmsg)
 			return
 		}
 		pathsb.WriteString(fileOrDir)
 		_, err := os.Stat(pathsb.String())
 		if err != nil {
 			rmsg.Rmsg = "file or path not found"
-			ctx.JSON(404, rmsg)
+			ctx.JSON(http.StatusNotFound, rmsg)
 			return
 		}
 		// pack the file or dir

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,7 +12,7 @@ func DowngradeHandler(ctx *gin.Context) {
 	res := Response{Msg: "OK"}
 	if State.StateType != STABLE {
 		res.Msg = "Not in stable state, confirm or install first"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	go doDownGrade()
@@ -23,7 +25,7 @@ func CancelHandler(ctx *gin.Context) {
 	res := Response{Msg: "OK"}
 	if State.StateType != PREVIEW {
 		res.Msg = "Not in preview state, not need cancel"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	go doCancel()
@@ -36,18 +38,18 @@ func UpgradeHandler(ctx *gin.Context) {
 	res := Response{Msg: "OK"}
 	if State.StateType != STABLE {
 		res.Msg = "Not in stable state, confirm or install first"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	version := ctx.PostForm("version")
 	if version == "" {
 		res.Msg = "Invalid version number"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	if version == State.Version2 {
 		res.Msg = "required version is already installed"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	go doUpgrade(version)
@@ -60,7 +62,7 @@ func ConfirmHandler(ctx *gin.Context) {
 	res := Response{Msg: "OK"}
 	if State.StateType != PREVIEW {
 		res.Msg = "Not in preview state, not need confirm"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	go doConfirm()
@@ -73,13 +75,13 @@ func InstallHandler(ctx *gin.Context) {
 	res := Response{Msg: "OK"}
 	if State.StateType != EMPTY {
 		res.Msg = "Use upgrade instead"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	version := ctx.PostForm("version")
 	if version == "" {
 		res.Msg = "Invalid version number"
-		ctx.JSON(400, res)
+		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 	go doInstall(version)
@@ -89,7 +91,7 @@ func InstallHandler(ctx *gin.Context) {
 func GetStateHandler(ctx *gin.Context) {
 	Busy.Lock()
 	defer Busy.Unlock()
-	statusCode := 200
+	statusCode := http.StatusOK
 	res := Response{
 		Msg:       "OK",
 		StateType: State.StateType,
@@ -101,7 +103,7 @@ func GetStateHandler(ctx *gin.Context) {
 
 	if PakmaError != nil {
 		res.Msg = PakmaError.Error()
-		statusCode = 400
+		statusCode = http.StatusBadRequest
 		PakmaError = nil
 	}
 	ctx.JSON(statusCode, res)

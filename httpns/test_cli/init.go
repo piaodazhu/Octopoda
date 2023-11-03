@@ -45,7 +45,7 @@ func NewTransPort() *http.Transport {
 
 func NewHttpsClient() *http.Client {
 	return &http.Client{
-		Timeout: 0,
+		Timeout:   0,
 		Transport: NewTransPort(),
 	}
 }
@@ -60,7 +60,7 @@ func PingServer() error {
 		return err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return errors.New("ping Error")
 	}
 	return nil

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -24,7 +25,7 @@ func SshLoginInfo(ctx *gin.Context) {
 		ctx.JSON(200, info)
 		return
 	}
-	ctx.JSON(404, struct{}{})
+	ctx.JSON(http.StatusNotFound, struct{}{})
 }
 
 func SshRegister(ctx *gin.Context) {
@@ -32,7 +33,7 @@ func SshRegister(ctx *gin.Context) {
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")
 	if len(name) == 0 || len(username) == 0 {
-		ctx.JSON(400, proxyMsg{
+		ctx.JSON(http.StatusBadRequest, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: "invalid arguments",
@@ -41,7 +42,7 @@ func SshRegister(ctx *gin.Context) {
 	}
 	services, err := network.ProxyServices()
 	if err != nil {
-		ctx.JSON(404, proxyMsg{
+		ctx.JSON(http.StatusNotFound, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("cannot get proxy services: %s", err.Error()),
@@ -52,7 +53,7 @@ func SshRegister(ctx *gin.Context) {
 	// 存在一致性问题，但是危害不大
 	for _, s := range services {
 		if name == s.Name {
-			ctx.JSON(400, proxyMsg{
+			ctx.JSON(http.StatusBadRequest, proxyMsg{
 				Code: -1,
 				Msg:  "ERR",
 				Data: fmt.Sprintf("service %s already exists", name),
@@ -86,8 +87,8 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		})
 		return true
 	}
-	if state, ok := model.GetNodeState(name); !ok || state != model.NodeStateReady {
-		ctx.JSON(404, proxyMsg{
+	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
+		ctx.JSON(http.StatusNotFound, proxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("node %s not found", name),
