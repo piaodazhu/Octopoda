@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"os"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/subcmd"
-	"os"
 )
 
 // Build Information
@@ -18,9 +19,16 @@ var (
 )
 
 func main() {
-	output.EnableColor()
-	output.EnableSpinner()
-	
+	if _, found := os.LookupEnv("OCTL_NOPRINT"); !found {
+		output.EnablePrint()
+	}
+	if _, found := os.LookupEnv("OCTL_NOCOLOR"); !found {
+		output.EnableColor()
+	}
+	if _, found := os.LookupEnv("OCTL_NOSPINNER"); !found {
+		output.EnableSpinner()
+	}
+
 	subcmd.InitUsage()
 	args := os.Args
 	var conf string
@@ -51,7 +59,7 @@ func main() {
 	if err := config.InitConfig(conf); err != nil {
 		panic(err)
 	}
-	
+
 	if err := nameclient.InitClient(); err != nil {
 		panic(err)
 	}

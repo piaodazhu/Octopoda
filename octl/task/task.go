@@ -30,7 +30,8 @@ func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error
 		defer s.Stop()
 	}
 
-	time.Sleep(time.Millisecond * 100)
+	pollCnt := 0
+
 	for {
 		res, err := http.Get(url)
 		if err != nil {
@@ -55,14 +56,30 @@ func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error
 				output.PrintFatalln(emsg)
 				return nil, errors.New(emsg)
 			}
+			makeCompatible(results)
 			return results, nil
 		} else if res.StatusCode == http.StatusAccepted {
-			time.Sleep(time.Second * 1)
+			mul := 32
+			if pollCnt < 5 {
+				mul = 1 << pollCnt
+			}
+			time.Sleep(time.Millisecond * time.Duration(mul) * 30)
+			pollCnt++
 		} else {
 			if prefix != "" {
 				output.PrintInfoln("  [FAILED]")
 			}
 			return nil, fmt.Errorf("wait task error. http statuscode=%d, response=%s", res.StatusCode, string(msg))
+		}
+	}
+}
+
+func makeCompatible(results []protocols.ExecutionResults) {
+	for i := range results {
+		if results[i].Code == 0 {
+			results[i].ResultCompatible = "[OK]"
+		} else {
+			results[i].ResultCompatible = "[ERR]"
 		}
 	}
 }

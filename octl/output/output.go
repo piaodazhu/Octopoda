@@ -77,7 +77,7 @@ func PrintJSON(message interface{}) {
 			if enableColor {
 				s = pretty.Color(s, nil)
 			}
-			fmt.Println(string(s))
+			fmt.Println(replacer.Replace(string(s)))
 		}
 	} else {
 		switch msg := message.(type) {
