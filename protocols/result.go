@@ -23,6 +23,7 @@ type ExecutionResults struct {
 	CommunicationErrorMsg string
 	ProcessErrorMsg       string
 	Result                string
+	ResultCompatible      string
 }
 
 type ExecStatus int

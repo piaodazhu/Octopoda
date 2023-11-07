@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -28,6 +29,7 @@ func NodeInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
+	node.BrainTs = time.Now().Unix()
 	ctx.JSON(200, node)
 }
 
@@ -58,6 +60,11 @@ func NodesInfo(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, struct{}{})
 			return
 		}
+	}
+
+	currTs := time.Now().Unix()
+	for i := range nodes.InfoList {
+		nodes.InfoList[i].BrainTs = currTs
 	}
 
 	ctx.JSON(200, nodes)

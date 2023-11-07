@@ -126,18 +126,10 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()
 	var cmd *exec.Cmd
-	var scriptFile string
 	var delayTimer *time.Timer = nil
 
 	if cparams.Background {
-		scriptFile = fmt.Sprintf("%s%d.sh", config.GlobalConfig.Workspace.Root, time.Now().UnixNano())
-		content := fmt.Sprintf("(%s) &>/dev/null &", cparams.Command)
-		err := os.WriteFile(scriptFile, []byte(content), os.ModePerm)
-		if err != nil {
-			logger.Exceptions.Println("WriteFile script", err)
-		}
-
-		cmd = exec.Command(shellPath, scriptFile)
+		cmd = exec.Command(shellPath, "-c", cparams.Command)
 		cmd.Dir = config.GlobalConfig.Workspace.Root
 		cmd.Env = append(syscall.Environ(), config.OctopodaEnv(config.GlobalConfig.Workspace.Root, "NONE", "NONE")...)
 	} else {
@@ -152,13 +144,24 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 		}
 		runFunc := func() {
 			if cparams.Background {
-				execErr := cmd.Run()
-				if execErr != nil {
-					logger.Exceptions.Println("Run cmd background", execErr)
-					rmsg.Rmsg = execErr.Error()
+				startErr := cmd.Start()
+				if startErr != nil {
+					emsg := "run cmd background error when start the process" + startErr.Error()
+					logger.Exceptions.Println(emsg)
+					rmsg.Rmsg = emsg
+					rmsg.Output = "0"
 				}
+				rmsg.Output = fmt.Sprint(cmd.Process.Pid)
+				go func() {
+					execErr := cmd.Wait()
+					if execErr != nil {
+						emsg := "run cmd background error when wait the process" + execErr.Error()
+						logger.Exceptions.Println(emsg)
+						rmsg.Rmsg = emsg
+						rmsg.Output = "0"
+					}
+				} ()
 			} else {
-				// TODO test this
 				stdoutPipe, err := cmd.StdoutPipe()
 				if err != nil {
 					emsg := fmt.Sprintf("Run cmd foreground error when open stdout pipe: %v", err)
@@ -231,7 +234,6 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 		if delayTimer != nil {
 			delayTimer.Stop()
 		}
-		os.Remove(scriptFile)
 	}
 
 	taskId, err := task.TaskManager.CreateTask(cmd.String(), utaskFunc, ucancelFunc)

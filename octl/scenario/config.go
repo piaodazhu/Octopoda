@@ -59,7 +59,7 @@ func checkConfig(config *ScenarioConfigModel) error {
 
 		app.Nodes, err = node.NodesParse(app.Nodes)
 		if err != nil {
-			return fmt.Errorf("invalid nodes list in app %s: %v", app.Name, strings.Join(app.Nodes, ", "))
+			return fmt.Errorf("invalid nodes list in app %s: %v: %s", app.Name, strings.Join(app.Nodes, ", "), err.Error())
 		}
 
 		// check: must implement the 4 basic target

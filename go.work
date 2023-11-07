@@ -4,8 +4,8 @@ use (
 	./brain
 	./httpns
 	./httpns/test_cli
-	./modtest
 	./octl
+	./octl/sdk/coctl
 	./pakma
 	./protocols
 	./tentacle

@@ -35,3 +35,4 @@ pakma_tentacle
 testlist
 todo
 installers
+__pycache__
