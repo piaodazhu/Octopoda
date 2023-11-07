@@ -5,6 +5,7 @@ use (
 	./httpns
 	./httpns/test_cli
 	./octl
+	./octl/sdk/coctl
 	./pakma
 	./protocols
 	./tentacle

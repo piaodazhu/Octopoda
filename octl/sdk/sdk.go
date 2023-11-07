@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/file"
@@ -124,7 +125,7 @@ func Run(runstask string, names []string) (results []protocols.ExecutionResults,
 	return
 }
 
-func XRun(runstask string, names []string) (results []protocols.ExecutionResults, err error) {
+func XRun(runstask string, names []string, delay int) (results []protocols.ExecutionResults, err error) {
 	if !initalized {
 		err = errors.New("SDK haven't been initalized")
 		return
@@ -134,6 +135,9 @@ func XRun(runstask string, names []string) (results []protocols.ExecutionResults
 			err = panicErr.(error)
 		}
 	}()
+	if delay > 0 {
+		names = append(names, fmt.Sprintf("-d%d", delay))
+	}
 	results, err = shell.XRun(runstask, names)
 	return
 }

@@ -21,6 +21,7 @@ type NodeInfo struct {
 	OnlineTs  int64
 	OfflineTs int64
 	ActiveTs  int64
+	BrainTs   int64
 }
 
 type BrainInfo struct {
@@ -106,13 +107,13 @@ func (node *NodeInfo) ToText() *NodeInfoText {
 	switch node.State {
 	case 0:
 		res.Health = "Healthy"
-		res.OnlineTime = time.Since(time.UnixMilli(node.OnlineTs)).String()
+		res.OnlineTime = time.Unix(node.BrainTs, 0).Sub(time.UnixMilli(node.OnlineTs)).String()
 	case 1:
 		res.Health = "Disconnect"
 		res.LastOnline = time.UnixMilli(node.ActiveTs).Format("2006-01-02 15:04:05")
 	case 2:
 		res.Health = "Offline"
-		res.OfflineTime = time.Since(time.UnixMilli(node.OfflineTs)).String()
+		res.OfflineTime = time.Unix(node.BrainTs, 0).Sub(time.UnixMilli(node.OfflineTs)).String()
 	}
 	res.MsgConnState = node.ConnState
 	return res
