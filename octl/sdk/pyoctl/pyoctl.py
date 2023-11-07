@@ -106,13 +106,34 @@ class OctlClient:
         self.lib.octl_del_group.restype = ctypes.c_int
         self.lib.octl_del_group.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
         
+        self.lib.octl_clear_node_info.restype = None
+        self.lib.octl_clear_node_info.argtypes = [ctypes.POINTER(node_info)]
+        self.lib.octl_clear_node_status.restype = None
+        self.lib.octl_clear_node_status.argtypes = [ctypes.POINTER(node_status)]
+        self.lib.octl_clear_brain_info.restype = None
+        self.lib.octl_clear_brain_info.argtypes = [ctypes.POINTER(brain_info)]
+        self.lib.octl_clear_execution_result.restype = None
+        self.lib.octl_clear_execution_result.argtypes = [ctypes.POINTER(execution_result)]
+        self.lib.octl_clear_nodes_info_list.restype = None
+        self.lib.octl_clear_nodes_info_list.argtypes = [ctypes.POINTER(node_info), ctypes.c_int]
+        self.lib.octl_clear_nodes_status_list.restype = None
+        self.lib.octl_clear_nodes_status_list.argtypes = [ctypes.POINTER(node_status), ctypes.c_int]
+        self.lib.octl_clear_execution_results_list.restype = None
+        self.lib.octl_clear_execution_results_list.argtypes = [ctypes.POINTER(execution_result), ctypes.c_int]
+        self.lib.octl_clear_name_list.restype = None
+        self.lib.octl_clear_name_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
+
 
     def get_node_info(self, name: str) -> NodeInfo:
         ninfo = node_info()
         ret = self.lib.octl_get_node_info(str.encode(name), ninfo, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_node_info(ninfo)
             raise Exception(bytes.decode(self.ebuf[:ret]))
-        return NodeInfo(ninfo)
+        
+        retobj = NodeInfo(ninfo)
+        self.lib.octl_clear_node_info(ninfo)
+        return retobj
 
     def get_nodes_info_list(self, names: List[str]) -> Tuple[BrainInfo, List[NodeInfo]]:
         binfo = brain_info()
@@ -128,20 +149,30 @@ class OctlClient:
 
         ret = self.lib.octl_get_nodes_info_list(names_input, len(names), binfo, ninfos_output, ninfolen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_brain_info(binfo)
+            self.lib.octl_clear_nodes_info_list(ninfos_output, ninfolen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
 
         ninfo_list = []
         for idx in range(ninfolen_output.value):
             ninfo_list.append(NodeInfo(ninfos_output[idx]))
 
-        return BrainInfo(binfo), ninfo_list
+        binfo_obj = BrainInfo(binfo)
+
+        self.lib.octl_clear_brain_info(binfo)
+        self.lib.octl_clear_nodes_info_list(ninfos_output, ninfolen_output)
+        return binfo_obj, ninfo_list
     
     def get_node_status(self, name: str) -> NodeStatus:
         nstatus = node_status()
         ret = self.lib.octl_get_node_status(str.encode(name), nstatus, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_node_status(nstatus)
             raise Exception(bytes.decode(self.ebuf[:ret]))
-        return NodeStatus(nstatus)
+        retobj = NodeStatus(nstatus)
+
+        self.lib.octl_clear_node_status(nstatus)
+        return retobj
 
     def get_nodes_status_list(self, names: List[str]) -> List[NodeStatus]:
         output_len = 1024
@@ -156,12 +187,14 @@ class OctlClient:
 
         ret = self.lib.octl_get_nodes_status_list(names_input, len(names), nstatus_output, nstatuslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_nodes_status_list(nstatus_output, nstatuslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
 
         nstatus_list = []
         for idx in range(nstatuslen_output.value):
             nstatus_list.append(NodeStatus(nstatus_output[idx]))
 
+        self.lib.octl_clear_nodes_status_list(nstatus_output, nstatuslen_output)
         return nstatus_list
 
     def distribute_file(self, local_file_or_dir: str, target_path: str, names: List[str]) -> List[ExecutionResult]:
@@ -176,12 +209,14 @@ class OctlClient:
         
         ret = self.lib.octl_distribute_file(str.encode(local_file_or_dir), str.encode(target_path), names_input, len(names), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
 
         result_list = []
         for idx in range(resultslen_output.value):
                 result_list.append(ExecutionResult(results_output[idx]))
         
+        self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
         return result_list
 
     def pull_file(self, ftype: str, name: str, remote_file_or_dir: str, local_dir: str) -> ExecutionResult:
@@ -198,9 +233,12 @@ class OctlClient:
         result_output = execution_result()
         ret = self.lib.octl_pull_file(type_input, str.encode(name), str.encode(remote_file_or_dir), str.encode(local_dir), result_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_execution_result(result_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
         
-        return ExecutionResult(result_output)
+        ret_obj = ExecutionResult(result_output)
+        self.lib.octl_clear_execution_result(result_output)
+        return ret_obj
 
     def run(self, cmd_expr: str, names: List[str]) -> List[ExecutionResult]:
         if len(names) == 0:
@@ -214,12 +252,14 @@ class OctlClient:
         
         ret = self.lib.octl_run(str.encode(cmd_expr), names_input, len(names), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
 
         result_list = []
         for idx in range(resultslen_output.value):
                 result_list.append(ExecutionResult(results_output[idx]))
         
+        self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
         return result_list
 
     def xrun(self, cmd_expr: str, names: List[str], delay: int) -> List[ExecutionResult]:
@@ -235,12 +275,14 @@ class OctlClient:
         print("args", cmd_expr, names, delay, output_len)
         ret = self.lib.octl_xrun(str.encode(cmd_expr), names_input, len(names), ctypes.c_int(delay), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
 
         result_list = []
         for idx in range(resultslen_output.value):
                 result_list.append(ExecutionResult(results_output[idx]))
         
+        self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
         return result_list
 
     def get_groups_list(self) -> List[str]:
@@ -249,12 +291,14 @@ class OctlClient:
         nameslen_output = ctypes.c_int(output_len)
         ret = self.lib.octl_get_groups_list(names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_name_list(names_output, nameslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
         
         names_list = []
         for idx in range(nameslen_output.value):
             names_list.append(bytes.decode(names_output[idx]))
 
+        self.lib.octl_clear_name_list(names_output, nameslen_output)
         return names_list
     
     def get_group(self, name: str) -> List[str]:
@@ -263,12 +307,14 @@ class OctlClient:
         nameslen_output = ctypes.c_int(output_len)
         ret = self.lib.octl_get_group(str.encode(name), names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
+            self.lib.octl_clear_name_list(names_output, nameslen_output)
             raise Exception(bytes.decode(self.ebuf[:ret]))
         
         names_list = []
         for idx in range(nameslen_output.value):
             names_list.append(bytes.decode(names_output[idx]))
 
+        self.lib.octl_clear_name_list(names_output, nameslen_output)
         return names_list
 
     def set_group(self, name: str, skipCheck: bool, members: List[str]) -> None:

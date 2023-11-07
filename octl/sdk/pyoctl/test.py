@@ -8,14 +8,20 @@ def main():
 	print(binfo)
 	for info in ninfos:
 		print(info)
+		ninfo = octl.get_node_info(info.name)
+		if info.name != ninfo.name:
+			raise Exception("get node info failed.")
 	
 	status_list = octl.get_nodes_status_list([])
 	for status in status_list:
 		print(status)
+		nstatus = octl.get_node_status(status.name)
+		if status.name != nstatus.name:
+			raise Exception("get node status failed.")
 	
-	# results = octl.run(r"{ifconfig}", ['pi4', 'pi5'])
-	# for result in results:
-	# 	print(result)
+	results = octl.run(r"{ifconfig}", ['pi4', 'pi5'])
+	for result in results:
+		print(result)
 	
 	results = octl.xrun(r"{ls}", ['pi4', 'pi5'], 1)
 	for result in results:

@@ -265,3 +265,77 @@ octl_del_group(char *group_name,
 	free(ret);
 	return len;
 }
+
+void
+octl_clear_node_info(octl_node_info *obj) {
+	if (obj->Name != NULL)
+		free(obj->Name);
+	if (obj->Version != NULL)
+		free(obj->Version);
+	if (obj->Addr != NULL)
+		free(obj->Addr);
+	if (obj->ConnState != NULL)
+		free(obj->ConnState);
+	memset(obj, 0, sizeof(octl_node_info));
+}
+
+void
+octl_clear_node_status(octl_node_status *obj) {
+	if (obj->Name != NULL)
+		free(obj->Name);
+	if (obj->Platform != NULL)
+		free(obj->Platform);
+	memset(obj, 0, sizeof(octl_node_status));
+}
+
+void
+octl_clear_brain_info(octl_brain_info *obj) {
+	if (obj->Name != NULL)
+		free(obj->Name);
+	if (obj->Version != NULL)
+		free(obj->Version);
+	if (obj->Addr != NULL)
+		free(obj->Addr);
+	memset(obj, 0, sizeof(octl_brain_info));
+}
+
+void
+octl_clear_execution_result(octl_execution_result *obj) {
+	if (obj->Name != NULL)
+		free(obj->Name);
+	if (obj->CommunicationErrorMsg != NULL)
+		free(obj->CommunicationErrorMsg);
+	if (obj->ProcessErrorMsg != NULL)
+		free(obj->ProcessErrorMsg);
+	if (obj->Result != NULL)
+		free(obj->Result);
+	memset(obj, 0, sizeof(octl_execution_result));
+}
+
+void
+octl_clear_nodes_info_list(octl_node_info *list, int n) {
+	int i;
+	for (i = 0; i < n; i++)
+		octl_clear_node_info(&list[i]);
+}
+
+void
+octl_clear_name_list(char **list, int n) {
+	int i;
+	for (i = 0; i < n; i++)
+		free(list[i]);
+}
+
+void
+octl_clear_nodes_status_list(octl_node_status *list, int n) {
+	int i;
+	for (i = 0; i < n; i++)
+		octl_clear_node_status(&list[i]);
+}
+
+void
+octl_clear_execution_results_list(octl_execution_result *list, int n) {
+	int i;
+	for (i = 0; i < n; i++)
+		octl_clear_execution_result(&list[i]);
+}

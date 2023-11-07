@@ -72,4 +72,28 @@ int
 octl_del_group(char *group_name,
 	char *errbuf, int errbuflen);
 
+void
+octl_clear_node_info(octl_node_info *obj);
+
+void
+octl_clear_node_status(octl_node_status *obj);
+
+void
+octl_clear_brain_info(octl_brain_info *obj);
+
+void
+octl_clear_execution_result(octl_execution_result *obj);
+
+void
+octl_clear_nodes_info_list(octl_node_info *list, int n);
+
+void
+octl_clear_nodes_status_list(octl_node_status *list, int n);
+
+void
+octl_clear_execution_results_list(octl_execution_result *list, int n);
+
+void
+octl_clear_name_list(char **list, int n);
+
 #endif
