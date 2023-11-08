@@ -1,9 +1,14 @@
 import pyoctl
 import time
 import os
+import platform
+
+libpath = "./libcoctl.so"
+if platform.system() == "Windows":
+    libpath = "./libcoctl.dll"
 
 def main():
-	octl = pyoctl.OctlClient("./libcoctl.so", "../../octl_test.yaml")
+	octl = pyoctl.OctlClient(libpath, "../../octl_test.yaml")
 	binfo, ninfos = octl.get_nodes_info_list(['pi4', 'pi5'])
 	print(binfo)
 	for info in ninfos:

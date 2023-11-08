@@ -68,9 +68,9 @@ class ExecutionResult:
             return f"result {self.name} : [Unknown], msg={self.result}"
 
 class OctlClient:
-    def __init__(self, lib_so: str, config_yaml :str):
+    def __init__(self, lib_so_or_dll: str, config_yaml :str):
         # 构造函数，初始化对象的属性
-        self.lib = ctypes.CDLL(lib_so)
+        self.lib = ctypes.CDLL(lib_so_or_dll)
         self.ebuf = ctypes.create_string_buffer(256)
         self.ebuflen = ctypes.c_int(256)
         
