@@ -45,22 +45,23 @@ import (
 	"fmt"
 
 	"github.com/piaodazhu/Octopoda/octl/sdk"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 //export Init
-func Init(configFile string) *C.char {
+func Init(configFile string) (C.int, *C.char) {
 	err := sdk.Init(configFile)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
-	return nil
+	return 0, nil
 }
 
 //export NodeInfo
-func NodeInfo(name string, result *C.struct_node_info) *C.char {
+func NodeInfo(name string, result *C.struct_node_info) (C.int, *C.char) {
 	res, err := sdk.NodeInfo(name)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	*result = C.struct_node_info{
 		Name:      C.CString(res.Name),
@@ -71,19 +72,19 @@ func NodeInfo(name string, result *C.struct_node_info) *C.char {
 		OnlineTs:  C.longlong(res.OnlineTs),
 		OfflineTs: C.longlong(res.OfflineTs),
 		ActiveTs:  C.longlong(res.ActiveTs),
-		BrainTs:   C.longlong(0), // TODO
+		BrainTs:   C.longlong(res.BrainTs),
 	}
-	return nil
+	return 0, nil
 }
 
 //export NodesInfo
-func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_node_info, size *C.int) *C.char {
+func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_node_info, size *C.int) (C.int, *C.char) {
 	res, err := sdk.NodesInfo(names)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res.InfoList) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.InfoList)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.InfoList)))
 	}
 
 	*size = C.int(len(res.InfoList))
@@ -102,17 +103,17 @@ func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_no
 			OnlineTs:  C.longlong(res.InfoList[i].OnlineTs),
 			OfflineTs: C.longlong(res.InfoList[i].OfflineTs),
 			ActiveTs:  C.longlong(res.InfoList[i].ActiveTs),
-			BrainTs:   C.longlong(0), // TODO
+			BrainTs:   C.longlong(res.InfoList[i].BrainTs),
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 //export NodeStatus
-func NodeStatus(name string, result *C.struct_node_status) *C.char {
+func NodeStatus(name string, result *C.struct_node_status) (C.int, *C.char) {
 	res, err := sdk.NodeStatus(name)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 
 	*result = C.struct_node_status{
@@ -127,17 +128,17 @@ func NodeStatus(name string, result *C.struct_node_status) *C.char {
 		DiskUsed:     C.longlong(res.DiskUsed),
 		DiskTotal:    C.longlong(res.DiskTotal),
 	}
-	return nil
+	return 0, nil
 }
 
 //export NodesStatus
-func NodesStatus(names []string, results []C.struct_node_status, size *C.int) *C.char {
+func NodesStatus(names []string, results []C.struct_node_status, size *C.int) (C.int, *C.char) {
 	res, err := sdk.NodesStatus(names)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res.StatusList) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.StatusList)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.StatusList)))
 	}
 
 	*size = C.int(len(res.StatusList))
@@ -155,17 +156,17 @@ func NodesStatus(names []string, results []C.struct_node_status, size *C.int) *C
 			DiskTotal:    C.longlong(res.StatusList[i].DiskTotal),
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 //export DistribFile
-func DistribFile(localFileOrDir string, targetPath string, names []string, results []C.struct_execution_result, size *C.int) *C.char {
+func DistribFile(localFileOrDir string, targetPath string, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
 	res, err := sdk.DistribFile(localFileOrDir, targetPath, names)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
 	}
 
 	*size = C.int(len(res))
@@ -178,14 +179,14 @@ func DistribFile(localFileOrDir string, targetPath string, names []string, resul
 			Result:                C.CString(res[i].Result),
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 //export PullFile
-func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_execution_result) *C.char {
+func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_execution_result) (C.int, *C.char) {
 	res, err := sdk.PullFile(pathtype, node, fileOrDir, targetdir)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	*result = C.struct_execution_result{
 		Name:                  C.CString(res.Name),
@@ -194,17 +195,17 @@ func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_exec
 		ProcessErrorMsg:       C.CString(res.ProcessErrorMsg),
 		Result:                C.CString(res.Result),
 	}
-	return nil
+	return 0, nil
 }
 
 //export Run
-func Run(runtask string, names []string, results []C.struct_execution_result, size *C.int) *C.char {
+func Run(runtask string, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
 	res, err := sdk.Run(runtask, names)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
 	}
 
 	*size = C.int(len(res))
@@ -217,17 +218,17 @@ func Run(runtask string, names []string, results []C.struct_execution_result, si
 			Result:                C.CString(res[i].Result),
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 //export XRun
-func XRun(runtask string, names []string, delay int, results []C.struct_execution_result, size *C.int) *C.char {
+func XRun(runtask string, names []string, delay int, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
 	res, err := sdk.XRun(runtask, names, delay)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
 	}
 
 	*size = C.int(len(res))
@@ -240,17 +241,17 @@ func XRun(runtask string, names []string, delay int, results []C.struct_executio
 			Result:                C.CString(res[i].Result),
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 //export GroupGetAll
-func GroupGetAll(results []*C.char, size *C.int) *C.char {
+func GroupGetAll(results []*C.char, size *C.int) (C.int, *C.char) {
 	res, err := sdk.GroupGetAll()
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
 	}
 
 	*size = C.int(len(res))
@@ -258,17 +259,17 @@ func GroupGetAll(results []*C.char, size *C.int) *C.char {
 		results[i] = C.CString(name)
 	}
 	// copy(results, res)
-	return nil
+	return 0, nil
 }
 
 //export GroupGet
-func GroupGet(name string, results []*C.char, size *C.int) *C.char {
+func GroupGet(name string, results []*C.char, size *C.int) (C.int, *C.char) {
 	res, err := sdk.GroupGet(name)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
 	if len(results) < len(res.Nodes) {
-		return C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.Nodes)))
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.Nodes)))
 	}
 
 	*size = C.int(len(res.Nodes))
@@ -276,25 +277,25 @@ func GroupGet(name string, results []*C.char, size *C.int) *C.char {
 		results[i] = C.CString(name)
 	}
 	// copy(results, res.Nodes)
-	return nil
+	return 0, nil
 }
 
 //export GroupSet
-func GroupSet(name string, nocheck bool, names []string) *C.char {
+func GroupSet(name string, nocheck bool, names []string) (C.int, *C.char) {
 	err := sdk.GroupSet(name, nocheck, names)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
-	return nil
+	return 0, nil
 }
 
 //export GroupDel
-func GroupDel(name string) *C.char {
+func GroupDel(name string) (C.int, *C.char) {
 	err := sdk.GroupDel(name)
 	if err != nil {
-		return C.CString(err.Error())
+		return C.int(err.Code()), C.CString(err.Error())
 	}
-	return nil
+	return 0, nil
 }
 
 func main() {}

@@ -110,19 +110,97 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern char* Init(GoString configFile);
-extern char* NodeInfo(GoString name, struct node_info* result);
-extern char* NodesInfo(GoSlice names, struct brain_info* brain, GoSlice results, int* size);
-extern char* NodeStatus(GoString name, struct node_status* result);
-extern char* NodesStatus(GoSlice names, GoSlice results, int* size);
-extern char* DistribFile(GoString localFileOrDir, GoString targetPath, GoSlice names, GoSlice results, int* size);
-extern char* PullFile(GoString pathtype, GoString node, GoString fileOrDir, GoString targetdir, struct execution_result* result);
-extern char* Run(GoString runtask, GoSlice names, GoSlice results, int* size);
-extern char* XRun(GoString runtask, GoSlice names, GoInt delay, GoSlice results, int* size);
-extern char* GroupGetAll(GoSlice results, int* size);
-extern char* GroupGet(GoString name, GoSlice results, int* size);
-extern char* GroupSet(GoString name, GoUint8 nocheck, GoSlice names);
-extern char* GroupDel(GoString name);
+
+/* Return type for Init */
+struct Init_return {
+	int r0;
+	char* r1;
+};
+extern struct Init_return Init(GoString configFile);
+
+/* Return type for NodeInfo */
+struct NodeInfo_return {
+	int r0;
+	char* r1;
+};
+extern struct NodeInfo_return NodeInfo(GoString name, struct node_info* result);
+
+/* Return type for NodesInfo */
+struct NodesInfo_return {
+	int r0;
+	char* r1;
+};
+extern struct NodesInfo_return NodesInfo(GoSlice names, struct brain_info* brain, GoSlice results, int* size);
+
+/* Return type for NodeStatus */
+struct NodeStatus_return {
+	int r0;
+	char* r1;
+};
+extern struct NodeStatus_return NodeStatus(GoString name, struct node_status* result);
+
+/* Return type for NodesStatus */
+struct NodesStatus_return {
+	int r0;
+	char* r1;
+};
+extern struct NodesStatus_return NodesStatus(GoSlice names, GoSlice results, int* size);
+
+/* Return type for DistribFile */
+struct DistribFile_return {
+	int r0;
+	char* r1;
+};
+extern struct DistribFile_return DistribFile(GoString localFileOrDir, GoString targetPath, GoSlice names, GoSlice results, int* size);
+
+/* Return type for PullFile */
+struct PullFile_return {
+	int r0;
+	char* r1;
+};
+extern struct PullFile_return PullFile(GoString pathtype, GoString node, GoString fileOrDir, GoString targetdir, struct execution_result* result);
+
+/* Return type for Run */
+struct Run_return {
+	int r0;
+	char* r1;
+};
+extern struct Run_return Run(GoString runtask, GoSlice names, GoSlice results, int* size);
+
+/* Return type for XRun */
+struct XRun_return {
+	int r0;
+	char* r1;
+};
+extern struct XRun_return XRun(GoString runtask, GoSlice names, GoInt delay, GoSlice results, int* size);
+
+/* Return type for GroupGetAll */
+struct GroupGetAll_return {
+	int r0;
+	char* r1;
+};
+extern struct GroupGetAll_return GroupGetAll(GoSlice results, int* size);
+
+/* Return type for GroupGet */
+struct GroupGet_return {
+	int r0;
+	char* r1;
+};
+extern struct GroupGet_return GroupGet(GoString name, GoSlice results, int* size);
+
+/* Return type for GroupSet */
+struct GroupSet_return {
+	int r0;
+	char* r1;
+};
+extern struct GroupSet_return GroupSet(GoString name, GoUint8 nocheck, GoSlice names);
+
+/* Return type for GroupDel */
+struct GroupDel_return {
+	int r0;
+	char* r1;
+};
+extern struct GroupDel_return GroupDel(GoString name);
 
 #ifdef __cplusplus
 }

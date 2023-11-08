@@ -46,12 +46,14 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+		// fmt.Println("Platform: Windows. Cmd: ", cmd.String())
 	} else {
 		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+		// fmt.Println("Platform: Linux. Cmd: ", cmd.String())
 	}
 	err = cmd.Run()
 	if err != nil {
-		emsg := fmt.Sprintf("warp files %s to %s error: %s", srcPath, wrapName, err.Error())
+		emsg := fmt.Sprintf("wrap files %s to %s error: %s", srcPath, wrapName, err.Error())
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}

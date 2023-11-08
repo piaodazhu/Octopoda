@@ -43,7 +43,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	}
 	err := cmd.Run()
 	if err != nil {
-		emsg := fmt.Sprintf("warp files %s to %s error: %s", srcPath, wrapName, err.Error())
+		emsg := fmt.Sprintf("wrap files %s to %s error: %s", srcPath, wrapName, err.Error())
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}

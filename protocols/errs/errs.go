@@ -46,4 +46,7 @@ const (
 	OctlGitOperationError
 	OctlTaskWaitingError
 	OctlArgumentError
+	OctlSdkNotInitializedError
+	OctlSdkPanicRecoverError
+	OctlSdkBufferError
 )

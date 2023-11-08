@@ -34,9 +34,9 @@ def main():
 	
 	try:
 		octl.del_group("setByPy")
-	except Exception:
-		pass
-	
+	except pyoctl.OctlException as e:
+		print(e)
+
 	octl.set_group("setByPy", False, ['pi4', 'pi5', 'yang'])
 
 	group_names = octl.get_groups_list()

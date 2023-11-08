@@ -1,5 +1,6 @@
 import ctypes
 from typing import List, Tuple
+from enum import Enum
 
 class node_info(ctypes.Structure):
     _fields_ = [("name", ctypes.c_char_p), ("version", ctypes.c_char_p), ("address", ctypes.c_char_p), ("state", ctypes.c_int), ("conn_state", ctypes.c_char_p), ("online_ts", ctypes.c_int64), ("offline_ts", ctypes.c_int64), ("active_ts", ctypes.c_int64), ("brain_ts", ctypes.c_int64)]
@@ -67,6 +68,33 @@ class ExecutionResult:
         else:
             return f"result {self.name} : [Unknown], msg={self.result}"
 
+class OctlErrorCode(Enum):
+    OctlReadConfigError = 1
+    OctlNameClientError = 2
+    OctlHttpRequestError = 3
+    OctlHttpStatusError = 4
+    OctlMessageParseError = 5
+    OctlNodeParseError = 6
+    OctlFileOperationError = 7
+    OctlGitOperationError = 8
+    OctlTaskWaitingError = 9
+    OctlArgumentError = 10
+    OctlSdkNotInitializedError = 11
+    OctlSdkPanicRecoverError = 12
+    OctlSdkBufferError = 13
+    OctlUnknownError = 255
+
+class OctlException(Exception):
+    def __init__(self, code:int, emsg:str):
+        if code in [member.value for member in OctlErrorCode]:
+            self.code = OctlErrorCode(code)
+        else:
+            self.code = OctlErrorCode.OctlUnknownError
+        self.emsg = emsg
+        super().__init__(emsg)
+    def __str__(self) -> str:
+        return f"OctlException <code={self.code}> <msg={self.emsg}>"
+
 class OctlClient:
     def __init__(self, lib_so_or_dll: str, config_yaml :str):
         # 构造函数，初始化对象的属性
@@ -75,36 +103,36 @@ class OctlClient:
         self.ebuflen = ctypes.c_int(256)
         
         self.lib.octl_init.restype = ctypes.c_int
-        self.lib.octl_init.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_init.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
 
         ret = self.lib.octl_init(str.encode(config_yaml), self.ebuf, self.ebuflen)
         if ret != 0:
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         self.lib.octl_get_node_info.restype = ctypes.c_int
-        self.lib.octl_get_node_info.argtypes = [ctypes.c_char_p, ctypes.POINTER(node_info), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_node_info.argtypes = [ctypes.c_char_p, ctypes.POINTER(node_info), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_nodes_info_list.restype = ctypes.c_int
-        self.lib.octl_get_nodes_info_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(brain_info), ctypes.POINTER(node_info), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_nodes_info_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(brain_info), ctypes.POINTER(node_info), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_node_status.restype = ctypes.c_int
-        self.lib.octl_get_node_status.argtypes = [ctypes.c_char_p, ctypes.POINTER(node_status), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_node_status.argtypes = [ctypes.c_char_p, ctypes.POINTER(node_status), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_nodes_status_list.restype = ctypes.c_int
-        self.lib.octl_get_nodes_status_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(node_status), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_nodes_status_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(node_status), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_distribute_file.restype = ctypes.c_int
-        self.lib.octl_distribute_file.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_distribute_file.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_pull_file.restype = ctypes.c_int
-        self.lib.octl_pull_file.argtypes = [ctypes.c_int8, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(execution_result), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_pull_file.argtypes = [ctypes.c_int8, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(execution_result), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_run.restype = ctypes.c_int
-        self.lib.octl_run.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_run.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_xrun.restype = ctypes.c_int
-        self.lib.octl_xrun.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_xrun.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_groups_list.restype = ctypes.c_int
-        self.lib.octl_get_groups_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_groups_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_group.restype = ctypes.c_int
-        self.lib.octl_get_group.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_get_group.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_set_group.restype = ctypes.c_int
-        self.lib.octl_set_group.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_set_group.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_del_group.restype = ctypes.c_int
-        self.lib.octl_del_group.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+        self.lib.octl_del_group.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         
         self.lib.octl_clear_node_info.restype = None
         self.lib.octl_clear_node_info.argtypes = [ctypes.POINTER(node_info)]
@@ -126,10 +154,11 @@ class OctlClient:
 
     def get_node_info(self, name: str) -> NodeInfo:
         ninfo = node_info()
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_node_info(str.encode(name), ninfo, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_node_info(ninfo)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         retobj = NodeInfo(ninfo)
         self.lib.octl_clear_node_info(ninfo)
@@ -147,11 +176,12 @@ class OctlClient:
         for idx in range(len(names)):
             names_input[idx] = str.encode(names[idx])
 
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_nodes_info_list(names_input, len(names), binfo, ninfos_output, ninfolen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_brain_info(binfo)
             self.lib.octl_clear_nodes_info_list(ninfos_output, ninfolen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         ninfo_list = []
         for idx in range(ninfolen_output.value):
@@ -165,10 +195,11 @@ class OctlClient:
     
     def get_node_status(self, name: str) -> NodeStatus:
         nstatus = node_status()
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_node_status(str.encode(name), nstatus, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_node_status(nstatus)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         retobj = NodeStatus(nstatus)
 
         self.lib.octl_clear_node_status(nstatus)
@@ -185,10 +216,11 @@ class OctlClient:
         for idx in range(len(names)):
             names_input[idx] = str.encode(names[idx])
 
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_nodes_status_list(names_input, len(names), nstatus_output, nstatuslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_nodes_status_list(nstatus_output, nstatuslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         nstatus_list = []
         for idx in range(nstatuslen_output.value):
@@ -207,10 +239,11 @@ class OctlClient:
         for idx in range(len(names)):
             names_input[idx] = str.encode(names[idx])
         
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_distribute_file(str.encode(local_file_or_dir), str.encode(target_path), names_input, len(names), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         result_list = []
         for idx in range(resultslen_output.value):
@@ -231,10 +264,11 @@ class OctlClient:
             type_input = ctypes.c_int8(0)
         
         result_output = execution_result()
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_pull_file(type_input, str.encode(name), str.encode(remote_file_or_dir), str.encode(local_dir), result_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_result(result_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         ret_obj = ExecutionResult(result_output)
         self.lib.octl_clear_execution_result(result_output)
@@ -250,10 +284,11 @@ class OctlClient:
         for idx in range(len(names)):
             names_input[idx] = str.encode(names[idx])
         
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_run(str.encode(cmd_expr), names_input, len(names), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         result_list = []
         for idx in range(resultslen_output.value):
@@ -272,11 +307,11 @@ class OctlClient:
         for idx in range(len(names)):
             names_input[idx] = str.encode(names[idx])
         
-        print("args", cmd_expr, names, delay, output_len)
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_xrun(str.encode(cmd_expr), names_input, len(names), ctypes.c_int(delay), results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
         result_list = []
         for idx in range(resultslen_output.value):
@@ -289,10 +324,11 @@ class OctlClient:
         output_len = 1024
         names_output = (ctypes.c_char_p * output_len)()
         nameslen_output = ctypes.c_int(output_len)
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_groups_list(names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_name_list(names_output, nameslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         names_list = []
         for idx in range(nameslen_output.value):
@@ -305,10 +341,11 @@ class OctlClient:
         output_len = 1024
         names_output = (ctypes.c_char_p * output_len)()
         nameslen_output = ctypes.c_int(output_len)
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_group(str.encode(name), names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_name_list(names_output, nameslen_output)
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         names_list = []
         for idx in range(nameslen_output.value):
@@ -328,14 +365,16 @@ class OctlClient:
         skipcheck_input = ctypes.c_int(0)
         if skipCheck:
             skipcheck_input = ctypes.c_int(1)
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_set_group(str.encode(name), skipcheck_input, members_input, len(members), self.ebuf, self.ebuflen)
         if ret != 0:
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
     def del_group(self, name: str) -> None:
+        self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_del_group(str.encode(name), self.ebuf, self.ebuflen)
         if ret != 0:
-            raise Exception(bytes.decode(self.ebuf[:ret]))
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
 
     def __str__(self):
         # 定义对象的字符串表示，可用于打印对象
