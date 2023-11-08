@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/tidwall/pretty"
 )
@@ -53,42 +54,41 @@ func init() {
 	enableSpinner = false
 }
 
+func printBytes(b []byte, isPretty bool) {
+	if isPretty {
+		b = pretty.Pretty(b)
+	}
+	if enableColor {
+		b = pretty.Color(b, nil)
+	}
+	str := string(b)
+	if isPretty {
+		str = replacer.Replace(str)
+	}
+	fmt.Println(str)
+}
+
 func PrintJSON(message interface{}) {
 	if !enablePrint {
 		return
 	}
-	if config.GlobalConfig.OutputPretty {
-		switch msg := message.(type) {
-		case string:
-			s := pretty.Pretty([]byte(msg))
-			if enableColor {
-				s = pretty.Color(s, nil)
+
+	switch msg := message.(type) {
+	case string:
+		printBytes([]byte(msg), config.GlobalConfig.OutputPretty)
+	case []byte:
+		printBytes(msg, config.GlobalConfig.OutputPretty)
+	case []protocols.ExecutionResults:
+		for i := range msg {
+			if msg[i].Code == 0 {
+				msg[i].Result = "\n" + msg[i].Result
 			}
-			fmt.Println(replacer.Replace(string(s)))
-		case []byte:
-			s := pretty.Pretty(msg)
-			if enableColor {
-				s = pretty.Color(s, nil)
-			}
-			fmt.Println(replacer.Replace(string(s)))
-		default:
-			raw, _ := json.Marshal(msg)
-			s := pretty.Pretty(raw)
-			if enableColor {
-				s = pretty.Color(s, nil)
-			}
-			fmt.Println(replacer.Replace(string(s)))
 		}
-	} else {
-		switch msg := message.(type) {
-		case string:
-			fmt.Print(msg)
-		case []byte:
-			fmt.Print(string(msg))
-		default:
-			raw, _ := json.Marshal(msg)
-			fmt.Println(string(raw))
-		}
+		raw, _ := json.Marshal(msg)
+		printBytes(raw, config.GlobalConfig.OutputPretty)
+	default:
+		raw, _ := json.Marshal(msg)
+		printBytes(raw, config.GlobalConfig.OutputPretty)
 	}
 }
 
@@ -121,7 +121,6 @@ func printInfo(message string) {
 	}
 	fmt.Println(msg)
 }
-
 
 func PrintFatalf(format string, args ...interface{}) {
 	if !enablePrint {
@@ -166,7 +165,6 @@ func PrintWarningln(args ...interface{}) {
 	}
 	printWarn(fmt.Sprint(args...))
 }
-
 
 func PrintPanicf(format string, args ...interface{}) {
 	err := fmt.Errorf(format, args...)

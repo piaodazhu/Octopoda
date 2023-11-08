@@ -101,7 +101,7 @@ func pathFixing(path string, base string) string {
 	if homePos != -1 {
 		result.WriteString(path[homePos:])
 	} else {
-		if path[0] != '/' {
+		if !filepath.IsAbs(path) {
 			result.WriteString(base)
 		}
 		result.WriteString(path)

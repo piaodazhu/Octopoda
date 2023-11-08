@@ -1,22 +1,23 @@
 package node
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
-	"github.com/piaodazhu/Octopoda/octl/output"
 	"strconv"
 	"time"
 	"unicode"
+
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 const timefmt string = "2006-01-02@15:04:05"
 
-func Pakma(firstarg string, args []string) (string, error) {
+func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 	var subcmd string = firstarg
 	var version string = ""
 	var names []string
@@ -33,18 +34,18 @@ func Pakma(firstarg string, args []string) (string, error) {
 			timestr = args[i][2:]
 			_, err := time.Parse(timefmt, timestr)
 			if err != nil {
-				emsg := fmt.Sprintf("pakma subcmd: invalid timestr (should be like %s).", timefmt)
-				output.PrintFatalln(emsg, err)
-				return emsg, err
+				emsg := fmt.Sprintf("pakma subcmd: invalid timestr (should be like %s): %s", timefmt, err.Error())
+				output.PrintFatalln(emsg)
+				return emsg, errs.New(errs.OctlArgumentError, emsg)
 			}
 			END--
 		case "-l":
 			limit = args[i][2:]
 			x, err := strconv.Atoi(limit)
 			if err != nil || x <= 0 {
-				emsg := "pakma subcmd: invalid limit (should be int >0)"
-				output.PrintFatalln(emsg, err)
-				return emsg, err
+				emsg := "pakma subcmd: invalid limit (should be int >0): " + err.Error()
+				output.PrintFatalln(emsg)
+				return emsg, errs.New(errs.OctlArgumentError, emsg)
 			}
 			END--
 		default:
@@ -53,13 +54,13 @@ func Pakma(firstarg string, args []string) (string, error) {
 	if END != len(args) && firstarg != "history" {
 		emsg := "only packma history support -t and -l"
 		output.PrintFatalln(emsg)
-		return emsg, errors.New(emsg)
+		return emsg, errs.New(errs.OctlArgumentError, emsg)
 	}
 
 	if len(args) < 1 {
 		emsg := "not any node is specified"
 		output.PrintFatalln(emsg)
-		return emsg, errors.New(emsg)
+		return emsg, errs.New(errs.OctlArgumentError, emsg)
 	}
 
 	switch firstarg {
@@ -69,7 +70,7 @@ func Pakma(firstarg string, args []string) (string, error) {
 		if len(args) < 2 {
 			emsg := "not any node is specified"
 			output.PrintFatalln(emsg)
-			return emsg, errors.New(emsg)
+			return emsg, errs.New(errs.OctlArgumentError, emsg)
 		}
 		version = args[0]
 		names = args[1:]
@@ -88,7 +89,7 @@ func Pakma(firstarg string, args []string) (string, error) {
 	default:
 		emsg := fmt.Sprintf("pakma subcommand not support: %s.", firstarg)
 		output.PrintFatalln(emsg)
-		return emsg, errors.New(emsg)
+		return emsg, errs.New(errs.OctlArgumentError, emsg)
 	}
 
 	names_filtered := []string{}
@@ -105,7 +106,7 @@ func Pakma(firstarg string, args []string) (string, error) {
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return "", errors.New(emsg)
+		return "", errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	if hasBrain {
@@ -131,21 +132,21 @@ func Pakma(firstarg string, args []string) (string, error) {
 		} else {
 			emsg := fmt.Sprintf("pakma invalid version number (right example: 1.4.1): %s.", version)
 			output.PrintFatalln(emsg)
-			return emsg, errors.New(emsg)
+			return emsg, errs.New(errs.OctlArgumentError, emsg)
 		}
 	}
 
 	res, err := http.PostForm(URL, values)
 	if err != nil {
-		emsg := "http post error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http post error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
 	output.PrintJSON(raw)
-	return string(raw), err
+	return string(raw), nil
 }
 
 func checkVersion(version string) bool {

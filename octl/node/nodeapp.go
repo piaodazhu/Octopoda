@@ -6,12 +6,14 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func NodeAppsInfo(node string) (string, error) {
+func NodeAppsInfo(node string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -20,9 +22,9 @@ func NodeAppsInfo(node string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -31,7 +33,7 @@ func NodeAppsInfo(node string) (string, error) {
 	return string(raw), nil
 }
 
-func NodeAppInfo(node, app, scenario string) (string, error) {
+func NodeAppInfo(node, app, scenario string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -42,9 +44,9 @@ func NodeAppInfo(node, app, scenario string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -53,7 +55,7 @@ func NodeAppInfo(node, app, scenario string) (string, error) {
 	return string(raw), nil
 }
 
-func NodeAppReset(node, app, scenario, version, message string) (string, error) {
+func NodeAppReset(node, app, scenario, version, message string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -72,9 +74,9 @@ func NodeAppReset(node, app, scenario, version, message string) (string, error) 
 
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
-		emsg := "http post error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http post error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)

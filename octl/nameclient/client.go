@@ -12,6 +12,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 var nsAddr string
@@ -19,7 +20,7 @@ var HttpsClient *http.Client
 var BrainAddr string
 var BrainIp string
 
-func InitClient() error {
+func InitClient() *errs.OctlError {
 	BrainIp = config.GlobalConfig.Brain.Ip
 	defaultBrainAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.Port)
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
@@ -36,18 +37,20 @@ func InitClient() error {
 	if err != nil {
 		emsg := "InitHttpsClient:" + err.Error()
 		output.PrintFatalln(emsg)
-		return err
+		return errs.New(errs.OctlNameClientError, emsg)
 	}
 	err = pingNameServer()
 	if err != nil {
-		output.PrintFatalf("Could not ping NameServer: %s (%s)", nsAddr, err.Error())
-		return err
+		emsg := fmt.Sprintf("Could not ping NameServer: %s (%s)", nsAddr, err.Error())
+		output.PrintFatalln(emsg)
+		return errs.New(errs.OctlNameClientError, emsg)
 	}
 
 	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".octlFace")
 	if err != nil {
-		output.PrintWarningf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
-		return err
+		emsg := fmt.Sprintf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
+		output.PrintWarningln(emsg)
+		return errs.New(errs.OctlNameClientError, emsg)
 	}
 	BrainIp = entry.Ip
 	BrainAddr = fmt.Sprintf("%s:%d", BrainIp, entry.Port)

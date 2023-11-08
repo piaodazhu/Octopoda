@@ -52,7 +52,7 @@ func TestSDK(t *testing.T) {
 	}
 	t.Log(result)
 	
-	if _, err = os.Stat("localfoobar/testfile.txt"); os.IsNotExist(err) {
+	if _, err := os.Stat("localfoobar/testfile.txt"); os.IsNotExist(err) {
 		t.Fatal("PullFile")
 	}
 

@@ -2,7 +2,6 @@ package file
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,14 +12,15 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, error) {
+func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	fsParams := &protocols.FileSpreadParams{
@@ -40,26 +40,26 @@ func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocol
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
 		emsg := "http read body: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 
 	if res.StatusCode != http.StatusAccepted {
 		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 	results, err := task.WaitTask("SPREADING...", string(msg))
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
 	output.PrintJSON(results)
 	return results, nil
