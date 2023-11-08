@@ -2,7 +2,6 @@ package file
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -18,11 +17,12 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 
 	"github.com/mholt/archiver/v3"
 )
 
-func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionResults, error) {
+func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionResults, *errs.OctlError) {
 	if targetPath == "." {
 		targetPath = ""
 	} else if targetPath[len(targetPath)-1] != '/' {
@@ -45,7 +45,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	if err != nil {
 		emsg := fmt.Sprintf("warp files %s to %s error: %s", srcPath, wrapName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer os.RemoveAll(wrapName)
 
@@ -55,7 +55,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	if err != nil {
 		emsg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s) error: %s", wrapName, packName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer os.Remove(packName)
 
@@ -63,7 +63,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	if err != nil {
 		emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm) errors: %s", packName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer f.Close()
 
@@ -87,7 +87,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 
 	msg, err := io.ReadAll(res.Body)
@@ -95,25 +95,25 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	if err != nil {
 		emsg := "http read body: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 
 	if res.StatusCode != http.StatusAccepted {
 		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 	results, err := task.WaitTask("UPLOADING...", string(msg))
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
-	
+
 	if len(results) != 1 {
 		emsg := fmt.Sprintf("number of results of this command should be only 1 but get %d", len(results))
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 	output.PrintJSON(results[0])
 	return &results[0], nil

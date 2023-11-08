@@ -1,19 +1,18 @@
 package config
 
 import (
-	"errors"
-
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 	"github.com/spf13/viper"
 )
 
 var GlobalConfig ConfigModel
 
-func InitConfig(conf string) error {
+func InitConfig(conf string) *errs.OctlError {
 	if conf != "" {
 		viper.SetConfigFile(conf)
 		err := viper.ReadInConfig()
 		if err != nil {
-			return errors.New("cannot read config <" + conf + ">: " + err.Error())
+			return errs.New(errs.OctlReadConfigError, "cannot read config <"+conf+">: "+err.Error())
 		}
 	} else {
 		viper.SetConfigName("octl")
@@ -22,13 +21,13 @@ func InitConfig(conf string) error {
 		viper.AddConfigPath("./")
 		err := viper.ReadInConfig()
 		if err != nil {
-			return errors.New("cannot read config because " + err.Error())
+			return errs.New(errs.OctlReadConfigError, "cannot read config because "+err.Error())
 		}
 	}
 
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
-		return errors.New("cannot unmarshal config because " + err.Error())
+		return errs.New(errs.OctlReadConfigError, "cannot unmarshal config because "+err.Error())
 	}
 
 	if GlobalConfig.JsonFast {

@@ -3,7 +3,6 @@ package node
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,9 +11,10 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func GroupGetAll() ([]string, error) {
+func GroupGetAll() ([]string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -24,7 +24,7 @@ func GroupGetAll() ([]string, error) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -32,7 +32,7 @@ func GroupGetAll() ([]string, error) {
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 
 	groups := []string{}
@@ -40,14 +40,14 @@ func GroupGetAll() ([]string, error) {
 	if err != nil {
 		emsg := "res unmarshal error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 
 	output.PrintJSON(groups)
 	return groups, nil
 }
 
-func GroupGet(name string) (*protocols.GroupInfo, error) {
+func GroupGet(name string) (*protocols.GroupInfo, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -58,7 +58,7 @@ func GroupGet(name string) (*protocols.GroupInfo, error) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -66,7 +66,7 @@ func GroupGet(name string) (*protocols.GroupInfo, error) {
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 
 	group := protocols.GroupInfo{}
@@ -74,14 +74,14 @@ func GroupGet(name string) (*protocols.GroupInfo, error) {
 	if err != nil {
 		emsg := "res unmarshal error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 
 	output.PrintJSON(group)
 	return &group, nil
 }
 
-func GroupDel(name string) error {
+func GroupDel(name string) *errs.OctlError {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -93,7 +93,7 @@ func GroupDel(name string) error {
 	if err != nil {
 		emsg := "http delete error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return errors.New(emsg)
+		return errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -101,18 +101,18 @@ func GroupDel(name string) error {
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return errors.New(emsg)
+		return errs.New(errs.OctlHttpStatusError, emsg)
 	}
 
 	return nil
 }
 
-func GroupSet(name string, nocheck bool, names []string) error {
+func GroupSet(name string, nocheck bool, names []string) *errs.OctlError {
 	nodes, err := NodesParse(names)
 	if err != nil {
 		emsg := "node parse: " + err.Error()
 		output.PrintFatalln(emsg)
-		return errors.New(emsg)
+		return errs.New(errs.OctlNodeParseError, emsg)
 	}
 	ginfo := protocols.GroupInfo{
 		Name:    name,
@@ -130,14 +130,14 @@ func GroupSet(name string, nocheck bool, names []string) error {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return errors.New(emsg)
+		return errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return errors.New(emsg)
+		return errs.New(errs.OctlHttpStatusError, emsg)
 	}
 	output.PrintInfoln(string(raw))
 	return nil

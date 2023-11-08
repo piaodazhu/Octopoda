@@ -2,7 +2,6 @@ package file
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -19,16 +18,17 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 
 	"github.com/mholt/archiver/v3"
 )
 
-func DistribFile(localFileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, error) {
+func DistribFile(localFileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	if targetPath == "." {
@@ -53,7 +53,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	if err != nil {
 		emsg := fmt.Sprintf("warp files %s to %s error: %s", srcPath, wrapName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer os.RemoveAll(wrapName)
 
@@ -64,7 +64,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	if err != nil {
 		emsg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s) error: %s", wrapName, packName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer os.Remove(packName)
 
@@ -72,7 +72,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	if err != nil {
 		emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm) errors: %s", packName, err.Error())
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer f.Close()
 
@@ -99,26 +99,26 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
 		emsg := "http read body: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 
 	if res.StatusCode != http.StatusAccepted {
 		emsg := fmt.Sprintf("http request error msg=%s, status=%d.", msg, res.StatusCode)
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
 	output.PrintJSON(results)
 	return results, nil

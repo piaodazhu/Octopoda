@@ -2,7 +2,6 @@ package shell
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -20,9 +19,10 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func XRun(runtask string, params []string) ([]protocols.ExecutionResults, error) {
+func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
 	delay := 0
 	names := []string{}
 	for i := range params {
@@ -35,7 +35,7 @@ func XRun(runtask string, params []string) ([]protocols.ExecutionResults, error)
 			x, err := strconv.Atoi(params[i][2:])
 			if err != nil {
 				emsg := "invalid args: " + err.Error()
-				return nil, errors.New(emsg)
+				return nil, errs.New(errs.OctlArgumentError, emsg)
 			}
 			delay = x
 		default:
@@ -45,16 +45,16 @@ func XRun(runtask string, params []string) ([]protocols.ExecutionResults, error)
 	return runTask(runtask, names, delay)
 }
 
-func Run(runtask string, names []string) ([]protocols.ExecutionResults, error) {
+func Run(runtask string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
 	return runTask(runtask, names, -1)
 }
 
-func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionResults, error) {
+func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	isScript := true
@@ -67,7 +67,7 @@ func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionRe
 		} else {
 			emsg := fmt.Sprintf("runtask=%s invalid.", runtask)
 			output.PrintFatalln(emsg)
-			return nil, errors.New(emsg)
+			return nil, errs.New(errs.OctlArgumentError, emsg)
 		}
 	} else if runtask[0] == '(' {
 		if len(runtask) > 2 && runtask[len(runtask)-1] == ')' {
@@ -76,7 +76,7 @@ func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionRe
 		} else {
 			emsg := fmt.Sprintf("runtask=%s invalid.", runtask)
 			output.PrintFatalln(emsg)
-			return nil, errors.New(emsg)
+			return nil, errs.New(errs.OctlArgumentError, emsg)
 		}
 	}
 	if isScript {
@@ -86,19 +86,19 @@ func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionRe
 	}
 }
 
-func runScript(runtask string, names []string, delay int) ([]protocols.ExecutionResults, error) {
+func runScript(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	f, err := os.OpenFile(runtask, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		emsg := "open script file error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlFileOperationError, emsg)
 	}
 	defer f.Close()
 	fname := filepath.Base(runtask)
@@ -121,7 +121,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
@@ -137,18 +137,18 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
 	output.PrintJSON(results)
 	return results, nil
 }
 
-func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.ExecutionResults, error) {
+func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
 	url := fmt.Sprintf("http://%s/%s%s",
@@ -172,7 +172,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
@@ -188,7 +188,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
 	output.PrintJSON(results)
 	return results, nil

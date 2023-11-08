@@ -2,7 +2,6 @@ package node
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,9 +10,10 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func NodeStatus(name string) (*protocols.Status, error) {
+func NodeStatus(name string) (*protocols.Status, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -24,7 +24,7 @@ func NodeStatus(name string) (*protocols.Status, error) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -32,7 +32,7 @@ func NodeStatus(name string) (*protocols.Status, error) {
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 
 	info := protocols.Status{}
@@ -40,19 +40,19 @@ func NodeStatus(name string) (*protocols.Status, error) {
 	if err != nil {
 		emsg := "res unmarshal error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 	output.PrintJSON(info.ToText())
 
 	return &info, nil
 }
 
-func NodesStatus(names []string) (*protocols.NodesStatus, error) {
+func NodesStatus(names []string) (*protocols.NodesStatus, *errs.OctlError) {
 	nodes, err := NodesParse(names)
 	if err != nil {
 		emsg := "node parse." + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
@@ -65,7 +65,7 @@ func NodesStatus(names []string) (*protocols.NodesStatus, error) {
 	if err != nil {
 		emsg := "http get error." + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -73,7 +73,7 @@ func NodesStatus(names []string) (*protocols.NodesStatus, error) {
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
 
 	info := protocols.NodesStatus{}
@@ -81,7 +81,7 @@ func NodesStatus(names []string) (*protocols.NodesStatus, error) {
 	if err != nil {
 		emsg := "res unmarshal error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return nil, errors.New(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 	output.PrintJSON(info.ToText())
 

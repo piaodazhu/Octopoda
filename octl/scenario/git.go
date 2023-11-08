@@ -2,15 +2,17 @@ package scenario
 
 import (
 	"fmt"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 
 	"github.com/go-git/go-git/v5"
 	gitconf "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-func GitClone(repo, user string) (string, error) {
+func GitClone(repo, user string) (string, *errs.OctlError) {
 	remoteUrl := makeRemoteUrl(repo, user)
 	_, err := git.PlainClone(repo, false, &git.CloneOptions{
 		URL: remoteUrl,
@@ -22,7 +24,7 @@ func GitClone(repo, user string) (string, error) {
 	if err != nil {
 		emsg := "git.PlainClone()"
 		output.PrintFatalln(emsg, err)
-		return emsg, err
+		return emsg, errs.New(errs.OctlGitOperationError, emsg)
 	} else {
 		info := "CLONE DONE!"
 		output.PrintInfoln(info)
@@ -30,7 +32,7 @@ func GitClone(repo, user string) (string, error) {
 	}
 }
 
-func GitPush(repo, user string) (string, error) {
+func GitPush(repo, user string) (string, *errs.OctlError) {
 	remoteUrl := makeRemoteUrl(repo, user)
 	repository, err := git.PlainOpen(repo)
 	if err != nil {
@@ -38,14 +40,14 @@ func GitPush(repo, user string) (string, error) {
 		if err != nil {
 			emsg := "git.PlainInit()"
 			output.PrintFatalln(emsg, err)
-			return emsg, err
+			return emsg, errs.New(errs.OctlGitOperationError, emsg)
 		}
 	}
 	workTree, err := repository.Worktree()
 	if err != nil {
 		emsg := "repository.Worktree()"
 		output.PrintFatalln(emsg, err)
-		return emsg, err
+		return emsg, errs.New(errs.OctlGitOperationError, emsg)
 	}
 	workTree.Add(".")
 	workTree.Commit("default msg", &git.CommitOptions{
@@ -60,7 +62,7 @@ func GitPush(repo, user string) (string, error) {
 		if err != nil {
 			emsg := "repository.Remote()"
 			output.PrintFatalln(emsg, err)
-			return emsg, err
+			return emsg, errs.New(errs.OctlGitOperationError, emsg)
 		}
 	}
 
@@ -73,7 +75,7 @@ func GitPush(repo, user string) (string, error) {
 	if err != nil {
 		emsg := "remote.Push()"
 		output.PrintFatalln(emsg, err)
-		return emsg, err
+		return emsg, errs.New(errs.OctlGitOperationError, emsg)
 	} else {
 		info := "PUSH REMOTE DONE!"
 		output.PrintInfoln(info)

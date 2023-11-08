@@ -6,12 +6,14 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func ScenariosInfo() (string, error) {
+func ScenariosInfo() (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -19,9 +21,9 @@ func ScenariosInfo() (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -30,7 +32,7 @@ func ScenariosInfo() (string, error) {
 	return string(raw), nil
 }
 
-func ScenarioInfo(name string) (string, error) {
+func ScenarioInfo(name string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -39,9 +41,9 @@ func ScenarioInfo(name string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -50,7 +52,7 @@ func ScenarioInfo(name string) (string, error) {
 	return string(raw), nil
 }
 
-func ScenarioFix(name string) (string, error) {
+func ScenarioFix(name string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -59,9 +61,9 @@ func ScenarioFix(name string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -70,7 +72,7 @@ func ScenarioFix(name string) (string, error) {
 	return string(raw), nil
 }
 
-func ScenarioVersion(name string) (string, error) {
+func ScenarioVersion(name string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -79,9 +81,9 @@ func ScenarioVersion(name string) (string, error) {
 	)
 	res, err := http.Get(url)
 	if err != nil {
-		emsg := "http get error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
@@ -90,7 +92,7 @@ func ScenarioVersion(name string) (string, error) {
 	return string(raw), nil
 }
 
-func ScenarioReset(name string, version string, message string) (string, error) {
+func ScenarioReset(name string, version string, message string) (string, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -108,9 +110,9 @@ func ScenarioReset(name string, version string, message string) (string, error) 
 
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
-		emsg := "http post error."
-		output.PrintFatalln(emsg, err)
-		return emsg, err
+		emsg := "http post error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
