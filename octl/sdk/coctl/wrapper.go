@@ -42,7 +42,9 @@ struct execution_result {
 */
 import "C"
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/piaodazhu/Octopoda/octl/sdk"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
@@ -292,6 +294,101 @@ func GroupSet(name string, nocheck bool, names []string) (C.int, *C.char) {
 //export GroupDel
 func GroupDel(name string) (C.int, *C.char) {
 	err := sdk.GroupDel(name)
+	if err != nil {
+		return C.int(err.Code()), C.CString(err.Error())
+	}
+	return 0, nil
+}
+
+//export Prune
+func Prune() (C.int, *C.char) {
+	err := sdk.Prune()
+	if err != nil {
+		return C.int(err.Code()), C.CString(err.Error())
+	}
+	return 0, nil
+}
+
+//export ScenarioInfo
+func ScenarioInfo(name string) (*C.char, C.int, *C.char) {
+	res, err := sdk.ScenarioInfo(name)
+	if err != nil {
+		return nil, C.int(err.Code()), C.CString(err.Error())
+	}
+	return C.CString(string(res)), 0, nil
+}
+
+//export ScenariosInfo
+func ScenariosInfo(results []*C.char, size *C.int) (C.int, *C.char) {
+	res, err := sdk.ScenariosInfo()
+	if err != nil {
+		return C.int(err.Code()), C.CString(err.Error())
+	}
+	if len(results) < len(res) {
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+	}
+
+	*size = C.int(len(res))
+	for i := range res {
+		results[i] = C.CString(string(res[i]))
+	}
+	return 0, nil
+}
+
+//export ScenarioVersion
+func ScenarioVersion(name string) (*C.char, C.int, *C.char) {
+	res, err := sdk.ScenarioVersion(name)
+	if err != nil {
+		return nil, C.int(err.Code()), C.CString(err.Error())
+	}
+	return C.CString(string(res)), 0, nil
+}
+
+//export NodeAppInfo
+func NodeAppInfo(name, app, scenario string) (*C.char, C.int, *C.char) {
+	res, err := sdk.NodeAppInfo(name, app, scenario)
+	if err != nil {
+		return nil, C.int(err.Code()), C.CString(err.Error())
+	}
+	return C.CString(string(res)), 0, nil
+}
+
+//export NodeAppsInfo
+func NodeAppsInfo(name string, results []*C.char, size *C.int) (C.int, *C.char) {
+	res, err := sdk.NodeAppsInfo(name)
+	if err != nil {
+		return C.int(err.Code()), C.CString(err.Error())
+	}
+	if len(results) < len(res) {
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+	}
+
+	*size = C.int(len(res))
+	for i := range res {
+		results[i] = C.CString(string(res[i]))
+	}
+	return 0, nil
+}
+
+//export Apply
+func Apply(deployment, target, message string, timeout int, logs []*C.char, size *C.int) (C.int, *C.char) {
+	var ctx context.Context
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(timeout))
+		defer cancel()
+	} else {
+		ctx = context.Background()
+	}
+	res, err := sdk.Apply(ctx, deployment, target, message)
+	if len(logs) < len(res) {
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(logs), len(res)))
+	}
+	*size = C.int(len(res))
+	for i := range res {
+		logs[i] = C.CString(string(res[i]))
+	}
+
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}

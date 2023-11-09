@@ -1,6 +1,7 @@
 import ctypes
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from enum import Enum
+import json
 
 class node_info(ctypes.Structure):
     _fields_ = [("name", ctypes.c_char_p), ("version", ctypes.c_char_p), ("address", ctypes.c_char_p), ("state", ctypes.c_int), ("conn_state", ctypes.c_char_p), ("online_ts", ctypes.c_int64), ("offline_ts", ctypes.c_int64), ("active_ts", ctypes.c_int64), ("brain_ts", ctypes.c_int64)]
@@ -134,6 +135,21 @@ class OctlClient:
         self.lib.octl_del_group.restype = ctypes.c_int
         self.lib.octl_del_group.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         
+        self.lib.octl_prune_nodes.restype = ctypes.c_int
+        self.lib.octl_prune_nodes.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_get_scenario_info.restype = ctypes.c_int
+        self.lib.octl_get_scenario_info.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_get_scenarios_info_list.restype = ctypes.c_int
+        self.lib.octl_get_scenarios_info_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_get_scenario_version.restype = ctypes.c_int
+        self.lib.octl_get_scenario_version.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_get_nodeapp_info.restype = ctypes.c_int
+        self.lib.octl_get_nodeapp_info.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_get_nodeapps_info_list.restype = ctypes.c_int
+        self.lib.octl_get_nodeapps_info_list.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_apply_scenario.restype = ctypes.c_int
+        self.lib.octl_apply_scenario.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+
         self.lib.octl_clear_node_info.restype = None
         self.lib.octl_clear_node_info.argtypes = [ctypes.POINTER(node_info)]
         self.lib.octl_clear_node_status.restype = None
@@ -148,8 +164,8 @@ class OctlClient:
         self.lib.octl_clear_nodes_status_list.argtypes = [ctypes.POINTER(node_status), ctypes.c_int]
         self.lib.octl_clear_execution_results_list.restype = None
         self.lib.octl_clear_execution_results_list.argtypes = [ctypes.POINTER(execution_result), ctypes.c_int]
-        self.lib.octl_clear_name_list.restype = None
-        self.lib.octl_clear_name_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
+        self.lib.octl_clear_string_list.restype = None
+        self.lib.octl_clear_string_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
 
 
     def get_node_info(self, name: str) -> NodeInfo:
@@ -327,14 +343,14 @@ class OctlClient:
         self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_groups_list(names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
-            self.lib.octl_clear_name_list(names_output, nameslen_output)
+            self.lib.octl_clear_string_list(names_output, nameslen_output)
             raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         names_list = []
         for idx in range(nameslen_output.value):
             names_list.append(bytes.decode(names_output[idx]))
 
-        self.lib.octl_clear_name_list(names_output, nameslen_output)
+        self.lib.octl_clear_string_list(names_output, nameslen_output)
         return names_list
     
     def get_group(self, name: str) -> List[str]:
@@ -344,14 +360,14 @@ class OctlClient:
         self.ebuflen = ctypes.c_int(256)
         ret = self.lib.octl_get_group(str.encode(name), names_output, nameslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
-            self.lib.octl_clear_name_list(names_output, nameslen_output)
+            self.lib.octl_clear_string_list(names_output, nameslen_output)
             raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
         
         names_list = []
         for idx in range(nameslen_output.value):
             names_list.append(bytes.decode(names_output[idx]))
 
-        self.lib.octl_clear_name_list(names_output, nameslen_output)
+        self.lib.octl_clear_string_list(names_output, nameslen_output)
         return names_list
 
     def set_group(self, name: str, skipCheck: bool, members: List[str]) -> None:
@@ -375,6 +391,91 @@ class OctlClient:
         ret = self.lib.octl_del_group(str.encode(name), self.ebuf, self.ebuflen)
         if ret != 0:
             raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+
+    def prune_nodes(self) -> None:
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_prune_nodes(self.ebuf, self.ebuflen)
+        if ret != 0:
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        
+    def get_scenario_info(self, name: str) -> Dict:
+        rawbuf = ctypes.create_string_buffer(4096)
+        rawlen = ctypes.c_int(4096)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_get_scenario_info(str.encode(name), rawbuf, rawlen, self.ebuf, self.ebuflen)
+        if ret != 0:
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        return json.loads(bytes.decode(rawbuf[:rawlen.value]))
+        
+    def get_scenarios_info_list(self) -> List[Dict]:
+        output_len = 1024
+        scens_output = (ctypes.c_char_p * output_len)()
+        scenslen_output = ctypes.c_int(output_len)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_get_scenarios_info_list(scens_output, scenslen_output, self.ebuf, self.ebuflen)
+        if ret != 0:
+            self.lib.octl_clear_string_list(scens_output, scenslen_output)
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        
+        scens_list = []
+        for idx in range(scenslen_output.value):
+            scens_list.append(json.loads(bytes.decode(scens_output[idx])))
+
+        self.lib.octl_clear_string_list(scens_output, scenslen_output)
+        return scens_list
+        
+    def get_scenario_version(self, name: str) -> Dict:
+        rawbuf = ctypes.create_string_buffer(4096)
+        rawlen = ctypes.c_int(4096)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_get_scenario_version(str.encode(name), rawbuf, rawlen, self.ebuf, self.ebuflen)
+        if ret != 0:
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        return json.loads(bytes.decode(rawbuf[:rawlen.value]))
+        
+    def get_nodeapps_info_list(self, name: str) -> List[Dict]:
+        output_len = 1024
+        nodeapps_output = (ctypes.c_char_p * output_len)()
+        nodeappslen_output = ctypes.c_int(output_len)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_get_nodeapps_info_list(str.encode(name), nodeapps_output, nodeappslen_output, self.ebuf, self.ebuflen)
+        if ret != 0:
+            self.lib.octl_clear_string_list(nodeapps_output, nodeappslen_output)
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        
+        nodeapps_list = []
+        for idx in range(nodeappslen_output.value):
+            nodeapps_list.append(json.loads(bytes.decode(nodeapps_output[idx])))
+
+        self.lib.octl_clear_string_list(nodeapps_output, nodeappslen_output)
+        return nodeapps_list
+        
+    def get_nodeapp_info(self, name: str, app: str, scenario: str) -> Dict:
+        rawbuf = ctypes.create_string_buffer(4096)
+        rawlen = ctypes.c_int(4096)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_get_nodeapp_info(str.encode(name), str.encode(app), str.encode(scenario), rawbuf, rawlen, self.ebuf, self.ebuflen)
+        if ret != 0:
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        return json.loads(bytes.decode(rawbuf[:rawlen.value]))
+    
+    def apply_scenario(self, name: str, target: str, message: str, timeout_s: int = 0) -> List[str]:
+        output_len = 1024
+        logs_output = (ctypes.c_char_p * output_len)()
+        logslen_output = ctypes.c_int(output_len)
+        self.ebuflen = ctypes.c_int(256)
+        ret = self.lib.octl_apply_scenario(str.encode(name), str.encode(target), str.encode(message), ctypes.c_int(timeout_s), logs_output, logslen_output, self.ebuf, self.ebuflen)
+        if ret != 0:
+            self.lib.octl_clear_string_list(logs_output, logslen_output)
+            raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
+        
+        logs_list = []
+        for idx in range(logslen_output.value):
+            logs_list.append(bytes.decode(logs_output[idx]))
+
+        self.lib.octl_clear_string_list(logs_output, logslen_output)
+        return logs_list
+        
 
     def __str__(self):
         # 定义对象的字符串表示，可用于打印对象

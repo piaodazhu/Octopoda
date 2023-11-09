@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -27,13 +28,14 @@ import (
 
 var basePath string
 
-func ScenarioApply(scenFolder string, target string, message string) (string, *errs.OctlError) {
+func ScenarioApply(ctx context.Context, scenFolder string, target string, message string) ([]string, *errs.OctlError) {
 	var err error
+	logList := []string{}
 	basePath, err = filepath.Abs(scenFolder)
 	if err != nil {
 		emsg := fmt.Sprintf("scenario dir %s not exists: %s\n", scenFolder, err.Error())
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlFileOperationError, emsg)
+		return logList, errs.New(errs.OctlFileOperationError, emsg)
 	}
 
 	confFile := basePath + "/deployment.yaml"
@@ -41,14 +43,14 @@ func ScenarioApply(scenFolder string, target string, message string) (string, *e
 	if err != nil {
 		emsg := fmt.Sprintf("os.ReadFile(%s): %s", confFile, err.Error())
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlReadConfigError, emsg)
+		return logList, errs.New(errs.OctlReadConfigError, emsg)
 	}
 	var configuration ScenarioConfigModel
 	err = yaml.Unmarshal(buf, &configuration)
 	if err != nil {
 		emsg := "yaml.Unmarshal(): " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlReadConfigError, emsg)
+		return logList, errs.New(errs.OctlReadConfigError, emsg)
 	}
 
 	aliasFile := basePath + "/alias.yaml"
@@ -56,54 +58,57 @@ func ScenarioApply(scenFolder string, target string, message string) (string, *e
 	if err != nil {
 		emsg := fmt.Sprintf("parseAliasFile(%s): %s", aliasFile, err.Error())
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlReadConfigError, emsg)
+		return logList, errs.New(errs.OctlReadConfigError, emsg)
 	}
 
 	err = checkConfig(&configuration)
 	if err != nil {
 		emsg := "checkConfig(): " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlReadConfigError, emsg)
+		return logList, errs.New(errs.OctlReadConfigError, emsg)
 	}
+
+	var subLogList []string 
+	var subError *errs.OctlError
 
 	switch target {
 	// ???
 	case "prepare":
-		result, err := ScenarioPrepare(&configuration, "(Prepare-Stage1) "+message)
+		subLogList, subError = ScenarioPrepare(ctx, &configuration, "(Prepare-Stage1) "+message)
+		logList = append(logList, subLogList...)
 		if err != nil {
-			return result, err
+			return logList, subError
 		}
 		// time.Sleep(time.Minute)
-		return ScenarioRun(&configuration, "prepare", "(Prepare-Stage2) "+message)
+		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare", "(Prepare-Stage2) "+message)
 	case "default":
-		result, err := ScenarioPrepare(&configuration, "(Prepare-Stage1) "+message)
-		if err != nil {
-			return result, err
+		subLogList, subError = ScenarioPrepare(ctx, &configuration, "(Prepare-Stage1) "+message)
+		logList = append(logList, subLogList...)
+		if subError != nil {
+			return logList, subError
 		}
 
-		result, err = ScenarioRun(&configuration, "prepare", "(Prepare-Stage2) "+message)
-		if err != nil {
-			return result, err
+		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare", "(Prepare-Stage2) "+message)
+		logList = append(logList, subLogList...)
+		if subError != nil {
+			return logList, subError
 		}
 
-		return ScenarioRun(&configuration, "start", "(Deploy) "+message)
+		subLogList, err = ScenarioRun(ctx, &configuration, "start", "(Deploy) "+message)
 	case "purge":
-		result, err := ScenarioPurge(&configuration)
-		if err != nil {
-			return result, err
-		}
+		subLogList, subError = ScenarioPurge(ctx, &configuration)
 	default:
-		result, err := ScenarioRun(&configuration, target, "(Deploy) "+message)
-		if err != nil {
-			return result, err
-		}
+		subLogList, subError = ScenarioRun(ctx, &configuration, target, "(Deploy) "+message)
 	}
-	return "OK", nil
+
+	logList = append(logList, subLogList...)
+	return logList, subError
 }
 
-func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string, *errs.OctlError) {
+func ScenarioPrepare(ctx context.Context, configuration *ScenarioConfigModel, message string) ([]string, *errs.OctlError) {
+	var logList []string
 	// create this scenario
-	result, err := ScenarioCreate(configuration.Name, configuration.Description)
+	result, err := ScenarioCreate(ctx, configuration.Name, configuration.Description)
 	if err != nil {
 		return result, err
 	}
@@ -123,7 +128,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if err != nil {
 			emsg := fmt.Sprintf("archiver.DefaultZip.Archive([]string{%s}, %s): %s", app.SourcePath, packName, err.Error())
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlFileOperationError, emsg)
+			return logList, errs.New(errs.OctlFileOperationError, emsg)
 		}
 
 		// distrib the files
@@ -131,7 +136,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if err != nil {
 			emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm): %s", packName, err.Error())
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlFileOperationError, emsg)
+			return logList, errs.New(errs.OctlFileOperationError, emsg)
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -164,7 +169,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if err != nil {
 			emsg := "http post error: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 		// defer res.Body.Close()
 		taskid, err := io.ReadAll(res.Body)
@@ -172,7 +177,7 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if err != nil {
 			emsg := "http read body: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 
 		sigChan := make(chan os.Signal, 1)
@@ -189,13 +194,13 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error status=%d. ", res.StatusCode)
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpStatusError, emsg)
+			return logList, errs.New(errs.OctlHttpStatusError, emsg)
 		}
 		results, err := task.WaitTask("PROCESSING...", string(taskid))
 		if err != nil {
 			emsg := "Task processing error: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlTaskWaitingError, emsg)
+			return logList, errs.New(errs.OctlTaskWaitingError, emsg)
 		}
 		output.PrintJSON(results)
 
@@ -203,11 +208,11 @@ func ScenarioPrepare(configuration *ScenarioConfigModel, message string) (string
 		if shouldStop {
 			emsg := "cancel and exit."
 			output.PrintInfoln(emsg, err)
-			return emsg, nil
+			return logList, nil
 		}
 	}
 	// update this scenario
-	result, err = ScenarioUpdate(configuration.Name, message)
+	result, err = ScenarioUpdate(ctx, configuration.Name, message)
 	if err != nil {
 		emsg := fmt.Sprintf("ScenarioUpdate(%s, %s).", configuration.Name, message)
 		output.PrintFatalln(emsg, err)
@@ -222,7 +227,8 @@ type orderedReq struct {
 	info  string
 }
 
-func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (string, *errs.OctlError) {
+func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target, message string) ([]string, *errs.OctlError) {
+	var logList []string
 	output.PrintInfoln("\n- Target: ", target)
 	orlist := []orderedReq{}
 	// for each application
@@ -255,7 +261,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if err != nil {
 			emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm): %s", sb.String(), err.Error())
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlFileOperationError, emsg)
+			return logList, errs.New(errs.OctlFileOperationError, emsg)
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -289,7 +295,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if err != nil {
 			emsg := "http post error: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -316,7 +322,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if err != nil {
 			emsg := "http.DefaultClient.Do(): " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 
 		taskid, err := io.ReadAll(res.Body)
@@ -324,7 +330,7 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if err != nil {
 			emsg := "http read body: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 
 		sigChan := make(chan os.Signal, 1)
@@ -341,13 +347,13 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error status=%d. ", res.StatusCode)
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpStatusError, emsg)
+			return logList, errs.New(errs.OctlHttpStatusError, emsg)
 		}
 		results, err := task.WaitTask("PROCESSING...", string(taskid))
 		if err != nil {
 			emsg := "Task processing error: " + err.Error()
 			output.PrintFatalln(emsg, err)
-			return emsg, errs.New(errs.OctlTaskWaitingError, emsg)
+			return logList, errs.New(errs.OctlTaskWaitingError, emsg)
 		}
 		output.PrintJSON(results)
 
@@ -355,21 +361,22 @@ func ScenarioRun(configuration *ScenarioConfigModel, target, message string) (st
 		if shouldStop {
 			emsg := "cancel and exit."
 			output.PrintInfoln(emsg)
-			return emsg, nil
+			return logList, nil
 		}
 	}
 
 	// update this scenario
-	result, err := ScenarioUpdate(configuration.Name, message)
+	result, err := ScenarioUpdate(ctx, configuration.Name, message)
 	if err != nil {
 		emsg := fmt.Sprintf("ScenarioUpdate(%s, %s).", configuration.Name, message)
 		output.PrintFatalln(emsg, err)
-		return emsg, err
+		return logList, err
 	}
 	return result, nil
 }
 
-func ScenarioPurge(configuration *ScenarioConfigModel) (string, *errs.OctlError) {
+func ScenarioPurge(ctx context.Context, configuration *ScenarioConfigModel) ([]string, *errs.OctlError) {
+	var logList []string
 	orlist := []orderedReq{}
 	// for each apps
 	for i := range configuration.Applications {
@@ -402,7 +409,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) (string, *errs.OctlError)
 		if err != nil {
 			emsg := fmt.Sprintf("os.OpenFile(%s, os.O_RDONLY, os.ModePerm): %s", sb.String(), err.Error())
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlTaskWaitingError, emsg)
+			return logList, errs.New(errs.OctlTaskWaitingError, emsg)
 		}
 
 		nodes_serialized, _ := config.Jsoner.Marshal(&app.Nodes)
@@ -436,7 +443,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) (string, *errs.OctlError)
 		if err != nil {
 			emsg := "http post error: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 		req.Header.Set("Content-Type", contentType)
 
@@ -463,7 +470,7 @@ func ScenarioPurge(configuration *ScenarioConfigModel) (string, *errs.OctlError)
 		if err != nil {
 			emsg := "http.DefaultClient.Do(): " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 
 		msg, err := io.ReadAll(res.Body)
@@ -471,34 +478,35 @@ func ScenarioPurge(configuration *ScenarioConfigModel) (string, *errs.OctlError)
 		if err != nil {
 			emsg := "http read body: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
 
 		if res.StatusCode != http.StatusAccepted {
 			emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlHttpStatusError, emsg)
+			return logList, errs.New(errs.OctlHttpStatusError, emsg)
 		}
 		results, err := task.WaitTask("PROCESSING...", string(msg))
 		if err != nil {
 			emsg := "Task processing error: " + err.Error()
 			output.PrintFatalln(emsg)
-			return emsg, errs.New(errs.OctlTaskWaitingError, emsg)
+			return logList, errs.New(errs.OctlTaskWaitingError, emsg)
 		}
 		output.PrintJSON(results)
 	}
 
 	// purge this scenario
-	result, err := ScenarioDelete(configuration.Name)
+	result, err := ScenarioDelete(ctx, configuration.Name)
 	if err != nil {
 		emsg := fmt.Sprintf("ScenarioDelete(%s).", configuration.Name)
 		output.PrintFatalln(emsg, err)
-		return emsg, err
+		return logList, err
 	}
 	return result, nil
 }
 
-func ScenarioCreate(name, description string) (string, *errs.OctlError) {
+func ScenarioCreate(ctx context.Context, name, description string) ([]string, *errs.OctlError) {
+	var logList []string
 	output.PrintInfoln(">> create scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
@@ -516,19 +524,20 @@ func ScenarioCreate(name, description string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return logList, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		emsg := fmt.Sprintf("scenario %s already exists, status=%d.", name, res.StatusCode)
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpStatusError, emsg)
+		return logList, errs.New(errs.OctlHttpStatusError, emsg)
 	}
-	return "OK", nil
+	return logList, nil
 }
 
-func ScenarioUpdate(name, message string) (string, *errs.OctlError) {
+func ScenarioUpdate(ctx context.Context, name, message string) ([]string, *errs.OctlError) {
+	var logList []string
 	output.PrintInfoln(">> update scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
@@ -546,17 +555,18 @@ func ScenarioUpdate(name, message string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return logList, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
 	msg, _ := io.ReadAll(res.Body)
 	output.PrintJSON(msg)
 
-	return string(msg), nil
+	return logList, nil
 }
 
-func ScenarioDelete(name string) (string, *errs.OctlError) {
+func ScenarioDelete(ctx context.Context, name string) ([]string, *errs.OctlError) {
+	var logList []string
 	output.PrintInfoln(">> delete scenario", name)
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
@@ -569,18 +579,18 @@ func ScenarioDelete(name string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http new delete request error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return logList, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		emsg := "http.DefaultClient.Do(): " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return logList, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 
 	msg, _ := io.ReadAll(res.Body)
 	output.PrintJSON(msg)
 
-	return string(msg), nil
+	return logList, nil
 }

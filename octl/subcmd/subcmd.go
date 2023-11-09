@@ -1,13 +1,15 @@
 package subcmd
 
 import (
+	"context"
 	"fmt"
+	"strings"
+
 	"github.com/piaodazhu/Octopoda/octl/file"
 	"github.com/piaodazhu/Octopoda/octl/log"
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/scenario"
 	"github.com/piaodazhu/Octopoda/octl/shell"
-	"strings"
 )
 
 func extractArg(inputlist []string, flag string) (arg string, output []string, found bool) {
@@ -65,7 +67,7 @@ func Apply(arglist []string) {
 		goto usage
 	}
 	if len(arglist) == 2 && arglist[1] == "purge" {
-		scenario.ScenarioApply(arglist[0], arglist[1], "")
+		scenario.ScenarioApply(context.Background(), arglist[0], arglist[1], "")
 		return
 	} else {
 		message, arglist, hasMessage := extractArg(arglist, "-m")
@@ -77,7 +79,7 @@ func Apply(arglist []string) {
 		if len(arglist) == 2 {
 			target = arglist[1]
 		}
-		scenario.ScenarioApply(deployment, target, message)
+		scenario.ScenarioApply(context.Background(), deployment, target, message)
 		return
 	}
 usage:

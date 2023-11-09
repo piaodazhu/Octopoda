@@ -99,10 +99,63 @@ int main() {
 		}
 		printf("\n");
 
-		octl_clear_name_list(mnames, total_members);
+		octl_clear_string_list(mnames, total_members);
 	}
 
-	octl_clear_name_list(gnames, total_groups);
+	octl_clear_string_list(gnames, total_groups);
+
+	char *scenarios[64];
+	int total_scenarios = 64;
+	elen = EBUF_LEN;
+	ret = octl_get_scenarios_info_list(scenarios, &total_scenarios, ebuf, &elen);
+	if (ret > 0) {
+		printf("octl_get_scenarios_info_list: %.*s\n", elen, ebuf);
+		return 1;
+	}
+	printf("total scenarios count=%d\n", total_scenarios);
+	for (i = 0; i < total_scenarios; i++) {
+		printf("scenario[%d]: %s\n", i, scenarios[i]);
+	}
+
+	char rawBuf[1024];
+	int rawLen = 1024;
+	ret = octl_get_scenario_info("s1", rawBuf, &rawLen, ebuf, &elen);
+	if (ret > 0) {
+		printf("octl_get_scenario_info: %.*s\n", elen, ebuf);
+		return 1;
+	}
+	printf("scenario s1: %.*s\n", rawLen, rawBuf);
+
+	rawLen = 1024;
+	ret = octl_get_scenario_version("s1", rawBuf, &rawLen, ebuf, &elen);
+	if (ret > 0) {
+		printf("octl_get_scenario_version: %.*s\n", elen, ebuf);
+		return 1;
+	}
+	printf("version s1: %.*s\n", rawLen, rawBuf);
+
+	char *nodeapps[64];
+	int total_nodeapps = 64;
+	elen = EBUF_LEN;
+	ret = octl_get_nodeapps_info_list("pi4", nodeapps, &total_nodeapps, ebuf, &elen);
+	if (ret > 0) {
+		printf("octl_get_nodeapps_info_list: %.*s\n", elen, ebuf);
+		return 1;
+	}
+	printf("total nodeapps count=%d\n", total_nodeapps);
+	for (i = 0; i < total_nodeapps; i++) {
+		printf("nodeapps[%d]: %s\n", i, nodeapps[i]);
+	}
+
+	char *logs[64];
+	int total_logs = 64;
+	elen = EBUF_LEN;
+	ret = octl_apply_scenario("../../s1", "start", "bycoctl", 10, logs, &total_logs, ebuf, &elen);
+	if (ret > 0) {
+		printf("octl_apply_scenario: %.*s\n", elen, ebuf);
+		return 1;
+	}
+	printf("total logs count=%d\n", total_logs);
 
 	printf("PASS\n");
 	return 0;

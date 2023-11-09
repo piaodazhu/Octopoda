@@ -72,6 +72,22 @@ def main():
 	os.remove("fromPi5/testfile")
 	os.rmdir("fromPi5")
 
+	octl.prune_nodes()
+	scens = octl.get_scenarios_info_list()
+	for scen in scens:
+		name = scen['Name']
+		info = octl.get_scenario_info(name)
+		version = octl.get_scenario_version(name)
+		print(f"found scenario {name} with {info['Version']} (total version number is {len(version)})")
+
+	nodeapps = octl.get_nodeapps_info_list("pi4")
+	for nodeapp in nodeapps:
+		name = nodeapp['Name']
+		tmp = str(name).split("@")
+		info = octl.get_nodeapp_info("pi4", tmp[0], tmp[1])
+		print(f"found pi4 nodeapp {info['Name']} with {info['Versions']}")
+	
+	octl.apply_scenario("../../s1", "start", "byPyoctl", 0)
 	print("PASS ALL")
 
 

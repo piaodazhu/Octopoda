@@ -200,7 +200,7 @@ func Digest() []byte {
 			CurVersion:  nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1],
 		})
 	}
-	serialized, _ := config.Jsoner.Marshal(digest)
+	serialized, _ := config.Jsoner.Marshal(digest.Apps)
 	return serialized
 }
 
