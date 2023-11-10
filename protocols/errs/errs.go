@@ -49,4 +49,5 @@ const (
 	OctlSdkNotInitializedError
 	OctlSdkPanicRecoverError
 	OctlSdkBufferError
+	OctlContextCancelError
 )

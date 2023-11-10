@@ -1,10 +1,13 @@
 package scenario
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"github.com/piaodazhu/Octopoda/octl/node"
 	"os"
 	"strings"
+
+	"github.com/piaodazhu/Octopoda/octl/node"
 )
 
 type ScenarioConfigModel struct {
@@ -28,19 +31,20 @@ type ScriptConfigModel struct {
 	Order  int    `yaml:"order"`
 }
 
-func checkConfig(config *ScenarioConfigModel) error {
+func checkConfig(ctx context.Context, config *ScenarioConfigModel) ([]string, error) {
+	logList := []string{}
 	if config.Name == "" || config.Description == "" || len(config.Applications) == 0 {
-		return fmt.Errorf("missing fields in deployment.yaml: scenario.name(%t) scenario.description(%t) scenario.applications(%t)",
+		return logList, fmt.Errorf("missing fields in deployment.yaml: scenario.name(%t) scenario.description(%t) scenario.applications(%t)",
 			config.Name == "", config.Description == "", len(config.Applications) == 0)
 	}
-
-	// nodeset := map[string]struct{}{}
+	logList = append(logList, "succeed in checking basic fields of scenario")
 	for i := range config.Applications {
 		app := &config.Applications[i]
 		if app.Name == "" || app.Description == "" || app.ScriptPath == "" || len(app.Nodes) == 0 {
-			return fmt.Errorf("missing fields in deployment.yaml: app.name(%t) app.description(%t) app.applications(%t)",
+			return logList, fmt.Errorf("missing fields in deployment.yaml: app.name(%t) app.description(%t) app.applications(%t)",
 				config.Name == "", config.Description == "", len(config.Applications) == 0)
 		}
+		logList = append(logList, "succeed in checking basic fields of app " + app.Name)
 
 		// path recorrect
 		app.SourcePath = basePath + "/" + app.SourcePath
@@ -49,26 +53,41 @@ func checkConfig(config *ScenarioConfigModel) error {
 		// check source path valid
 		info, err := os.Stat(app.SourcePath)
 		if err != nil || !info.IsDir() {
-			return fmt.Errorf("invalid source filepath: %s", app.SourcePath)
+			return logList, fmt.Errorf("invalid source filepath: %s", app.SourcePath)
 		}
+		logList = append(logList, "succeed in checking source path of app " + app.Name)
 
 		app.Nodes, err = expandAlias(app.Nodes)
 		if err != nil {
-			return err
+			return logList, err
+		}
+		logList = append(logList, "succeed in resolving alias of app " + app.Name)
+
+		doneChan := make(chan error, 1)
+		go func() {
+			app.Nodes, err = node.NodesParse(app.Nodes)
+			doneChan <- err
+			close(doneChan)
+		} ()
+		select {
+		case err := <- doneChan:
+			if err != nil {
+				return logList, fmt.Errorf("invalid nodes list in app %s: %v: %s", app.Name, strings.Join(app.Nodes, ", "), err.Error())
+			}
+		case <- ctx.Done():
+			return logList, errors.New("request canceled by context")
 		}
 
-		app.Nodes, err = node.NodesParse(app.Nodes)
-		if err != nil {
-			return fmt.Errorf("invalid nodes list in app %s: %v: %s", app.Name, strings.Join(app.Nodes, ", "), err.Error())
-		}
+		logList = append(logList, "succeed in parsing nodes of app " + app.Name)
 
 		// check: must implement the 4 basic target
 		err = checkTarget(app.Name, app.Script, app.ScriptPath)
 		if err != nil {
-			return err
+			return logList, err
 		}
+		logList = append(logList, "succeed in checking targets of app " + app.Name)
 	}
-	return nil
+	return logList, nil
 }
 
 func checkTarget(name string, script []ScriptConfigModel, path string) error {
