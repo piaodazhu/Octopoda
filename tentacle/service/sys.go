@@ -146,7 +146,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 			if cparams.Background {
 				startErr := cmd.Start()
 				if startErr != nil {
-					emsg := "run cmd background error when start the process" + startErr.Error()
+					emsg := fmt.Sprintf("run cmd background error when start the process: %s. command is: %s", startErr.Error(), cmd.String())
 					logger.Exceptions.Println(emsg)
 					rmsg.Rmsg = emsg
 					rmsg.Output = "0"
@@ -155,7 +155,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 				go func() {
 					execErr := cmd.Wait()
 					if execErr != nil {
-						emsg := "run cmd background error when wait the process" + execErr.Error()
+						emsg := fmt.Sprintf("run cmd background error when wait the process: %s. command is: %s", execErr.Error(), cmd.String())
 						logger.Exceptions.Println(emsg)
 						rmsg.Rmsg = emsg
 						rmsg.Output = "0"
@@ -164,7 +164,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 			} else {
 				stdoutPipe, err := cmd.StdoutPipe()
 				if err != nil {
-					emsg := fmt.Sprintf("Run cmd foreground error when open stdout pipe: %v", err)
+					emsg := fmt.Sprintf("run cmd foreground error when open stdout pipe: %s. command is: %s", err.Error(), cmd.String())
 					logger.Exceptions.Println(emsg)
 					rmsg.Rmsg = emsg
 					return
@@ -173,7 +173,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 
 				stderrPipe, err := cmd.StderrPipe()
 				if err != nil {
-					emsg := fmt.Sprintf("Run cmd foreground error when open stderr pipe: %v", err)
+					emsg := fmt.Sprintf("run cmd foreground error when open stderr pipe: %s. command is: %s", err.Error(), cmd.String())
 					logger.Exceptions.Println(emsg)
 					rmsg.Rmsg = emsg
 					return
@@ -202,7 +202,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 				}()
 
 				if err := cmd.Start(); err != nil {
-					emsg := fmt.Sprintf("Run cmd foreground error when start(): %v", err)
+					emsg := fmt.Sprintf("run cmd foreground error when start the process: %s. command is: %s", err.Error(), cmd.String())
 					logger.Exceptions.Println(emsg)
 					rmsg.Rmsg = emsg
 					return
@@ -210,7 +210,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 
 				wg.Wait()
 				if err := cmd.Wait(); err != nil {
-					emsg := fmt.Sprintf("Run cmd foreground error when wait(): %v", err)
+					emsg := fmt.Sprintf("run cmd foreground error when wait the process: %s. command is: %s", err.Error(), cmd.String())
 					logger.Exceptions.Println(emsg)
 					rmsg.Rmsg = emsg
 					rmsg.Output = stderrSb.String()

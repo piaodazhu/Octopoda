@@ -72,7 +72,7 @@ func KeepAlive() {
 
 		logger.Network.Print("Cannot connect to brain.")
 		if config.GlobalConfig.Heartbeat.AutoRestart {
-			exec.Command("reboot").Run()
+			exec.Command("bash", "-c", config.GlobalConfig.Heartbeat.AutoRestartCommand).Run()
 			wg.Done()
 		} else {
 			logger.Exceptions.Print("Dead but wont restart.")

@@ -26,8 +26,8 @@ func InitConfig(conf string) {
 		if err != nil {
 			panic("cannot read config because " + err.Error())
 		}
-	}	
-	
+	}
+
 	err := viper.Unmarshal(&GlobalConfig)
 	if err != nil {
 		panic("cannot unmarshal config because " + err.Error())
@@ -39,6 +39,10 @@ func InitConfig(conf string) {
 		if err != nil {
 			GlobalConfig.Name = fmt.Sprintf("Node-%d", rand.Int())
 		}
+	}
+
+	if GlobalConfig.Heartbeat.AutoRestartCommand == "" {
+		GlobalConfig.Heartbeat.AutoRestartCommand = "reboot"
 	}
 
 	// JSON iterator
