@@ -240,7 +240,7 @@ octl_get_group(char *group_name, char **output_list, int *output_size,
 
 int
 octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
-	char *errbuf, int *errbuflen) {
+		char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
 	int i;
 	for (i = 0; i < input_size; i++) {
@@ -260,8 +260,144 @@ octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
 
 int
 octl_del_group(char *group_name,
-	char *errbuf, int *errbuflen) {
+		char *errbuf, int *errbuflen) {
 	struct GroupDel_return ret = GroupDel(make_GoString(group_name));
+	int code = ret.r0;
+	char *emsg = ret.r1;
+	if (code == 0) {
+		return 0;
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	return code;
+}
+
+
+int octl_prune_nodes(char *errbuf, int *errbuflen) {
+	struct Prune_return ret = Prune();
+	int code = ret.r0;
+	char *emsg = ret.r1;
+	if (code == 0) {
+		return 0;
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	return code;
+}
+
+
+int octl_get_scenarios_info_list(char **output_list, int *output_size,
+		char *errbuf, int *errbuflen) {
+	struct ScenariosInfo_return ret = ScenariosInfo(make_GoSlice(output_list, *output_size), output_size);
+	int code = ret.r0;
+	char *emsg = ret.r1;
+	if (code == 0) {
+		return 0;
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	return code;
+}
+
+
+int octl_get_scenario_info(char *name, char *output_buf, int *output_size,
+		char *errbuf, int *errbuflen) {
+	struct ScenarioInfo_return ret = ScenarioInfo(make_GoString(name));
+	char *scenBuf = ret.r0;
+	int scenLen = strlen(scenBuf);
+	int code = ret.r1;
+	char *emsg = ret.r2;
+	if (code == 0) {
+		if (scenLen <= *output_size) {
+			*output_size = scenLen;
+			memcpy(output_buf, scenBuf, scenLen);
+			free(scenBuf);
+			return 0;
+		}
+		code = OctlSdkBufferError;
+		emsg = "buf size not enough";
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	free(scenBuf);
+	return code;
+}
+
+
+int octl_get_scenario_version(char *name, char *output_buf, int *output_size,
+		char *errbuf, int *errbuflen) {
+	struct ScenarioVersion_return ret = ScenarioVersion(make_GoString(name));
+	char *verBuf = ret.r0;
+	int verLen = strlen(verBuf);
+	int code = ret.r1;
+	char *emsg = ret.r2;
+	if (code == 0) {
+		if (verLen <= *output_size) {
+			*output_size = verLen;
+			memcpy(output_buf, verBuf, verLen);
+			free(verBuf);
+			return 0;
+		}
+		code = OctlSdkBufferError;
+		emsg = "buf size not enough";
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	free(verBuf);
+	return code;
+}
+
+
+int octl_get_nodeapp_info(char *name, char *app, char *scenario, 
+		char *output_buf, int *output_size,
+		char *errbuf, int *errbuflen) {
+	struct NodeAppInfo_return ret = NodeAppInfo(make_GoString(name), make_GoString(app), make_GoString(scenario));
+	char *nodeappBuf = ret.r0;
+	int nodeappLen = strlen(nodeappBuf);
+	int code = ret.r1;
+	char *emsg = ret.r2;
+	if (code == 0) {
+		if (nodeappLen <= *output_size) {
+			*output_size = nodeappLen;
+			memcpy(output_buf, nodeappBuf, nodeappLen);
+			free(nodeappBuf);
+			return 0;
+		}
+		code = OctlSdkBufferError;
+		emsg = "buf size not enough";
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	free(nodeappBuf);
+	return code;
+}
+
+
+int octl_get_nodeapps_info_list(char *name, char **output_list, int *output_size,
+		char *errbuf, int *errbuflen) {
+	struct NodeAppsInfo_return ret = NodeAppsInfo(make_GoString(name), make_GoSlice(output_list, *output_size), output_size);
+	int code = ret.r0;
+	char *emsg = ret.r1;
+	if (code == 0) {
+		return 0;
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	return code;
+}
+
+
+int octl_apply_scenario(char *name, char *target, char *message, 
+		int timeout, char **log_list, int *log_size,
+		char *errbuf, int *errbuflen) {
+	struct Apply_return ret = Apply(make_GoString(name), make_GoString(target), make_GoString(message), timeout, make_GoSlice(log_list, *log_size), log_size);
 	int code = ret.r0;
 	char *emsg = ret.r1;
 	if (code == 0) {
@@ -327,7 +463,7 @@ octl_clear_nodes_info_list(octl_node_info *list, int n) {
 }
 
 void
-octl_clear_name_list(char **list, int n) {
+octl_clear_string_list(char **list, int n) {
 	int i;
 	for (i = 0; i < n; i++)
 		free(list[i]);

@@ -2,6 +2,7 @@ package scenario
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -13,7 +14,7 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func ScenariosInfo() (string, *errs.OctlError) {
+func ScenariosInfo() ([][]byte, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -23,16 +24,28 @@ func ScenariosInfo() (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
+	itemList := []interface{}{}
+	err = json.Unmarshal(raw, &itemList)
+	if err != nil {
+		emsg := "unmarshal list error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
+	}
+	rawList := [][]byte{}
+	for _, item := range itemList {
+		rawItem, _ := json.Marshal(item)
+		rawList = append(rawList, rawItem)
+	}
 	output.PrintJSON(raw)
-	return string(raw), nil
+	return rawList, nil
 }
 
-func ScenarioInfo(name string) (string, *errs.OctlError) {
+func ScenarioInfo(name string) ([]byte, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -43,13 +56,13 @@ func ScenarioInfo(name string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
-	return string(raw), nil
+	return raw, nil
 }
 
 func ScenarioFix(name string) (string, *errs.OctlError) {
@@ -72,7 +85,7 @@ func ScenarioFix(name string) (string, *errs.OctlError) {
 	return string(raw), nil
 }
 
-func ScenarioVersion(name string) (string, *errs.OctlError) {
+func ScenarioVersion(name string) ([]byte, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -83,13 +96,13 @@ func ScenarioVersion(name string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
-	return string(raw), nil
+	return raw, nil
 }
 
 func ScenarioReset(name string, version string, message string) (string, *errs.OctlError) {

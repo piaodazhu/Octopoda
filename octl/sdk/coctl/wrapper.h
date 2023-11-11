@@ -202,6 +202,58 @@ struct GroupDel_return {
 };
 extern struct GroupDel_return GroupDel(GoString name);
 
+/* Return type for Prune */
+struct Prune_return {
+	int r0;
+	char* r1;
+};
+extern struct Prune_return Prune();
+
+/* Return type for ScenarioInfo */
+struct ScenarioInfo_return {
+	char* r0;
+	int r1;
+	char* r2;
+};
+extern struct ScenarioInfo_return ScenarioInfo(GoString name);
+
+/* Return type for ScenariosInfo */
+struct ScenariosInfo_return {
+	int r0;
+	char* r1;
+};
+extern struct ScenariosInfo_return ScenariosInfo(GoSlice results, int* size);
+
+/* Return type for ScenarioVersion */
+struct ScenarioVersion_return {
+	char* r0;
+	int r1;
+	char* r2;
+};
+extern struct ScenarioVersion_return ScenarioVersion(GoString name);
+
+/* Return type for NodeAppInfo */
+struct NodeAppInfo_return {
+	char* r0;
+	int r1;
+	char* r2;
+};
+extern struct NodeAppInfo_return NodeAppInfo(GoString name, GoString app, GoString scenario);
+
+/* Return type for NodeAppsInfo */
+struct NodeAppsInfo_return {
+	int r0;
+	char* r1;
+};
+extern struct NodeAppsInfo_return NodeAppsInfo(GoString name, GoSlice results, int* size);
+
+/* Return type for Apply */
+struct Apply_return {
+	int r0;
+	char* r1;
+};
+extern struct Apply_return Apply(GoString deployment, GoString target, GoString message, GoInt timeout, GoSlice logs, int* size);
+
 #ifdef __cplusplus
 }
 #endif

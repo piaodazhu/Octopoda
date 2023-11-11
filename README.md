@@ -4,7 +4,7 @@
 🐙 **Octopoda** is a lightweight multi-node scenario management platform. It's not a lightweight K8S. It is originally designed for managing Lab101's ICN application scenarios (Obviously it can do more than that), which require the execution of commands on the node at the lower level of the system, such as inserting a kernel driver module. **Note that it not safe enough to deploy Octopoda in unfamiliar network environment.**
 
 Features of Octopoda:
-1. Simple topology.
+1. Simple topology with NAT reverse path.
 2. Out-of-box.
 3. Robust & auto retry & auto reboot.
 4. Nodes status monitoring.
@@ -15,6 +15,54 @@ Features of Octopoda:
 9. Centralized scripts execution.
 10. Log management.
 11. Fast SSH login.
+12. Golang/C/Python SDK.
+
+- [Octopoda](#octopoda)
+- [Concepts](#concepts)
+  - [Topology](#topology)
+  - [SAN Model](#san-model)
+- [Quick Start](#quick-start)
+- [Octl Command Manual](#octl-command-manual)
+  - [A. Network Information](#a-network-information)
+    - [GET](#get)
+    - [STATUS](#status)
+    - [LOG](#log)
+    - [GROUP](#group)
+  - [B. Scenario Deployment](#b-scenario-deployment)
+    - [CREATE](#create)
+    - [REPO](#repo)
+    - [APPLY](#apply)
+      - [a. About Target](#a-about-target)
+      - [b. About Order](#b-about-order)
+      - [c. About Path](#c-about-path)
+      - [d. Script Environment Variables](#d-script-environment-variables)
+  - [C. Version Control](#c-version-control)
+    - [VERSION](#version)
+    - [RESET](#reset)
+    - [FIX](#fix)
+  - [D. File Distribution](#d-file-distribution)
+    - [UPLOAD](#upload)
+    - [SPREAD](#spread)
+    - [DISTRIB](#distrib)
+    - [TREE](#tree)
+    - [PULL](#pull)
+  - [E. Script Execution](#e-script-execution)
+    - [RUN](#run)
+  - [F. Fast SSH](#f-fast-ssh)
+    - [setssh](#setssh)
+    - [getssh](#getssh)
+    - [delssh](#delssh)
+    - [ssh](#ssh)
+  - [G. HttpsNameServer](#g-httpsnameserver)
+    - [APIs](#apis)
+    - [CertGen](#certgen)
+  - [H. Online Upgrade - Pakma](#h-online-upgrade---pakma)
+- [Scenario Example](#scenario-example)
+- [Octl SDK](#octl-sdk)
+  - [Golang SDK](#golang-sdk)
+  - [C/C++ SDK](#cc-sdk)
+  - [Python SDK](#python-sdk)
+
 
 # Concepts
 
@@ -482,3 +530,54 @@ cd ./octl
 ```
 
 The nodeApps will be installed under `{tentacle.yaml:workspace.root}/app@scen` on corresponding nodes.
+
+# Octl SDK
+
+We provide Golang/C/Python octl SDK to support integrating Octopoda's capability into your code.
+## Golang SDK
+APIs are exported in `octl/sdk/sdk.go`. For using them in Golang program, you should import this module first:
+```go
+import octl "github.com/piaodazhu/Octopoda/octl/sdk"
+```
+or `go get`:
+```bash
+go get "github.com/piaodazhu/Octopoda/octl/sdk"
+```
+Before programming with those APIs, make sure `Init()` has been called first and only once.
+```go
+// Init only once
+if err := octl.Init("/your/path/of/octl_conf.yaml"); err != nil {
+  // something wrong
+}
+
+nodesInfo, err := octl.NodesInfo([]string{"node1", "node2", "node3"})
+if err != nil {
+  // something wrong
+}
+
+```
+Some usage examples can be found in `octl/sdk/sdk_test.go`.
+
+## C/C++ SDK
+APIs are exported in `octl/sdk/coctl/coctl.h`. For using them in C/C++ program, you should include `wrapper.h` and `coctl.h`, and link `libcoctl.a` or `libcoctl.so`.
+
+When programming with those APIs, you should call `octl_init` first. Those APIs take C style with input/output pointer, and **all input array of pointers must be freed manually (See examples)**.
+
+Some usage examples can be found in `octl/sdk/coctl/test.c`.
+
+## Python SDK
+APIs are exported in `octl/sdk/pyoctl/pyoctl.py`. For using them in Python program, you should import `pyoctl`, and make sure you have `libcoctl.so` or `libcoctl.dll`.
+```python
+try:
+  octl = pyoctl.OctlClient("/path/of/libcoctl.so", "/path/of/octl_conf.yaml")
+  results = octl.run(r"{uname -a}", ['node1', 'node2'])
+    for result in results:
+      print(result)
+except pyoctl.OctlException as e: # capture the exception of octl
+  print(e)
+
+```
+
+Some usage examples can be found in `octl/sdk/pyoctl/test.py`.
+
+ 

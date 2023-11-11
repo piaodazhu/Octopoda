@@ -2,6 +2,7 @@ package node
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -13,7 +14,7 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func NodeAppsInfo(node string) (string, *errs.OctlError) {
+func NodeAppsInfo(node string) ([][]byte, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -24,16 +25,28 @@ func NodeAppsInfo(node string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
+	itemList := []interface{}{}
+	err = json.Unmarshal(raw, &itemList)
+	if err != nil {
+		emsg := "unmarshal list error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
+	}
+	rawList := [][]byte{}
+	for _, item := range itemList {
+		rawItem, _ := json.Marshal(item)
+		rawList = append(rawList, rawItem)
+	}
 	output.PrintJSON(raw)
-	return string(raw), nil
+	return rawList, nil
 }
 
-func NodeAppInfo(node, app, scenario string) (string, *errs.OctlError) {
+func NodeAppInfo(node, app, scenario string) ([]byte, *errs.OctlError) {
 	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
 		nameclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -46,13 +59,13 @@ func NodeAppInfo(node, app, scenario string) (string, *errs.OctlError) {
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
-		return emsg, errs.New(errs.OctlHttpRequestError, emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(res.Body)
 
 	output.PrintJSON(raw)
-	return string(raw), nil
+	return raw, nil
 }
 
 func NodeAppReset(node, app, scenario, version, message string) (string, *errs.OctlError) {

@@ -42,7 +42,6 @@ else
 endif
 
 clean:
-	rm -rf *.o *.gch *.a test test_shared *.so
 ifeq ($(OS), Windows_NT)
 	del *.o
 	del *.gch

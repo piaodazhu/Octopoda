@@ -12,6 +12,24 @@ enum PATHTYPE {
 	NODEAPP,
 };
 
+enum ERRORTYPE {
+	OK,
+	OctlReadConfigError,
+	OctlNameClientError,
+	OctlHttpRequestError,
+	OctlHttpStatusError,
+	OctlMessageParseError,
+	OctlNodeParseError,
+	OctlFileOperationError,
+	OctlGitOperationError,
+	OctlTaskWaitingError,
+	OctlArgumentError,
+	OctlSdkNotInitializedError,
+	OctlSdkPanicRecoverError,
+	OctlSdkBufferError,
+};
+
+
 typedef struct node_info octl_node_info;
 typedef struct brain_info octl_brain_info;
 typedef struct node_status octl_node_status;
@@ -108,6 +126,50 @@ int octl_del_group(char *group_name,
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
+#endif
+int octl_prune_nodes(char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_get_scenarios_info_list(char **output_list, int *output_size,
+	char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_get_scenario_info(char *name, char *output_buf, int *output_size,
+	char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_get_scenario_version(char *name, char *output_buf, int *output_size,
+	char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_get_nodeapp_info(char *name, char *app, char *scenario, 
+	char *output_buf, int *output_size,
+	char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_get_nodeapps_info_list(char *name, char **output_list, int *output_size,
+	char *errbuf, int *errbuflen);
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
+#endif
+int octl_apply_scenario(char *name, char *target, char *message, 
+	int timeout, char **log_list, int *log_size,
+	char *errbuf, int *errbuflen);
+
+
+#ifdef WIN_DLL_EXPORT
+__declspec(dllexport) 
 #endif 
 void octl_clear_node_info(octl_node_info *obj);
 
@@ -144,7 +206,7 @@ void octl_clear_execution_results_list(octl_execution_result *list, int n);
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-void octl_clear_name_list(char **list, int n);
+void octl_clear_string_list(char **list, int n);
 
 
 #ifdef __cplusplus

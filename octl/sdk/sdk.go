@@ -1,12 +1,14 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/file"
 	"github.com/piaodazhu/Octopoda/octl/nameclient"
 	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/scenario"
 	"github.com/piaodazhu/Octopoda/octl/shell"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
@@ -195,5 +197,104 @@ func GroupDel(name string) (err *errs.OctlError) {
 		}
 	}()
 	err = node.GroupDel(name)
+	return
+}
+
+func Prune() (err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	err = node.NodePrune()
+	return
+}
+
+func ScenarioInfo(name string) (rawresult_json []byte, err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	rawresult_json, err = scenario.ScenarioInfo(name)
+	return
+}
+
+func ScenariosInfo() (rawresult_json [][]byte, err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	rawresult_json, err = scenario.ScenariosInfo()
+	return
+}
+
+func ScenarioVersion(name string) (rawresult_json []byte, err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	rawresult_json, err = scenario.ScenarioVersion(name)
+	return
+}
+
+func NodeAppInfo(name, app, scenario string) (rawresult_json []byte, err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	rawresult_json, err = node.NodeAppInfo(name, app, scenario)
+	return
+}
+
+func NodeAppsInfo(name string) (rawresult_json [][]byte, err *errs.OctlError) {
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	rawresult_json, err = node.NodeAppsInfo(name)
+	return
+}
+
+func Apply(ctx context.Context, deployment, target, message string) (logList []string, err *errs.OctlError) {
+	// should log
+	if !initalized {
+		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+		return
+	}
+	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+		}
+	}()
+	logList, err = scenario.ScenarioApply(ctx, deployment, target, message)
 	return
 }
