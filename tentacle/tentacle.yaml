@@ -21,6 +21,7 @@ heartbeat:
   reconnectInterval: 5
   retryTime: 6
   autoRestart: false
+  autoRestartCommand: "reboot"
 workspace:
   root: "/var/octopoda/tentacle/workspace/"
   store: "/var/octopoda/tentacle/FSTORE/"

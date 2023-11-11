@@ -30,10 +30,11 @@ type LoggerModel struct {
 }
 
 type HeartbeatModel struct {
-	SendInterval      int  `mapstructure:"sendInterval"`
-	ReconnectInterval int  `mapstructure:"reconnectInterval"`
-	RetryTime         int  `mapstructure:"retryTime"`
-	AutoRestart       bool `mapstructure:"autoRestart"`
+	SendInterval       int    `mapstructure:"sendInterval"`
+	ReconnectInterval  int    `mapstructure:"reconnectInterval"`
+	RetryTime          int    `mapstructure:"retryTime"`
+	AutoRestart        bool   `mapstructure:"autoRestart"`
+	AutoRestartCommand string `mapstructure:"autoRestartCommand"`
 }
 
 type WorkspaceModel struct {

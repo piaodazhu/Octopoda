@@ -17,7 +17,9 @@ Features of Octopoda:
 11. Fast SSH login.
 12. Golang/C/Python SDK.
 
+# Table of Contents
 - [Octopoda](#octopoda)
+- [Table of Contents](#table-of-contents)
 - [Concepts](#concepts)
   - [Topology](#topology)
   - [SAN Model](#san-model)
