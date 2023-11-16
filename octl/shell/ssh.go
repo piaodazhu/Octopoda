@@ -107,7 +107,7 @@ func GetSSH() {
 		output.PrintFatalln("cannot query proxyliteFace: ", err)
 	}
 
-	infos, err := proxylite.DiscoverServices(fmt.Sprintf("%s:%d", entry.Ip, entry.Port))
+	infos, err := proxylite.DiscoverServices(entry.Value)
 	if err != nil {
 		output.PrintFatalln("cannot discover services: ", err)
 	}

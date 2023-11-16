@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/piaodazhu/Octopoda/httpns/config"
 	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/bluele/gcache"
@@ -21,44 +23,23 @@ type BaseDao struct {
 type NameEntryDao struct {
 	BaseDao
 }
-type ConfigDao struct {
-	BaseDao
-}
-type SshInfoDao struct {
-	BaseDao
-}
 
 var rdb *redis.Client
 var ctx context.Context
 var namedao *NameEntryDao
-var confdao *ConfigDao
-var sshdao *SshInfoDao
 
 func DaoInit() error {
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       1,
+		Addr:     fmt.Sprintf("%s:%d", config.GlobalConfig.Redis.Ip, config.GlobalConfig.Redis.Port),
+		Password: config.GlobalConfig.Redis.Password,
+		DB:       config.GlobalConfig.Redis.Db,
 	})
 	ctx = context.TODO()
+
 	namedao = &NameEntryDao{
 		BaseDao: BaseDao{
 			DefaultTTL:    5000,
 			DefaultPrefix: "NameEntry:",
-			Cache:         gcache.New(256).Build(),
-		},
-	}
-	confdao = &ConfigDao{
-		BaseDao: BaseDao{
-			DefaultTTL:    0,
-			DefaultPrefix: "Config:",
-			Cache:         gcache.New(256).Build(),
-		},
-	}
-	sshdao = &SshInfoDao{
-		BaseDao: BaseDao{
-			DefaultTTL:    0,
-			DefaultPrefix: "SshInfo:",
 			Cache:         gcache.New(256).Build(),
 		},
 	}
@@ -67,12 +48,6 @@ func DaoInit() error {
 
 func GetNameEntryDao() *NameEntryDao {
 	return namedao
-}
-func GetNameConfigDao() *ConfigDao {
-	return confdao
-}
-func GetSshInfoDao() *SshInfoDao {
-	return sshdao
 }
 
 func (b *BaseDao) list(pattern string) ([]string, error) {
@@ -131,29 +106,19 @@ func (b *BaseDao) get(key string) (string, error) {
 	return value, nil
 }
 
-func (b *BaseDao) append(key string, value string) error {
-	key = b.DefaultPrefix + key
-	return rdb.LPush(ctx, key, value).Err()
-}
-
-func (b *BaseDao) getrange(key string, index, amount int) ([]string, error) {
-	key = b.DefaultPrefix + key
-	return rdb.LRange(ctx, key, int64(index), int64(index+amount)).Result()
-}
-
 // NameEntryDao
 
-func (n *NameEntryDao) Set(key string, entry protocols.NameEntry, ttl int) error {
+func (n *NameEntryDao) Set(key string, entry protocols.NameServiceEntry, ttl int) error {
 	raw, _ := json.Marshal(entry)
 	return n.set(key, string(raw), ttl)
 }
 
-func (n *NameEntryDao) Get(key string) (*protocols.NameEntry, error) {
+func (n *NameEntryDao) Get(key string) (*protocols.NameServiceEntry, error) {
 	value, err := n.get(key)
 	if err != nil {
 		return nil, err
 	}
-	res := &protocols.NameEntry{}
+	res := &protocols.NameServiceEntry{}
 	err = json.Unmarshal([]byte(value), res)
 	if err != nil {
 		return nil, err
@@ -167,64 +132,4 @@ func (n *NameEntryDao) Del(key string) error {
 
 func (n *NameEntryDao) List(pattern string) ([]string, error) {
 	return n.list(pattern)
-}
-
-// ConfigDao
-
-func (c *ConfigDao) Append(key string, config protocols.ConfigEntry) error {
-	raw, _ := json.Marshal(config)
-	return c.append(key, string(raw))
-}
-
-func (c *ConfigDao) GetRange(key string, index, amount int) ([]*protocols.ConfigEntry, error) {
-	value, err := c.getrange(key, index, amount)
-	if err != nil {
-		return nil, err
-	}
-	res := []*protocols.ConfigEntry{}
-	for _, conf := range value {
-		var item protocols.ConfigEntry
-		err = json.Unmarshal([]byte(conf), &item)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, &item)
-	}
-	return res, nil
-}
-
-func (c *ConfigDao) Del(key string) error {
-	return c.del(key)
-}
-
-func (c *ConfigDao) List(pattern string) ([]string, error) {
-	return c.list(pattern)
-}
-
-// SshInfoDao
-
-func (s *SshInfoDao) Set(key string, ssh protocols.SshInfo, ttl int) error {
-	raw, _ := json.Marshal(ssh)
-	return s.set(key, string(raw), ttl)
-}
-
-func (s *SshInfoDao) Get(key string) (*protocols.SshInfo, error) {
-	value, err := s.get(key)
-	if err != nil {
-		return nil, err
-	}
-	res := &protocols.SshInfo{}
-	err = json.Unmarshal([]byte(value), res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (s *SshInfoDao) Del(key string) error {
-	return s.del(key)
-}
-
-func (s *SshInfoDao) List(pattern string) ([]string, error) {
-	return s.list(pattern)
 }

@@ -18,10 +18,8 @@ import (
 var nsAddr string
 var HttpsClient *http.Client
 var BrainAddr string
-var BrainIp string
 
 func InitClient() *errs.OctlError {
-	BrainIp = config.GlobalConfig.Brain.Ip
 	defaultBrainAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.Port)
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		output.PrintWarningf("NameService client is disabled")
@@ -46,14 +44,14 @@ func InitClient() *errs.OctlError {
 		return errs.New(errs.OctlNameClientError, emsg)
 	}
 
-	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".octlFace")
+	entry, err := NameQuery(config.GlobalConfig.Brain.Name + ".octlFace.request")
 	if err != nil {
 		emsg := fmt.Sprintf("Could not resolve name %s (%s)", config.GlobalConfig.Brain.Name+".octlFace", err.Error())
 		output.PrintWarningln(emsg)
 		return errs.New(errs.OctlNameClientError, emsg)
 	}
-	BrainIp = entry.Ip
-	BrainAddr = fmt.Sprintf("%s:%d", BrainIp, entry.Port)
+	// BrainIp = entry.Ip
+	BrainAddr = entry.Value
 	return nil
 }
 
@@ -98,7 +96,7 @@ func pingNameServer() error {
 	return nil
 }
 
-func NameQuery(name string) (*protocols.NameEntry, error) {
+func NameQuery(name string) (*protocols.NameServiceEntry, error) {
 	res, err := HttpsClient.Get(fmt.Sprintf("https://%s/query?name=%s", nsAddr, name))
 	if err != nil {
 		return nil, err
