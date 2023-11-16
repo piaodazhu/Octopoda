@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"github.com/piaodazhu/Octopoda/protocols/security"
+
 	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
@@ -155,15 +155,11 @@ func SendMessageUnique(conn net.Conn, mtype int, serial uint32, raw []byte) erro
 	binary.LittleEndian.PutUint32(msg[0:], serial)
 	copy(msg[4:], raw)
 
-	msg, TokenSerial, err := security.AesEncrypt(msg)
-	if err != nil {
-		return err
-	}
 	Len := len(msg)
 	Buf := make([]byte, Len+16)
 	binary.LittleEndian.PutUint32(Buf[0:], uint32(mtype))
 	binary.LittleEndian.PutUint32(Buf[4:], uint32(Len))
-	binary.LittleEndian.PutUint64(Buf[8:], uint64(TokenSerial))
+	binary.LittleEndian.PutUint64(Buf[8:], 0)
 	copy(Buf[16:], msg)
 
 	Offset := 0
@@ -193,7 +189,6 @@ func RecvMessageUnique(conn net.Conn) (int, uint32, []byte, error) {
 
 	mtype := int(binary.LittleEndian.Uint32(Buf[0:]))
 	Len = int(binary.LittleEndian.Uint32(Buf[4:]))
-	TokenSerial := int64(binary.LittleEndian.Uint64(Buf[8:]))
 
 	Buf = make([]byte, Len)
 	Offset = 0
@@ -205,10 +200,7 @@ func RecvMessageUnique(conn net.Conn) (int, uint32, []byte, error) {
 
 		Offset += n
 	}
-	Buf, err := security.AesDecrypt(Buf, TokenSerial)
-	if err != nil {
-		return 0, 0, nil, err
-	}
+
 	serial := binary.LittleEndian.Uint32(Buf[0:])
 	if !snp.CheckSerial(serial) {
 		return 0, 0, nil, fmt.Errorf("duplicated message")
