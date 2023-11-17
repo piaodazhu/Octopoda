@@ -32,7 +32,7 @@ func InitNameClient() {
 	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
 
 	// init https client
-	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ClientCert, config.GlobalConfig.Sslinfo.ClientKey)
+	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey)
 	if err != nil {
 		logger.Network.Fatal("InitHttpsClient:", err.Error())
 		return

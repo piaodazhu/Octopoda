@@ -59,8 +59,10 @@ type HttpsNsModel struct {
 
 type SslinfoModel struct {
 	CaCert     string `mapstructure:"caCert"`
-	ClientCert string `mapstructure:"clientCert"`
-	ClientKey  string `mapstructure:"clientKey"`
+	// ClientCert string `mapstructure:"clientCert"`
+	// ClientKey  string `mapstructure:"clientKey"`
+	ServerCert string `mapstructure:"serverCert"`
+	ServerKey  string `mapstructure:"serverKey"`
 }
 
 type MailAlertModel struct {

@@ -57,7 +57,5 @@ func main() {
 	network.WaitNodeJoin()
 	network.InitProxyServer()
 
-	if err := Run(); err != nil {
-		panic(err)
-	}
+	Run()
 }

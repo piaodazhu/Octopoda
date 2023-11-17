@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
@@ -91,13 +91,13 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 
 	bodyWriter.Close()
 
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FileDistrib,
 	)
 
-	res, err := http.Post(url, contentType, &bodyBuffer)
+	res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

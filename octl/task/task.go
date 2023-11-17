@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
 
@@ -17,8 +17,8 @@ import (
 )
 
 func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error) {
-	url := fmt.Sprintf("http://%s/%s%s?taskid=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?taskid=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_TaskState,
 		taskid,
@@ -33,7 +33,7 @@ func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error
 	pollCnt := 0
 
 	for {
-		res, err := http.Get(url)
+		res, err := httpclient.BrainClient.Get(url)
 		if err != nil {
 			return nil, err
 		}

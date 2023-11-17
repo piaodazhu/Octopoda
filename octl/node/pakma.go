@@ -3,14 +3,13 @@ package node
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 	"unicode"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
@@ -113,8 +112,8 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 		nodes = append(nodes, "brain")
 	}
 
-	URL := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	URL := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Pakma,
 	)
@@ -136,7 +135,7 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 		}
 	}
 
-	res, err := http.PostForm(URL, values)
+	res, err := httpclient.BrainClient.PostForm(URL, values)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

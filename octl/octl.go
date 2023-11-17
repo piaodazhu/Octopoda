@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/subcmd"
 )
@@ -60,7 +60,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := nameclient.InitClient(); err != nil {
+	if err := httpclient.InitClients(); err != nil {
 		panic(err)
 	}
 

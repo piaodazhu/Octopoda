@@ -71,7 +71,7 @@ class ExecutionResult:
 
 class OctlErrorCode(Enum):
     OctlReadConfigError = 1
-    OctlNameClientError = 2
+    OctlInitClientError = 2
     OctlHttpRequestError = 3
     OctlHttpStatusError = 4
     OctlMessageParseError = 5

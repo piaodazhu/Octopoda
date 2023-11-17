@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
@@ -19,15 +19,15 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlArgumentError, emsg)
 	}
-	url := fmt.Sprintf("http://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FilePull,
 		pathtype,
 		node,
 		fileOrDir,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
