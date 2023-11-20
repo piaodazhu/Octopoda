@@ -26,6 +26,7 @@ func InitTLSConfig() error {
 		return errors.New("certPool.AppendCertsFromPEM failed")
 	}
 	TLSConfig = &tls.Config{
+		ServerName:         "octopoda",
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            certPool,
 		ClientAuth:         tls.RequireAndVerifyClientCert,

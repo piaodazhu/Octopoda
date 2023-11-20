@@ -55,8 +55,14 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
 
-	if len(results) != 1 || len(results[0].Result) == 0 {
+	if len(results) != 1 {
 		emsg := fmt.Sprintf("number of results of this command should be only 1 but get %d", len(results))
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
+	}
+
+	if len(results[0].Result) == 0 {
+		emsg := "file is empty or not found."
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}

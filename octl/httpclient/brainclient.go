@@ -38,6 +38,7 @@ func initHttpsClient(caCert, cliCert, cliKey string) error {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
+			ServerName: "octopoda",
 			RootCAs:            certPool,
 			InsecureSkipVerify: false,
 			ClientAuth:         tls.RequireAndVerifyClientCert,
