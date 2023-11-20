@@ -1,6 +1,7 @@
 package network
 
 import (
+	"crypto/tls"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -23,14 +24,12 @@ func InitTentacleFace() {
 	startTime = time.Now()
 	var err error
 
-	addr1 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.HeartbeatPort)
-	heartbeatListener, err = net.Listen("tcp", addr1)
+	heartbeatListener, err = newTlsListener(fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.HeartbeatPort))
 	if err != nil {
 		logger.Exceptions.Panic(err)
 	}
 
-	addr2 := fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.MessagePort)
-	messagerListener, err = net.Listen("tcp", addr2)
+	messagerListener, err = newTlsListener(fmt.Sprintf("%s:%d", config.GlobalConfig.TentacleFace.Ip, config.GlobalConfig.TentacleFace.MessagePort))
 	if err != nil {
 		logger.Exceptions.Panic(err)
 	}
@@ -52,6 +51,10 @@ func acceptNodeJoin(listener net.Listener) {
 			go ProcessNodeJoin(conn)
 		}
 	}()
+}
+
+func newTlsListener(address string) (net.Listener, error) {
+	return tls.Listen("tcp", address, config.TLSConfig)
 }
 
 func ProcessNodeJoin(conn net.Conn) {

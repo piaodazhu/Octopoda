@@ -1,6 +1,7 @@
 package network
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"sync"
@@ -30,41 +31,30 @@ func getIpByDevice(device string) (string, error) {
 	return "", fmt.Errorf("IPv4 address not found with device %s", device)
 }
 
-func dialWithDevice(addr, dev string) (net.Conn, error) {
-	remote, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		logger.Network.Println("cannot resolve remote address: ", err)
-		return nil, err
-	}
-
-	localip, err := getIpByDevice(dev)
-	if err != nil {
-		logger.Network.Println("cannot get local ip: ", err)
-		// fall back to dail
-		return net.Dial("tcp", addr)
-	}
-
-	local, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", localip))
-	if err != nil {
-		logger.Network.Println("cannot resolve local address: ", err)
-		// fall back to dail
-		return net.Dial("tcp", addr)
-	}
-
-	tcpConn, err := net.DialTCP("tcp", local, remote)
-	if err != nil {
-		// fall back to dail
-		return net.Dial("tcp", addr)
-	}
-	return tcpConn, nil
-}
-
 func Dial(addr string) (net.Conn, error) {
+	dailer := net.Dialer{KeepAlive: -1}
 	dev := config.GlobalConfig.NetDevice
-	if len(dev) == 0 {
-		return net.Dial("tcp", addr)
+	if len(dev) != 0 {
+		localip, err := getIpByDevice(dev)
+		if err != nil {
+			logger.Network.Println("cannot get local ip: ", err)
+			// fall back to dail
+		} else {
+			local, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", localip))
+			if err != nil {
+				logger.Network.Println("cannot resolve local address: ", err)
+				// fall back to dail
+			}
+			dailer.LocalAddr = local
+		}
 	}
-	return dialWithDevice(addr, dev)
+	conn, err := tls.DialWithDialer(&dailer, "tcp", addr, config.TLSConfig)
+	if err != nil {
+		logger.Network.Println("cannot dail with dialer: ", err)
+		// fall back to dail
+		return tls.Dial("tcp", addr, config.TLSConfig)
+	}
+	return conn, nil
 }
 
 func Run() {

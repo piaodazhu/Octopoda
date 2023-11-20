@@ -21,6 +21,18 @@ func KeepAlive() {
 		retry := 0
 	reconnect:
 		nameclient.ResolveBrain()
+
+		// TODO: ugly code
+		resolvRetry := 0;
+		for len(nameclient.BrainHeartAddr) == 0 {
+			time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
+			nameclient.ResolveBrain()
+			resolvRetry++
+			if resolvRetry > 10 {
+				break
+			}
+		}
+
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
 			conn, err := Dial(nameclient.BrainHeartAddr)
 			if err != nil {

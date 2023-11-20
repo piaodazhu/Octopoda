@@ -52,12 +52,12 @@ func NodesInfo(ctx *gin.Context) {
 
 	if len(names) == 0 {
 		if nodes.InfoList, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(http.StatusNotFound, struct{}{})
+			ctx.JSON(200, struct{}{})
 			return
 		}
 	} else {
 		if nodes.InfoList, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(http.StatusNotFound, struct{}{})
+			ctx.JSON(200, struct{}{})
 			return
 		}
 	}
