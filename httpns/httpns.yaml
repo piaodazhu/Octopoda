@@ -4,7 +4,7 @@ redis:
   ip: "127.0.0.1"
   port: 6379
   password: ""
-  db: 1
+  db: 2
 logger:
   path: "/var/octopoda/httpns/log"
   namePrefix: "log"
