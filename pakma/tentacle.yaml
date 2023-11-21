@@ -11,8 +11,6 @@ brain:
   ip: "127.0.0.1"
   heartbeatPort: 1111
   messagePort: 1112
-  
-  token: "default"
 ssh:
   username: "username"
   password: "password"

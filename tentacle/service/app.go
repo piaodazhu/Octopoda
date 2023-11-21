@@ -166,7 +166,7 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 			}
 		}
 		// run script
-		sparams := ScriptParams{
+		sparams := protocols.ScriptParams{
 			FileName:   fmt.Sprintf("script_%s.sh", time.Now().Format("2006_01_02_15_04")),
 			TargetPath: "scripts/",
 			FileBuf:    adParams.Script,

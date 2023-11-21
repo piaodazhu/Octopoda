@@ -18,6 +18,7 @@ type NodeInfo struct {
 	Addr      string
 	State     int32
 	ConnState string
+	Delay     int64
 	OnlineTs  int64
 	OfflineTs int64
 	ActiveTs  int64
@@ -61,6 +62,7 @@ type NodeInfoText struct {
 	Addr         string `json:"addr"`
 	Health       string `json:"health"`
 	MsgConnState string `json:"msg_conn"`
+	Delay        string `json:"delay"`
 	OnlineTime   string `json:"online_time,omitempty"`
 	OfflineTime  string `json:"offline_time,omitempty"`
 	LastOnline   string `json:"last_active,omitempty"`
@@ -103,11 +105,13 @@ func (node *NodeInfo) ToText() *NodeInfoText {
 		Name:    node.Name,
 		Version: node.Version,
 		Addr:    node.Addr,
+		Delay:   "-",
 	}
 	switch node.State {
 	case 0:
 		res.Health = "Healthy"
 		res.OnlineTime = time.Unix(node.BrainTs, 0).Sub(time.UnixMilli(node.OnlineTs)).String()
+		res.Delay = fmt.Sprintf("%dms", node.Delay)
 	case 1:
 		res.Health = "Disconnect"
 		res.LastOnline = time.UnixMilli(node.ActiveTs).Format("2006-01-02 15:04:05")

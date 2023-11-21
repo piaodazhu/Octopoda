@@ -6,7 +6,7 @@ import (
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/file"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/scenario"
 	"github.com/piaodazhu/Octopoda/octl/shell"
@@ -21,7 +21,7 @@ func Init(conf string) *errs.OctlError {
 		return err
 	}
 
-	if err := nameclient.InitClient(); err != nil {
+	if err := httpclient.InitClients(); err != nil {
 		return err
 	}
 

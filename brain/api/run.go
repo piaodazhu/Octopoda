@@ -14,14 +14,8 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/ostp"
 )
-
-type ScriptParams struct {
-	FileName   string
-	TargetPath string
-	FileBuf    string
-	DelayTime  int
-}
 
 func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
@@ -57,13 +51,6 @@ func RunScript(ctx *gin.Context) {
 
 	raw, _ := io.ReadAll(f)
 	content := base64.RawStdEncoding.EncodeToString(raw)
-	sparams := ScriptParams{
-		FileName:   script.Filename,
-		TargetPath: "scripts/",
-		FileBuf:    content,
-		DelayTime:  delay,
-	}
-	payload, _ := config.Jsoner.Marshal(&sparams)
 
 	nodes := []string{}
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
@@ -72,6 +59,15 @@ func RunScript(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+
+	sparams := protocols.ScriptParams{
+		FileName:   script.Filename,
+		TargetPath: "scripts/",
+		FileBuf:    content,
+		DelayTime:  delay,
+		ExecTs: ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+	}
+	payload, _ := config.Jsoner.Marshal(&sparams)
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(http.StatusAccepted, taskid)
@@ -86,12 +82,6 @@ func RunScript(ctx *gin.Context) {
 
 func runScript(taskid string, name string, payload []byte) {
 	runAndWait(taskid, name, payload, protocols.TypeRunScript)
-}
-
-type CommandParams struct {
-	Command    string
-	Background bool
-	DelayTime  int
 }
 
 func RunCmd(ctx *gin.Context) {
@@ -123,13 +113,6 @@ func RunCmd(ctx *gin.Context) {
 		return
 	}
 
-	cParams := CommandParams{
-		Command:    cmd,
-		Background: isbg,
-		DelayTime:  delay,
-	}
-	payload, _ := json.Marshal(cParams)
-
 	nodes := []string{}
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
@@ -137,6 +120,14 @@ func RunCmd(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+
+	cParams := protocols.CommandParams{
+		Command:    cmd,
+		Background: isbg,
+		DelayTime:  delay,
+		ExecTs:     ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+	}
+	payload, _ := json.Marshal(cParams)
 
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(http.StatusAccepted, taskid)

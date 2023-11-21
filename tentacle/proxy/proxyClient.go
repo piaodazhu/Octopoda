@@ -3,6 +3,7 @@ package proxy
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/nameclient"
@@ -15,14 +16,13 @@ var done chan struct{}
 
 func RegisterSshService() (string, error) {
 	var err error
-	var proxyServerIp string
-	var proxyServerPort int
+	var proxyAddr string
 	if proxyClient == nil {
-		proxyServerIp, proxyServerPort, err = getProxyServerAddr()
+		proxyAddr, err = getProxyServerAddr()
 		if err != nil {
 			return "", err
 		}
-		proxyClient = proxylite.NewProxyLiteClient(fmt.Sprintf("%s:%d", proxyServerIp, proxyServerPort))
+		proxyClient = proxylite.NewProxyLiteClient(proxyAddr)
 		proxyClient.SetLogger(nil)
 	}
 
@@ -43,7 +43,11 @@ func RegisterSshService() (string, error) {
 		proxyClient = nil
 		return "", err
 	}
-	return fmt.Sprintf("%s:%d", proxyServerIp, port), nil
+	proxyIpPort := strings.Split(proxyAddr, ":")
+	if len(proxyIpPort) != 2 {
+		return "", errors.New("invalid proxy service address entry value: " + proxyAddr)
+	}
+	return fmt.Sprintf("%s:%d", proxyIpPort[0], port), nil
 }
 
 func UnregisterSshService() {
@@ -54,11 +58,11 @@ func UnregisterSshService() {
 	}
 }
 
-func getProxyServerAddr() (string, int, error) {
+func getProxyServerAddr() (string, error) {
 	entry, err := nameclient.NameQuery(config.GlobalConfig.Brain.Name + ".proxyliteFace")
 	if err != nil {
 		fmt.Println("QUERY: ", config.GlobalConfig.Brain.Name+".proxyliteFace")
-		return "", 0, err
+		return "", err
 	}
-	return entry.Ip, entry.Port, nil
+	return entry.Value, nil
 }

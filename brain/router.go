@@ -1,8 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/api"
@@ -16,21 +20,15 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var engine *gin.Engine
-
-func Run() error {
-	// gin.SetMode(gin.DebugMode)
-	// engine = gin.Default()
-
+func Run() {
 	gin.SetMode(gin.ReleaseMode)
-	engine = gin.New()
-	engine.Use(gin.Recovery())
-
+	engine := gin.New()
 	initRouter(engine)
-	return ListenCommand()
+	listenTLS(engine)
 }
 
 func initRouter(engine *gin.Engine) {
+	engine.Use(gin.Recovery())
 	engine.Use(BusyBlocker())
 	group := engine.Group("/api/v1")
 	{
@@ -124,9 +122,31 @@ func BusyBlocker() gin.HandlerFunc {
 	}
 }
 
-func ListenCommand() error {
-	listenaddr := fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port)
-	return engine.Run(listenaddr)
+func listenTLS(engine *gin.Engine) {
+	// config TLS server
+	certPool := x509.NewCertPool()
+	ca, err := os.ReadFile(config.GlobalConfig.Sslinfo.CaCert)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	ok := certPool.AppendCertsFromPEM(ca)
+	if !ok {
+		log.Panic(ok)
+	}
+	tlsConfig := &tls.Config{
+		RootCAs:    certPool,
+		ClientCAs:  certPool,
+		ClientAuth: tls.RequireAndVerifyClientCert,
+	}
+
+	// run HTTP server with TLS
+	s := http.Server{
+		Addr:      fmt.Sprintf("%s:%d", config.GlobalConfig.OctlFace.Ip, config.GlobalConfig.OctlFace.Port),
+		Handler:   engine,
+		TLSConfig: tlsConfig,
+	}
+	logger.SysInfo.Fatal(s.ListenAndServeTLS(config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey))
 }
 
 func RateLimiter(r float64, burst int) gin.HandlerFunc {

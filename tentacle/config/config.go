@@ -71,4 +71,8 @@ func InitConfig(conf string) {
 		os.Remove(GlobalConfig.Workspace.Store)
 		os.MkdirAll(GlobalConfig.Workspace.Store, os.ModePerm)
 	}
+
+	if err := InitTLSConfig(); err != nil {
+		panic("InitTLSConfig failed: " + err.Error())
+	}
 }

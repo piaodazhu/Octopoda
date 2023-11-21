@@ -20,7 +20,6 @@ type TentacleFaceModel struct {
 	Ip            string `mapstructure:"ip"`
 	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
 	MessagePort   uint16 `mapstructure:"messagePort"`
-	Token         string `mapstructure:"token"`
 	ActiveTimeout int    `mapstructure:"activeTimeout"`
 	RecordTimeout int    `mapstructure:"recordTimeout"`
 }
@@ -59,8 +58,10 @@ type HttpsNsModel struct {
 
 type SslinfoModel struct {
 	CaCert     string `mapstructure:"caCert"`
-	ClientCert string `mapstructure:"clientCert"`
-	ClientKey  string `mapstructure:"clientKey"`
+	// ClientCert string `mapstructure:"clientCert"`
+	// ClientKey  string `mapstructure:"clientKey"`
+	ServerCert string `mapstructure:"serverCert"`
+	ServerKey  string `mapstructure:"serverKey"`
 }
 
 type MailAlertModel struct {

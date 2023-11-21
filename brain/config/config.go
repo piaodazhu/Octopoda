@@ -61,4 +61,8 @@ func InitConfig(conf string) {
 	if GlobalConfig.OctlFace.SshPort == 0 {
 		GlobalConfig.OctlFace.SshPort = 22
 	}
+
+	if err := InitTLSConfig(); err != nil {
+		panic("InitTLSConfig failed: " + err.Error())
+	}
 }

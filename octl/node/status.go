@@ -7,20 +7,20 @@ import (
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func NodeStatus(name string) (*protocols.Status, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeStatus,
 		name,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -55,13 +55,13 @@ func NodesStatus(names []string) (*protocols.NodesStatus, *errs.OctlError) {
 		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
-	url := fmt.Sprintf("http://%s/%s%s?targetNodes=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?targetNodes=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodesStatus,
 		string(nodes_serialized),
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error." + err.Error()
 		output.PrintFatalln(emsg)

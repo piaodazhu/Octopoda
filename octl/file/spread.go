@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
@@ -30,13 +30,13 @@ func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocol
 	}
 	buf, _ := config.Jsoner.Marshal(fsParams)
 
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FileSpread,
 	)
 
-	res, err := http.Post(url, "application/json", bytes.NewBuffer(buf))
+	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

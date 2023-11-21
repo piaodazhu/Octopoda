@@ -6,22 +6,21 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func NodeAppsInfo(node string) ([][]byte, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeApps,
 		node,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -47,15 +46,15 @@ func NodeAppsInfo(node string) ([][]byte, *errs.OctlError) {
 }
 
 func NodeAppInfo(node, app, scenario string) ([]byte, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s&app=%s&scenario=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&app=%s&scenario=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeAppVersion,
 		node,
 		app,
 		scenario,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -69,8 +68,8 @@ func NodeAppInfo(node, app, scenario string) ([]byte, *errs.OctlError) {
 }
 
 func NodeAppReset(node, app, scenario, version, message string) (string, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeAppVersion,
 	)
@@ -85,7 +84,7 @@ func NodeAppReset(node, app, scenario, version, message string) (string, *errs.O
 	writer.WriteField("message", message)
 	writer.Close()
 
-	res, err := http.Post(url, contentType, body)
+	res, err := httpclient.BrainClient.Post(url, contentType, body)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

@@ -31,7 +31,7 @@ fi
 if [[ ($TYPE == "server" || $TYPE == "svr") && $# == 3 ]];
 then
 	FNAME=server
-	EXTARG=subjectAltName=DNS:localhost,IP:127.0.0.1,IP:$3
+	EXTARG=subjectAltName=DNS:localhost,DNS:octopoda,DNS:brain,IP:127.0.0.1,IP:$3
 elif [[ ($TYPE == "client" || $TYPE == "cli") && $# == 2 ]];
 then
 	FNAME=client

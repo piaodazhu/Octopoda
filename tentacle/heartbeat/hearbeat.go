@@ -1,15 +1,19 @@
 package heartbeat
 
 import (
+	"time"
+
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/ostp"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func MakeHeartbeat(num uint32) []byte {
 	hbInfo := protocols.HeartBeatRequest{
-		Msg: "ping",
-		Num: num,
+		Msg:   "ping",
+		Num:   num,
+		Delay: ostp.Delay,
 	}
 
 	serialized_info, err := config.Jsoner.Marshal(hbInfo)
@@ -34,6 +38,7 @@ func MakeHeartbeatResponse(newNum uint32) []byte {
 	hbInfo := protocols.HeartBeatResponse{
 		Msg:    "pong",
 		NewNum: newNum,
+		Ts:     time.Now().UnixMilli(),
 	}
 
 	serialized_info, err := config.Jsoner.Marshal(hbInfo)

@@ -15,7 +15,7 @@ enum PATHTYPE {
 enum ERRORTYPE {
 	OK,
 	OctlReadConfigError,
-	OctlNameClientError,
+	OctlInitClientError,
 	OctlHttpRequestError,
 	OctlHttpStatusError,
 	OctlMessageParseError,

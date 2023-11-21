@@ -68,9 +68,9 @@ func StoreNode(name, version, addr string, conn net.Conn) {
 	}
 }
 
-func UpdateNode(name string) bool {
+func UpdateNode(name string, delay int64) bool {
 	// logger.Tentacle.Print("UpdateNode", name)
-	return SetNodeState(name, protocols.NodeStateReady)
+	return SetNodeStateAndDelay(name, protocols.NodeStateReady, delay)
 }
 
 func DisconnNode(name string) bool {
@@ -190,4 +190,32 @@ func SetNodeState(name string, state int) bool {
 		return true
 	}
 	return false
+}
+
+func SetNodeStateAndDelay(name string, state int, delay int64) bool {
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
+
+	if node, found := NodeMap[name]; found {
+		node.State = int32(state)
+		node.ActiveTs = time.Now().UnixMilli()
+		node.Delay = delay
+		return true
+	}
+	return false
+}
+
+func GetNodesMaxDelay(names []string) int64 {
+	NodesLock.Lock()
+	defer NodesLock.Unlock()
+
+	var maxDelay int64 = 0
+	for _, name := range names {
+		if node, found := NodeMap[name]; found {
+			if node.State == protocols.NodeStateReady && node.Delay > maxDelay {
+				maxDelay = node.Delay
+			}
+		}
+	}
+	return maxDelay
 }

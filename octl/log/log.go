@@ -3,11 +3,11 @@ package log
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
-	"github.com/piaodazhu/Octopoda/octl/output"
 	"strconv"
+
+	"github.com/piaodazhu/Octopoda/octl/config"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
+	"github.com/piaodazhu/Octopoda/octl/output"
 )
 
 func NodeLog(name string, params []string) (string, error) {
@@ -32,15 +32,15 @@ func NodeLog(name string, params []string) (string, error) {
 		default:
 		}
 	}
-	url := fmt.Sprintf("http://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeLog,
 		name,
 		maxlines,
 		maxdaysbefore,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error."
 		output.PrintFatalln(emsg, err)

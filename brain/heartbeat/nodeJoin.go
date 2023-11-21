@@ -30,7 +30,7 @@ func ParseNodeJoin(raw []byte) (protocols.NodeJoinInfo, error) {
 
 func MakeNodeJoinResponse(randNum uint32) []byte {
 	nodeJoinResponse := protocols.NodeJoinResponse{
-		Ts:     time.Now().UnixMicro(),
+		Ts:     time.Now().UnixMilli(),
 		NewNum: randNum,
 	}
 	serialized_response, err := config.Jsoner.Marshal(nodeJoinResponse)

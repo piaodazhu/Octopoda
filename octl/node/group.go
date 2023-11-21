@@ -8,19 +8,19 @@ import (
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func GroupGetAll() ([]string, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Groups,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -48,13 +48,13 @@ func GroupGetAll() ([]string, *errs.OctlError) {
 }
 
 func GroupGet(name string) (*protocols.GroupInfo, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 		name,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -82,14 +82,14 @@ func GroupGet(name string) (*protocols.GroupInfo, *errs.OctlError) {
 }
 
 func GroupDel(name string) *errs.OctlError {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 		name,
 	)
 	req, _ := http.NewRequest("DELETE", url, nil)
-	res, err := http.DefaultClient.Do(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http delete error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -121,12 +121,12 @@ func GroupSet(name string, nocheck bool, names []string) *errs.OctlError {
 	}
 	body, _ := json.Marshal(ginfo)
 
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 	)
-	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)

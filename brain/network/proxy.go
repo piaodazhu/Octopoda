@@ -43,17 +43,16 @@ func InitProxyServer() {
 	}()
 
 	// register self
-	nameEntry := &protocols.RegisterParam{
-		Type:        "other",
-		Name:        config.GlobalConfig.Name + ".proxyliteFace",
-		Ip:          tentacleFaceIp,
-		Port:        int(config.GlobalConfig.ProxyliteServer.Port),
+	nameEntry := &protocols.NameServiceEntry{
+		Key:         config.GlobalConfig.Name + ".proxyliteFace",
+		Type:        "addr",
+		Value:       fmt.Sprintf("%s:%d", tentacleFaceIp, config.GlobalConfig.ProxyliteServer.Port),
 		Description: "proxylite serve port",
 		TTL:         1000 * (config.GlobalConfig.ProxyliteServer.FreshTime + 10),
 	}
 
-	err = nameRegister(nameEntry)
-	fmt.Println("REGISTER: ", nameEntry.Name)
+	err = entriesRegister([]*protocols.NameServiceEntry{nameEntry})
+	fmt.Println("REGISTER: ", nameEntry.Key)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +60,7 @@ func InitProxyServer() {
 	go func() {
 		for {
 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.ProxyliteServer.FreshTime))
-			err := nameRegister(nameEntry)
+			err := entriesRegister([]*protocols.NameServiceEntry{nameEntry})
 			if err != nil {
 				logger.Exceptions.Print("fresh proxylite server name register: ", err)
 			}
@@ -140,6 +139,3 @@ func GetSshInfo(name string) (SSHInfo, bool) {
 	return SSHInfo{}, false
 }
 
-// func AddSshInfo(name string, info SSHInfo) {
-// 	sshInfos.Store(name, info)
-// }

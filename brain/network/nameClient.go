@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,22 +9,18 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
-	"github.com/piaodazhu/Octopoda/protocols/security"
 )
 
 var nsAddr string
 var httpsClient *http.Client
 
 func InitNameClient() {
-	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
 		return
@@ -33,7 +30,7 @@ func InitNameClient() {
 	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
 
 	// init https client
-	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ClientCert, config.GlobalConfig.Sslinfo.ClientKey)
+	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey)
 	if err != nil {
 		logger.Network.Fatal("InitHttpsClient:", err.Error())
 		return
@@ -47,49 +44,18 @@ func InitNameClient() {
 
 	retry := 6
 	success := false
-	var nameEntry1, nameEntry2 *protocols.RegisterParam
+	var entries []*protocols.NameServiceEntry
 	for retry > 0 {
-		tentacleFaceIp, err := getTentacleFaceIp()
+		entries, err = getRegisterEntries()
 		if err != nil {
-			logger.Network.Println("getTentacleFaceIp", err)
-			time.Sleep(time.Second * 10)
+			logger.Network.Println("getRegisterEntries: ", err)
+			time.Sleep(time.Second)
 			retry--
 			continue
 		}
-		octlFaceIp, err := getOctlFaceIp()
+		err = entriesRegister(entries)
 		if err != nil {
-			logger.Network.Println("getTentacleFaceIp", err)
-			time.Sleep(time.Second * 10)
-			retry--
-			continue
-		}
-
-		// first report to ns
-		nameEntry1 = &protocols.RegisterParam{
-			Type:        "brain",
-			Name:        config.GlobalConfig.Name + ".tentacleFace",
-			Ip:          tentacleFaceIp,
-			Port:        int(config.GlobalConfig.TentacleFace.HeartbeatPort),
-			Port2:       int(config.GlobalConfig.TentacleFace.MessagePort),
-			Description: "first update since running",
-			TTL:         0,
-		}
-		nameEntry2 = &protocols.RegisterParam{
-			Type:        "brain",
-			Name:        config.GlobalConfig.Name + ".octlFace",
-			Ip:          octlFaceIp,
-			Port:        int(config.GlobalConfig.OctlFace.Port),
-			Description: "first update since running",
-			TTL:         0,
-		}
-
-		err = nameRegister(nameEntry1)
-		if err != nil {
-			logger.Network.Fatal("NameRegister1:", err)
-		}
-		err = nameRegister(nameEntry2)
-		if err != nil {
-			logger.Network.Fatal("NameRegister2:", err)
+			logger.Network.Fatal("entriesRegister: ", err)
 		}
 		success = true
 		retry = 0
@@ -102,33 +68,17 @@ func InitNameClient() {
 	go func() {
 		for {
 			time.Sleep(time.Second * time.Duration(config.GlobalConfig.HttpsNameServer.RequestInterval))
-			tentacleFaceIp, err := getTentacleFaceIp()
+			entries, err = getRegisterEntries()
 			if err != nil {
-				logger.Network.Println("getTentacleFaceIp", err)
-				// time.Sleep(time.Second * 10)
+				logger.Network.Println("getRegisterEntries: ", err)
 				continue
 			}
-			octlFaceIp, err := getOctlFaceIp()
+			err = entriesRegister(entries)
 			if err != nil {
-				logger.Network.Println("getTentacleFaceIp", err)
-				// time.Sleep(time.Second * 10)
-				continue
-			}
-			nameEntry1.Description = "periodical"
-			nameEntry1.Ip = tentacleFaceIp
-			nameEntry2.Description = "periodical"
-			nameEntry2.Ip = octlFaceIp
-			err = nameRegister(nameEntry1)
-			if err != nil {
-				logger.Network.Println("NameRegister1:", err)
-			}
-			err = nameRegister(nameEntry2)
-			if err != nil {
-				logger.Network.Println("NameRegister2:", err)
+				logger.Network.Fatal("entriesRegister: ", err)
 			}
 		}
 	}()
-	fetchTokens()
 }
 
 func getIpByDevice(device string) (string, error) {
@@ -183,6 +133,7 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
+			ServerName:         "octopoda",
 			RootCAs:            certPool,
 			InsecureSkipVerify: false,
 			ClientAuth:         tls.RequireAndVerifyClientCert,
@@ -198,16 +149,47 @@ func InitHttpsClient(caCert, cliCert, cliKey string) error {
 	return nil
 }
 
-func nameRegister(entry *protocols.RegisterParam) error {
-	form := url.Values{}
-	form.Set("name", entry.Name)
-	form.Set("ip", entry.Ip)
-	form.Set("port", strconv.Itoa(entry.Port))
-	form.Set("port2", strconv.Itoa(entry.Port2))
-	form.Set("type", entry.Type)
-	form.Set("description", entry.Description)
-	form.Set("ttl", strconv.Itoa(entry.TTL))
-	res, err := httpsClient.PostForm(fmt.Sprintf("https://%s/register", nsAddr), form)
+func getRegisterEntries() ([]*protocols.NameServiceEntry, error) {
+	tentacleFaceIp, err := getTentacleFaceIp()
+	if err != nil {
+		logger.Network.Println("getTentacleFaceIp", err)
+		return nil, err
+	}
+	octlFaceIp, err := getOctlFaceIp()
+	if err != nil {
+		logger.Network.Println("getTentacleFaceIp", err)
+		return nil, err
+	}
+
+	var entries [3]*protocols.NameServiceEntry
+	// first report to ns
+	entries[0] = &protocols.NameServiceEntry{
+		Key:         config.GlobalConfig.Name + ".tentacleFace.heartbeat",
+		Type:        "addr",
+		Value:       fmt.Sprintf("%s:%d", tentacleFaceIp, config.GlobalConfig.TentacleFace.HeartbeatPort),
+		Description: "first update heartbeat address since running",
+		TTL:         0,
+	}
+	entries[1] = &protocols.NameServiceEntry{
+		Key:         config.GlobalConfig.Name + ".tentacleFace.message",
+		Type:        "addr",
+		Value:       fmt.Sprintf("%s:%d", tentacleFaceIp, config.GlobalConfig.TentacleFace.MessagePort),
+		Description: "first update message address since running",
+		TTL:         0,
+	}
+	entries[2] = &protocols.NameServiceEntry{
+		Key:         config.GlobalConfig.Name + ".octlFace.request",
+		Type:        "addr",
+		Value:       fmt.Sprintf("%s:%d", octlFaceIp, config.GlobalConfig.OctlFace.Port),
+		Description: "first update octl request address since running",
+		TTL:         0,
+	}
+	return entries[:], nil
+}
+
+func entriesRegister(entries []*protocols.NameServiceEntry) error {
+	body, _ := json.Marshal(entries)
+	res, err := httpsClient.Post(fmt.Sprintf("https://%s/register", nsAddr), "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -233,58 +215,5 @@ func pingNameServer() error {
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("cannot Ping https Nameserver")
 	}
-	return nil
-}
-
-func GetToken() (*protocols.Tokens, error) {
-	res, err := httpsClient.Get(fmt.Sprintf("https://%s/tokens", nsAddr))
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("cannot get token from Nameserver")
-	}
-	raw, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	tks := &protocols.Tokens{}
-	err = json.Unmarshal(raw, tks)
-	if err != nil {
-		return nil, err
-	}
-	return tks, nil
-}
-
-func fetchTokens() {
-	ticker := time.NewTicker(security.Fetchinterval)
-	go func() {
-		fetchAndUpdate()
-		for range ticker.C {
-			if err := fetchAndUpdate(); err != nil {
-				logger.Exceptions.Println("can not get token:", err)
-				continue
-			}
-		}
-	}()
-}
-
-func fetchAndUpdate() error {
-	tks, err := GetToken()
-	if err != nil {
-		return err
-	}
-	cur := security.Token{
-		Raw:    []byte(tks.CurToken),
-		Serial: tks.CurSerial,
-		Age:    tks.CurAge,
-	}
-	prev := security.Token{
-		Raw:    []byte(tks.PrevToken),
-		Serial: tks.PrevSerial,
-		Age:    tks.PrevAge,
-	}
-	security.UpdateTokens(cur, prev)
 	return nil
 }

@@ -7,16 +7,18 @@ type NodeJoinInfo struct {
 }
 
 type NodeJoinResponse struct {
-	Ts  int64  `json:"ts"`
+	Ts     int64  `json:"ts"`
 	NewNum uint32 `json:"new_num"`
 }
 
 type HeartBeatRequest struct {
-	Msg string `json:"msg"` // reserved for future usage
-	Num uint32 `json:"num"`
+	Msg   string `json:"msg"` // reserved for future usage
+	Num   uint32 `json:"num"`
+	Delay int64  `json:"delay"`
 }
 
 type HeartBeatResponse struct {
 	Msg    string `json:"msg"` // reserved for future usage
 	NewNum uint32 `json:"new_num"`
+	Ts     int64  `json:"ts"`
 }

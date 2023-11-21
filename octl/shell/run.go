@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,7 +13,7 @@ import (
 	"syscall"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
@@ -103,8 +102,8 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	defer f.Close()
 	fname := filepath.Base(runtask)
 
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunScript,
 	)
@@ -117,7 +116,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	io.Copy(fileWriter, f)
 	writer.Close()
 
-	res, err := http.Post(url, writer.FormDataContentType(), body)
+	res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -151,8 +150,8 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunCmd,
 	)
@@ -168,7 +167,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	writer.Close()
 
-	res, err := http.Post(url, writer.FormDataContentType(), body)
+	res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -195,14 +194,14 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 }
 
 func RunCancel(taskid string) {
-	URL := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	URL := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunCancel,
 	)
 	values := url.Values{}
 	values.Add("taskid", taskid)
-	res, err := http.PostForm(URL, values)
+	res, err := httpclient.BrainClient.PostForm(URL, values)
 	if err != nil {
 		output.PrintFatalln("runCancel http post error.")
 	}

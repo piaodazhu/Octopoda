@@ -6,21 +6,20 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func ScenariosInfo() ([][]byte, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenariosInfo,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -46,13 +45,13 @@ func ScenariosInfo() ([][]byte, *errs.OctlError) {
 }
 
 func ScenarioInfo(name string) ([]byte, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioInfo,
 		name,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -66,13 +65,13 @@ func ScenarioInfo(name string) ([]byte, *errs.OctlError) {
 }
 
 func ScenarioFix(name string) (string, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioFix,
 		name,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -86,13 +85,13 @@ func ScenarioFix(name string) (string, *errs.OctlError) {
 }
 
 func ScenarioVersion(name string) ([]byte, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioVersion,
 		name,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -106,8 +105,8 @@ func ScenarioVersion(name string) ([]byte, *errs.OctlError) {
 }
 
 func ScenarioReset(name string, version string, message string) (string, *errs.OctlError) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioVersion,
 		name,
@@ -121,7 +120,7 @@ func ScenarioReset(name string, version string, message string) (string, *errs.O
 	writer.WriteField("message", message)
 	writer.Close()
 
-	res, err := http.Post(url, contentType, body)
+	res, err := httpclient.BrainClient.Post(url, contentType, body)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

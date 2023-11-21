@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/piaodazhu/Octopoda/httpns/config"
 	"github.com/piaodazhu/Octopoda/httpns/logger"
@@ -76,9 +77,6 @@ func main() {
 		config.GlobalConfig.ServeIp = devIp
 	}
 
-	// start rolling token
-	startRollingToken()
-
 	// init dao and service
 	err := DaoInit()
 	if err != nil {
@@ -86,6 +84,33 @@ func main() {
 	}
 	ServiceInit()
 
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go HttpServerStart(&wg)
+	go HttpsServerStart(&wg)
+	wg.Wait()
+}
+
+func HttpServerStart(wg *sync.WaitGroup) {
+	defer wg.Done()
+	// config GIN handler
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(OctopodaLogger())
+	r.Use(StatsMiddleWare())
+
+	r.GET("/ping", func(ctx *gin.Context) {
+		ctx.Status(200)
+	})
+	r.GET("/query", NameQuery)
+
+	mountStatic(r)
+	log.Fatal(r.Run(fmt.Sprintf("%s:%d", config.GlobalConfig.ServeIp, config.GlobalConfig.ServePort+1)))
+}
+
+func HttpsServerStart(wg *sync.WaitGroup) {
+	defer wg.Done()
 	// config GIN handler
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -98,15 +123,8 @@ func main() {
 	})
 	r.GET("/query", NameQuery)
 	r.GET("/list", NameList)
-	r.GET("/conf", DownloadConfig)
-	r.GET("/sshinfo", DownloadSshInfo)
-	r.GET("/tokens", DistribToken)
-
 	r.POST("/register", NameRegister)
 	r.POST("/delete", NameDelete)
-	r.POST("/conf", UploadConfig)
-	r.POST("/sshinfo", UploadSshInfo)
-
 	r.GET("/summary", ServiceSummary)
 
 	mountStatic(r)
@@ -134,7 +152,6 @@ func main() {
 		Handler:   r,
 		TLSConfig: tlsConfig,
 	}
-
 	log.Fatal(s.ListenAndServeTLS(config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey))
 }
 

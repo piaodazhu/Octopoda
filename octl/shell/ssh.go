@@ -12,7 +12,7 @@ import (
 	"runtime"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
-	"github.com/piaodazhu/Octopoda/octl/nameclient"
+	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/protocols"
 
@@ -46,8 +46,8 @@ func SetSSH(nodename string) {
 	}
 
 	// ask tentacle to register ssh service
-	URL := fmt.Sprintf("http://%s/%s%s",
-		nameclient.BrainAddr,
+	URL := fmt.Sprintf("https://%s/%s%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 	)
@@ -55,7 +55,7 @@ func SetSSH(nodename string) {
 	values.Add("name", nodename)
 	values.Add("username", username)
 	values.Add("password", password)
-	res, err := http.PostForm(URL, values)
+	res, err := httpclient.BrainClient.PostForm(URL, values)
 	if err != nil {
 		output.PrintFatalln("PostForm")
 	}
@@ -75,8 +75,8 @@ func SetSSH(nodename string) {
 }
 
 func delSSH(nodename string) []byte {
-	URL := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	URL := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 		nodename,
@@ -87,7 +87,7 @@ func delSSH(nodename string) []byte {
 		output.PrintFatalln("NewRequest: ", err)
 		return nil
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("DELETE")
 	}
@@ -102,12 +102,12 @@ func DelSSH(nodename string) {
 }
 
 func GetSSH() {
-	entry, err := nameclient.NameQuery(config.GlobalConfig.Brain.Name + ".proxyliteFace")
+	entry, err := httpclient.NameQuery(config.GlobalConfig.Brain.Name + ".proxyliteFace")
 	if err != nil {
 		output.PrintFatalln("cannot query proxyliteFace: ", err)
 	}
 
-	infos, err := proxylite.DiscoverServices(fmt.Sprintf("%s:%d", entry.Ip, entry.Port))
+	infos, err := proxylite.DiscoverServices(entry.Value)
 	if err != nil {
 		output.PrintFatalln("cannot discover services: ", err)
 	}
@@ -117,13 +117,13 @@ func GetSSH() {
 }
 
 func SSH(nodename string) {
-	url := fmt.Sprintf("http://%s/%s%s?name=%s",
-		nameclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 		nodename,
 	)
-	res, err := http.Get(url)
+	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
 		output.PrintFatalln("Get")
 	}
