@@ -19,8 +19,6 @@ type BrainModel struct {
 	Ip            string `mapstructure:"ip"`
 	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
 	MessagePort   uint16 `mapstructure:"messagePort"`
-	// reserved
-	Token string `mapstructure:"token"`
 }
 
 type LoggerModel struct {

@@ -15,14 +15,12 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
-	"github.com/piaodazhu/Octopoda/protocols/security"
 )
 
 var nsAddr string
 var httpsClient *http.Client
 
 func InitNameClient() {
-	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
 		return

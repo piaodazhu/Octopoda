@@ -4,7 +4,7 @@ from enum import Enum
 import json
 
 class node_info(ctypes.Structure):
-    _fields_ = [("name", ctypes.c_char_p), ("version", ctypes.c_char_p), ("address", ctypes.c_char_p), ("state", ctypes.c_int), ("conn_state", ctypes.c_char_p), ("online_ts", ctypes.c_int64), ("offline_ts", ctypes.c_int64), ("active_ts", ctypes.c_int64), ("brain_ts", ctypes.c_int64)]
+    _fields_ = [("name", ctypes.c_char_p), ("version", ctypes.c_char_p), ("address", ctypes.c_char_p), ("state", ctypes.c_int), ("conn_state", ctypes.c_char_p), ("delay", ctypes.c_int64), ("online_ts", ctypes.c_int64), ("offline_ts", ctypes.c_int64), ("active_ts", ctypes.c_int64), ("brain_ts", ctypes.c_int64)]
 
 class brain_info(ctypes.Structure):
     _fields_ = [("name", ctypes.c_char_p), ("version", ctypes.c_char_p), ("address", ctypes.c_char_p)]
@@ -22,6 +22,7 @@ class NodeInfo:
         self.address = bytes.decode(cstruct.address) 
         self.state = cstruct
         self.conn_state = bytes.decode(cstruct.conn_state)
+        self.delay = cstruct.delay
         self.online_ts = cstruct.online_ts
         self.offline_ts = cstruct.offline_ts
         self.active_ts = cstruct.active_ts

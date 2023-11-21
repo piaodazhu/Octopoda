@@ -15,40 +15,46 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/snp"
 )
 
-func ProcessHeartbeat(ctx context.Context, c chan bool, conn net.Conn, randNum uint32) {
+type hbState struct {
+	isHealthy bool
+	delay     int64
+}
+
+func ProcessHeartbeat(ctx context.Context, c chan hbState, conn net.Conn, randNum uint32) {
 	var mtype int
 	var msg []byte
-	var health bool
+	var hs hbState
 	var hbinfo protocols.HeartBeatRequest
 	var err error
 
 	for {
-		health = true
+		hs.isHealthy = true
 		mtype, _, msg, err = protocols.RecvMessageUnique(conn)
 		if err != nil || mtype != protocols.TypeHeartbeat {
 			logger.Network.Print(err) // TODO who?
-			health = false
+			hs.isHealthy = false
 			goto reportstate
 		}
 
 		hbinfo, err = heartbeat.ParseHeartbeat(msg)
 		if err != nil || hbinfo.Num != randNum {
 			logger.Network.Println(err)
-			health = false
+			hs.isHealthy = false
 			goto reportstate
 		}
+		hs.delay = hbinfo.Delay
 
 		randNum = snp.GenSerial()
 		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
 		if err != nil {
 			logger.Network.Print(err)
-			health = false
+			hs.isHealthy = false
 			goto reportstate
 		}
 	reportstate:
 		select {
-		case c <- health:
-			if !health {
+		case c <- hs:
+			if !hs.isHealthy {
 				goto closeconnection
 			}
 		case <-ctx.Done():
@@ -64,20 +70,20 @@ func startHeartbeat(conn net.Conn, name string, randNum uint32) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
 	hbStartTime := time.Now()
 
-	hbchan := make(chan bool)
+	hbchan := make(chan hbState)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ProcessHeartbeat(ctx, hbchan, conn, randNum)
 	for {
 		select {
 		case hbstate := <-hbchan:
-			if !hbstate {
+			if !hbstate.isHealthy {
 				// quited
 				if !model.DisconnNode(name) {
 					goto errout
 				}
 				goto errout
 			} else {
-				if !model.UpdateNode(name) {
+				if !model.UpdateNode(name, hbstate.delay) {
 					goto errout
 				}
 			}

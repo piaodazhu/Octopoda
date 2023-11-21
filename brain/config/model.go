@@ -20,7 +20,6 @@ type TentacleFaceModel struct {
 	Ip            string `mapstructure:"ip"`
 	HeartbeatPort uint16 `mapstructure:"heartbeatPort"`
 	MessagePort   uint16 `mapstructure:"messagePort"`
-	Token         string `mapstructure:"token"`
 	ActiveTimeout int    `mapstructure:"activeTimeout"`
 	RecordTimeout int    `mapstructure:"recordTimeout"`
 }

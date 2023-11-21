@@ -7,6 +7,7 @@ struct node_info {
     char* Addr;
     int State;
     char* ConnState;
+    long long Delay;
     long long OnlineTs;
     long long OfflineTs;
     long long ActiveTs;
@@ -71,6 +72,7 @@ func NodeInfo(name string, result *C.struct_node_info) (C.int, *C.char) {
 		Addr:      C.CString(res.Addr),
 		State:     C.int(res.State),
 		ConnState: C.CString(res.ConnState),
+		Delay:     C.longlong(res.Delay),
 		OnlineTs:  C.longlong(res.OnlineTs),
 		OfflineTs: C.longlong(res.OfflineTs),
 		ActiveTs:  C.longlong(res.ActiveTs),
@@ -102,6 +104,7 @@ func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_no
 			Addr:      C.CString(res.InfoList[i].Addr),
 			State:     C.int(res.InfoList[i].State),
 			ConnState: C.CString(res.InfoList[i].ConnState),
+			Delay:     C.longlong(res.InfoList[i].Delay),
 			OnlineTs:  C.longlong(res.InfoList[i].OnlineTs),
 			OfflineTs: C.longlong(res.InfoList[i].OfflineTs),
 			ActiveTs:  C.longlong(res.InfoList[i].ActiveTs),

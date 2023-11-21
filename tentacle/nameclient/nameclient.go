@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/protocols"
-	"github.com/piaodazhu/Octopoda/protocols/security"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
@@ -19,7 +18,6 @@ var BrainHeartAddr, BrainMsgAddr string
 func InitNameClient() {
 	defaultBrainHeartAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.HeartbeatPort)
 	defaultBrainMsgAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.MessagePort)
-	security.TokenEnabled = config.GlobalConfig.HttpsNameServer.Enabled
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		logger.Network.Println("NameService client is disabled")
 		BrainHeartAddr = defaultBrainHeartAddr

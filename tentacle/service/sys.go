@@ -14,17 +14,11 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/ostp"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 	"github.com/piaodazhu/Octopoda/tentacle/task"
 )
-
-type ScriptParams struct {
-	FileName   string
-	TargetPath string
-	FileBuf    string
-	DelayTime  int
-}
 
 var shellPath string
 
@@ -42,7 +36,7 @@ func init() {
 	shellPath = "sh"
 }
 
-func execScript(sparams *ScriptParams, dir string, cmdChan chan *exec.Cmd) ([]byte, error) {
+func execScript(sparams *protocols.ScriptParams, dir string, cmdChan chan *exec.Cmd) ([]byte, error) {
 	var content []byte
 	var err error
 	var scriptFile strings.Builder
@@ -104,19 +98,22 @@ func execScript(sparams *ScriptParams, dir string, cmdChan chan *exec.Cmd) ([]by
 	return result, scriptErr
 }
 
-type CommandParams struct {
-	Command    string
-	Background bool
-	DelayTime  int
-}
-
 func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
-	cparams := CommandParams{}
-
+	cparams := protocols.CommandParams{}
 	if err := config.Jsoner.Unmarshal(raw, &cparams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
 		err = protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeRunCommandResponse send error")
+		}
+		return
+	}
+
+	if !ostp.SleepForExec(cparams.ExecTs) {
+		logger.Exceptions.Println("invalid exection timestamp.")
+		// SNED BACK
+		err := protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunCommandResponse send error")
 		}
@@ -253,10 +250,20 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
-	sparams := ScriptParams{}
+	sparams := protocols.ScriptParams{}
 	if err := config.Jsoner.Unmarshal(raw, &sparams); err != nil {
 		logger.Exceptions.Println(err)
 		err = protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeRunScriptResponse send error")
+		}
+		return
+	}
+
+	if !ostp.SleepForExec(sparams.ExecTs) {
+		logger.Exceptions.Println("invalid exection timestamp.")
+		// SNED BACK
+		err := protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte{})
 		if err != nil {
 			logger.Comm.Println("TypeRunScriptResponse send error")
 		}
