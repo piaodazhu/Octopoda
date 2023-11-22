@@ -21,6 +21,11 @@ func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
 	delayStr := ctx.PostForm("delayTime")
 	targetNodes := ctx.PostForm("targetNodes")
+	needAlignStr := ctx.PostForm("needAlign")
+	needAlign := false
+	if needAlignStr == "true" {
+		needAlign = true
+	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -65,7 +70,8 @@ func RunScript(ctx *gin.Context) {
 		TargetPath: "scripts/",
 		FileBuf:    content,
 		DelayTime:  delay,
-		ExecTs: ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		ExecTs:     ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		NeedAlign:  needAlign,
 	}
 	payload, _ := config.Jsoner.Marshal(&sparams)
 
@@ -93,6 +99,11 @@ func RunCmd(ctx *gin.Context) {
 		isbg = true
 	}
 	targetNodes := ctx.PostForm("targetNodes")
+	needAlignStr := ctx.PostForm("needAlign")
+	needAlign := false
+	if needAlignStr == "true" {
+		needAlign = true
+	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -126,6 +137,7 @@ func RunCmd(ctx *gin.Context) {
 		Background: isbg,
 		DelayTime:  delay,
 		ExecTs:     ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		NeedAlign:  needAlign,
 	}
 	payload, _ := json.Marshal(cParams)
 

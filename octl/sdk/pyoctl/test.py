@@ -24,7 +24,7 @@ def main():
 		if status.name != nstatus.name:
 			raise Exception("get node status failed.")
 	
-	results = octl.run(r"{ifconfig}", ['pi4', 'pi5'])
+	results = octl.run(r"{ifconfig}", ['pi4', 'pi5'], True)
 	for result in results:
 		print(result)
 	

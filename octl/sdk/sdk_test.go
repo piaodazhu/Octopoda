@@ -37,7 +37,7 @@ func TestSDK(t *testing.T) {
 	}
 	t.Log(group)
 
-	results, err := Run("{ls}", []string{"pi4", "pi5"})
+	results, err := Run("{ls}", []string{"pi4", "pi5"}, false)
 	if err != nil {
 		t.Fatal(err)
 	}

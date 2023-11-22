@@ -70,7 +70,7 @@ func startHeartbeat(conn net.Conn, name string, randNum uint32) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
 	hbStartTime := time.Now()
 
-	hbchan := make(chan hbState)
+	hbchan := make(chan hbState, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ProcessHeartbeat(ctx, hbchan, conn, randNum)
 	for {

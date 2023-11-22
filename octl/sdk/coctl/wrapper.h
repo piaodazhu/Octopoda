@@ -27,6 +27,7 @@ struct node_info {
     char* Addr;
     int State;
     char* ConnState;
+    long long Delay;
     long long OnlineTs;
     long long OfflineTs;
     long long ActiveTs;
@@ -165,14 +166,14 @@ struct Run_return {
 	int r0;
 	char* r1;
 };
-extern struct Run_return Run(GoString runtask, GoSlice names, GoSlice results, int* size);
+extern struct Run_return Run(GoString runtask, GoSlice names, GoUint8 needAlign, GoSlice results, int* size);
 
 /* Return type for XRun */
 struct XRun_return {
 	int r0;
 	char* r1;
 };
-extern struct XRun_return XRun(GoString runtask, GoSlice names, GoInt delay, GoSlice results, int* size);
+extern struct XRun_return XRun(GoString runtask, GoSlice names, GoInt delay, GoUint8 needAlign, GoSlice results, int* size);
 
 /* Return type for GroupGetAll */
 struct GroupGetAll_return {

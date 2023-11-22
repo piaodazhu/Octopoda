@@ -54,6 +54,7 @@ func KeepAlive() {
 				_, _, raw, err := protocols.RecvMessageUnique(conn)
 				if err != nil {
 					conn.Close()
+					logger.Network.Println("[HBCONN DBG] close heartbeat because err=", err.Error())
 					time.Sleep(time.Second * time.Duration(config.GlobalConfig.Heartbeat.ReconnectInterval))
 					goto reconnect
 				}

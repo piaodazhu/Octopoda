@@ -55,7 +55,10 @@ func InitNameClient() {
 		}
 		err = entriesRegister(entries)
 		if err != nil {
-			logger.Network.Fatal("entriesRegister: ", err)
+			logger.Network.Println("entriesRegister: ", err)
+			time.Sleep(time.Second)
+			retry--
+			continue
 		}
 		success = true
 		retry = 0
@@ -75,7 +78,7 @@ func InitNameClient() {
 			}
 			err = entriesRegister(entries)
 			if err != nil {
-				logger.Network.Fatal("entriesRegister: ", err)
+				logger.Network.Println("entriesRegister: ", err)
 			}
 		}
 	}()

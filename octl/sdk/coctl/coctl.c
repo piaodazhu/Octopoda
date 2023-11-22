@@ -165,7 +165,7 @@ octl_pull_file(enum PATHTYPE type, char* name,
 }
 
 int
-octl_run(char *cmd_expr, char **names, int input_size, 
+octl_run(char *cmd_expr, char **names, int input_size, int need_align, 
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
@@ -173,7 +173,7 @@ octl_run(char *cmd_expr, char **names, int input_size,
 	for (i = 0; i < input_size; i++) {
 		name_strs[i] = make_GoString(names[i]);
 	}
-	struct Run_return ret = Run(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, 2), output_size);
+	struct Run_return ret = Run(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), (GoInt)(need_align), make_GoSlice(output_list, 2), output_size);
 	free(name_strs);
 	int code = ret.r0;
 	char *emsg = ret.r1;
@@ -187,7 +187,7 @@ octl_run(char *cmd_expr, char **names, int input_size,
 }
 
 int
-octl_xrun(char *cmd_expr, char **names, int input_size, int delay, 
+octl_xrun(char *cmd_expr, char **names, int input_size, int delay, int need_align, 
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
@@ -195,7 +195,7 @@ octl_xrun(char *cmd_expr, char **names, int input_size, int delay,
 	for (i = 0; i < input_size; i++) {
 		name_strs[i] = make_GoString(names[i]);
 	}
-	struct XRun_return ret = XRun(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), (GoInt)(delay), make_GoSlice(output_list, *output_size), output_size);
+	struct XRun_return ret = XRun(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), (GoInt)(delay), (GoInt)(need_align), make_GoSlice(output_list, *output_size), output_size);
 	free(name_strs);
 	int code = ret.r0;
 	char *emsg = ret.r1;
@@ -322,7 +322,8 @@ int octl_get_scenario_info(char *name, char *output_buf, int *output_size,
 	}
 	*errbuflen = min(*errbuflen, strlen(emsg));
 	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
+	if (code != OctlSdkBufferError)
+		free(emsg);
 	free(scenBuf);
 	return code;
 }
@@ -347,7 +348,8 @@ int octl_get_scenario_version(char *name, char *output_buf, int *output_size,
 	}
 	*errbuflen = min(*errbuflen, strlen(emsg));
 	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
+	if (code != OctlSdkBufferError)
+		free(emsg);
 	free(verBuf);
 	return code;
 }
@@ -373,7 +375,8 @@ int octl_get_nodeapp_info(char *name, char *app, char *scenario,
 	}
 	*errbuflen = min(*errbuflen, strlen(emsg));
 	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
+	if (code != OctlSdkBufferError)
+		free(emsg);
 	free(nodeappBuf);
 	return code;
 }

@@ -204,8 +204,8 @@ func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_exec
 }
 
 //export Run
-func Run(runtask string, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
-	res, err := sdk.Run(runtask, names)
+func Run(runtask string, names []string, needAlign bool, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.Run(runtask, names, needAlign)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -227,8 +227,8 @@ func Run(runtask string, names []string, results []C.struct_execution_result, si
 }
 
 //export XRun
-func XRun(runtask string, names []string, delay int, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
-	res, err := sdk.XRun(runtask, names, delay)
+func XRun(runtask string, names []string, delay int, needAlign bool, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.XRun(runtask, names, delay, needAlign)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}

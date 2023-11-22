@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 
@@ -54,7 +55,14 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func newTlsListener(address string) (net.Listener, error) {
-	return tls.Listen("tcp", address, config.TLSConfig)
+	lcfg := net.ListenConfig{
+		KeepAlive: -1,
+	}
+	listener, err := lcfg.Listen(context.Background(), "tcp", address)
+	if err != nil {
+		return nil, err
+	}
+	return tls.NewListener(listener, config.TLSConfig), nil
 }
 
 func ProcessNodeJoin(conn net.Conn) {

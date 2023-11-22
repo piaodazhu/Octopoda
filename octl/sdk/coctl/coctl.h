@@ -89,14 +89,14 @@ int octl_pull_file(enum PATHTYPE type, char* name,
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_run(char *cmd_expr, char **names, int input_size, 
+int octl_run(char *cmd_expr, char **names, int input_size, int need_align, 
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_xrun(char *cmd_expr, char **names, int input_size, int delay, 
+int octl_xrun(char *cmd_expr, char **names, int input_size, int delay, int need_align,
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 

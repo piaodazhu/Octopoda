@@ -124,9 +124,9 @@ class OctlClient:
         self.lib.octl_pull_file.restype = ctypes.c_int
         self.lib.octl_pull_file.argtypes = [ctypes.c_int8, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(execution_result), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_run.restype = ctypes.c_int
-        self.lib.octl_run.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_run.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_xrun.restype = ctypes.c_int
-        self.lib.octl_xrun.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
+        self.lib.octl_xrun.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(execution_result), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_groups_list.restype = ctypes.c_int
         self.lib.octl_get_groups_list.argtypes = [ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_int), ctypes.c_char_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.octl_get_group.restype = ctypes.c_int
@@ -291,9 +291,12 @@ class OctlClient:
         self.lib.octl_clear_execution_result(result_output)
         return ret_obj
 
-    def run(self, cmd_expr: str, names: List[str]) -> List[ExecutionResult]:
+    def run(self, cmd_expr: str, names: List[str], should_align: bool = False) -> List[ExecutionResult]:
         if len(names) == 0:
             return
+        align_flag = ctypes.c_int(0)
+        if should_align:
+            align_flag = ctypes.c_int(1)
         output_len = len(names)
         names_input = (ctypes.c_char_p * len(names))()
         results_output = (execution_result * output_len)()
@@ -302,7 +305,7 @@ class OctlClient:
             names_input[idx] = str.encode(names[idx])
         
         self.ebuflen = ctypes.c_int(256)
-        ret = self.lib.octl_run(str.encode(cmd_expr), names_input, len(names), results_output, resultslen_output, self.ebuf, self.ebuflen)
+        ret = self.lib.octl_run(str.encode(cmd_expr), names_input, len(names), align_flag, results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
             raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))
@@ -314,9 +317,12 @@ class OctlClient:
         self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
         return result_list
 
-    def xrun(self, cmd_expr: str, names: List[str], delay: int) -> List[ExecutionResult]:
+    def xrun(self, cmd_expr: str, names: List[str], delay: int, should_align: bool = False) -> List[ExecutionResult]:
         if len(names) == 0:
             return
+        align_flag = ctypes.c_int(0)
+        if should_align:
+            align_flag = ctypes.c_int(1)
         output_len = len(names)
         names_input = (ctypes.c_char_p * len(names))()
         results_output = (execution_result * output_len)()
@@ -325,7 +331,7 @@ class OctlClient:
             names_input[idx] = str.encode(names[idx])
         
         self.ebuflen = ctypes.c_int(256)
-        ret = self.lib.octl_xrun(str.encode(cmd_expr), names_input, len(names), ctypes.c_int(delay), results_output, resultslen_output, self.ebuf, self.ebuflen)
+        ret = self.lib.octl_xrun(str.encode(cmd_expr), names_input, len(names), ctypes.c_int(delay), align_flag, results_output, resultslen_output, self.ebuf, self.ebuflen)
         if ret != 0:
             self.lib.octl_clear_execution_results_list(results_output, resultslen_output)
             raise OctlException(ret, bytes.decode(self.ebuf[:self.ebuflen.value]))

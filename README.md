@@ -50,6 +50,7 @@ Features of Octopoda:
     - [PULL](#pull)
   - [E. Script Execution](#e-script-execution)
     - [RUN](#run)
+    - [XRUN](#xrun)
   - [F. Fast SSH](#f-fast-ssh)
     - [setssh](#setssh)
     - [getssh](#getssh)
@@ -447,9 +448,17 @@ With this subcmd we can pull file or directory from under `SubDir` from brain or
 
 ### RUN
 
-> `usage: octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] <node1> <node2> ...`
+> `usage: octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] [-a] <node1> <@group1> ...`
 
 With this subcmd we can run a command or a script on given nodes. For running a command, we need to enclose the command in `'{}'`. As for blocking command, we need to run it in background, so we can enclose the command in `'()'`. For running a script, we need to specify the complete filepath of the script.
+
+The `-a` (align) flag is optional. When this enable `-a` flag, all target nodes need to make sure that their process will start at the same moment as much as possible (with the help of Octopoda Simple Time Protocol). Since there is jitter in the delay, if the node cannot guarantee it, it will reject the execution.
+
+### XRUN
+
+> `usage: octl xrun [ '{<command>}' | '(<bgcommand>)' | <script> ] [-d<delayseconds>] [-a] <node1> <@group1> ...`
+
+The difference between subcmd `run` and `xrun` is that `xrun` will not execute and return the result immediately, instead it just load the process and trigger it after a delay (specified with `-d` flag).
 
 ## F. Fast SSH
 

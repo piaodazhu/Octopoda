@@ -51,7 +51,7 @@ int main() {
 	char *targets[2] = {"pi4", "pi5"};
 	int total_results = 2;
 	elen = EBUF_LEN;
-	ret = octl_run("{uname -a}", targets, 2, results, &total_results, ebuf, &elen);
+	ret = octl_run("{uname -a}", targets, 2, 0, results, &total_results, ebuf, &elen);
 	if (ret > 0) {
 		printf("octl_run: %.*s\n", elen, ebuf);
 		return 1;
@@ -62,7 +62,7 @@ int main() {
 
 	total_results = 2;
 	elen = EBUF_LEN;
-	ret = octl_xrun("{uname -a}", targets, 2, 1, results, &total_results, ebuf, &elen);
+	ret = octl_xrun("{uname -a}", targets, 2, 1, 0, results, &total_results, ebuf, &elen);
 	if (ret > 0) {
 		printf("octl_run: %.*s\n", elen, ebuf);
 		return 1;

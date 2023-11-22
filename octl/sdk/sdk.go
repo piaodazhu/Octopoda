@@ -113,7 +113,7 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 	return
 }
 
-func Run(runstask string, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func Run(runstask string, names []string, needAlign bool) (results []protocols.ExecutionResults, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -123,11 +123,14 @@ func Run(runstask string, names []string) (results []protocols.ExecutionResults,
 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
 		}
 	}()
+	if needAlign {
+		names = append(names, "-a")
+	}
 	results, err = shell.Run(runstask, names)
 	return
 }
 
-func XRun(runstask string, names []string, delay int) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func XRun(runstask string, names []string, delay int, needAlign bool) (results []protocols.ExecutionResults, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -139,6 +142,9 @@ func XRun(runstask string, names []string, delay int) (results []protocols.Execu
 	}()
 	if delay > 0 {
 		names = append(names, fmt.Sprintf("-d%d", delay))
+	}
+	if needAlign {
+		names = append(names, "-a")
 	}
 	results, err = shell.XRun(runstask, names)
 	return

@@ -212,6 +212,7 @@ func GetNodesMaxDelay(names []string) int64 {
 	var maxDelay int64 = 0
 	for _, name := range names {
 		if node, found := NodeMap[name]; found {
+			// logger.Network.Printf("[DBG] delay of %s is %d", name, node.Delay)
 			if node.State == protocols.NodeStateReady && node.Delay > maxDelay {
 				maxDelay = node.Delay
 			}

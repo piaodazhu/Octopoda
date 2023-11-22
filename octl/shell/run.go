@@ -23,9 +23,10 @@ import (
 
 func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
 	delay := 0
+	align := false
 	names := []string{}
 	for i := range params {
-		if len(params[i]) < 3 {
+		if len(params[i]) < 2 {
 			names = append(names, params[i])
 			continue
 		}
@@ -37,18 +38,34 @@ func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.
 				return nil, errs.New(errs.OctlArgumentError, emsg)
 			}
 			delay = x
+		case "-a":
+			align = true
 		default:
 			names = append(names, params[i])
 		}
 	}
-	return runTask(runtask, names, delay)
+	return runTask(runtask, names, delay, align)
 }
 
-func Run(runtask string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	return runTask(runtask, names, -1)
+func Run(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	align := false
+	names := []string{}
+	for i := range params {
+		if len(params[i]) < 2 {
+			names = append(names, params[i])
+			continue
+		}
+		switch params[i][:2] {
+		case "-a":
+			align = true
+		default:
+			names = append(names, params[i])
+		}
+	}
+	return runTask(runtask, names, -1, align)
 }
 
-func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
+func runTask(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -79,13 +96,13 @@ func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionRe
 		}
 	}
 	if isScript {
-		return runScript(runtask, nodes, delay)
+		return runScript(runtask, nodes, delay, align)
 	} else {
-		return runCmd(runtask, nodes, isBackground, delay)
+		return runCmd(runtask, nodes, isBackground, delay, align)
 	}
 }
 
-func runScript(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
+func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -111,6 +128,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.WriteField("delayTime", fmt.Sprint(delay))
+	writer.WriteField("needAlign", fmt.Sprint(align))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	fileWriter, _ := writer.CreateFormFile("script", fname)
 	io.Copy(fileWriter, f)
@@ -142,7 +160,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	return results, nil
 }
 
-func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
+func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -164,6 +182,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 		writer.WriteField("background", "true")
 	}
 	writer.WriteField("delayTime", fmt.Sprint(delay))
+	writer.WriteField("needAlign", fmt.Sprint(align))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	writer.Close()
 

@@ -5,6 +5,7 @@ type CommandParams struct {
 	Background bool
 	DelayTime  int
 	ExecTs     int64
+	NeedAlign  bool
 }
 
 
@@ -14,5 +15,6 @@ type ScriptParams struct {
 	FileBuf    string
 	DelayTime  int
 	ExecTs     int64
+	NeedAlign  bool
 }
 
