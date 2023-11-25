@@ -26,6 +26,7 @@ func ReadAndServe() {
 				}
 			}()
 			joinwg.Wait()
+			logger.Network.Printf("[NETDBG] msg conn dial %s", nameclient.BrainMsgAddr)
 			conn, err := Dial(nameclient.BrainMsgAddr)
 			if err != nil {
 				logger.Network.Println("[MSGCONN DBG] cannot dial ", nameclient.BrainMsgAddr)
@@ -66,6 +67,7 @@ func ReadAndServe() {
 					break
 				}
 			}
+			logger.Network.Print("[NETDBG] end msgconn")
 		}
 	}()
 }

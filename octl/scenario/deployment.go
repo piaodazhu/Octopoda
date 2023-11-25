@@ -223,6 +223,7 @@ func ScenarioPrepare(ctx context.Context, configuration *ScenarioConfigModel, me
 			case _, sigCaptured := <-sigChan:
 				if sigCaptured {
 					shell.RunCancel(tid)
+					signal.Stop(sigChan)
 					shouldStop = true
 				}
 			case <-ctx.Done():
@@ -404,6 +405,7 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 			case _, sigCaptured := <-sigChan:
 				if sigCaptured {
 					shell.RunCancel(tid)
+					signal.Stop(sigChan)
 					shouldStop = true
 				}
 			case <-ctx.Done():
@@ -581,6 +583,7 @@ func ScenarioPurge(ctx context.Context, configuration *ScenarioConfigModel) ([]s
 			case _, sigCaptured := <-sigChan:
 				if sigCaptured {
 					shell.RunCancel(tid)
+					signal.Stop(sigChan)
 					shouldStop = true
 				}
 			case <-ctx.Done():

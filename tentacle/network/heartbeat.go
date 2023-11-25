@@ -34,6 +34,7 @@ func KeepAlive() {
 		}
 
 		for retry < config.GlobalConfig.Heartbeat.RetryTime {
+			logger.Network.Printf("[NETDBG] want dial %s", nameclient.BrainHeartAddr)
 			conn, err := Dial(nameclient.BrainHeartAddr)
 			if err != nil {
 				logger.Network.Print("Cannot connect to brain. retry = ", retry, err)
@@ -95,6 +96,8 @@ func KeepAlive() {
 func LoopHeartbeat(conn net.Conn, randNum uint32) error {
 	joinwg.Done()
 	defer joinwg.Add(1)
+	logger.Network.Print("[NETDBG] start heartbeatloop")
+	defer logger.Network.Print("[NETDBG] end heartbeatloop")
 	for {
 		err := protocols.SendMessageUnique(conn, protocols.TypeHeartbeat, snp.GenSerial(), heartbeat.MakeHeartbeat(randNum))
 		if err != nil {

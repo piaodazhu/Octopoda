@@ -19,6 +19,7 @@ var (
 )
 
 func main() {
+	// use environment variable to control command line print
 	if _, found := os.LookupEnv("OCTL_NOPRINT"); !found {
 		output.EnablePrint()
 	}
@@ -53,69 +54,20 @@ func main() {
 		return
 	}
 	if conf != "" {
-		args = args[2:]
+		args = args[3:]
+	} else {
+		args = args[1:]
 	}
 
 	if err := config.InitConfig(conf); err != nil {
-		panic(err)
+		output.PrintFatalf("cannot load config file %s: %s\n", conf, err.Error())
 	}
 
 	if err := httpclient.InitClients(); err != nil {
-		panic(err)
+		output.PrintFatalf("cannot init http nameclient: %s\n", err.Error())
 	}
-
-	switch args[1] {
-	case "create":
-		subcmd.Create(args[2:])
-	case "repo":
-		subcmd.ScenRepo(args[2:])
-	case "apply":
-		subcmd.Apply(args[2:])
-	case "get":
-		subcmd.Get(args[2:])
-	case "status":
-		subcmd.Status(args[2:])
-	case "group":
-		subcmd.Group(args[2:])
-	case "groups":
-		subcmd.Groups(args[2:])
-	case "log":
-		subcmd.Log(args[2:])
-	case "fix":
-		subcmd.Fix(args[2:])
-	case "version":
-		subcmd.Version(args[2:])
-	case "reset":
-		subcmd.Reset(args[2:])
-	case "upload":
-		subcmd.Upload(args[2:])
-	case "spread":
-		subcmd.Spread(args[2:])
-	case "distrib":
-		subcmd.Distrib(args[2:])
-	case "tree":
-		subcmd.FileTree(args[2:])
-	case "pull":
-		subcmd.Pull(args[2:])
-	case "prune":
-		subcmd.Prune(args[2:])
-	case "run":
-		subcmd.Run(args[2:])
-	case "xrun":
-		subcmd.XRun(args[2:])
-	case "pakma":
-		subcmd.Pakma(args[2:])
-	case "ssh":
-		subcmd.SSH(args[2:])
-	case "setssh":
-		subcmd.SetSSH(args[2:])
-	case "getssh":
-		subcmd.GetSSH(args[2:])
-	case "delssh":
-		subcmd.DelSSH(args[2:])
-	case "help":
-		subcmd.PrintUsages(args[2:])
-	default:
-		output.PrintFatalln("sub command not support")
+	if len(args) == 0 {
+		subcmd.PrintUsages(nil)
 	}
+	subcmd.Execute(args[0], args[1:])
 }

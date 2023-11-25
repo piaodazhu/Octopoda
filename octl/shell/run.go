@@ -102,6 +102,22 @@ func runTask(runtask string, names []string, delay int, align bool) ([]protocols
 	}
 }
 
+func RunCommand(cmd string, isBackgroud bool, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runCmd(cmd, names, isBackgroud, -1, shouldAlign)
+}
+
+func RunScript(cmd string, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runScript(cmd, names, -1, shouldAlign)
+}
+
+func XRunCommand(cmd string, isBackgroud bool, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runCmd(cmd, names, isBackgroud, delayExec, shouldAlign)
+}
+
+func XRunScript(cmd string, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runScript(cmd, names, delayExec, shouldAlign)
+}
+
 func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {
@@ -147,6 +163,7 @@ func runScript(runtask string, names []string, delay int, align bool) ([]protoco
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
+		signal.Stop(sigChan)
 		RunCancel(tid)
 	}(string(taskid))
 
@@ -199,6 +216,7 @@ func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]p
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
+		signal.Stop(sigChan)
 		RunCancel(tid)
 	}(string(taskid))
 

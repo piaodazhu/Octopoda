@@ -32,7 +32,7 @@ func getIpByDevice(device string) (string, error) {
 }
 
 func Dial(addr string) (net.Conn, error) {
-	dailer := net.Dialer{KeepAlive: -1}
+	dailer := net.Dialer{}
 	dev := config.GlobalConfig.NetDevice
 	if len(dev) != 0 {
 		localip, err := getIpByDevice(dev)
