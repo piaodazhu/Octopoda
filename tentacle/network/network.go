@@ -11,6 +11,7 @@ import (
 )
 
 var wg, joinwg sync.WaitGroup
+var msgConn net.Conn
 
 func getIpByDevice(device string) (string, error) {
 	iface, err := net.InterfaceByName(device)
@@ -60,6 +61,7 @@ func Dial(addr string) (net.Conn, error) {
 func Run() {
 	wg.Add(1)
 	joinwg.Add(1)
+	appendLog("start join the network")
 	KeepAlive()
 	ReadAndServe()
 	wg.Wait()

@@ -20,7 +20,7 @@ type hbState struct {
 	delay     int64
 }
 
-func ProcessHeartbeat(ctx context.Context, c chan hbState, conn net.Conn, randNum uint32) {
+func ProcessHeartbeat(ctx context.Context, name string, c chan hbState, conn net.Conn, randNum uint32) {
 	var mtype int
 	var msg []byte
 	var hs hbState
@@ -45,7 +45,7 @@ func ProcessHeartbeat(ctx context.Context, c chan hbState, conn net.Conn, randNu
 		hs.delay = hbinfo.Delay
 
 		randNum = snp.GenSerial()
-		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
+		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum, model.IsMsgConnOn(name)))
 		if err != nil {
 			logger.Network.Print(err)
 			hs.isHealthy = false
@@ -72,7 +72,7 @@ func startHeartbeat(conn net.Conn, name string, randNum uint32) {
 
 	hbchan := make(chan hbState, 1)
 	ctx, cancel := context.WithCancel(context.Background())
-	go ProcessHeartbeat(ctx, hbchan, conn, randNum)
+	go ProcessHeartbeat(ctx, name, hbchan, conn, randNum)
 	for {
 		select {
 		case hbstate := <-hbchan:

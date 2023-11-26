@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -28,7 +29,7 @@ func InitNodeMap() {
 				if node.State == protocols.NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().UnixMilli() {
 					// logger.Tentacle.Print("MarkDeadNode", nodename)
 					node.State = protocols.NodeStateDead
-					node.ConnInfo.Close()
+					node.Close()
 				}
 			}
 			NodesLock.Unlock()
@@ -45,6 +46,7 @@ func StoreNode(name, version, addr string, conn net.Conn) {
 	if n, found := NodeMap[name]; found {
 		node = n
 		if conn != nil {
+			logger.Comm.Printf("[DBG]node %s call Fresh Conn", name)
 			node.ConnInfo.Fresh(conn)
 			node.ConnInfo.StartReceive()
 		}
@@ -153,12 +155,24 @@ func GetNodeMsgConn(name string) (*ConnInfo, int) {
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if !found {
+		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because NodeMap miss", name)
 		return nil, GetConnNoNode
 	}
 	if node.ConnState == "Off" {
+		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because ConnState off", name)
 		return &node.ConnInfo, GetConnNoConn
 	}
 	return &node.ConnInfo, GetConnOk
+}
+
+func IsMsgConnOn(name string) bool {
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
+	node, found := NodeMap[name]
+	if !found {
+		return false 
+	}
+	return node.ConnState == "On"
 }
 
 func ResetNodeMsgConn(name string) {
@@ -166,6 +180,7 @@ func ResetNodeMsgConn(name string) {
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if found {
+		logger.Comm.Printf("[DBG]node %s call resetMsgConn", name)
 		node.Close()
 	}
 }

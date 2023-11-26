@@ -55,9 +55,7 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func newTlsListener(address string) (net.Listener, error) {
-	lcfg := net.ListenConfig{
-		KeepAlive: -1,
-	}
+	lcfg := net.ListenConfig{}
 	listener, err := lcfg.Listen(context.Background(), "tcp", address)
 	if err != nil {
 		return nil, err
