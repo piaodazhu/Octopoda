@@ -16,7 +16,7 @@ func DowngradeHandler(ctx *gin.Context) {
 		return
 	}
 	go doDownGrade()
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func CancelHandler(ctx *gin.Context) {
@@ -29,7 +29,7 @@ func CancelHandler(ctx *gin.Context) {
 		return
 	}
 	go doCancel()
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func UpgradeHandler(ctx *gin.Context) {
@@ -53,7 +53,7 @@ func UpgradeHandler(ctx *gin.Context) {
 		return
 	}
 	go doUpgrade(version)
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func ConfirmHandler(ctx *gin.Context) {
@@ -66,7 +66,7 @@ func ConfirmHandler(ctx *gin.Context) {
 		return
 	}
 	go doConfirm()
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func InstallHandler(ctx *gin.Context) {
@@ -85,7 +85,7 @@ func InstallHandler(ctx *gin.Context) {
 		return
 	}
 	go doInstall(version)
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func GetStateHandler(ctx *gin.Context) {
@@ -114,5 +114,5 @@ func CleanHandler(ctx *gin.Context) {
 	defer Busy.Unlock()
 	res := Response{Msg: "OK"}
 	doClean()
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }

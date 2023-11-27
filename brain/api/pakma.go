@@ -56,7 +56,7 @@ func PakmaCmd(ctx *gin.Context) {
 		}
 	}
 	wg.Wait()
-	ctx.JSON(200, results)
+	ctx.JSON(http.StatusOK, results)
 }
 
 func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {

@@ -38,7 +38,7 @@ func GroupGetGroup(ctx *gin.Context) {
 		}
 	}
 	// write response
-	ctx.JSON(200, ginfo)
+	ctx.JSON(http.StatusOK, ginfo)
 }
 
 func GroupSetGroup(ctx *gin.Context) {
@@ -83,7 +83,7 @@ func GroupSetGroup(ctx *gin.Context) {
 	}
 
 	// write response
-	ctx.String(200, "OK")
+	ctx.String(http.StatusOK, "OK")
 }
 
 func GroupDeleteGroup(ctx *gin.Context) {
@@ -104,9 +104,9 @@ func GroupDeleteGroup(ctx *gin.Context) {
 	}
 
 	// write response
-	ctx.JSON(200, struct{}{})
+	ctx.JSON(http.StatusOK, struct{}{})
 }
 
 func GroupGetAll(ctx *gin.Context) {
-	ctx.JSON(200, rdb.GroupGetAll())
+	ctx.JSON(http.StatusOK, rdb.GroupGetAll())
 }

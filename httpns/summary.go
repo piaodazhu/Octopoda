@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,5 +19,5 @@ func ServiceInit() {
 }
 
 func ServiceSummary(ctx *gin.Context) {
-	ctx.JSON(200, summary)
+	ctx.JSON(http.StatusOK, summary)
 }

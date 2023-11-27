@@ -28,7 +28,7 @@ func ScenarioCreate(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }
 
 func ScenarioUpdate(ctx *gin.Context) {
@@ -49,7 +49,7 @@ func ScenarioUpdate(ctx *gin.Context) {
 		return
 	}
 	rmsg.Modified = modified
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }
 
 type AppDeleteParams struct {
@@ -102,7 +102,7 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	// finally delete this scenario locallly
 	model.DelScenario(name)
-	ctx.JSON(200, results)
+	ctx.JSON(http.StatusOK, results)
 }
 
 func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
@@ -150,7 +150,7 @@ func ScenarioInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, scen)
+	ctx.JSON(http.StatusOK, scen)
 }
 
 func ScenariosInfo(ctx *gin.Context) {
@@ -165,7 +165,7 @@ func ScenariosInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, scens)
+	ctx.JSON(http.StatusOK, scens)
 }
 
 func ScenarioVersion(ctx *gin.Context) {
@@ -182,7 +182,7 @@ func ScenarioVersion(ctx *gin.Context) {
 		return
 	}
 	versions = model.GetScenarioVersionByName(name)
-	ctx.JSON(200, versions)
+	ctx.JSON(http.StatusOK, versions)
 }
 
 type AppResetParams struct {
@@ -272,7 +272,7 @@ func ScenarioReset(ctx *gin.Context) {
 
 	// finally reset this scenario locallly
 	model.ResetScenario(name, version, msg)
-	ctx.JSON(200, results)
+	ctx.JSON(http.StatusOK, results)
 }
 
 func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
@@ -316,5 +316,5 @@ func ScenarioFix(ctx *gin.Context) {
 		rmsg.Rmsg = "Fix:" + err.Error()
 		ctx.JSON(http.StatusBadRequest, rmsg)
 	}
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }

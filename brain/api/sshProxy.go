@@ -22,7 +22,7 @@ type proxyMsg struct {
 func SshLoginInfo(ctx *gin.Context) {
 	name := ctx.Query("name")
 	if info, found := network.GetSshInfo(name); found {
-		ctx.JSON(200, info)
+		ctx.JSON(http.StatusOK, info)
 		return
 	}
 	ctx.JSON(http.StatusNotFound, struct{}{})
@@ -80,7 +80,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		if cmdType == protocols.TypeSshRegister {
 			network.CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
 		}
-		ctx.JSON(200, proxyMsg{
+		ctx.JSON(http.StatusOK, proxyMsg{
 			Code: 0,
 			Msg:  "OK",
 			Data: fmt.Sprintf("%s:%d", ip, config.GlobalConfig.OctlFace.SshPort),
@@ -118,7 +118,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		return false
 	}
 	if pmsg.Code == 0 {
-		ctx.JSON(200, pmsg)
+		ctx.JSON(http.StatusOK, pmsg)
 		return true
 	} else {
 		ctx.JSON(http.StatusInternalServerError, pmsg)

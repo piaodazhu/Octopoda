@@ -265,7 +265,7 @@ func FileTree(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.Data(200, "application/json", raw)
+	ctx.Data(http.StatusOK, "application/json", raw)
 }
 
 type ErrInvalidPathType struct{ pathtype, node string }
@@ -479,7 +479,7 @@ func FilePull(ctx *gin.Context) {
 		}
 		defer os.Remove(packName)
 		rmsg.Output = loadFile(packName)
-		ctx.JSON(200, rmsg)
+		ctx.JSON(http.StatusOK, rmsg)
 		return
 	}
 

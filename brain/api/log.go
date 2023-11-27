@@ -54,7 +54,7 @@ func NodeLog(ctx *gin.Context) {
 			return
 		}
 	}
-	ctx.JSON(200, lparams)
+	ctx.JSON(http.StatusOK, lparams)
 }
 
 func readLogs(params *LogParams) {

@@ -25,7 +25,7 @@ func NameRegister(ctx *gin.Context) {
 			return
 		}
 	}
-	ctx.JSON(200, protocols.Response{Message: "OK"})
+	ctx.JSON(http.StatusOK, protocols.Response{Message: "OK"})
 }
 
 func NameDelete(ctx *gin.Context) {
@@ -53,7 +53,7 @@ func NameDelete(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
-	ctx.JSON(200, protocols.Response{Message: "OK"})
+	ctx.JSON(http.StatusOK, protocols.Response{Message: "OK"})
 }
 
 func NameQuery(ctx *gin.Context) {
@@ -69,7 +69,7 @@ func NameQuery(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
-	ctx.JSON(200, protocols.Response{Message: "OK", NameEntry: entry})
+	ctx.JSON(http.StatusOK, protocols.Response{Message: "OK", NameEntry: entry})
 }
 
 func NameList(ctx *gin.Context) {
@@ -103,5 +103,5 @@ func NameList(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, protocols.Response{Message: err.Error()})
 		return
 	}
-	ctx.JSON(200, protocols.Response{Message: "OK", NameList: names})
+	ctx.JSON(http.StatusOK, protocols.Response{Message: "OK", NameList: names})
 }

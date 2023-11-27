@@ -30,7 +30,7 @@ func NodeInfo(ctx *gin.Context) {
 		return
 	}
 	node.BrainTs = time.Now().Unix()
-	ctx.JSON(200, node)
+	ctx.JSON(http.StatusOK, node)
 }
 
 func NodesInfo(ctx *gin.Context) {
@@ -52,12 +52,12 @@ func NodesInfo(ctx *gin.Context) {
 
 	if len(names) == 0 {
 		if nodes.InfoList, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(200, struct{}{})
+			ctx.JSON(http.StatusOK, struct{}{})
 			return
 		}
 	} else {
 		if nodes.InfoList, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(200, struct{}{})
+			ctx.JSON(http.StatusOK, struct{}{})
 			return
 		}
 	}
@@ -67,7 +67,7 @@ func NodesInfo(ctx *gin.Context) {
 		nodes.InfoList[i].BrainTs = currTs
 	}
 
-	ctx.JSON(200, nodes)
+	ctx.JSON(http.StatusOK, nodes)
 }
 
 func NodeStatus(ctx *gin.Context) {
@@ -79,7 +79,7 @@ func NodeStatus(ctx *gin.Context) {
 	}
 	var status protocols.Status
 	if name == "brain" {
-		ctx.JSON(200, sys.LocalStatus())
+		ctx.JSON(http.StatusOK, sys.LocalStatus())
 		return
 	}
 	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
@@ -99,7 +99,7 @@ func NodeStatus(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, struct{}{})
 		return
 	}
-	ctx.JSON(200, status)
+	ctx.JSON(http.StatusOK, status)
 }
 
 func NodesState(ctx *gin.Context) {
@@ -145,7 +145,7 @@ func NodesState(ctx *gin.Context) {
 		nodesStatus.StatusList = append(nodesStatus.StatusList, v)
 	}
 
-	ctx.JSON(200, nodesStatus)
+	ctx.JSON(http.StatusOK, nodesStatus)
 }
 
 func getNodeStatus(name string, channel chan<- protocols.Status, wg *sync.WaitGroup) {
@@ -213,7 +213,7 @@ func NodesParse(ctx *gin.Context) {
 	}
 
 	// second loop: get rid of duplicate
-	for _, name := range names {
+	for _, name := range nodeNames {
 		if len(name) == 0 {
 			continue
 		}
@@ -244,5 +244,5 @@ func NodesParse(ctx *gin.Context) {
 	for node := range invalidNameSet {
 		res.InvalidNames = append(res.InvalidNames, node)
 	}
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }

@@ -30,7 +30,7 @@ func NodeAppsInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.Data(200, "application/json", raw)
+	ctx.Data(http.StatusOK, "application/json", raw)
 }
 
 func NodeAppVersion(ctx *gin.Context) {
@@ -60,7 +60,7 @@ func NodeAppVersion(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.Data(200, "application/json", raw)
+	ctx.Data(http.StatusOK, "application/json", raw)
 }
 
 func NodeAppReset(ctx *gin.Context) {
@@ -125,5 +125,5 @@ func NodeAppReset(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, rmsg)
 	}
 	rmsg.Modified = modified
-	ctx.JSON(200, result)
+	ctx.JSON(http.StatusOK, result)
 }
