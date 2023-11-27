@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
@@ -84,9 +85,46 @@ func NodesInfo(names []string) (*protocols.NodesInfo, *errs.OctlError) {
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
-	output.PrintJSON(info.ToText())
+	// output.PrintJSON(info.ToText())
 
 	return &info, nil
+}
+
+func NodesInfoWithFilter(names []string, healthFilter, msgconnFilter string) (*protocols.NodesInfo, *errs.OctlError) {
+	infos, err := NodesInfo(names)
+	if err != nil {
+		return nil, err
+	}
+	
+	infos_filtered := &protocols.NodesInfo{
+		BrainName: infos.BrainAddr,
+		BrainVersion: infos.BrainVersion,
+		BrainAddr: infos.BrainAddr,
+		InfoList: nil,
+	}
+
+	for _, info := range infos.InfoList {
+		infoText := info.ToText()
+		if !filterMatch(infoText.Health, healthFilter) {
+			continue 
+		}
+		if !filterMatch(infoText.MsgConnState, msgconnFilter) {
+			continue 
+		}
+		infos_filtered.InfoList = append(infos_filtered.InfoList, info)
+	}
+
+	output.PrintJSON(infos_filtered.ToText())
+	return infos_filtered, nil
+}
+
+func filterMatch(value, target string) bool {
+	if target == "" {
+		return true 
+	}
+	v := strings.ToLower(value)
+	t := strings.ToLower(target)
+	return strings.Contains(v, t)
 }
 
 

@@ -11,10 +11,12 @@ func nodeCmd(args []string) {
 	args = args[1:]
 	switch operation {
 	case "get":
+		hf, args := extractArgString(args, "-hf", "--health-filter", "")
+		mf, args := extractArgString(args, "-mf", "--msgconn-filter", "")
 		if len(args) == 0 || args[0] == "ALL" {
-			node.NodesInfo(nil)
+			node.NodesInfoWithFilter(nil, hf, mf)
 		} else {
-			node.NodesInfo(args)
+			node.NodesInfoWithFilter(args, hf, mf)
 		}
 	case "prune":
 		if len(args) == 0 {
