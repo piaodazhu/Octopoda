@@ -170,7 +170,15 @@ sendres:
 }
 
 func NodePrune(ctx *gin.Context) {
-	model.PruneDeadNode()
+	targetNodes := ctx.Query("targetNodes")
+	names := []string{}
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &names)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	model.PruneDeadNode(names)
 	ctx.Status(200)
 }
 
@@ -182,6 +190,29 @@ func NodesParse(ctx *gin.Context) {
 		return
 	}
 	nodeSet := map[string]struct{}{}
+	invalidNameSet := map[string]struct{}{}
+	unhealthyNodeSet := map[string]struct{}{}
+
+	nodeNames := []string{}
+
+	// first loop: only process group names
+	for _, name := range names {
+		if len(name) == 0 {
+			continue
+		}
+		if name[0] == '@' { // group name
+			res, ok := rdb.GroupGet(name[1:])
+			if !ok || len(res) == 0 {
+				invalidNameSet[name] = struct{}{}
+				continue
+			}
+			nodeNames = append(nodeNames, res...)
+		} else {
+			nodeNames = append(nodeNames, name)
+		}
+	}
+
+	// second loop: get rid of duplicate
 	for _, name := range names {
 		if len(name) == 0 {
 			continue
@@ -190,28 +221,28 @@ func NodesParse(ctx *gin.Context) {
 			continue
 		}
 
-		if name[0] == '@' {
-			res, ok := rdb.GroupGet(name[1:])
-			if !ok || len(res) == 0 {
-				ctx.String(http.StatusBadRequest, "invalid group %s", name[1:])
-				return
-			}
-			for _, node := range res {
-				nodeSet[node] = struct{}{}
-			}
-		} else {
-			res, ok := model.GetNodeState(name)
-			if !ok || res != protocols.NodeStateReady {
-				ctx.String(http.StatusBadRequest, "invalid node %s", name)
-				return
-			}
-			nodeSet[name] = struct{}{}
+		state, ok := model.GetNodeState(name)
+		if !ok {
+			invalidNameSet[name] = struct{}{}
+			continue
 		}
+
+		if state != protocols.NodeStateReady {
+			unhealthyNodeSet[name] = struct{}{}
+			// there is no continue because unhealthy node should be also put into outputSet
+		}
+		nodeSet[name] = struct{}{}
 	}
 
-	nodes := []string{}
+	res := protocols.NodeParseResult{}
 	for node := range nodeSet {
-		nodes = append(nodes, node)
+		res.OutputNames = append(res.OutputNames, node)
 	}
-	ctx.JSON(200, nodes)
+	for node := range unhealthyNodeSet {
+		res.UnhealthyNodes = append(res.UnhealthyNodes, node)
+	}
+	for node := range invalidNameSet {
+		res.InvalidNames = append(res.InvalidNames, node)
+	}
+	ctx.JSON(200, res)
 }

@@ -87,16 +87,29 @@ func DisconnNode(name string) bool {
 	return false
 }
 
-func PruneDeadNode() {
+func PruneDeadNode(names []string) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	toBePruned := []string{}
-	for name, node := range NodeMap {
-		if node.State == protocols.NodeStateDead {
-			toBePruned = append(toBePruned, name)
+
+	// names = [] means prune all dead nodes
+	if len(names) == 0 {
+		for name, node := range NodeMap {
+			if node.State == protocols.NodeStateDead {
+				toBePruned = append(toBePruned, name)
+			}
+		}
+	} else { // only prune dead nodes contained by names
+		for _, name := range names {
+			if node, found := NodeMap[name]; found {
+				if node.State == protocols.NodeStateDead {
+					toBePruned = append(toBePruned, name)
+				}
+			}
 		}
 	}
+
 	for i := range toBePruned {
 		delete(NodeMap, toBePruned[i])
 	}
@@ -170,7 +183,7 @@ func IsMsgConnOn(name string) bool {
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if !found {
-		return false 
+		return false
 	}
 	return node.ConnState == "On"
 }

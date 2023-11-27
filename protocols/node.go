@@ -189,3 +189,9 @@ func (status *NodesStatus) ToText() *NodesStatusText {
 	})
 	return &nodesStatus
 }
+
+type NodeParseResult struct {
+	OutputNames    []string
+	InvalidNames   []string
+	UnhealthyNodes []string
+}

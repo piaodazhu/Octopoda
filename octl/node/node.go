@@ -95,21 +95,21 @@ func NodesInfoWithFilter(names []string, healthFilter, msgconnFilter string) (*p
 	if err != nil {
 		return nil, err
 	}
-	
+
 	infos_filtered := &protocols.NodesInfo{
-		BrainName: infos.BrainAddr,
+		BrainName:    infos.BrainAddr,
 		BrainVersion: infos.BrainVersion,
-		BrainAddr: infos.BrainAddr,
-		InfoList: nil,
+		BrainAddr:    infos.BrainAddr,
+		InfoList:     nil,
 	}
 
 	for _, info := range infos.InfoList {
 		infoText := info.ToText()
 		if !filterMatch(infoText.Health, healthFilter) {
-			continue 
+			continue
 		}
 		if !filterMatch(infoText.MsgConnState, msgconnFilter) {
-			continue 
+			continue
 		}
 		infos_filtered.InfoList = append(infos_filtered.InfoList, info)
 	}
@@ -120,20 +120,26 @@ func NodesInfoWithFilter(names []string, healthFilter, msgconnFilter string) (*p
 
 func filterMatch(value, target string) bool {
 	if target == "" {
-		return true 
+		return true
 	}
 	v := strings.ToLower(value)
 	t := strings.ToLower(target)
 	return strings.Contains(v, t)
 }
 
-
-// TODO
 func NodesPrune(names []string) *errs.OctlError {
-	url := fmt.Sprintf("https://%s/%s%s",
+	nodes, err := NodesParseNoCheck(names)
+	if err != nil {
+		emsg := "node parse." + err.Error()
+		output.PrintFatalln(emsg)
+		return errs.New(errs.OctlNodeParseError, emsg)
+	}
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
+	url := fmt.Sprintf("https://%s/%s%s?targetNodes=%s",
 		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodePrune,
+		nodes_serialized,
 	)
 	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {
@@ -145,25 +151,47 @@ func NodesPrune(names []string) *errs.OctlError {
 	return nil
 }
 
-func NodePrune() *errs.OctlError {
-	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
-		config.GlobalConfig.Brain.ApiPrefix,
-		config.API_NodePrune,
-	)
-	res, err := httpclient.BrainClient.Get(url)
-	if err != nil {
-		emsg := "http get error: " + err.Error()
-		output.PrintFatalln(emsg)
-		return errs.New(errs.OctlHttpRequestError, emsg)
-	}
-	res.Body.Close()
-	return nil
-}
+// func NodePrune() *errs.OctlError {
+// 	url := fmt.Sprintf("https://%s/%s%s",
+// 		httpclient.BrainAddr,
+// 		config.GlobalConfig.Brain.ApiPrefix,
+// 		config.API_NodePrune,
+// 	)
+// 	res, err := httpclient.BrainClient.Get(url)
+// 	if err != nil {
+// 		emsg := "http get error: " + err.Error()
+// 		output.PrintFatalln(emsg)
+// 		return errs.New(errs.OctlHttpRequestError, emsg)
+// 	}
+// 	res.Body.Close()
+// 	return nil
+// }
 
 func NodesParse(names []string) ([]string, error) {
-	// parse nodes
+	result, err := nodesParse(names)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.InvalidNames) != 0 {
+		return nil, fmt.Errorf("node parse return invalid names: %v", result.InvalidNames)
+	}
+	if len(result.UnhealthyNodes) != 0 {
+		return nil, fmt.Errorf("node parse return unhealthy nodes: %v", result.UnhealthyNodes)
+	}
+	return result.OutputNames, nil
+}
+
+func NodesParseNoCheck(names []string) ([]string, error) {
+	result, err := nodesParse(names)
+	if err != nil {
+		return nil, err
+	}
+	return result.OutputNames, nil
+}
+
+func nodesParse(names []string) (protocols.NodeParseResult, error) {
 	body, _ := json.Marshal(names)
+	result := protocols.NodeParseResult{}
 
 	url := fmt.Sprintf("https://%s/%s%s",
 		httpclient.BrainAddr,
@@ -173,20 +201,19 @@ func NodesParse(names []string) ([]string, error) {
 	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewReader(body))
 	if err != nil {
 		output.PrintFatalln("nodeparse post")
-		return nil, err
+		return result, err
 	}
 	defer res.Body.Close()
 
 	raw, _ := io.ReadAll(res.Body)
 	if res.StatusCode == http.StatusOK {
-		nodes := []string{}
-		err := json.Unmarshal(raw, &nodes)
+		err := json.Unmarshal(raw, &result)
 		if err != nil {
 			output.PrintFatalln(err)
-			return nil, err
+			return result, err
 		}
-		return nodes, nil
+		return result, nil
 	} else {
-		return nil, errors.New(string(raw))
+		return result, errors.New(string(raw))
 	}
 }

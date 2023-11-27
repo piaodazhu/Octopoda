@@ -33,7 +33,7 @@
 			# -ta == --try-align
 			# -cc == --common-command	(default)
 			# -bg == --background
-			# -ss  == --shellscript
+			# -ss == --shellscript
 	[CHK]	- cmd xrun
 			[TODO:	Version 1]
 			usage: octl xrun [-ta] [[-c] 'command' | -bg 'command' | -s 'shellScript'] [-d <delayseconds>] <node1> <@group1> ...
