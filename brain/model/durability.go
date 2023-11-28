@@ -20,6 +20,7 @@ func CheckReady() bool { return atomic.LoadInt32(&Busy) == 1 }
 
 func InitScenarioMap() {
 	SetBusy()
+	defer SetReady()
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
 	file.WriteString(diskFileName)
@@ -29,8 +30,6 @@ func InitScenarioMap() {
 		ScenLock.Lock()
 		ScenarioMap = make(map[string]*ScenarioModel)
 		ScenLock.Unlock()
-		// new storage need not fix
-		SetReady()
 	} else {
 		logger.SysInfo.Printf("Scenario file found. Loading...")
 		defer f.Close()
@@ -161,8 +160,6 @@ func AutoFix() {
 			logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
 		}
 	}
-	// first roll fix done. Then http request can be accepted
-	SetReady()
 
 	for {
 		namelist := []string{}
