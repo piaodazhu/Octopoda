@@ -188,11 +188,13 @@ func deployApp(taskid string, name string, adParams *AppDeployParams) {
 	}
 
 	// update scenario version
-	success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
-	if success {
-		logger.Request.Print("Success: AddScenNodeApp")
-	} else {
-		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, adParams.Name, adParams.Scenario)
-		// *result = "Failed: AddScenNodeApp"
-	}
+	// TODO: not add app
+	// success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
+	// if success {
+	// 	logger.Request.Print("Success: AddScenNodeApp")
+	// } else {
+	// 	logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, adParams.Name, adParams.Scenario)
+	// 	// *result = "Failed: AddScenNodeApp"
+	// }
+	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%v", adParams.Name, adParams.Scenario, name, rmsg)
 }

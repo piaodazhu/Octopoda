@@ -119,6 +119,7 @@ func Fix(name string) error {
 	ScenLock.RUnlock()
 
 	// check real nodeapp versions
+	curNodeAppLatestVersion := make([]Version, len(curNodeApps))
 	for i := range curNodeApps {
 		aParams := AppBasic{
 			Name:     curNodeApps[i].AppName,
@@ -137,15 +138,21 @@ func Fix(name string) error {
 			return ErrorNodeAppError{}
 		}
 
+		curNodeAppLatestVersion[i] = latest
+	}
+
+	for i := range curNodeApps {
 		// check the latest version
-		if curNodeApps[i].Version != latest.Hash {
-			if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
+		if curNodeApps[i].Version != curNodeAppLatestVersion[i].Hash {
+			if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, curNodeAppLatestVersion[i].Hash, true) {
 				return ErrorAddScenNodeApp{}
 			}
 		}
 	}
+
 	_, ok := UpdateScenario(name, "System Data Fix")
 	if !ok {
+		// should not happen
 		return ErrorUpdateScenario{}
 	}
 	return nil

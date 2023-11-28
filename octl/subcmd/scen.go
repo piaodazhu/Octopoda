@@ -23,16 +23,16 @@ func scenCmd(args []string) {
 		}
 
 		deployment := args[0]
-		if deployment != "purge" && message == "" {
-			goto usage
-		}
-
 		target := "default"
 		if len(args) > 2 {
 			goto usage
 		}
 		if len(args) == 2 {
 			target = args[1]
+			// TODO: message is not necessary
+			if target != "purge" && message == "" {
+				goto usage
+			}
 		}
 		scenario.ScenarioApply(context.Background(), deployment, target, message)
 	case "create":

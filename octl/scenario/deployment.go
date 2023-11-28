@@ -178,8 +178,7 @@ func ScenarioPrepare(ctx context.Context, configuration *ScenarioConfigModel, me
 				config.API_ScenarioAppCreate,
 			)
 
-			client := http.Client{Timeout: 0}
-			res, err := client.Post(url, contentType, &bodyBuffer)
+			res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
 			if err != nil {
 				emsg := "http post error: " + err.Error()
 				output.PrintFatalln(emsg)
@@ -431,13 +430,14 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 	}
 
 	// update this scenario
-	result, err := ScenarioUpdate(ctx, configuration.Name, message)
-	logList = append(logList, result...)
-	if err != nil {
-		emsg := fmt.Sprintf("ScenarioUpdate(%s, %s).", configuration.Name, message)
-		output.PrintFatalln(emsg, err)
-		return logList, err
-	}
+	// TODO: not update?
+	// result, err := ScenarioUpdate(ctx, configuration.Name, message)
+	// logList = append(logList, result...)
+	// if err != nil {
+	// 	emsg := fmt.Sprintf("ScenarioUpdate(%s, %s).", configuration.Name, message)
+	// 	output.PrintFatalln(emsg, err)
+	// 	return logList, err
+	// }
 	return logList, nil
 }
 
