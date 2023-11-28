@@ -171,7 +171,7 @@ func GetNodeMsgConn(name string) (*ConnInfo, int) {
 		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because NodeMap miss", name)
 		return nil, GetConnNoNode
 	}
-	if node.ConnState == "Off" {
+	if node.ConnState == protocols.ConnStateOff {
 		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because ConnState off", name)
 		return &node.ConnInfo, GetConnNoConn
 	}
@@ -185,7 +185,7 @@ func IsMsgConnOn(name string) bool {
 	if !found {
 		return false
 	}
-	return node.ConnState == "On"
+	return node.ConnState == protocols.ConnStateOn
 }
 
 func ResetNodeMsgConn(name string) {

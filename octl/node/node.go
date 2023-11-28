@@ -90,7 +90,7 @@ func NodesInfo(names []string) (*protocols.NodesInfo, *errs.OctlError) {
 	return &info, nil
 }
 
-func NodesInfoWithFilter(names []string, healthFilter, msgconnFilter string) (*protocols.NodesInfo, *errs.OctlError) {
+func NodesInfoWithFilter(names []string, stateFilter string) (*protocols.NodesInfo, *errs.OctlError) {
 	infos, err := NodesInfo(names)
 	if err != nil {
 		return nil, err
@@ -105,10 +105,7 @@ func NodesInfoWithFilter(names []string, healthFilter, msgconnFilter string) (*p
 
 	for _, info := range infos.InfoList {
 		infoText := info.ToText()
-		if !filterMatch(infoText.Health, healthFilter) {
-			continue
-		}
-		if !filterMatch(infoText.MsgConnState, msgconnFilter) {
+		if !filterMatch(infoText.State, stateFilter) {
 			continue
 		}
 		infos_filtered.InfoList = append(infos_filtered.InfoList, info)

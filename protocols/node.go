@@ -12,12 +12,17 @@ const (
 	NodeStateDead
 )
 
+const (
+	ConnStateOn = iota
+	ConnStateOff
+)
+
 type NodeInfo struct {
 	Name      string
 	Version   string
 	Addr      string
 	State     int32
-	ConnState string
+	ConnState int32
 	Delay     int64
 	OnlineTs  int64
 	OfflineTs int64
@@ -60,8 +65,7 @@ type NodeInfoText struct {
 	Name         string `json:"name"`
 	Version      string `json:"version"`
 	Addr         string `json:"addr"`
-	Health       string `json:"health"`
-	MsgConnState string `json:"msg_conn"`
+	State       string `json:"state"`
 	Delay        string `json:"delay"`
 	OnlineTime   string `json:"online_time,omitempty"`
 	OfflineTime  string `json:"offline_time,omitempty"`
@@ -72,7 +76,7 @@ type NodesInfoText struct {
 	BrainInfo    BrainInfoText   `json:"brain"`
 	NodeInfoList []*NodeInfoText `json:"nodes"`
 	Total        int             `json:"total"`
-	Active       int             `json:"active"`
+	Online       int             `json:"online"`
 	Offline      int             `json:"offline"`
 }
 
@@ -108,18 +112,25 @@ func (node *NodeInfo) ToText() *NodeInfoText {
 		Delay:   "-",
 	}
 	switch node.State {
-	case 0:
-		res.Health = "Healthy"
+	case NodeStateReady:
+		if node.ConnState == ConnStateOn {
+			res.State = "online"
+		} else {
+			res.State = "unstable"
+		}
 		res.OnlineTime = time.Unix(node.BrainTs, 0).Sub(time.UnixMilli(node.OnlineTs)).String()
 		res.Delay = fmt.Sprintf("%dms", node.Delay)
-	case 1:
-		res.Health = "Disconnect"
+	case NodeStateDisconn:
+		res.State = "unstable"
 		res.LastOnline = time.UnixMilli(node.ActiveTs).Format("2006-01-02 15:04:05")
-	case 2:
-		res.Health = "Offline"
+	case NodeStateDead:
+		if node.ConnState == ConnStateOn {
+			res.State = "unstable"
+		} else {
+			res.State = "offline"
+		}
 		res.OfflineTime = time.Unix(node.BrainTs, 0).Sub(time.UnixMilli(node.OfflineTs)).String()
 	}
-	res.MsgConnState = node.ConnState
 	return res
 }
 
@@ -134,9 +145,9 @@ func (nodes *NodesInfo) ToText() *NodesInfoText {
 	}
 	for i, node := range nodes.InfoList {
 		res.Total++
-		if node.State == 0 {
-			res.Active++
-		} else if node.State == 2 || node.ConnState != "On" {
+		if node.State == NodeStateReady && node.ConnState == ConnStateOn {
+			res.Online++
+		} else if node.State == NodeStateDead && node.ConnState == ConnStateOff {
 			res.Offline++
 		}
 		res.NodeInfoList[i] = node.ToText()

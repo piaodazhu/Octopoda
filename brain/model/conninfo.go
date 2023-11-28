@@ -16,19 +16,19 @@ type ConnMsg struct {
 }
 
 type ConnInfo struct {
-	ConnStatePtr *string
+	ConnStateRef *int32
 	Conn         net.Conn
 	Messages     sync.Map
 }
 
-func CreateConnInfo(conn net.Conn, connStatePtr *string) ConnInfo {
-	*connStatePtr = "On"
+func CreateConnInfo(conn net.Conn, connStateRef *int32) ConnInfo {
+	*connStateRef = protocols.ConnStateOn
 	if conn == nil {
-		*connStatePtr = "Off"
+		*connStateRef = protocols.ConnStateOff
 	}
 	return ConnInfo{
 		Conn:         conn,
-		ConnStatePtr: connStatePtr,
+		ConnStateRef: connStateRef,
 		Messages:     sync.Map{},
 	}
 }
@@ -38,7 +38,7 @@ func (c *ConnInfo) Close() {
 		c.Conn.Close()
 		c.Conn = nil
 	}
-	*(c.ConnStatePtr) = "Off"
+	*(c.ConnStateRef) = protocols.ConnStateOff
 
 	pendingList := []uint32{}
 	c.Messages.Range(func(key, value any) bool {
@@ -58,9 +58,9 @@ func (c *ConnInfo) Fresh(conn net.Conn) {
 	c.Close()
 	c.Conn = conn
 	if c.Conn == nil {
-		*(c.ConnStatePtr) = "Off"
+		*(c.ConnStateRef) = protocols.ConnStateOff
 	} else {
-		*(c.ConnStatePtr) = "On"
+		*(c.ConnStateRef) = protocols.ConnStateOn
 	}
 }
 
