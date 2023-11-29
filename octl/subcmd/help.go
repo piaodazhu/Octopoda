@@ -20,7 +20,7 @@ Node:prune:octl node prune [ALL | <node1> <@group1> ...]:octl node prune @mygrou
 Node:status:octl node status [[ALL] | <node1> <@group1> ...]:octl node status pi0 pi1
 
 Group:get:octl group get [[ALL] | <group>]:octl group get mygroup
-Group:set:octl group set <group> [<node1> ...] [<@group1> ...]:octl group set mygroup pi0 pi2
+Group:set:octl group set <group> [-n] [<node1> ...] [<@group1> ...]:octl group set mygroup pi0 pi2
 Group:del:octl group del <group>:octl group del mygroup
 
 Command:run:octl cmd run [-ta] [[-c] 'cmd' | -bg 'cmd' | -ss 'shellScript'] <node1> <@group1> ...:octl cmd run -ta -c 'uname -a' @mygroup pi3

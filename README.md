@@ -25,12 +25,26 @@ Features of Octopoda:
   - [SAN Model](#san-model)
 - [Quick Start](#quick-start)
 - [Octl Command Manual](#octl-command-manual)
-  - [A. Network Information](#a-network-information)
+  - [A. Node Information](#a-node-information)
     - [GET](#get)
+    - [PRUNE](#prune)
     - [STATUS](#status)
-    - [LOG](#log)
-    - [GROUP](#group)
-  - [B. Scenario Deployment](#b-scenario-deployment)
+  - [B. Group Information](#b-group-information)
+    - [SET](#set)
+    - [GET](#get-1)
+    - [DEL](#del)
+  - [C. Command Exection](#c-command-exection)
+    - [RUN](#run)
+    - [XRUN](#xrun)
+  - [D. File Distribution](#d-file-distribution)
+    - [UPLOAD](#upload)
+    - [DOWNLOAD](#download)
+  - [E. Fast SSH](#e-fast-ssh)
+    - [SET](#set-1)
+    - [LS](#ls)
+    - [DEL](#del-1)
+    - [LOGIN](#login)
+  - [F. Scenario Deployment](#f-scenario-deployment)
     - [CREATE](#create)
     - [REPO](#repo)
     - [APPLY](#apply)
@@ -38,28 +52,14 @@ Features of Octopoda:
       - [b. About Order](#b-about-order)
       - [c. About Path](#c-about-path)
       - [d. Script Environment Variables](#d-script-environment-variables)
-  - [C. Version Control](#c-version-control)
+    - [NODEAPP](#nodeapp)
+  - [G. Version Control](#g-version-control)
     - [VERSION](#version)
     - [RESET](#reset)
-    - [FIX](#fix)
-  - [D. File Distribution](#d-file-distribution)
-    - [UPLOAD](#upload)
-    - [SPREAD](#spread)
-    - [DISTRIB](#distrib)
-    - [TREE](#tree)
-    - [PULL](#pull)
-  - [E. Script Execution](#e-script-execution)
-    - [RUN](#run)
-    - [XRUN](#xrun)
-  - [F. Fast SSH](#f-fast-ssh)
-    - [setssh](#setssh)
-    - [getssh](#getssh)
-    - [delssh](#delssh)
-    - [ssh](#ssh)
-  - [G. HttpsNameServer](#g-httpsnameserver)
+  - [H. HttpsNameServer](#h-httpsnameserver)
     - [APIs](#apis)
     - [CertGen](#certgen)
-  - [H. Online Upgrade - Pakma](#h-online-upgrade---pakma)
+  - [I. Online Upgrade - Pakma](#i-online-upgrade---pakma)
 - [Scenario Example](#scenario-example)
 - [Octl SDK](#octl-sdk)
   - [Golang SDK](#golang-sdk)
@@ -154,15 +154,15 @@ sudo cp octl.yaml /etc/octopoda/octl/
 sudo cp octl /usr/local/bin/
 
 # 7 Hello World
-$ octl get nodes
+$ octl node get
 # Info: NameService client is enabled. nsAddr=10.108.30.85:3455
 # {
 #   "nodes": [
 #     {
 #       "name": "hello",
 #       "addr": "192.168.1.4",
-#       "health": "Healthy",
-#       "msg_conn": "On",
+#       "state": "online",
+#       "delay": "3ms",
 #       "online_time": "2m42.483697064s"
 #     }
 #   ],
@@ -171,62 +171,134 @@ $ octl get nodes
 #   "offline": 0
 # }
 
-$ octl get nodes | grep name | awk '{print $2}' | sed 's/"//g' | sed -z 's/\n/ /g' | sed 's/,//g'
+$ octl node get | grep name | awk '{print $2}' | sed 's/"//g' | sed -z 's/\n/ /g' | sed 's/,//g'
 # you may get: pi02 pi05 pi06 pi08
 ```
 
 # Octl Command Manual
 
-## A. Network Information
+## A. Node Information
 ### GET
 
-> `usage: octl get [nodes|nodes <node1> <@group1> ...|node <node>|scenarios|scenario <scen>|nodeapps <node>|nodeapp <node> <app>@<scen>]`
+> `usage: octl node get [-sf <statefilter>] [[ALL] | <node1> <@group1> ...]`
 
-With this subcmd we can get some basic information about current octopoda network, such as:
-- Basic information of all nodes or detailed information of a given node.
+With this subcmd we can get some basic information of all nodes or given nodes. With optional flag `-sf`, you we can define a state filter such as `online`, `offline` to filter nodes.
+
+<!-- 
 - Basic information of all scenarios in the network or detailed information of a given scenario.
-- Basic informations of all apps on the given node or detailed information of a given app on the given node.
+- Basic informations of all apps on the given node or detailed information of a given app on the given node. -->
+
+### PRUNE
+> `usage: octl node prune [ALL | <node1> <@group1> ...]`
+
+With this subcmd we can prune dead nodes within given nodes.
 
 ### STATUS
 
-> `usage: octl status [nodes|nodes <node1> <@group1> ...|node <node>|brain]`
+> `usage: octl node status [[ALL] | <node1> <@group1> ...]`
 
 With this subcmd we can get the running status of nodes or a given node, such as:
 - CPU Load.
 - Memory Used/Total.
 - Disk Used/Total.
 - Other Status.
-
+<!-- 
 ### LOG
 
 > `usage: octl log [<node>|brain] [-l<maxline>] [-d<maxday>]`
 
 With this subcmd we can get the running log of brain or a given node. The argument `l` means max lines need to be read, and argument `d` means max days before today need to be read.
 
-Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be return.
+Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be return. -->
 
-### GROUP
+## B. Group Information
+### SET
+> `usage: octl group set <group> [-n] [<node1> ...] [<@group1> ...]`
 
-> `usage: octl group [get-all |get <group>|del <group>|set <group> <nodes...>|set-nocheck <group> <nodes...>]`
+With this subcmd we can create a node group, which is a set consists of multiple nodes. When calling `file distrib/spread`, `run` and writing scenarios deployment file, we can use `@GroupName` to represent multiple nodes with the group name. Its useful when the number of nodes is large. For example:
 
-With this subcmd we can create/get/query a node group, which is a set consists of multiple nodes. When calling `file distrib/spread`, `run` and writing scenarios deployment file, we can use `@GroupName` to represent multiple nodes with the group name. Its useful when the number of nodes is large. For example:
-
-1. We set a group g1 to present node1 and node2: `octl group get g1 node1 node2`.
-2. Then we run command: `octl run '{hostname}' @g1 node3`
+1. We set a group g1 to present node1 and node2: `octl group set g1 node1 node2`.
+2. Then we run command: `octl cmd run 'hostname' @g1 node3`
 3. Then we get the result: the hostname of node1, node2 and node3.
 
-Note that we can use more than one groups in arguments, or mix node names with group names, and the final node names will be automatically de-duplicated. When we set a group with some nodes, **Brain** will check if all nodes are healthy or if the group is already exists. To disable this check, use `octl group set-nocheck` instead of `octl group set`.
+Note that we can use more than one groups in arguments, or mix node names with group names, and the final node names will be automatically de-duplicated. When we set a group with some nodes, **Brain** will check if all nodes are healthy or if the group is already exists. To disable this check, use flag `-n (or --no-check)` to disable health check.
 
-## B. Scenario Deployment
+### GET
+> `usage: octl group get [[ALL] | <group>]`
+
+With this subcmd we can list all groups or a given group which is a set consists of multiple nodes.
+
+### DEL
+> `usage: octl group del <group>`
+
+With this subcmd we can delete a given group.
+
+## C. Command Exection
+
+### RUN
+
+> `usage: octl cmd run [-ta] [[-c] 'cmd' | -bg 'cmd' | -ss 'shellScript'] <node1> <@group1> ...`
+
+With this subcmd we can run a command or a script on given nodes. For running a forground command, we can use flag `-c 'cmd'` or only `'cmd'`. As for blocking command, we need to run it background, so we can use flag `-bg 'cmd'`. For running a script, we need to specify the complete filepath of the script with flag `-ss 'shellScript'`.
+
+The `-ta` (time align) flag is optional. When this enable `-ta` flag, all target nodes need to make sure that their process will start at the same moment as much as possible (with the help of Octopoda Simple Time Protocol). Since there is jitter in the delay, if the node cannot guarantee it, it will reject the execution.
+
+### XRUN
+
+> `usage: octl cmd xrun [-ta] [[-c] 'cmd' | -bg 'cmd' | -ss 'shellScript'] [-d <delayseconds>] <node1> <@group1> ...`
+
+The difference between subcmd `run` and `xrun` is that `xrun` will not execute and return the result immediately, instead it just load the process and trigger it after a delay (specified with `-d` flag).
+
+## D. File Distribution
+
+### UPLOAD
+
+> `usage: octl file upload [-f] <localFileOrDir> <targetDir>  [<node1> ...] [<@group1> ...]`
+
+With this subcmd we can upload a file or a whole directory to the given nodes' storage. (TODO: flag and path variable)
+
+### DOWNLOAD
+
+> `usage: octl file download FileOrDir [localDir] <node1>`
+
+With this subcmd we can download file or directory from under `FileOrDir` from brain or a given node to `localDir`. (TODO: path variable)
+
+## E. Fast SSH
+
+### SET
+
+> `usage: octl ssh set <node1>`
+
+Set SSH login information binding with a name. 
+
+### LS
+
+> `usage: octl ls`
+
+List all SSH services in this network.
+
+### DEL
+
+> `usage: octl ssh del <name>`
+
+Delete SSH login information binding with a name. 
+
+### LOGIN
+
+> `usage: octl ssh login <name>`
+
+Directly login the host binding with a name via SSH.
+
+## F. Scenario Deployment
 ### CREATE
 
-> `usage: octl create <scenario> [with <app1> <app2> ...]`
+> `usage: octl scen create <scenario> [with <app1> <app2> ...]`
 
 With this subcmd we can generate a template folder for a scenarios, which can be edited and then used for `apply` subcmd.
 
 ### REPO
 
-> `usage: octl repo [clone|push] <scen> [-u <username>]`
+> `usage: octl scen repo [clone|push] <scen> [-u <username>]`
 
 With this subcmd we can clone a scenario deployment folder from a git service, or push modification to a remote git service.
 
@@ -234,7 +306,7 @@ Note that the git service URL and Auth information should be configured in `octl
 
 ### APPLY
 
-> `usage: octl apply <scenario> [target] -m "your message"`
+> `usage: octl scen apply <scenario> [target] -m "your message"`
 
 With this subcmd we can create, delete, run a scenario. The information required for scenario deployment is defined in the `<scenario>` folder, with a deployment.yaml configuration file and application subfolders. Below is a typical deployment file. 
 
@@ -346,13 +418,13 @@ Except for this deployment file, some shell script should be prepared. It will b
 #### a. About Target
 
 `target` means the target of a scenario operation. If subcmd `apply` run with `target`, scripts corresponding to this `target` will be executed. There are three types of target:
-- **SPECIAL** target: `prepare`, `purge`
+- **SPECIAL** target: `prepare`, `purge`, `commit`
 - **NORMAL** target: `start`, `stop`
 - **CUSTOMIZED** target: defined by user.
 
-If subcmd `apply` run with **SPECIAL** target, Octopoda will not only run the corresponding scripts but also do something else. **SPECIAL** target and **MNORMAL** target must be implemented for each application. And **CUSTOMIZED** is defined by user.
+If subcmd `apply` run with **SPECIAL** target, Octopoda will not just run the corresponding scripts (`commit` will not execute any scripts). **SPECIAL** target and **MNORMAL** target must be implemented for each application. And **CUSTOMIZED** is defined by user.
 
-When running subcmd `apply` in command line, target `default` or `(empty)` means `prepare + start`. For target `purge`, `-m {message}` is no necessary.
+When running subcmd `apply` in command line, target `default` or `(empty)` means `prepare + start`. For target `purge`, `-m {message}` is no necessary. (TODO: message not necessary)
 
 #### b. About Order
 
@@ -378,10 +450,17 @@ Note that in scripts, output to stdout (for example, `echo "done"`) won't work. 
 
 Customized environment variables are also supported. They can be defined in tentacle.yaml and can be directly referred in script or command.
 
-## C. Version Control
+### NODEAPP
+
+> `usage: octl napp get <node> [[ALL] | <app>@<scen>]`
+
+With this subcmd we can get basic informations of all apps on the given node or detailed information of a given app on the given node.
+
+## G. Version Control
 ### VERSION
 
-> `usage: octl version [scenario <scen>|nodeapp <node> <app>@<scen>]`
+> `usage: octl scen version <scen>`
+> `usage: octl napp version <node> <app>@<scen>`
 
 With this subcmd we can get a version list of a given scenario, or a given app on a given node. Each version consists of version hash code, committed message, committed timestamp and other basic information.
 
@@ -389,9 +468,12 @@ Current Octopoda only support version list so `branch` is not supported. However
 
 `.gitignore` is supported.
 
+Changes will be committed when applying target `prepare` and `commit`.
+
 ### RESET
 
-> `usage: octl reset [scenario <scen>|nodeapp <node> <app>@<scen>]  -v <version> -m <message>`
+> `usage: octl scen reset <scen> -v <version> -m "your message"`
+> `usage: octl napp reset <node> <app>@<scen> -v <version> -m "your message"`
 
 With this subcmd we can set a given scenario, or a given app on a given node to a given historical version. **If a scenario is reset, all relative apps on corresponding nodes will be reset. If an app on a given node is reset, the corresponding scenario will evolved into a new version. That's the rule**
 
@@ -401,102 +483,26 @@ Note that `reset` will not really let the version list back to a history version
 
 Hot reset is not supported in current Octopoda. Therefore, stop the running scenario service before the reset, the start the running service after the reset.
 
-### FIX
+<!-- ### FIX
 
 > `usage: octl fix scenario <scen>`
 
 With this subcmd we can manually fix the version file of a given scenario. When the actual version of the application in the scenario does not match the version in the version file, this subcmd may help. 
 
-There is no need to run this subcmd in most cases, because fix will also be periodically executed by a goroutine.
-
-## D. File Distribution
-
-### UPLOAD
-
-> `usage: octl upload <localFileOrDir> <targetDir>`
-
-With this subcmd we can upload a file or a whole directory to the storage of brain. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
-
-### SPREAD
-
-> `usage: octl spread <brainFileOrDir> <targetDir> <node1> <node2> ...`
-
-With this subcmd we can spread a file or a whole directory from the brain's storage to the given nodes' storage. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
+There is no need to run this subcmd in most cases, because fix will also be periodically executed by a goroutine. -->
 
 
-### DISTRIB
-
-> `usage: octl distrib <localFileOrDir> <targetDir> <node1> <node2> ...`
-
-With this subcmd we can distribute a file or a whole directory to the given nodes' storage. The argument `targetDir` is actually a relative path, so don't hesitate to set `targetDir` to the root directory `/`.
-
-`distribute` can be considered as `upload` + `spread`.
-
-### TREE
-
-> `octl tree [store [brain|<node>]|log [<node>|brain]|nodeapp <node> <app>@<scen>] [SubDir]`
-
-With this subcmd we can get all files information under `SubDir` on brain or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. Current Octopoda not support print this files like a tree, it list all files instead. 
-
-### PULL
-
-> `octl pull [store [brain|<node>]|log [<node>|brain]|nodeapp <node> <app>@<scen>] FileOrDir [localDir]`
-
-With this subcmd we can pull file or directory from under `SubDir` from brain or a given node. The pathtype `store`, `log` and `nodeapp` corresponds to the path configuration in the node configuration file. 
-
-## E. Script Execution
-
-### RUN
-
-> `usage: octl run [ '{<command>}' | '(<bgcommand>)' | <script> ] [-a] <node1> <@group1> ...`
-
-With this subcmd we can run a command or a script on given nodes. For running a command, we need to enclose the command in `'{}'`. As for blocking command, we need to run it in background, so we can enclose the command in `'()'`. For running a script, we need to specify the complete filepath of the script.
-
-The `-a` (align) flag is optional. When this enable `-a` flag, all target nodes need to make sure that their process will start at the same moment as much as possible (with the help of Octopoda Simple Time Protocol). Since there is jitter in the delay, if the node cannot guarantee it, it will reject the execution.
-
-### XRUN
-
-> `usage: octl xrun [ '{<command>}' | '(<bgcommand>)' | <script> ] [-d<delayseconds>] [-a] <node1> <@group1> ...`
-
-The difference between subcmd `run` and `xrun` is that `xrun` will not execute and return the result immediately, instead it just load the process and trigger it after a delay (specified with `-d` flag).
-
-## F. Fast SSH
-
-### setssh
-
-> `usage: octl setssh <name>`
-
-Set SSH login information binding with a name. It will be uploaded to HttpsNameServer, so make sure HttpsNameServer is online.
-
-### getssh
-
-> `usage: octl getssh`
-
-List all SSH services in this network.
-
-### delssh
-
-> `usage: octl delssh <name>`
-
-Delete SSH login information binding with a name. It will be deleted from HttpsNameServer, so make sure HttpsNameServer is online.
-
-### ssh
-
-> `usage: octl ssh <name>`
-
-Directly login the host binding with a name via SSH. It will query HttpsNameServer for login infomation, so make sure HttpsNameServer is online.
-
-## G. HttpsNameServer
+## H. HttpsNameServer
 
 ### APIs
 
-see `httpNameServer/api_doc.md`
+see `httpNameServer/api_doc.md` (TODO: finish this doc)
 
 ### CertGen
 
 Fast script to generate keys and certificates for CA, server and client.
 
-## H. Online Upgrade - Pakma
+## I. Online Upgrade - Pakma
 
 > `usage: octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<brain>|<node1>|<node2>|...] [-t<timestr>] [-l<limit>]`
 
@@ -515,29 +521,32 @@ See an example in `./octl/example/helloWorld`. The file `deployment.yaml` define
 cd ./octl
 # SPECAIL target `prepare` will copy all of the sourcepath files to corresponding nodes, 
 # then run all scripts of target `prepare` on corresponding nodes. 
-./octl apply example/helloWorld prepare -m "Prepare a new scenario"
+./octl scen apply example/helloWorld prepare -m "Prepare a new scenario"
 
 # NORMAL target `start` will run all scripts of target `start` on corresponding nodes. 
-./octl apply example/helloWorld start -m "Start run a scenario"
+./octl scen apply example/helloWorld start -m "Start run a scenario"
 
 # NORMAL target `stop` will run all scripts of target `stop` on corresponding nodes. 
-./octl apply example/helloWorld stop -m "Stop run a scenario"
+./octl scen apply example/helloWorld stop -m "Stop run a scenario"
 
 # CUSTOMIZED target `date` will run all scripts of target `date` on corresponding nodes. 
-./octl apply example/helloWorld date -m "Append current date to file"
+./octl scen apply example/helloWorld date -m "Append current date to file"
+
+# SPECIAL target `commit` will commit all changes on corresponding nodes. 
+./octl scen apply example/helloWorld commit -m "Append current date to file"
 
 # see details of this scenario
-./octl get scenario helloWorld
+./octl scen get scenario helloWorld
 
 # list all history versions of this scenario. 
-./octl version scenario helloWorld
+./octl scen version scenario helloWorld
 
 # reset this scenario to a history version. 
-./octl reset scenario helloWorld -v d8ef -m "Reset to a history version"
+./octl scen reset scenario helloWorld -v d8ef -m "Reset to a history version"
 
 # SPECAIL target `purge` will run all scripts of target `purge` on corresponding nodes,
 # then remove all nodeapp directories on corresponding nodes.
-./octl apply example/helloWorld purge
+./octl scen apply example/helloWorld purge
 ```
 
 The nodeApps will be installed under `{tentacle.yaml:workspace.root}/app@scen` on corresponding nodes.
