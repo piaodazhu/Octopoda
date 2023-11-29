@@ -496,7 +496,7 @@ There is no need to run this subcmd in most cases, because fix will also be peri
 
 ### APIs
 
-see `httpNameServer/api_doc.md` (TODO: finish this doc)
+see `httpNameServer/api_doc.md`
 
 ### CertGen
 
