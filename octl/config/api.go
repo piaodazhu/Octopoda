@@ -19,6 +19,7 @@ const (
 	API_ScenarioFix       = "/scenario/fix"
 	API_ScenarioAppDeploy = "/scenario/app/deployment"
 	API_ScenarioAppCreate = "/scenario/app/prepare"
+	API_ScenarioAppCommit = "/scenario/app/commit"
 
 	API_ScenariosInfo = "/scenarios/info"
 

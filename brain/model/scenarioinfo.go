@@ -111,6 +111,7 @@ func UpdateScenario(name, message string) (bool, bool) {
 	} else {
 		hasModified := scen.modified
 		if hasModified {
+			fmt.Println("UpdateScenario: have modify")
 			versionhash := sha1.Sum([]byte(message + time.Now().String()))
 			scen.Versions = append(scen.Versions, &ScenarioVersionModel{
 				BasicVersionModel: BasicVersionModel{
@@ -123,6 +124,8 @@ func UpdateScenario(name, message string) (bool, bool) {
 			// triger save?
 			scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
 			scen.modified = false
+		} else {
+			fmt.Println("UpdateScenario: no modify")
 		}
 		// scen.newversionbuf = cloneLayer(scen.newversionbuf) // must deep copy!
 		// scen.modified = false
@@ -308,6 +311,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 					worknode.Version = version
 					if modified {
 						scen.modified = true
+						fmt.Println("1 scen.modified = true")
 					}
 					return true
 				}
@@ -320,6 +324,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 			})
 			if modified {
 				scen.modified = true
+				fmt.Println("2 scen.modified = true")
 			}
 			return true
 		}
@@ -336,6 +341,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 	})
 	if modified {
 		scen.modified = true
+		fmt.Println("3 scen.modified = true")
 	}
 
 	return true

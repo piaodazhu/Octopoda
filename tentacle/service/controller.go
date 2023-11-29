@@ -69,7 +69,9 @@ func HandleMessage(conn net.Conn) error {
 		case protocols.TypeQueryTask:
 			TaskQueryState(conn, serialNum, raw)
 		case protocols.TypeListTasks:
-			TaskQueryState(conn, serialNum, raw)
+			TaskListAll(conn, serialNum, raw)
+		case protocols.TypeAppCommit:
+			AppCommit(conn, serialNum, raw)
 		default:
 			protocols.SendMessageUnique(conn, protocols.TypeUndefined, serialNum, []byte{})
 			logger.Comm.Println("unsupported protocol")

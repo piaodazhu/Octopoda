@@ -77,6 +77,9 @@ const (
 	TypeListTasks
 	TypeListTasksResponse
 
+	TypeAppCommit
+	TypeAppCommitResponse
+
 	TypeUndefined
 )
 
@@ -148,6 +151,9 @@ var MsgTypeString map[int]string = map[int]string{
 
 	TypeListTasks:         "TypeListTasks",
 	TypeListTasksResponse: "TypeListTasksResponse",
+
+	TypeAppCommit:         "TypeAppCommit",
+	TypeAppCommitResponse: "TypeAppCommitResponse",
 }
 
 func SendMessageUnique(conn net.Conn, mtype int, serial uint32, raw []byte) error {

@@ -247,6 +247,95 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 }
 
+func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
+	acParams := AppBasic{}
+	if err := config.Jsoner.Unmarshal(raw, &acParams); err != nil {
+		logger.Exceptions.Println("invalid arguments: ", err)
+		// SNED BACK
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppCommitResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppCommitResponse send error")
+		}
+		return
+	}
+	fmt.Println("want commit: ", acParams)
+
+	var utaskFunc func() *protocols.Result
+	var ucancelFunc func()
+	cmdChan := make(chan *exec.Cmd, 1)
+
+	utaskFunc = func() *protocols.Result {
+		rmsg := protocols.Result{
+			Rmsg: "OK",
+		}
+
+		// TODO: modified means git has modify?
+		rmsg.Modified = false
+		fullname := acParams.Name + "@" + acParams.Scenario
+		var version app.Version
+
+		// is new?
+		if !app.Exists(acParams.Name, acParams.Scenario) {
+			logger.Exceptions.Println("app.Create")
+			rmsg.Rmsg = "App repo not exist"
+			return &rmsg
+		}
+
+		// append a dummy file
+		err := appendDummyFile(fullname)
+		if err != nil {
+			logger.Exceptions.Println("append dummy file", err)
+		}
+
+		// commit
+		version, err = app.GitCommit(fullname, acParams.Message)
+		if err != nil {
+			if _, ok := err.(app.EmptyCommitError); ok {
+				rmsg.Rmsg = "OK: No Change"
+				rmsg.Version = app.CurVersion(acParams.Name, acParams.Scenario).Hash
+			} else {
+				rmsg.Rmsg = err.Error()
+				logger.Exceptions.Println("app.GitCommit")
+			}
+			return &rmsg
+		}
+
+		// update nodeApps
+		if !app.Update(acParams.Name, acParams.Scenario, version) {
+			logger.Exceptions.Println("app.Update")
+			rmsg.Rmsg = "Faild to update app version"
+		}
+
+		rmsg.Version = version.Hash
+		rmsg.Modified = true
+		app.Save()
+
+		return &rmsg
+	}
+
+	ucancelFunc = func() {
+		cmd := <-cmdChan
+		cmd.Process.Kill()
+	}
+
+	brief := fmt.Sprintf("%s@%s(%s)", acParams.Name, acParams.Scenario, acParams.Description)
+	taskId, err := task.TaskManager.CreateTask(brief, utaskFunc, ucancelFunc)
+	if err != nil {
+		// ERROR
+		logger.Exceptions.Println("cannot create task: ", err)
+		err = protocols.SendMessageUnique(conn, protocols.TypeAppCommitResponse, serialNum, []byte{})
+		if err != nil {
+			logger.Comm.Println("TypeAppCommitResponse send error")
+		}
+		return
+	}
+	err = protocols.SendMessageUnique(conn, protocols.TypeAppCommitResponse, serialNum, []byte(taskId))
+	if err != nil {
+		logger.Comm.Println("TypeAppCommitResponse send error")
+	}
+}
+
+
 type AppDeleteParams struct {
 	Name     string
 	Scenario string

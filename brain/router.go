@@ -63,6 +63,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/scenario/app/prepare", api.AppPrepare)
 		group.POST("/scenario/app/deployment", api.AppDeploy)
+		group.POST("/scenario/app/commit", api.AppCommit)
 
 		group.POST("/file/upload", api.FileUpload)
 		group.POST("/file/spread", api.FileSpread)

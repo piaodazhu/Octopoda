@@ -164,6 +164,53 @@ func AppDeploy(ctx *gin.Context) {
 	}()
 }
 
+func AppCommit(ctx *gin.Context) {
+	appName := ctx.PostForm("appName")
+	scenario := ctx.PostForm("scenario")
+	description := ctx.PostForm("description")
+	messages := ctx.PostForm("message")
+	targetNodes := ctx.PostForm("targetNodes")
+	rmsg := protocols.Result{
+		Rmsg: "OK",
+	}
+
+	if len(appName) == 0 || len(scenario) == 0 || len(messages) == 0 || len(targetNodes) == 0 {
+		rmsg.Rmsg = "ERROR: Wrong Args"
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
+		ctx.JSON(http.StatusNotFound, rmsg)
+		return
+	}
+
+	nodes := []string{}
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
+	if err != nil {
+		rmsg.Rmsg = "targetNodes:" + err.Error()
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	taskid := model.BrainTaskManager.CreateTask(len(nodes))
+	ctx.String(http.StatusAccepted, taskid)
+
+	// async processing
+	go func() {
+		acParams := AppBasic{
+			Name:        appName,
+			Scenario:    scenario,
+			Description: description,
+			Message:     messages,
+		}
+		for i := range nodes {
+			go commitApp(taskid, nodes[i], &acParams)
+		}
+	}()
+}
+
 func createApp(taskid string, name string, acParams *AppCreateParams) {
 	payload, _ := config.Jsoner.Marshal(acParams)
 	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCreate)
@@ -197,4 +244,20 @@ func deployApp(taskid string, name string, adParams *AppDeployParams) {
 	// 	// *result = "Failed: AddScenNodeApp"
 	// }
 	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%v", adParams.Name, adParams.Scenario, name, rmsg)
+}
+
+func commitApp(taskid string, name string, acParams *AppBasic) {
+	payload, _ := config.Jsoner.Marshal(acParams)
+	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCommit)
+	if err != nil {
+		return
+	}
+	// update scenario version
+	success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, name, rmsg.Version, rmsg.Modified)
+	if success {
+		logger.Request.Print("Success: AddScenNodeApp")
+	} else {
+		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
+		// *result = "Failed: AddScenNodeApp"
+	}
 }

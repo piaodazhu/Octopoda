@@ -171,7 +171,9 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 		rstr = "createApp"
 	} else if rtype == protocols.TypeAppDeploy {
 		rstr = "deployApp"
-	} else {
+	} else if rtype == protocols.TypeAppCommit {
+		rstr = "commitApp"
+	}else {
 		logger.Comm.Println("unsupported rtype in runAndWait: ", rtype)
 		result.Code = protocols.ExecCommunicationError
 		result.CommunicationErrorMsg = "unsupported rtype"
