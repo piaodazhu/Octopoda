@@ -65,9 +65,6 @@ func execScript(sparams *protocols.ScriptParams, dir string, cmdChan chan *exec.
 	outputFile := scriptFile.String() + ".output"
 	output, _ := os.Create(outputFile)
 
-	// fbuf, _ := os.ReadFile(scriptFile.String())
-	// logger.Client.Println(string(fbuf))
-
 	cmd := exec.Command(shellPath, scriptFile.String())
 	cmd.Dir = dir
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(scriptDir, sparams.FileName, outputFile)...)

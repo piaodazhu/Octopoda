@@ -86,7 +86,6 @@ func GitCommit(app string, message string) (Version, error) {
 	return Version{commitTime.Unix(), hash.String(), message}, nil
 }
 
-// TODO: debug this 
 func GitStatus(app string) (Version, bool, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	isClean := false

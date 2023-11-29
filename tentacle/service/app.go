@@ -107,7 +107,7 @@ func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 
 	ucancelFunc = func() {
-		// TODO: 不好控制回滚，状态太复杂
+		// 不好控制回滚，状态太复杂
 		// 肯定不会阻塞，所以这里只是一个假Kill
 	}
 
@@ -182,37 +182,6 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 			return &rmsg
 		}
 
-		// TODO: not commit
-		// append a dummy file
-		// err = appendDummyFile(fullname)
-		// if err != nil {
-		// 	logger.Exceptions.Println("append dummy file", err)
-		// }
-
-		// // commit
-		// version, err = app.GitCommit(fullname, adParams.Message)
-		// if err != nil {
-		// 	if _, ok := err.(app.EmptyCommitError); ok {
-		// 		rmsg.Rmsg = "OK: No Change"
-		// 		rmsg.Version = app.CurVersion(adParams.Name, adParams.Scenario).Hash
-		// 	} else {
-		// 		rmsg.Rmsg = err.Error()
-		// 		logger.Exceptions.Println("app.GitCommit")
-		// 	}
-		// 	return &rmsg
-		// }
-
-		// // update nodeApps
-		// if !app.Update(adParams.Name, adParams.Scenario, version) {
-		// 	logger.Exceptions.Println("app.Update")
-		// 	rmsg.Rmsg = "Faild to update app version"
-		// }
-
-		// rmsg.Version = version.Hash
-		// rmsg.Modified = true
-		// app.Save()
-		
-		// TODO: debug this
 		version, isClean, err := app.GitStatus(fullname)
 		if err != nil {
 			rmsg.Rmsg = err.Error()
@@ -258,7 +227,6 @@ func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
 		}
 		return
 	}
-	fmt.Println("want commit: ", acParams)
 
 	var utaskFunc func() *protocols.Result
 	var ucancelFunc func()

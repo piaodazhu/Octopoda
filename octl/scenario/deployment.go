@@ -79,7 +79,6 @@ func ScenarioApply(ctx context.Context, scenFolder string, target string, messag
 	var subError *errs.OctlError
 
 	switch target {
-	// ???
 	case "prepare":
 		subLogList, subError = ScenarioPrepare(ctx, &configuration, "(Prepare-Stage1) "+message)
 		logList = append(logList, subLogList...)
@@ -431,15 +430,6 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 		}
 	}
 
-	// update this scenario
-	// TODO: not update?
-	// result, err := ScenarioUpdate(ctx, configuration.Name, message)
-	// logList = append(logList, result...)
-	// if err != nil {
-	// 	emsg := fmt.Sprintf("ScenarioUpdate(%s, %s).", configuration.Name, message)
-	// 	output.PrintFatalln(emsg, err)
-	// 	return logList, err
-	// }
 	return logList, nil
 }
 

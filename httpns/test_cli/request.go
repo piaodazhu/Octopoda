@@ -1,23 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
-	"strconv"
 	"time"
+
+	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-func NameRegister(entry *RegisterParam) error {
-	form := url.Values{}
-	form.Set("name", entry.Name)
-	form.Set("ip", entry.Ip)
-	form.Set("port", strconv.Itoa(entry.Port))
-	form.Set("type", entry.Type)
-	form.Set("description", entry.Description)
-	form.Set("ttl", strconv.Itoa(entry.TTL))
-	res, err := httpsClient.PostForm(host+"/register", form)
+func NameRegister(entries ...*protocols.NameServiceEntry) error {
+	body, _ := json.Marshal(entries)
+	res, err := httpsClient.Post(host+"/register", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -26,9 +23,11 @@ func NameRegister(entry *RegisterParam) error {
 	if err != nil {
 		return err
 	}
-	var response Response
+	var response protocols.Response
 	json.Unmarshal(buf, &response)
-	fmt.Println(response.Message)
+	if response.Message != "OK" || res.StatusCode != http.StatusOK {
+		return fmt.Errorf(response.Message)
+	}
 	return nil
 }
 
@@ -42,19 +41,20 @@ func NameQuery(name string) error {
 	if err != nil {
 		return err
 	}
-	var response Response
-	json.Unmarshal(buf, &response)
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("NameQuery status code = %d", res.StatusCode)
+	}
+	var response protocols.Response
+	err = json.Unmarshal(buf, &response)
+	if err != nil {
+		return err
+	}
 	fmt.Println(response.NameEntry)
 	return nil
 }
 
-func ConfigRegister(conf *ConfigUploadParam) error {
-	form := url.Values{}
-	form.Set("name", conf.Name)
-	form.Set("method", conf.Method)
-	form.Set("type", conf.Type)
-	form.Set("conf", conf.RawConfig)
-	res, err := httpsClient.PostForm(host+"/conf", form)
+func NameList(params *protocols.ListQueryParam) error {
+	res, err := httpsClient.Get(fmt.Sprintf("%s/list?match=%s&method=%s", host, params.Match, params.Method))
 	if err != nil {
 		return err
 	}
@@ -63,81 +63,7 @@ func ConfigRegister(conf *ConfigUploadParam) error {
 	if err != nil {
 		return err
 	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	fmt.Println(response.Message)
-	return nil
-}
-
-func ConfigQuery(query *ConfigQueryParam) error {
-	res, err := httpsClient.Get(fmt.Sprintf("%s/conf?name=%s&index=%d&amount=%d", host, query.Name, query.Index, query.Amount))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	fmt.Println("configlist:")
-	for _, c := range response.RawConfig {
-		fmt.Println("  ", *c)
-	}
-	return nil
-}
-
-func SshinfoRegister(sshinfo *SshInfoUploadParam) error {
-	form := url.Values{}
-	form.Set("name", sshinfo.Name)
-	form.Set("ip", sshinfo.Ip)
-	form.Set("port", strconv.Itoa(sshinfo.Port))
-	form.Set("type", sshinfo.Type)
-	form.Set("username", sshinfo.Username)
-	form.Set("password", sshinfo.Password)
-	res, err := httpsClient.PostForm(host+"/sshinfo", form)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	fmt.Println(response.Message)
-	return nil
-}
-
-func SshinfoQuery(name string) error {
-	res, err := httpsClient.Get(fmt.Sprintf("%s/sshinfo?name=%s", host, name))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
-	json.Unmarshal(buf, &response)
-	fmt.Println(response.SshInfo)
-	return nil
-}
-
-func NameList(params *ListQueryParam) error {
-	res, err := httpsClient.Get(fmt.Sprintf("%s/list?match=%s&method=%s&scope=%s", host, params.Match, params.Method, params.Scope))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	var response Response
+	var response protocols.Response
 	json.Unmarshal(buf, &response)
 	fmt.Println(response.NameList)
 	return nil
@@ -155,7 +81,7 @@ func NameDelete(name string) error {
 	if err != nil {
 		return err
 	}
-	var response Response
+	var response protocols.Response
 	json.Unmarshal(buf, &response)
 	fmt.Println(response.Message)
 	return nil
@@ -171,7 +97,7 @@ func GetSummary() error {
 	if err != nil {
 		return err
 	}
-	var summary Summary
+	var summary protocols.Summary
 	json.Unmarshal(buf, &summary)
 
 	fmt.Println(summary.TotalRequests, time.UnixMilli(summary.Since).Format("2006-01-02 15:04:05"))

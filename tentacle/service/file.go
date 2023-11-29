@@ -103,11 +103,6 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 
 	pwd, _ = os.Getwd()
 	srcPath = pathFixing(pathsb.String(), pwd+string(filepath.Separator))
-	// _, err = os.Stat(srcPath)
-	// if err != nil {
-	// 	logger.Exceptions.Println(srcPath, " not exist")
-	// 	goto errorout
-	// }
 
 	// wrap the files first
 	wrapName = fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
@@ -252,16 +247,6 @@ func saveFile(filebufb64, filename string) error {
 		}
 		Offset += ChunkSize
 	}
-	// content, err := base64.RawStdEncoding.DecodeString(filebufb64)
-	// if err != nil {
-	// 	logger.Server.Println("FileDecode")
-	// 	return err
-	// }
-	// err = os.WriteFile(filename, content, os.ModePerm)
-	// if err != nil {
-	// 	logger.Server.Println("WriteFile:", filename)
-	// 	return err
-	// }
 	return nil
 }
 
@@ -342,16 +327,6 @@ func unpackFilesNoWrap(packb64 string, dir string) error {
 	os.Remove(file.String())
 	return nil
 }
-
-// func packFile(fileOrDir string) string {
-// 	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-// 	archiver.DefaultZip.OverwriteExisting = true
-// 	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
-// 	if err != nil {
-// 		return ""
-// 	}
-// 	return packName
-// }
 
 func loadFile(packName string) string {
 	var filebufb64 strings.Builder

@@ -148,22 +148,6 @@ func NodesPrune(names []string) *errs.OctlError {
 	return nil
 }
 
-// func NodePrune() *errs.OctlError {
-// 	url := fmt.Sprintf("https://%s/%s%s",
-// 		httpclient.BrainAddr,
-// 		config.GlobalConfig.Brain.ApiPrefix,
-// 		config.API_NodePrune,
-// 	)
-// 	res, err := httpclient.BrainClient.Get(url)
-// 	if err != nil {
-// 		emsg := "http get error: " + err.Error()
-// 		output.PrintFatalln(emsg)
-// 		return errs.New(errs.OctlHttpRequestError, emsg)
-// 	}
-// 	res.Body.Close()
-// 	return nil
-// }
-
 func NodesParse(names []string) ([]string, error) {
 	result, err := nodesParse(names)
 	if err != nil {

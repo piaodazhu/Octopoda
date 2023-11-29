@@ -113,6 +113,7 @@ func nappCmd(args []string) {
 		} else {
 			goto usage
 		}
+	// TODO: how many version?
 	// case "version":
 	// 	if len(args) == 1 {
 			

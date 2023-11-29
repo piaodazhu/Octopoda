@@ -223,7 +223,6 @@ func createApp(taskid string, name string, acParams *AppCreateParams) {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
 		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
-		// *result = "Failed: AddScenNodeApp"
 	}
 }
 
@@ -234,16 +233,7 @@ func deployApp(taskid string, name string, adParams *AppDeployParams) {
 		return
 	}
 
-	// update scenario version
-	// TODO: not add app
-	// success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
-	// if success {
-	// 	logger.Request.Print("Success: AddScenNodeApp")
-	// } else {
-	// 	logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, adParams.Name, adParams.Scenario)
-	// 	// *result = "Failed: AddScenNodeApp"
-	// }
-	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%v", adParams.Name, adParams.Scenario, name, rmsg)
+	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%s", adParams.Name, adParams.Scenario, name, rmsg.Rmsg)
 }
 
 func commitApp(taskid string, name string, acParams *AppBasic) {
@@ -258,6 +248,5 @@ func commitApp(taskid string, name string, acParams *AppBasic) {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
 		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
-		// *result = "Failed: AddScenNodeApp"
 	}
 }

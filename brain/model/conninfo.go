@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -118,7 +119,7 @@ func (c *ConnInfo) WaitMsg(serialNum uint32) (msg *ConnMsg, ok bool) {
 	defer func() {
 		debug_waitmsg.WriteByte('\n')
 		if !ok {
-			fmt.Println(debug_waitmsg.String())
+			logger.Comm.Println(debug_waitmsg.String())
 		}
 	}()
 
