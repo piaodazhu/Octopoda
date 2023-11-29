@@ -19,10 +19,11 @@ import (
 )
 
 type FileParams struct {
-	PackName   string
-	PathType   string
-	TargetPath string
-	FileBuf    string
+	PackName    string
+	PathType    string
+	TargetPath  string
+	FileBuf     string
+	ForceCreate bool
 }
 
 func pathFixing(path string, base string) string {
@@ -363,6 +364,11 @@ func FileDistrib(ctx *gin.Context) {
 	packfiles, _ := ctx.FormFile("packfiles")
 	packName := packfiles.Filename
 	targetPath := ctx.PostForm("targetPath")
+	isForceStr := ctx.PostForm("isForce")
+	isForce := false
+	if isForceStr == "true" {
+		isForce = true
+	}
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := protocols.Result{
 		Rmsg: "OK",
@@ -393,9 +399,10 @@ func FileDistrib(ctx *gin.Context) {
 	content := b64Encode(raw)
 	// content := base64.RawStdEncoding.EncodeToString(raw)
 	finfo := FileParams{
-		PackName:   packName,
-		TargetPath: targetPath,
-		FileBuf:    content,
+		PackName:    packName,
+		TargetPath:  targetPath,
+		FileBuf:     content,
+		ForceCreate: isForce,
 	}
 	payload, _ := config.Jsoner.Marshal(&finfo)
 

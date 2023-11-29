@@ -189,6 +189,7 @@ func Upload(localFileOrDir string, targetPath string, names []string, isForce bo
 	fileWriter, _ := bodyWriter.CreateFormFile("packfiles", packName)
 	io.Copy(fileWriter, f)
 	bodyWriter.WriteField("targetPath", targetPath)
+	bodyWriter.WriteField("isForce", fmt.Sprint(isForce))
 	bodyWriter.WriteField("targetNodes", string(nodes_serialized))
 
 	contentType := bodyWriter.FormDataContentType()

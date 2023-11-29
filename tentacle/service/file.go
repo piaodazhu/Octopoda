@@ -20,10 +20,27 @@ import (
 )
 
 type FileParams struct {
-	PackName   string
-	PathType   string
-	TargetPath string
-	FileBuf    string
+	PackName    string
+	PathType    string
+	TargetPath  string
+	FileBuf     string
+	ForceCreate bool
+}
+
+func dirExist(dir string) bool {
+	stat, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+	return stat.IsDir()
+}
+
+func fileExist(filePath string) bool {
+	stat, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	return !stat.IsDir()
 }
 
 func pathFixing(path string, base string) string {
@@ -52,7 +69,7 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 		Rmsg: "OK",
 	}
 
-	var file string
+	var targetPath string
 	fileinfo := FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
@@ -61,8 +78,20 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 		goto errorout
 	}
 
-	file = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
-	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, file)
+	targetPath = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
+	if !fileinfo.ForceCreate && !dirExist(targetPath) {
+		logger.Exceptions.Println("target path not exist")
+		rmsg.Rmsg = "target path not exist"
+		goto errorout
+	}
+
+	if fileExist(targetPath) {
+		logger.Exceptions.Println("target path is a file")
+		rmsg.Rmsg = "target path is a file"
+		goto errorout
+	}
+
+	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, targetPath)
 	if err != nil {
 		rmsg.Rmsg = "unpack Files"
 		goto errorout
