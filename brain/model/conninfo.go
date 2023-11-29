@@ -75,7 +75,6 @@ func (c *ConnInfo) StartReceive() {
 			}
 			mtype, serialNum, raw, err := protocols.RecvMessageUnique(conn)
 			if err != nil {
-				// TODO error reason
 				// fmt.Println("[DEBUG] receive error: ", err)
 				c.Close()
 				return

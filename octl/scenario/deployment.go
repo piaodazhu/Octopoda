@@ -86,7 +86,7 @@ func ScenarioApply(ctx context.Context, scenFolder string, target string, messag
 			return logList, subError
 		}
 
-		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare", "(Prepare-Stage2) "+message)
+		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare")
 	case "default":
 		subLogList, subError = ScenarioPrepare(ctx, &configuration, "(Prepare-Stage1) "+message)
 		logList = append(logList, subLogList...)
@@ -94,19 +94,19 @@ func ScenarioApply(ctx context.Context, scenFolder string, target string, messag
 			return logList, subError
 		}
 
-		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare", "(Prepare-Stage2) "+message)
+		subLogList, subError = ScenarioRun(ctx, &configuration, "prepare")
 		logList = append(logList, subLogList...)
 		if subError != nil {
 			return logList, subError
 		}
 
-		subLogList, err = ScenarioRun(ctx, &configuration, "start", "(Deploy) "+message)
+		subLogList, err = ScenarioRun(ctx, &configuration, "start")
 	case "purge":
 		subLogList, subError = ScenarioPurge(ctx, &configuration)
 	case "commit":
 		subLogList, subError = ScenarioCommit(ctx, &configuration, message)
 	default:
-		subLogList, subError = ScenarioRun(ctx, &configuration, target, "(Deploy) "+message)
+		subLogList, subError = ScenarioRun(ctx, &configuration, target)
 	}
 
 	logList = append(logList, subLogList...)
@@ -265,7 +265,7 @@ type orderedReq struct {
 	info  string
 }
 
-func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target, message string) ([]string, *errs.OctlError) {
+func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target string) ([]string, *errs.OctlError) {
 	var logList []string
 	output.PrintInfoln("\n- Target: ", target)
 	orlist := []orderedReq{}
@@ -312,8 +312,6 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 		bodyWriter.WriteField("appName", app.Name)
 		bodyWriter.WriteField("scenario", configuration.Name)
 		bodyWriter.WriteField("description", app.Description)
-		bodyWriter.WriteField("message", message)
-
 		bodyWriter.WriteField("targetNodes", string(nodes_serialized))
 
 		contentType := bodyWriter.FormDataContentType()

@@ -149,7 +149,6 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 			Rmsg: "OK",
 		}
 
-		// TODO: modified means git has modify?
 		rmsg.Modified = false
 		fullname := adParams.Name + "@" + adParams.Scenario
 		var version app.Version
@@ -237,7 +236,6 @@ func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
 			Rmsg: "OK",
 		}
 
-		// TODO: modified means git has modify?
 		rmsg.Modified = false
 		fullname := acParams.Name + "@" + acParams.Scenario
 		var version app.Version

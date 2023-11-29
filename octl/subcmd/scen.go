@@ -30,8 +30,7 @@ func scenCmd(args []string) {
 		}
 		if len(args) == 2 {
 			target = args[1]
-			// TODO: message is not necessary
-			if target != "purge" && message == "" {
+			if target == "commit" && message == "" {
 				goto usage
 			}
 		}

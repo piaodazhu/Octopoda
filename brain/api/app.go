@@ -101,14 +101,13 @@ func AppDeploy(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
 	scenario := ctx.PostForm("scenario")
 	description := ctx.PostForm("description")
-	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	file, err := ctx.FormFile("script")
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
-	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
+	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Rmsg = "ERROR: Wrong Args"
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
@@ -154,7 +153,6 @@ func AppDeploy(ctx *gin.Context) {
 				Name:        appName,
 				Scenario:    scenario,
 				Description: description,
-				Message:     messages,
 			},
 			content,
 		}

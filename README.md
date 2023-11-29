@@ -424,7 +424,7 @@ Except for this deployment file, some shell script should be prepared. It will b
 
 If subcmd `apply` run with **SPECIAL** target, Octopoda will not just run the corresponding scripts (`commit` will not execute any scripts). **SPECIAL** target and **MNORMAL** target must be implemented for each application. And **CUSTOMIZED** is defined by user.
 
-When running subcmd `apply` in command line, target `default` or `(empty)` means `prepare + start`. For target `purge`, `-m {message}` is no necessary. (TODO: message not necessary)
+When running subcmd `apply` in command line, target `default` or `(empty)` means `prepare + start`. For target `commit`, `-m {message}` is necessary. 
 
 #### b. About Order
 
