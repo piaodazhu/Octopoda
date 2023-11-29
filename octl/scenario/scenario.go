@@ -84,12 +84,14 @@ func ScenarioFix(name string) (string, *errs.OctlError) {
 	return string(raw), nil
 }
 
-func ScenarioVersion(name string) ([]byte, *errs.OctlError) {
-	url := fmt.Sprintf("https://%s/%s%s?name=%s",
+func ScenarioVersion(name string, offset, limit int) ([]byte, *errs.OctlError) {
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&offset=%d&limit=%d",
 		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioVersion,
 		name,
+		offset,
+		limit,
 	)
 	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {

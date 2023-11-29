@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
@@ -33,8 +34,9 @@ func NodeAppsInfo(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/json", raw)
 }
 
-func NodeAppVersion(ctx *gin.Context) {
+func NodeAppInfo(ctx *gin.Context) {
 	var name, app, scen string
+	var err error
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -51,6 +53,62 @@ func NodeAppVersion(ctx *gin.Context) {
 	aParams := &AppBasic{
 		Name:     app,
 		Scenario: scen,
+	}
+	payload, _ := config.Jsoner.Marshal(aParams)
+	raw, err := model.Request(name, protocols.TypeAppInfo, payload)
+	if err != nil {
+		logger.Comm.Println("NodeAppInfo", err)
+		rmsg.Rmsg = "NodeAppInfo"
+		ctx.JSON(http.StatusNotFound, rmsg)
+		return
+	}
+	ctx.Data(http.StatusOK, "application/json", raw)
+}
+
+func NodeAppVersion(ctx *gin.Context) {
+	var name, app, scen, offsetStr, limitStr string
+	var err error
+	rmsg := protocols.Result{
+		Rmsg: "OK",
+	}
+
+	name = ctx.Query("name")
+	app = ctx.Query("app")
+	scen = ctx.Query("scenario")
+	if len(name) == 0 || len(app) == 0 || len(scen) == 0 {
+		rmsg.Rmsg = "ERROR: Wrong Args"
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	offset := 0
+	limit := 5
+
+	offsetStr = ctx.Query("offset")
+	if len(offsetStr) != 0 {
+		if offset, err = strconv.Atoi(offsetStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: offset=" + offsetStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	limitStr = ctx.Query("limit")
+	if len(limitStr) != 0 {
+		if limit, err = strconv.Atoi(limitStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: limit=" + limitStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	aParams := &AppVersionParams{
+		AppBasic: AppBasic{
+			Name:     app,
+			Scenario: scen,
+		},
+		Offset: offset,
+		Limit:  limit,
 	}
 	payload, _ := config.Jsoner.Marshal(aParams)
 	raw, err := model.Request(name, protocols.TypeAppVersion, payload)

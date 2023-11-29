@@ -37,10 +37,10 @@ SSH:ls:octl ssh ls:octl ssh ls
 Scenario:create:octl scen create <scen> [with <app1> <app2> ...]:octl scen create ChatScen with alice bob
 Scenario:repo:octl scen repo [clone|push] <scen> [-u <username>]:octl scen repo clone ChatScen -u mike
 Scenario:apply:octl scen apply <scen> [target] -m "your message":octl scen apply ChatScen prepare -m "prepare my scenario"
-Scenario:version:octl scen version <scen>:octl scen version scenario ChatScen
+Scenario:version:octl scen version <scen> [-o <offset>] [-l <limit>]:octl scen version scenario ChatScen -o 0 -l 10
 Scenario:reset:octl scen reset <scen> -v <version> -m "your message":octl scen reset scenario ChatScen -v b698 -m "back to yesterday"
 
-NodeApp:get:octl napp get <node> [[ALL] | <app>@<scen>]:octl napp get pi0 alice@ChatScen
+NodeApp:get:octl napp get <node> [[ALL] | <app>@<scen> [-o <offset>] [-l <limit>]]:octl napp get pi0 alice@ChatScen
 NodeApp:reset:octl napp reset <node> <app>@<scen> -v <version> -m "your message":octl napp reset pi0 alice@ChatScen -v b698 -m "back to yesterday"
 
 PAcKage MAnager:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<brain>|<node1>|<group1>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 brain pi0 pi1 pi2

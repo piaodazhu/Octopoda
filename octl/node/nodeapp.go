@@ -49,10 +49,34 @@ func NodeAppInfo(node, app, scenario string) ([]byte, *errs.OctlError) {
 	url := fmt.Sprintf("https://%s/%s%s?name=%s&app=%s&scenario=%s",
 		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
+		config.API_NodeAppInfo,
+		node,
+		app,
+		scenario,
+	)
+	res, err := httpclient.BrainClient.Get(url)
+	if err != nil {
+		emsg := "http get error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+
+	output.PrintJSON(raw)
+	return raw, nil
+}
+
+func NodeAppVersion(node, app, scenario string, offset, limit int) ([]byte, *errs.OctlError) {
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&app=%s&scenario=%s&offset=%d&limit=%d",
+		httpclient.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeAppVersion,
 		node,
 		app,
 		scenario,
+		offset,
+		limit,
 	)
 	res, err := httpclient.BrainClient.Get(url)
 	if err != nil {

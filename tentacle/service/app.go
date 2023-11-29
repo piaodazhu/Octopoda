@@ -21,11 +21,33 @@ func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 }
 
+func AppInfo(conn net.Conn, serialNum uint32, raw []byte) {
+	aParams := AppBasic{}
+	err := config.Jsoner.Unmarshal(raw, &aParams)
+	var payload []byte = []byte("[]")
+	if err != nil {
+		logger.Exceptions.Println(err)
+		goto errorout
+	}
+	payload = app.AppInfo(aParams.Name, aParams.Scenario)
+errorout:
+	err = protocols.SendMessageUnique(conn, protocols.TypeAppInfoResponse, serialNum, payload)
+	if err != nil {
+		logger.Comm.Println("AppsInfo send error")
+	}
+}
+
 type AppBasic struct {
 	Name        string
 	Scenario    string
 	Description string
 	Message     string
+}
+
+type AppVersionParams struct {
+	AppBasic
+	Offset int
+	Limit  int
 }
 
 type AppCreateParams struct {

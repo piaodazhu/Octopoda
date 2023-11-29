@@ -66,8 +66,10 @@ func scenCmd(args []string) {
 			goto usage
 		}
 	case "version":
+		offset, args := extractArgInt(args, "-o", "--offset", 0)
+		limit, args := extractArgInt(args, "-l", "--limit", 5)
 		if len(args) == 1 {
-			scenario.ScenarioVersion(args[0])
+			scenario.ScenarioVersion(args[0], offset, limit)
 		} else {
 			goto usage
 		}
@@ -115,13 +117,19 @@ func nappCmd(args []string) {
 		} else {
 			goto usage
 		}
-	// TODO: how many version?
-	// case "version":
-	// 	if len(args) == 1 {
-
-	// 	} else {
-	// 		goto usage
-	// 	}
+	case "version":
+		offset, args := extractArgInt(args, "-o", "--offset", 0)
+		limit, args := extractArgInt(args, "-l", "--limit", 5)
+		if len(args) != 1 {
+			goto usage
+		}
+		nodeapp := args[0]
+		appscen := strings.Split(nodeapp, "@")
+		if len(appscen) == 2 && len(appscen[0]) != 0 && len(appscen[1]) != 0 {
+			node.NodeAppVersion(nodename, appscen[0], appscen[1], offset, limit)
+		} else {
+			goto usage
+		}
 	case "reset":
 		message, args := extractArgString(args, "-m", "--message", "")
 		version, args := extractArgString(args, "-v", "--version", "")

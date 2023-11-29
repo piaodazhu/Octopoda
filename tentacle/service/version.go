@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"net"
 
 	"github.com/piaodazhu/Octopoda/protocols"
@@ -28,15 +29,17 @@ func AppLatestVersion(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func AppVersions(conn net.Conn, serialNum uint32, raw []byte) {
-	aParams := AppBasic{}
+	aParams := AppVersionParams{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte
+	var vlist []app.Version
 	if err != nil {
 		logger.Exceptions.Println(err)
-		payload = []byte{}
-	} else {
-		payload = app.Versions(aParams.Name, aParams.Scenario)
+		goto errorout
 	}
+	vlist = app.Versions(aParams.Name, aParams.Scenario, aParams.Offset, aParams.Limit)
+errorout:
+	payload, _ = json.Marshal(vlist)
 	err = protocols.SendMessageUnique(conn, protocols.TypeAppVersionResponse, serialNum, payload)
 	if err != nil {
 		logger.Comm.Println("AppVersion send error")

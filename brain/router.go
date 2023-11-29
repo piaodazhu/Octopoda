@@ -42,6 +42,7 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/node/prune", api.NodePrune)
 
 		group.GET("/node/apps", api.NodeAppsInfo)
+		group.GET("/node/app/info", api.NodeAppInfo)
 		group.GET("/node/app/version", api.NodeAppVersion)
 		group.POST("/node/app/version", api.NodeAppReset)
 

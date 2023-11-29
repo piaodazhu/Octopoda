@@ -19,6 +19,12 @@ type AppBasic struct {
 	Message     string
 }
 
+type AppVersionParams struct {
+	AppBasic
+	Offset int
+	Limit  int
+}
+
 type AppCreateParams struct {
 	AppBasic
 	FilePack string

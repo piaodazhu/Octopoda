@@ -6,6 +6,7 @@ const (
 	API_NodeLog        = "/node/log"
 	API_NodePrune      = "/node/prune"
 	API_NodeApps       = "/node/apps"
+	API_NodeAppInfo    = "/node/app/info"
 	API_NodeAppVersion = "/node/app/version"
 	API_NodeAppReset   = "/node/app/version"
 

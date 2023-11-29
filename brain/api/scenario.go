@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -169,9 +170,10 @@ func ScenariosInfo(ctx *gin.Context) {
 }
 
 func ScenarioVersion(ctx *gin.Context) {
-	var versions []model.BasicVersionModel
-	var name string
+	var vlist []model.BasicVersionModel
+	var name, offsetStr, limitStr string
 	var ok bool
+	var err error
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -181,8 +183,46 @@ func ScenarioVersion(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	versions = model.GetScenarioVersionByName(name)
-	ctx.JSON(http.StatusOK, versions)
+
+	offset := 0
+	limit := 5
+
+	offsetStr = ctx.Query("offset")
+	if len(offsetStr) != 0 {
+		if offset, err = strconv.Atoi(offsetStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: offset=" + offsetStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	limitStr = ctx.Query("limit")
+	if len(limitStr) != 0 {
+		if limit, err = strconv.Atoi(limitStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: limit=" + limitStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	allVersions := model.GetScenarioVersionByName(name)
+	if len(allVersions) <= offset {
+		ctx.JSON(http.StatusOK, vlist)
+		return
+	}
+	end := offset + limit
+	if len(allVersions) < end {
+		end = len(allVersions)
+	}
+
+	// reverse list
+	offset = len(allVersions) - 1 - offset
+	end = len(allVersions) - 1 - end
+	for i := offset; i > end; i-- {
+		vlist = append(vlist, allVersions[i])
+	}
+
+	ctx.JSON(http.StatusOK, vlist)
 }
 
 type AppResetParams struct {

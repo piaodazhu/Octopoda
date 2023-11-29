@@ -459,8 +459,8 @@ With this subcmd we can get basic informations of all apps on the given node or 
 ## G. Version Control
 ### VERSION
 
-> `usage: octl scen version <scen>`
-> `usage: octl napp version <node> <app>@<scen>`
+> `usage: octl scen version <scen> [-o <offset>] [-l <limit>]`
+> `usage: octl napp version <node> <app>@<scen> [-o <offset>] [-l <limit>]`
 
 With this subcmd we can get a version list of a given scenario, or a given app on a given node. Each version consists of version hash code, committed message, committed timestamp and other basic information.
 
