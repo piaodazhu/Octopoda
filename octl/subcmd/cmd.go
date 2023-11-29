@@ -5,7 +5,8 @@ import (
 )
 
 func cmdCmd(args []string) {
-	var operation string
+	var class string = "Command"
+	var operation string = ""
 	var cmd string
 	if len(args) == 0 {
 		goto usage
@@ -61,5 +62,5 @@ func cmdCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("group")
+	PrintUsage(class, operation)
 }

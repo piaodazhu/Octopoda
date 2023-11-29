@@ -3,7 +3,8 @@ package subcmd
 import "github.com/piaodazhu/Octopoda/octl/file"
 
 func fileCmd(args []string) {
-	var operation string
+	var class string = "File"
+	var operation string = ""
 	if len(args) == 0 {
 		goto usage
 	}
@@ -26,5 +27,5 @@ func fileCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("file")
+	PrintUsage(class, operation)
 }

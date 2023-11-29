@@ -29,7 +29,7 @@
 #3 CMD				2
 	[CHK]	- cmd run
 			[TODO:	Version 1]
-			usage: octl run [-ta] [[-c] 'cmd' | -bg 'cmd' | -s 'shellScript'] <node1> <@group1> ...
+			usage: octl run [-ta] [[-c] 'cmd' | -bg 'cmd' | -ss 'shellScript'] <node1> <@group1> ...
 			# -ta == --try-align
 			# -cc == --common-command	(default)
 			# -bg == --background

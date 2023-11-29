@@ -126,7 +126,7 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) ([]pr
 	return results, nil
 }
 
-// TODO
+// TODO: force, pattern
 func Upload(localFileOrDir string, targetPath string, names []string, isForce bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := node.NodesParse(names)
 	if err != nil {

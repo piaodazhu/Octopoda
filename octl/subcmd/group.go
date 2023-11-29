@@ -3,7 +3,8 @@ package subcmd
 import "github.com/piaodazhu/Octopoda/octl/node"
 
 func groupCmd(args []string) {
-	var operation string
+	var class string = "Group"
+	var operation string = ""
 	if len(args) == 0 {
 		goto usage
 	}
@@ -35,5 +36,5 @@ func groupCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("group")
+	PrintUsage(class, operation)
 }

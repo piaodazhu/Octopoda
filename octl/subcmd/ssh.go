@@ -3,7 +3,8 @@ package subcmd
 import "github.com/piaodazhu/Octopoda/octl/shell"
 
 func sshCmd(args []string) {
-	var operation string
+	var class string = "SSH"
+	var operation string = ""
 	if len(args) == 0 {
 		goto usage
 	}
@@ -35,6 +36,5 @@ func sshCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("ssh")
+	PrintUsage(class, operation)
 }
-

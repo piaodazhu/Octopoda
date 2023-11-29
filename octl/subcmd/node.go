@@ -3,7 +3,8 @@ package subcmd
 import "github.com/piaodazhu/Octopoda/octl/node"
 
 func nodeCmd(args []string) {
-	var operation string
+	var class string = "Node"
+	var operation string = ""
 	if len(args) == 0 {
 		goto usage
 	}
@@ -37,5 +38,5 @@ func nodeCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("node")
+	PrintUsage(class, operation)
 }

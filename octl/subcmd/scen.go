@@ -9,7 +9,8 @@ import (
 )
 
 func scenCmd(args []string) {
-	var operation string
+	var class string = "Scenario"
+	var operation string = ""
 	if len(args) == 0 {
 		goto usage
 	}
@@ -86,11 +87,13 @@ func scenCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("scen")
+	PrintUsage(class, operation)
 }
 
 func nappCmd(args []string) {
-	var operation, nodename string
+	var class string = "NodeApp"
+	var operation string = ""
+	var nodename string
 	if len(args) < 2 {
 		goto usage
 	}
@@ -116,7 +119,7 @@ func nappCmd(args []string) {
 	// TODO: how many version?
 	// case "version":
 	// 	if len(args) == 1 {
-			
+
 	// 	} else {
 	// 		goto usage
 	// 	}
@@ -143,5 +146,5 @@ func nappCmd(args []string) {
 	}
 	return
 usage:
-	PrintUsage("napp")
+	PrintUsage(class, operation)
 }

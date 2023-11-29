@@ -68,6 +68,7 @@ func main() {
 	}
 	if len(args) == 0 {
 		subcmd.PrintUsages(nil)
+		return
 	}
 	subcmd.Execute(args[0], args[1:])
 }
