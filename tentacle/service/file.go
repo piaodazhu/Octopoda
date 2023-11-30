@@ -21,7 +21,6 @@ import (
 
 type FileParams struct {
 	PackName    string
-	PathType    string
 	TargetPath  string
 	FileBuf     string
 	ForceCreate bool
@@ -44,6 +43,9 @@ func fileExist(filePath string) bool {
 }
 
 func pathFixing(path string, base string) string {
+	// if path start with pathenv: expand it
+	path = config.ParsePathWithEnv(path)
+
 	// dstPath: the unpacked files will be moved under this path
 	var result strings.Builder
 	// find ~
@@ -106,7 +108,6 @@ errorout:
 }
 
 func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
-	var pathsb strings.Builder
 	var err error
 	var packName, wrapName, srcPath, pwd string
 	var cmd *exec.Cmd
@@ -118,21 +119,9 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 		logger.Exceptions.Println("FilePull")
 		goto errorout
 	}
-	switch fileinfo.PathType {
-	case "store":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-	case "log":
-		pathsb.WriteString(config.GlobalConfig.Logger.Path)
-	case "nodeapp":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
-	default:
-		goto errorout
-	}
-	pathsb.WriteString(fileinfo.TargetPath)
 
 	pwd, _ = os.Getwd()
-	srcPath = pathFixing(pathsb.String(), pwd+string(filepath.Separator))
-
+	srcPath = pathFixing(fileinfo.TargetPath, pwd+string(filepath.Separator))
 	// wrap the files first
 	wrapName = fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
 	os.MkdirAll(wrapName, os.ModePerm)
@@ -160,7 +149,6 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 
 	fileinfo.FileBuf = loadFile(packName)
 	fileinfo.PackName = packName
-
 	payload, _ = json.Marshal(&fileinfo)
 errorout:
 	err = protocols.SendMessageUnique(conn, protocols.TypeFilePullResponse, serialNum, payload)
@@ -170,7 +158,7 @@ errorout:
 }
 
 func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
-	var pathsb strings.Builder
+	var targetPath string
 	res := []byte{}
 	pathinfo := FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &pathinfo)
@@ -178,19 +166,8 @@ func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
 		goto errorout
 	}
 
-	switch pathinfo.PathType {
-	case "store":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-	case "log":
-		pathsb.WriteString(config.GlobalConfig.Logger.Path)
-	case "nodeapp":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
-	default:
-		goto errorout
-	}
-	pathsb.WriteString(pathinfo.TargetPath)
-
-	res = allFiles(pathsb.String())
+	targetPath = config.ParsePathWithEnv(pathinfo.TargetPath)
+	res = allFiles(targetPath)
 errorout:
 	err = protocols.SendMessageUnique(conn, protocols.TypeFileTreeResponse, serialNum, res)
 	if err != nil {

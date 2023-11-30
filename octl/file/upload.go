@@ -14,6 +14,7 @@ import (
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
+	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/protocols"
@@ -22,7 +23,14 @@ import (
 	"github.com/mholt/archiver/v3"
 )
 
-func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionResults, *errs.OctlError) {
+func Upload(localFileOrDir string, targetPath string, names []string, isForce bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+	nodes, err := node.NodesParse(names)
+	if err != nil {
+		emsg := "node parse error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlNodeParseError, emsg)
+	}
+
 	if targetPath == "." {
 		targetPath = ""
 	} else if targetPath[len(targetPath)-1] != '/' {
@@ -38,10 +46,12 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+		// fmt.Println("Platform: Windows. Cmd: ", cmd.String())
 	} else {
 		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
+		// fmt.Println("Platform: Linux. Cmd: ", cmd.String())
 	}
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		emsg := fmt.Sprintf("wrap files %s to %s error: %s", srcPath, wrapName, err.Error())
 		output.PrintFatalln(emsg)
@@ -50,6 +60,7 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	defer os.RemoveAll(wrapName)
 
 	packName := fmt.Sprintf("%s.zip", wrapName)
+
 	archiver.DefaultZip.OverwriteExisting = true
 	err = archiver.DefaultZip.Archive([]string{wrapName}, packName)
 	if err != nil {
@@ -67,12 +78,15 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	}
 	defer f.Close()
 
+	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
+
 	bodyBuffer := bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
-	fileWriter, _ := bodyWriter.CreateFormFile("tarfile", packName)
+	fileWriter, _ := bodyWriter.CreateFormFile("packfiles", packName)
 	io.Copy(fileWriter, f)
-
 	bodyWriter.WriteField("targetPath", targetPath)
+	bodyWriter.WriteField("isForce", fmt.Sprint(isForce))
+	bodyWriter.WriteField("targetNodes", string(nodes_serialized))
 
 	contentType := bodyWriter.FormDataContentType()
 
@@ -81,15 +95,15 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	url := fmt.Sprintf("https://%s/%s%s",
 		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
-		config.API_FileUpload,
+		config.API_FileDistrib,
 	)
+
 	res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlHttpRequestError, emsg)
 	}
-
 	msg, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
@@ -99,22 +113,16 @@ func UpLoadFile(localFileOrDir string, targetPath string) (*protocols.ExecutionR
 	}
 
 	if res.StatusCode != http.StatusAccepted {
-		emsg := fmt.Sprintf("http request error msg=%s, status=%d. ", msg, res.StatusCode)
+		emsg := fmt.Sprintf("http request error msg=%s, status=%d.", msg, res.StatusCode)
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlHttpStatusError, emsg)
 	}
-	results, err := task.WaitTask("UPLOADING...", string(msg))
+	results, err := task.WaitTask("DISTRIBUTING...", string(msg))
 	if err != nil {
 		emsg := "Task processing error: " + err.Error()
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
-
-	if len(results) != 1 {
-		emsg := fmt.Sprintf("number of results of this command should be only 1 but get %d", len(results))
-		output.PrintFatalln(emsg)
-		return nil, errs.New(errs.OctlMessageParseError, emsg)
-	}
-	output.PrintJSON(results[0])
-	return &results[0], nil
+	output.PrintJSON(results)
+	return results, nil
 }

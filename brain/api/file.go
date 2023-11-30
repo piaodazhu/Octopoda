@@ -20,7 +20,6 @@ import (
 
 type FileParams struct {
 	PackName    string
-	PathType    string
 	TargetPath  string
 	FileBuf     string
 	ForceCreate bool
@@ -253,26 +252,14 @@ func FileTree(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	pathtype, ok := ctx.GetQuery("pathtype")
-	if !ok {
-		rmsg.Rmsg = "Lack pathtype"
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
 	subdir, _ := ctx.GetQuery("subdir")
-	raw, err := getFileTree(pathtype, name, subdir)
+	raw, err := getFileTree(name, subdir)
 	if err != nil {
 		rmsg.Rmsg = err.Error()
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
 	ctx.Data(http.StatusOK, "application/json", raw)
-}
-
-type ErrInvalidPathType struct{ pathtype, node string }
-
-func (e ErrInvalidPathType) Error() string {
-	return fmt.Sprintf("Invalid path type: %s on %s\n", e.pathtype, e.node)
 }
 
 type ErrInvalidNode struct{ node string }
@@ -283,23 +270,13 @@ type ErrNetworkError struct{ node string }
 
 func (e ErrNetworkError) Error() string { return fmt.Sprintf("Network error: %s\n", e.node) }
 
-func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
-	var pathsb strings.Builder
+func getFileTree(name string, subdir string) ([]byte, error) {
 	if name == "brain" {
-		switch pathtype {
-		case "store":
-			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-		case "log":
-			pathsb.WriteString(config.GlobalConfig.Logger.Path)
-		default:
-			return nil, ErrInvalidPathType{pathtype: pathtype, node: name}
-		}
-		pathsb.WriteString(subdir)
-		return allFiles(pathsb.String()), nil
+		subdir = config.ParsePathWithEnv(subdir)
+		return allFiles(subdir), nil
 	}
 
 	params, _ := config.Jsoner.Marshal(&FileParams{
-		PathType:   pathtype,
 		TargetPath: subdir,
 	})
 	raw, err := model.Request(name, protocols.TypeFileTree, params)
@@ -444,12 +421,6 @@ func FilePull(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	pathtype, ok := ctx.GetQuery("pathtype")
-	if !ok {
-		rmsg.Rmsg = "Lack pathtype"
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
 	fileOrDir, ok := ctx.GetQuery("fileOrDir")
 	if !ok {
 		rmsg.Rmsg = "Lack fileOrDir"
@@ -459,26 +430,15 @@ func FilePull(ctx *gin.Context) {
 
 	// pull brain file?
 	if name == "brain" {
-		var pathsb strings.Builder
-		switch pathtype {
-		case "store":
-			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-		case "log":
-			pathsb.WriteString(config.GlobalConfig.Logger.Path)
-		default:
-			rmsg.Rmsg = ErrInvalidPathType{pathtype: pathtype, node: name}.Error()
-			ctx.JSON(http.StatusBadRequest, rmsg)
-			return
-		}
-		pathsb.WriteString(fileOrDir)
-		_, err := os.Stat(pathsb.String())
+		fileOrDir = config.ParsePathWithEnv(fileOrDir)
+		_, err := os.Stat(fileOrDir)
 		if err != nil {
 			rmsg.Rmsg = "file or path not found"
 			ctx.JSON(http.StatusNotFound, rmsg)
 			return
 		}
 		// pack the file or dir
-		packName := packFile(pathsb.String())
+		packName := packFile(fileOrDir)
 		if packName == "" {
 			rmsg.Rmsg = "Error when packing files"
 			ctx.JSON(http.StatusInternalServerError, rmsg)
@@ -500,7 +460,6 @@ func FilePull(ctx *gin.Context) {
 		}
 
 		params, _ := config.Jsoner.Marshal(&FileParams{
-			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
 		raw, err := model.Request(name, protocols.TypeFilePull, params)

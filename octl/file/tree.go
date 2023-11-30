@@ -10,12 +10,11 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func ListAllFile(pathtype string, node string, subdir string) (string, *errs.OctlError) {
-	url := fmt.Sprintf("https://%s/%s%s?pathtype=%s&name=%s&subdir=%s",
+func ListAllFile(subdir string, node string) (string, *errs.OctlError) {
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&subdir=%s",
 		httpclient.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FileTree,
-		pathtype,
 		node,
 		subdir,
 	)

@@ -22,6 +22,11 @@ func fileCmd(args []string) {
 			goto usage
 		}
 		file.Download(args[0], args[1], args[2])
+	case "ls":
+		if len(args) != 2 {
+			goto usage
+		}
+		file.ListAllFile(args[0], args[1])
 	default:
 		goto usage
 	}

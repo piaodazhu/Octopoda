@@ -75,4 +75,6 @@ func InitConfig(conf string) {
 	if err := InitTLSConfig(); err != nil {
 		panic("InitTLSConfig failed: " + err.Error())
 	}
+
+	initPathEnv()
 }
