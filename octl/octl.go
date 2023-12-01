@@ -8,6 +8,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/subcmd"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 )
 
 // Build Information
@@ -66,6 +67,11 @@ func main() {
 	if err := httpclient.InitClients(); err != nil {
 		output.PrintFatalf("cannot init http nameclient: %s\n", err.Error())
 	}
+
+	if err := workgroup.InitWorkgroup(config.GlobalConfig.WorkgroupConfigPath, httpclient.BrainClient); err != nil {
+		output.PrintFatalf("cannot init workgroup: %s\n", err.Error())
+	}
+
 	if len(args) == 0 {
 		subcmd.PrintUsages(nil)
 		return

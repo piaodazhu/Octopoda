@@ -1,12 +1,13 @@
 package config
 
 type ConfigModel struct {
-	HttpsNameServer HttpsNsModel `mapstructure:"httpsNameServer"`
-	Brain           BrainModel   `mapstructure:"brain"`
-	Sslinfo         SslinfoModel `mapstructure:"ssl"`
-	Gitinfo         GitinfoModel `mapstructure:"git"`
-	OutputPretty    bool         `mapstructure:"outputPretty"`
-	JsonFast        bool         `mapstructure:"jsonFast"`
+	HttpsNameServer     HttpsNsModel `mapstructure:"httpsNameServer"`
+	Brain               BrainModel   `mapstructure:"brain"`
+	Sslinfo             SslinfoModel `mapstructure:"ssl"`
+	Gitinfo             GitinfoModel `mapstructure:"git"`
+	OutputPretty        bool         `mapstructure:"outputPretty"`
+	JsonFast            bool         `mapstructure:"jsonFast"`
+	WorkgroupConfigPath string       `mapstructure:"workgroupConfigPath"`
 }
 
 type BrainModel struct {

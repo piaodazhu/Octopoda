@@ -12,18 +12,21 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func NodeInfo(name string) (*protocols.NodeInfo, *errs.OctlError) {
 	url := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeInfo,
 		name,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -58,12 +61,14 @@ func NodesInfo(names []string) (*protocols.NodesInfo, *errs.OctlError) {
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	url := fmt.Sprintf("https://%s/%s%s?targetNodes=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodesInfo,
 		string(nodes_serialized),
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error." + err.Error()
 		output.PrintFatalln(emsg)
@@ -133,12 +138,14 @@ func NodesPrune(names []string) *errs.OctlError {
 	}
 	nodes_serialized, _ := config.Jsoner.Marshal(&nodes)
 	url := fmt.Sprintf("https://%s/%s%s?targetNodes=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodePrune,
 		nodes_serialized,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -175,11 +182,14 @@ func nodesParse(names []string) (protocols.NodeParseResult, error) {
 	result := protocols.NodeParseResult{}
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodesParse,
 	)
-	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("nodeparse post")
 		return result, err

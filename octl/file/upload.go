@@ -17,6 +17,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 
@@ -93,12 +94,15 @@ func Upload(localFileOrDir string, targetPath string, names []string, isForce bo
 	bodyWriter.Close()
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FileDistrib,
 	)
 
-	res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
+	req, _ := http.NewRequest("POST", url, &bodyBuffer)
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", contentType)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

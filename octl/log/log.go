@@ -3,11 +3,13 @@ package log
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 )
 
 func NodeLog(name string, params []string) (string, error) {
@@ -33,14 +35,16 @@ func NodeLog(name string, params []string) (string, error) {
 		}
 	}
 	url := fmt.Sprintf("https://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_NodeLog,
 		name,
 		maxlines,
 		maxdaysbefore,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error."
 		output.PrintFatalln(emsg, err)

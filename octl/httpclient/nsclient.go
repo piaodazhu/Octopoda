@@ -15,18 +15,17 @@ import (
 var nsAddr string
 
 var NsClient *http.Client
-var BrainAddr string
 
 func initNsClient() *errs.OctlError {
 	NsClient = &http.Client{}
 	defaultBrainAddr := fmt.Sprintf("%s:%d", config.GlobalConfig.Brain.Ip, config.GlobalConfig.Brain.Port)
 	if !config.GlobalConfig.HttpsNameServer.Enabled {
 		output.PrintWarningf("NameService client is disabled")
-		BrainAddr = defaultBrainAddr
+		config.BrainAddr = defaultBrainAddr
 		return nil
 	}
 
-	BrainAddr = ""
+	config.BrainAddr = ""
 	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port+1)
 	output.PrintInfof("NameService client is enabled. nsAddr=%s", nsAddr)
 
@@ -44,7 +43,7 @@ func initNsClient() *errs.OctlError {
 		return errs.New(errs.OctlInitClientError, emsg)
 	}
 
-	BrainAddr = entry.Value
+	config.BrainAddr = entry.Value
 	return nil
 }
 

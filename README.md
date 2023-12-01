@@ -255,13 +255,23 @@ The difference between subcmd `run` and `xrun` is that `xrun` will not execute a
 
 > `usage: octl file upload [-f] <localFileOrDir> <targetDir>  [<node1> ...] [<@group1> ...]`
 
-With this subcmd we can upload a file or a whole directory to the given nodes' storage. (TODO: flag and path variable)
+With this subcmd we can upload a file or a whole directory to the given nodes' storage. The `-f` flag means `targetDir` will be created by force if it not exists on target nodes. `targetDir` support these **path variable**:
+- `@root`: the home directory of root user (/root/).
+- `@workspace`: the root of workspace, configured by `tentacle.yaml` or `brain.yaml`.
+- `@log`: log directory, configured by `tentacle.yaml` or `brain.yaml`.
+- `@fstore`: file storage directory, configured by `tentacle.yaml` or `brain.yaml`.
+- `@pakma`: pakma directory, configured by `tentacle.yaml` or `brain.yaml`.
 
 ### DOWNLOAD
 
 > `usage: octl file download FileOrDir [localDir] <node1>`
 
-With this subcmd we can download file or directory from under `FileOrDir` from brain or a given node to `localDir`. (TODO: path variable)
+With this subcmd we can download file or directory from under `FileOrDir` from brain or a given node to `localDir`. `FileOrDir` support these **path variable**:
+- `@root`: the home directory of root user (/root/).
+- `@workspace`: the root of workspace, configured by `tentacle.yaml` or `brain.yaml`.
+- `@log`: log directory, configured by `tentacle.yaml` or `brain.yaml`.
+- `@fstore`: file storage directory, configured by `tentacle.yaml` or `brain.yaml`.
+- `@pakma`: pakma directory, configured by `tentacle.yaml` or `brain.yaml`.
 
 ## E. Fast SSH
 

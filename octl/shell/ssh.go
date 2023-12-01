@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/piaodazhu/proxylite"
@@ -47,7 +49,7 @@ func SetSSH(nodename string) {
 
 	// ask tentacle to register ssh service
 	URL := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 	)
@@ -55,7 +57,11 @@ func SetSSH(nodename string) {
 	values.Add("name", nodename)
 	values.Add("username", username)
 	values.Add("password", password)
-	res, err := httpclient.BrainClient.PostForm(URL, values)
+
+	req, _ := http.NewRequest("POST", URL, bytes.NewBufferString(values.Encode()))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("PostForm")
 	}
@@ -76,7 +82,7 @@ func SetSSH(nodename string) {
 
 func delSSH(nodename string) []byte {
 	URL := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 		nodename,
@@ -87,6 +93,7 @@ func delSSH(nodename string) []byte {
 		output.PrintFatalln("NewRequest: ", err)
 		return nil
 	}
+	workgroup.SetHeader(req)
 	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("DELETE")
@@ -118,12 +125,14 @@ func GetSSH() {
 
 func SSH(nodename string) {
 	url := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Ssh,
 		nodename,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("Get")
 	}

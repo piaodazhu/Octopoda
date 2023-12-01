@@ -42,4 +42,10 @@ const (
 
 	API_Group  = "/group"
 	API_Groups = "/groups"
+
+	API_WorkgroupInfo = "/workgroup/info"
+	API_WorkgroupMembers = "/workgroup/members"
+	API_WorkgroupChildren = "/workgroup/children"
 )
+
+var BrainAddr string

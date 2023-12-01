@@ -20,6 +20,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/shell"
 	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 
 	"github.com/mholt/archiver/v3"
@@ -174,12 +175,15 @@ func ScenarioPrepare(ctx context.Context, configuration *ScenarioConfigModel, me
 			bodyWriter.Close()
 
 			url := fmt.Sprintf("https://%s/%s%s",
-				httpclient.BrainAddr,
+				config.BrainAddr,
 				config.GlobalConfig.Brain.ApiPrefix,
 				config.API_ScenarioAppCreate,
 			)
 
-			res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
+			req, _ := http.NewRequest("POST", url, &bodyBuffer)
+			workgroup.SetHeader(req)
+			req.Header.Set("Content-Type", contentType)
+			res, err := httpclient.BrainClient.Do(req)
 			if err != nil {
 				emsg := "http post error: " + err.Error()
 				output.PrintFatalln(emsg)
@@ -321,7 +325,7 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 
 		// run the scripts
 		url := fmt.Sprintf("https://%s/%s%s",
-			httpclient.BrainAddr,
+			config.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
 			config.API_ScenarioAppDeploy,
 		)
@@ -332,6 +336,7 @@ func ScenarioRun(ctx context.Context, configuration *ScenarioConfigModel, target
 			output.PrintFatalln(emsg)
 			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
+		workgroup.SetHeader(req)
 		req.Header.Set("Content-Type", contentType)
 		logList = append(logList, "succeed in making deployment request for app "+app.Name)
 
@@ -491,7 +496,7 @@ func ScenarioPurge(ctx context.Context, configuration *ScenarioConfigModel) ([]s
 
 		// run purge script in corresponding nodes
 		url := fmt.Sprintf("https://%s/%s%s",
-			httpclient.BrainAddr,
+			config.BrainAddr,
 			config.GlobalConfig.Brain.ApiPrefix,
 			config.API_ScenarioAppDeploy,
 		)
@@ -502,6 +507,7 @@ func ScenarioPurge(ctx context.Context, configuration *ScenarioConfigModel) ([]s
 			output.PrintFatalln(emsg)
 			return logList, errs.New(errs.OctlHttpRequestError, emsg)
 		}
+		workgroup.SetHeader(req)
 		req.Header.Set("Content-Type", contentType)
 		logList = append(logList, "succeed in making purge request for app "+app.Name)
 
@@ -611,7 +617,7 @@ func ScenarioPurge(ctx context.Context, configuration *ScenarioConfigModel) ([]s
 
 func ScenarioCommit(ctx context.Context, configuration *ScenarioConfigModel, message string) ([]string, *errs.OctlError) {
 	var logList []string
-	
+
 	// for each application
 	for i := range configuration.Applications {
 		app := configuration.Applications[i]
@@ -635,12 +641,15 @@ func ScenarioCommit(ctx context.Context, configuration *ScenarioConfigModel, mes
 			bodyWriter.Close()
 
 			url := fmt.Sprintf("https://%s/%s%s",
-				httpclient.BrainAddr,
+				config.BrainAddr,
 				config.GlobalConfig.Brain.ApiPrefix,
 				config.API_ScenarioAppCommit,
 			)
 
-			res, err := httpclient.BrainClient.Post(url, contentType, &bodyBuffer)
+			req, _ := http.NewRequest("POST", url, &bodyBuffer)
+			workgroup.SetHeader(req)
+			req.Header.Set("Content-Type", contentType)
+			res, err := httpclient.BrainClient.Do(req)
 			if err != nil {
 				emsg := "http post error: " + err.Error()
 				output.PrintFatalln(emsg)
@@ -724,7 +733,7 @@ func ScenarioCreate(ctx context.Context, name, description string) ([]string, *e
 	var logList []string
 	output.PrintInfoln(">> create scenario", name)
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioInfo,
 	)
@@ -738,7 +747,10 @@ func ScenarioCreate(ctx context.Context, name, description string) ([]string, *e
 		writer.WriteField("description", description)
 		writer.Close()
 
-		res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
+		req, _ := http.NewRequest("POST", url, body)
+		workgroup.SetHeader(req)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		res, err := httpclient.BrainClient.Do(req)
 		if err != nil {
 			emsg := "http post error: " + err.Error()
 			output.PrintFatalln(emsg)
@@ -772,7 +784,7 @@ func ScenarioUpdate(ctx context.Context, name, message string) ([]string, *errs.
 	var logList []string
 	output.PrintInfoln(">> update scenario", name)
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioUpdate,
 	)
@@ -786,7 +798,10 @@ func ScenarioUpdate(ctx context.Context, name, message string) ([]string, *errs.
 		writer.WriteField("message", message)
 		writer.Close()
 
-		res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
+		req, _ := http.NewRequest("POST", url, body)
+		workgroup.SetHeader(req)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		res, err := httpclient.BrainClient.Do(req)
 		if err != nil {
 			emsg := "http post error: " + err.Error()
 			output.PrintFatalln(emsg)
@@ -817,7 +832,7 @@ func ScenarioDelete(ctx context.Context, name string) ([]string, *errs.OctlError
 	var logList []string
 	output.PrintInfoln(">> delete scenario", name)
 	url := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_ScenarioInfo,
 		name,
@@ -833,6 +848,7 @@ func ScenarioDelete(ctx context.Context, name string) ([]string, *errs.OctlError
 			doneChan <- errs.New(errs.OctlHttpRequestError, emsg)
 			return
 		}
+		workgroup.SetHeader(req)
 		res, err := httpclient.BrainClient.Do(req)
 		if err != nil {
 			emsg := "httpclient.BrainClient.Do(): " + err.Error()
