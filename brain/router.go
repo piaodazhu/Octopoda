@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/api"
@@ -174,7 +175,9 @@ func RateLimiter(r float64, burst int) gin.HandlerFunc {
 func WorkgroupAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		rootpath := ctx.GetHeader("rootpath")
+		rootpath = strings.TrimSuffix(rootpath, "/")
 		currentPath := ctx.GetHeader("currentpath")
+		currentPath = strings.TrimSuffix(currentPath, "/")
 		password := ctx.GetHeader("password")
 		if len(password) == 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -182,6 +185,7 @@ func WorkgroupAuth() gin.HandlerFunc {
 		}
 
 		if !workgroup.IsSameOrSubPath(currentPath, rootpath) {
+			fmt.Println("!workgroup.IsSameOrSubPath(currentPath, rootpath)")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} 
@@ -192,10 +196,12 @@ func WorkgroupAuth() gin.HandlerFunc {
 			return 
 		}
 		if info == nil { // rootgroup not found
+			fmt.Println("info == nil")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		if info.Password != password { // rootgroup unauth
+			fmt.Println("info.Password != password: ", info.Password, password)
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -205,7 +211,8 @@ func WorkgroupAuth() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return 
 		}
-		if len(members) == 0 {
+		if len(currentPath) > 0 && len(members) == 0 {
+			fmt.Println("len(members) == 0")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

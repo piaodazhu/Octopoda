@@ -25,21 +25,21 @@ type workgroupClient struct {
 
 func newWorkgroupClient(rootGroup, passwd, currentGroup string, client *http.Client) workgroupClient {
 	return workgroupClient{
-		rootPath:    rootGroup,
+		rootPath:    strings.TrimSuffix(rootGroup, "/"),
 		password:    passwd,
-		currentPath: currentGroup,
+		currentPath: strings.TrimSuffix(currentGroup, "/"),
 		client:      client,
 	}
 }
 
-func (wg workgroupClient) auth() error {
+func (wg *workgroupClient) auth() error {
 	if _, err := wg.remoteGetInfo(wg.rootPath); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (wg workgroupClient) grant(groupPath string, password string) error {
+func (wg *workgroupClient) grant(groupPath string, password string) error {
 	if len(password) < 6 {
 		return fmt.Errorf("password must longer than 6")
 	}
@@ -53,22 +53,25 @@ func (wg workgroupClient) grant(groupPath string, password string) error {
 	return nil
 }
 
-func (wg workgroupClient) valid() bool {
+func (wg *workgroupClient) valid() bool {
 	return wg.isSubPath(wg.currentPath, wg.rootPath)
 }
 
-func (wg workgroupClient) cd(groupPath string) error {
+func (wg *workgroupClient) cd(groupPath string) error {
 	groupPath = wg.fixPath(groupPath)
 	if !wg.isSubPath(groupPath, wg.rootPath) {
 		return fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
 	}
+	fmt.Println("want cd to ", groupPath)
 	if _, err := wg.remoteGetInfo(groupPath); err != nil {
 		return err
 	}
+	fmt.Println("ok, cd to ", groupPath)
+	wg.currentPath = groupPath
 	return nil
 }
 
-func (wg workgroupClient) ls(groupPath string) ([]string, error) {
+func (wg *workgroupClient) ls(groupPath string) ([]string, error) {
 	groupPath = wg.fixPath(groupPath)
 	if !wg.isSubPath(groupPath, wg.rootPath) {
 		return nil, fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
@@ -80,11 +83,11 @@ func (wg workgroupClient) ls(groupPath string) ([]string, error) {
 	}
 }
 
-func (wg workgroupClient) pwd() string {
+func (wg *workgroupClient) pwd() string {
 	return wg.currentPath
 }
 
-func (wg workgroupClient) get(groupPath string) ([]string, error) {
+func (wg *workgroupClient) get(groupPath string) ([]string, error) {
 	groupPath = wg.fixPath(groupPath)
 	if !wg.isSubPath(groupPath, wg.rootPath) {
 		return nil, fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
@@ -96,7 +99,7 @@ func (wg workgroupClient) get(groupPath string) ([]string, error) {
 	}
 }
 
-func (wg workgroupClient) addMembers(groupPath string, names ...string) error {
+func (wg *workgroupClient) addMembers(groupPath string, names ...string) error {
 	if names == nil {
 		return nil
 	}
@@ -104,13 +107,15 @@ func (wg workgroupClient) addMembers(groupPath string, names ...string) error {
 	if !wg.isSubPath(groupPath, wg.rootPath) {
 		return fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
 	}
+
+	fmt.Println("want add members to ", groupPath)
 	if err := wg.remoteAddMember(groupPath, names); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (wg workgroupClient) removeMembers(groupPath string, names ...string) error {
+func (wg *workgroupClient) removeMembers(groupPath string, names ...string) error {
 	// if names == nil, remove this group and its children
 	groupPath = wg.fixPath(groupPath)
 	if !wg.isSubPath(groupPath, wg.rootPath) {
@@ -122,14 +127,14 @@ func (wg workgroupClient) removeMembers(groupPath string, names ...string) error
 	return nil
 }
 
-func (wg workgroupClient) fixPath(path string) string {
+func (wg *workgroupClient) fixPath(path string) string {
 	if strings.HasPrefix(path, "/") {
 		return filepath.Clean(path)
 	}
 	return filepath.Clean(wg.currentPath + "/" + path)
 }
 
-func (wg workgroupClient) isSubPath(subPath, path string) bool {
+func (wg *workgroupClient) isSubPath(subPath, path string) bool {
 	if !strings.HasPrefix(subPath, path) {
 		return false
 	}
@@ -139,13 +144,13 @@ func (wg workgroupClient) isSubPath(subPath, path string) bool {
 	return subPath[len(path)] == '/'
 }
 
-func (wg workgroupClient) setHeader(req *http.Request) {
+func (wg *workgroupClient) setHeader(req *http.Request) {
 	req.Header.Set("rootpath", wg.rootPath)
 	req.Header.Set("password", wg.password)
 	req.Header.Set("currentpath", wg.currentPath)
 }
 
-func (wg workgroupClient) remoteGetInfo(path string) (*protocols.WorkgroupInfo, error) {
+func (wg *workgroupClient) remoteGetInfo(path string) (*protocols.WorkgroupInfo, error) {
 	info := protocols.WorkgroupInfo{}
 	url := fmt.Sprintf("https://%s/%s%s?path=%s",
 		config.BrainAddr,
@@ -174,7 +179,7 @@ func (wg workgroupClient) remoteGetInfo(path string) (*protocols.WorkgroupInfo, 
 	return nil, fmt.Errorf("status code: %d", res.StatusCode)
 }
 
-func (wg workgroupClient) remoteSetGrant(path, password string) error {
+func (wg *workgroupClient) remoteSetGrant(path, password string) error {
 	info := protocols.WorkgroupInfo{
 		Path:     path,
 		Password: password,
@@ -197,10 +202,11 @@ func (wg workgroupClient) remoteSetGrant(path, password string) error {
 	if res.StatusCode == http.StatusOK {
 		return nil
 	}
-	return fmt.Errorf("status code: %d", res.StatusCode)
+	raw, _ := io.ReadAll(res.Body)
+	return fmt.Errorf("status code: %d. msg: %s", res.StatusCode, string(raw))
 }
 
-func (wg workgroupClient) remoteGetChildren(path string) (protocols.WorkgroupChildren, error) {
+func (wg *workgroupClient) remoteGetChildren(path string) (protocols.WorkgroupChildren, error) {
 	children := protocols.WorkgroupChildren{}
 	url := fmt.Sprintf("https://%s/%s%s?path=%s",
 		config.BrainAddr,
@@ -226,10 +232,10 @@ func (wg workgroupClient) remoteGetChildren(path string) (protocols.WorkgroupChi
 		}
 		return children, nil
 	}
-	return nil, fmt.Errorf("status code: %d", res.StatusCode)
+	return nil, fmt.Errorf("status code: %d. msg: %s", res.StatusCode, string(raw))
 }
 
-func (wg workgroupClient) remoteGetMembers(path string) (protocols.WorkgroupMembers, error) {
+func (wg *workgroupClient) remoteGetMembers(path string) (protocols.WorkgroupMembers, error) {
 	members := protocols.WorkgroupMembers{}
 	url := fmt.Sprintf("https://%s/%s%s?path=%s",
 		config.BrainAddr,
@@ -255,18 +261,18 @@ func (wg workgroupClient) remoteGetMembers(path string) (protocols.WorkgroupMemb
 		}
 		return members, nil
 	}
-	return nil, fmt.Errorf("status code: %d", res.StatusCode)
+	return nil, fmt.Errorf("status code: %d. msg: %s", res.StatusCode, string(raw))
 }
 
-func (wg workgroupClient) remoteAddMember(path string, names []string) error {
+func (wg *workgroupClient) remoteAddMember(path string, names []string) error {
 	return wg.remoteOperateMember(path, true, names)
 }
 
-func (wg workgroupClient) remoteRemoveMember(path string, names []string) error {
+func (wg *workgroupClient) remoteRemoveMember(path string, names []string) error {
 	return wg.remoteOperateMember(path, false, names)
 }
 
-func (wg workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
+func (wg *workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
 	params := protocols.WorkgroupMembersPostParams{
 		Path:    path,
 		IsAdd:   isAdd,
@@ -290,5 +296,6 @@ func (wg workgroupClient) remoteOperateMember(path string, isAdd bool, names []s
 	if res.StatusCode == http.StatusOK {
 		return nil
 	}
-	return fmt.Errorf("status code: %d", res.StatusCode)
+	raw, _ := io.ReadAll(res.Body)
+	return fmt.Errorf("status code: %d. msg: %s", res.StatusCode, string(raw))
 }

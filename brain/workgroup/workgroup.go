@@ -13,6 +13,13 @@ func Info(path string) (*protocols.WorkgroupInfo, error) {
 	// if not found : return nil, nil
 	// if access error: return nil, err
 	// else return : info, nil
+	if len(path) == 0 || path == "/" {
+		return &protocols.WorkgroupInfo{
+			Path: "",
+			Password: "admin123",
+		}, nil
+	}
+
 	passwd, found, err := rdb.GetString(infoKey(path))
 	if err != nil {
 		return nil, err
@@ -54,10 +61,15 @@ func Children(path string) (protocols.WorkgroupChildren, error) {
 }
 
 func addChild(parent string, path string) error {
+	fmt.Println("add children ", path, " to ", parent)
 	return rdb.AddSMembers(childrenKey(parent), path)
 }
 
 func removeChild(parent string, path string) error {
+	fmt.Println("call remove child: ", path)
+	if len(path) == 0 { // root never remove root self
+		return nil
+	}
 	cnt, err := rdb.RemoveSMembers(childrenKey(parent), path)
 	if err != nil {
 		return err
@@ -88,10 +100,11 @@ func removeChild(parent string, path string) error {
 
 func Members(path string) (protocols.WorkgroupMembers, error) {
 	// return array
+	fmt.Println("Members want get path ", path)
 	return rdb.GetSMembers(membersKey(path))
 }
 
-func AddMembers(parent, path string, names protocols.WorkgroupMembers) error {
+func AddMembers(parent, path string, names ...string) error {
 	// if not found: set
 	if info, err := Info(path); err != nil {
 		return err
@@ -106,10 +119,11 @@ func AddMembers(parent, path string, names protocols.WorkgroupMembers) error {
 			return err
 		}
 	} 
+	fmt.Println("AddMembers want add path ", path)
 	return rdb.AddSMembers(membersKey(path), names...)
 }
 
-func RemoveMembers(parent, path string, names protocols.WorkgroupMembers) error {
+func RemoveMembers(parent, path string, names ...string) error {
 	// if names is empry: delete all
 	// delete along the sub trees
 	if len(names) == 0 {
@@ -118,6 +132,7 @@ func RemoveMembers(parent, path string, names protocols.WorkgroupMembers) error 
 
 	// 1. delete names from path
 	deleteCnt, err := rdb.RemoveSMembers(membersKey(path), names...)
+	fmt.Println("remove return: ", deleteCnt, err)
 	if err != nil {
 		return err 
 	}
@@ -141,7 +156,7 @@ func RemoveMembers(parent, path string, names protocols.WorkgroupMembers) error 
 		return err 
 	}
 	for _, child := range children { // recursively delete
-		RemoveMembers(path, child, names)
+		RemoveMembers(path, child, names...)
 	}
 
 	return nil
@@ -192,7 +207,15 @@ func IsSameOrSubPath(subPath, path string) bool {
 
 func IsDirectSubPath(subPath, path string) bool {
 	// prevent end with //
-	return false
+	if !strings.HasPrefix(subPath, path) {
+		return false
+	}
+	if len(subPath) == len(path) {
+		return false
+	}
+	remain := subPath[len(path):]
+	parts := strings.Split(remain, "/")
+	return len(parts) == 2 && len(parts[0]) == 0 && len(parts[1]) > 0
 }
 
 func infoKey(key string) string {

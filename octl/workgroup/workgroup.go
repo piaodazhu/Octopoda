@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/spf13/viper"
 )
 
@@ -44,35 +45,70 @@ func SetHeader(req *http.Request) {
 
 func Cd(path string) error {
 	if err := wg.cd(path); err != nil {
+		output.PrintFatalln(err)
 		return err
 	}
 	conf.Set("current", wg.pwd())
 	if err := conf.WriteConfig(); err != nil {
+		output.PrintFatalln(err)
 		return err
 	}
 	return nil
 }
 
 func Ls(path string) ([]string, error) {
-	return wg.ls(path)
+	children, err := wg.ls(path)
+	if err != nil {
+		output.PrintFatalln(err)
+		return nil, err
+	}
+	output.PrintJSON(children)
+	return children, nil
 }
 
 func Pwd() string {
-	return wg.pwd()
+	res := wg.pwd()
+	if len(res) == 0 {
+		res = "/"
+	}
+	fmt.Println(res)
+	output.PrintJSON(res)
+	return res
 }
 
 func Get(path string) ([]string, error) {
-	return wg.get(path)
+	members, err := wg.get(path)
+	if err != nil {
+		output.PrintFatalln(err)
+		return nil, err
+	}
+	output.PrintJSON(members)
+	return members, nil
 }
 
 func AddMembers(path string, names ...string) error {
-	return wg.addMembers(path, names...)
+	err := wg.addMembers(path, names...)
+	if err != nil {
+		output.PrintFatalln(err)
+		return err
+	}
+	return nil
 }
 
 func RemoveMembers(path string, names ...string) error {
-	return wg.removeMembers(path, names...)
+	err := wg.removeMembers(path, names...)
+	if err != nil {
+		output.PrintFatalln(err)
+		return err
+	}
+	return nil
 }
 
 func Grant(path string, password string) error {
-	return wg.grant(path, password)
+	err := wg.grant(path, password)
+	if err != nil {
+		output.PrintFatalln(err)
+		return err
+	}
+	return nil
 }

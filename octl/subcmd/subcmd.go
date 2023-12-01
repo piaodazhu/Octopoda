@@ -10,6 +10,8 @@ func Execute(subcmd string, args []string) {
 		nodeCmd(args)
 	case "group":
 		groupCmd(args)
+	case "wg":
+		workgroupCmd(args)
 	case "cmd":
 		cmdCmd(args)
 	case "file":
