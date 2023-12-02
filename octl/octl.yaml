@@ -20,4 +20,7 @@ git:
   password: "testpass"
 jsonFast: true
 outputPretty: true
-workgroupConfigPath: "./workgroup.yaml"
+workgroup:
+  root: ""
+  password: "admin123"
+  currentPathFile: "./.curPath.yaml"

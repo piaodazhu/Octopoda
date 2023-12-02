@@ -55,7 +55,7 @@ func workgroupCmd(args []string) {
 		workgroup.Pwd()
 	case "cd":
 		if len(args) == 0 {
-			path = ""
+			path = "~"
 		} else if len(args) == 1 {
 			path = args[0]
 		} else {

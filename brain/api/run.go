@@ -13,6 +13,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/ostp"
 )
@@ -61,6 +62,12 @@ func RunScript(ctx *gin.Context) {
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "ERROR: targetNodes"
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
@@ -132,6 +139,12 @@ func RunCmd(ctx *gin.Context) {
 		return
 	}
 
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
 	cParams := protocols.CommandParams{
 		Command:    cmd,
 		Background: isbg,
@@ -173,7 +186,7 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 		rstr = "deployApp"
 	} else if rtype == protocols.TypeAppCommit {
 		rstr = "commitApp"
-	}else {
+	} else {
 		logger.Comm.Println("unsupported rtype in runAndWait: ", rtype)
 		result.Code = protocols.ExecCommunicationError
 		result.CommunicationErrorMsg = "unsupported rtype"

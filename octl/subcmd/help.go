@@ -19,6 +19,14 @@ Node:get:octl node get [-sf <statefilter>] [[ALL] | <node1> <@group1> ...]:octl 
 Node:prune:octl node prune [ALL | <node1> <@group1> ...]:octl node prune @mygroup
 Node:status:octl node status [[ALL] | <node1> <@group1> ...]:octl node status pi0 pi1
 
+Workgroup:pwd:octl wg pwd:octl wg pwd
+Workgroup:cd:octl wg cd [<grouppath>]:octl wg cd mygroup
+Workgroup:ls:octl wg ls [<grouppath>]:octl wg ls .
+Workgroup:grant:octl wg grant <grouppath> <password>:octl wg grant subgroup 123456
+Workgroup:get:octl wg get [<grouppath>]:octl wg get mygroup
+Workgroup:add:octl wg add <grouppath> <node1> @<node1>:octl wg add g1 pi1 pi2
+Workgroup:rm:octl wg rm <grouppath> <node1> @<node1>:octl wg rm g1 pi1
+
 Group:get:octl group get [[ALL] | <group>]:octl group get mygroup
 Group:set:octl group set <group> [-n] [<node1> ...] [<@group1> ...]:octl group set mygroup pi0 pi2
 Group:del:octl group del <group>:octl group del mygroup

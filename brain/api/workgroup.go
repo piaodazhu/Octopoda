@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -95,7 +94,6 @@ func WorkgroupMembers(ctx *gin.Context) {
 		ctx.String(http.StatusNotFound, "path not exist")
 		return
 	}
-	fmt.Println("tag1")
 
 	members, err := workgroup.Members(path)
 	if err != nil {
@@ -115,10 +113,9 @@ func WorkgroupMembersOperation(ctx *gin.Context) {
 
 	params.Path = trimPath(params.Path)
 	rootPath := trimPath(ctx.GetHeader("rootpath"))
-	fmt.Println("+", params.Path, "-", rootPath)
 	if len(params.Path) == 0 && len(rootPath) == 0 {
 		sudoWorkgroupMembersOperation(ctx, params)
-		return 
+		return
 	}
 	if !workgroup.IsDirectSubPath(params.Path, rootPath) {
 		ctx.String(http.StatusUnauthorized, "target path is not directly under rootpath")

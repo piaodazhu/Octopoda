@@ -10,6 +10,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -21,6 +22,11 @@ type proxyMsg struct {
 
 func SshLoginInfo(ctx *gin.Context) {
 	name := ctx.Query("name")
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, struct{}{})
+		return
+	}
+
 	if info, found := network.GetSshInfo(name); found {
 		ctx.JSON(http.StatusOK, info)
 		return
@@ -40,6 +46,16 @@ func SshRegister(ctx *gin.Context) {
 		})
 		return
 	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, proxyMsg{
+			Code: -1,
+			Msg:  "ERR",
+			Data: "some nodes are invalid or out of scope",
+		})
+		return
+	}
+
 	services, err := network.ProxyServices()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, proxyMsg{
@@ -69,6 +85,15 @@ func SshRegister(ctx *gin.Context) {
 
 func SshUnregister(ctx *gin.Context) {
 	name := ctx.Query("name")
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, proxyMsg{
+			Code: -1,
+			Msg:  "ERR",
+			Data: "some nodes are invalid or out of scope",
+		})
+		return
+	}
+
 	if proxyCmd(ctx, name, protocols.TypeSshUnregister) { // 成功就删除
 		network.DelSshInfo(name)
 	}

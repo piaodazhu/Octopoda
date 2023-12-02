@@ -162,33 +162,32 @@ func AutoFix() {
 	// 10s to wait active nodes connect to brain
 	time.Sleep(10 * time.Second)
 
+	scenList := []string{}
+
+	ScenLock.RLock()
 	for name := range ScenarioMap {
 		if err := Fix(name); err != nil {
-			logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+			scenList = append(scenList, name)
 		}
 	}
+	ScenLock.RUnlock()
 
-	for {
-		namelist := []string{}
-		ScenLock.RLock()
-		for name := range ScenarioMap {
-			namelist = append(namelist, name)
-		}
-		ScenLock.RUnlock()
-
-		for _, name := range namelist {
+	for len(scenList) > 0 {
+		unfixed := []string{}
+		logger.SysInfo.Printf("Scenarios to be fixed: %v", scenList)
+		for _, name := range scenList {
 			// each 30s, check a scenario
 			time.Sleep(30 * time.Second)
-
 			// fix failed is allowed. Because scenarios are dynamically changing.
 			if err := Fix(name); err != nil {
-				logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+				unfixed = append(unfixed, name)
 			}
 		}
-
+		scenList = unfixed
 		// sleep 1min then start next roll fix
 		time.Sleep(60 * time.Second)
 	}
+	logger.SysInfo.Println("All scenarios are fixed.")
 }
 
 func saveNoLock() {

@@ -15,6 +15,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -359,6 +360,12 @@ func FileDistrib(ctx *gin.Context) {
 		return
 	}
 
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
 	multipart, err := packfiles.Open()
 	if err != nil {
 		rmsg.Rmsg = "Open:" + err.Error()
@@ -421,6 +428,12 @@ func FilePull(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
 	fileOrDir, ok := ctx.GetQuery("fileOrDir")
 	if !ok {
 		rmsg.Rmsg = "Lack fileOrDir"

@@ -189,6 +189,7 @@ func WorkgroupAuth() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} 
+		fmt.Printf("%s, %s\n", rootpath, currentPath)
 
 		info, err := workgroup.Info(rootpath)
 		if err != nil {

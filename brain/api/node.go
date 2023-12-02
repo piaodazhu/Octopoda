@@ -2,7 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,8 +14,8 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/brain/network"
-	"github.com/piaodazhu/Octopoda/brain/rdb"
 	"github.com/piaodazhu/Octopoda/brain/sys"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
@@ -42,6 +45,12 @@ func NodesInfo(ctx *gin.Context) {
 		return
 	}
 
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), names...) {
+		emsg := "some nodes are invalid or out of scope"
+		ctx.JSON(http.StatusBadRequest, errors.New(emsg))
+		return
+	}
+
 	octlFaceIp, _ := network.GetOctlFaceIp()
 	nodes := protocols.NodesInfo{
 		BrainName:    config.GlobalConfig.Name,
@@ -50,16 +59,9 @@ func NodesInfo(ctx *gin.Context) {
 	}
 	var ok bool
 
-	if len(names) == 0 {
-		if nodes.InfoList, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(http.StatusOK, struct{}{})
-			return
-		}
-	} else {
-		if nodes.InfoList, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(http.StatusOK, struct{}{})
-			return
-		}
+	if nodes.InfoList, ok = model.GetNodesInfo(names); !ok {
+		ctx.JSON(http.StatusOK, struct{}{})
+		return
 	}
 
 	currTs := time.Now().Unix()
@@ -115,15 +117,14 @@ func NodesState(ctx *gin.Context) {
 		return
 	}
 
-	if len(names) == 0 {
-		if nodes, ok = model.GetNodesInfoAll(); !ok {
-			ctx.JSON(http.StatusNotFound, struct{}{})
-		}
-	} else {
-		if nodes, ok = model.GetNodesInfo(names); !ok {
-			ctx.JSON(http.StatusNotFound, struct{}{})
-			return
-		}
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), names...) {
+		emsg := "ERROR: some nodes are invalid or out of scope."
+		ctx.String(http.StatusBadRequest, emsg)
+		return
+	}
+	if nodes, ok = model.GetNodesInfo(names); !ok {
+		ctx.JSON(http.StatusNotFound, struct{}{})
+		return
 	}
 
 	for _, n := range nodes {
@@ -177,6 +178,11 @@ func NodePrune(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), names...) {
+		emsg := "some nodes are invalid or out of scope"
+		ctx.JSON(http.StatusBadRequest, errors.New(emsg))
+		return
+	}
 
 	model.PruneDeadNode(names)
 	ctx.Status(200)
@@ -189,6 +195,10 @@ func NodesParse(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
+	if len(names) == 0 {
+		names = append(names, "@")
+	}
+
 	nodeSet := map[string]struct{}{}
 	invalidNameSet := map[string]struct{}{}
 	unhealthyNodeSet := map[string]struct{}{}
@@ -196,23 +206,32 @@ func NodesParse(ctx *gin.Context) {
 	nodeNames := []string{}
 
 	// first loop: only process group names
+	currentPath := ctx.GetHeader("currentpath")
+	currentPath = strings.TrimSuffix(currentPath, "/")
 	for _, name := range names {
 		if len(name) == 0 {
 			continue
 		}
 		if name[0] == '@' { // group name
-			res, ok := rdb.GroupGet(name[1:])
-			if !ok || len(res) == 0 {
+			groupName := name[1:]
+			groupPath := fmt.Sprintf("%s/%s", currentPath, groupName)
+			if groupName == "" || groupName == "ALL" || groupName == "all" {
+				groupPath = currentPath
+			}
+
+			members, err := workgroup.Members(groupPath)
+			if err != nil {
 				invalidNameSet[name] = struct{}{}
 				continue
 			}
-			nodeNames = append(nodeNames, res...)
+			nodeNames = append(nodeNames, members...)
 		} else {
 			nodeNames = append(nodeNames, name)
 		}
 	}
 
 	// second loop: get rid of duplicate
+	scope := ctx.GetStringMapString("octopoda_scope")
 	for _, name := range nodeNames {
 		if len(name) == 0 {
 			continue
@@ -221,9 +240,14 @@ func NodesParse(ctx *gin.Context) {
 			continue
 		}
 
+		if !workgroup.IsInScope(scope, name) {
+			invalidNameSet[name] = struct{}{}
+			continue
+		}
+
 		state, ok := model.GetNodeState(name)
 		if !ok {
-			invalidNameSet[name] = struct{}{}
+			unhealthyNodeSet[name] = struct{}{}
 			continue
 		}
 

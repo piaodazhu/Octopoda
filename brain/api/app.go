@@ -9,6 +9,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -61,7 +62,13 @@ func AppPrepare(ctx *gin.Context) {
 	nodes := []string{}
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Rmsg = "targetNodes:" + err.Error()
+		rmsg.Rmsg = "ERROR: unmarshal targetNodes:" + err.Error()
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}

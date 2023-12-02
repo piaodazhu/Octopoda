@@ -24,6 +24,13 @@ type workgroupClient struct {
 }
 
 func newWorkgroupClient(rootGroup, passwd, currentGroup string, client *http.Client) workgroupClient {
+	rootGroup = filepath.Clean(rootGroup)
+	if rootGroup == "." {
+		rootGroup = ""
+	}
+	if !strings.HasPrefix(rootGroup, "/") {
+		rootGroup = "/" + rootGroup
+	}
 	return workgroupClient{
 		rootPath:    strings.TrimSuffix(rootGroup, "/"),
 		password:    passwd,
@@ -53,20 +60,18 @@ func (wg *workgroupClient) grant(groupPath string, password string) error {
 	return nil
 }
 
-func (wg *workgroupClient) valid() bool {
-	return wg.isSubPath(wg.currentPath, wg.rootPath)
-}
-
 func (wg *workgroupClient) cd(groupPath string) error {
-	groupPath = wg.fixPath(groupPath)
-	if !wg.isSubPath(groupPath, wg.rootPath) {
-		return fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
+	if groupPath == "~" {
+		groupPath = wg.rootPath
+	} else {
+		groupPath = wg.fixPath(groupPath)
+		if !wg.isSubPath(groupPath, wg.rootPath) {
+			return fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
+		}
 	}
-	fmt.Println("want cd to ", groupPath)
 	if _, err := wg.remoteGetInfo(groupPath); err != nil {
 		return err
 	}
-	fmt.Println("ok, cd to ", groupPath)
 	wg.currentPath = groupPath
 	return nil
 }
@@ -79,12 +84,34 @@ func (wg *workgroupClient) ls(groupPath string) ([]string, error) {
 	if children, err := wg.remoteGetChildren(groupPath); err != nil {
 		return nil, err
 	} else {
-		return children, nil
+		res := make([]string, len(children))
+		for i := range children {
+			res[i] = strings.TrimPrefix(children[i], groupPath + "/")
+		}
+		return res, nil
 	}
 }
 
 func (wg *workgroupClient) pwd() string {
+	if wg.currentPath == "" {
+		return "/"
+	}
 	return wg.currentPath
+}
+
+func (wg *workgroupClient) root() string {
+	if wg.rootPath == "" {
+		return "/"
+	}
+	return wg.rootPath
+}
+
+func (wg *workgroupClient) valid() bool {
+	return wg.isSubPath(wg.currentPath, wg.rootPath)
+}
+
+func (wg *workgroupClient) toRoot() {
+	wg.currentPath = wg.rootPath
 }
 
 func (wg *workgroupClient) get(groupPath string) ([]string, error) {
@@ -108,7 +135,6 @@ func (wg *workgroupClient) addMembers(groupPath string, names ...string) error {
 		return fmt.Errorf("root workgroup is %s, cannot access %s", wg.rootPath, groupPath)
 	}
 
-	fmt.Println("want add members to ", groupPath)
 	if err := wg.remoteAddMember(groupPath, names); err != nil {
 		return err
 	}
@@ -128,10 +154,17 @@ func (wg *workgroupClient) removeMembers(groupPath string, names ...string) erro
 }
 
 func (wg *workgroupClient) fixPath(path string) string {
+	var fixed string
 	if strings.HasPrefix(path, "/") {
-		return filepath.Clean(path)
+		fixed = filepath.Clean(path)
+	} else {
+		fixed = filepath.Clean(wg.currentPath + "/" + path)
 	}
-	return filepath.Clean(wg.currentPath + "/" + path)
+	
+	if fixed == "/" {
+		return ""
+	}
+	return fixed
 }
 
 func (wg *workgroupClient) isSubPath(subPath, path string) bool {

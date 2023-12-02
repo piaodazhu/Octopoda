@@ -61,12 +61,10 @@ func Children(path string) (protocols.WorkgroupChildren, error) {
 }
 
 func addChild(parent string, path string) error {
-	fmt.Println("add children ", path, " to ", parent)
 	return rdb.AddSMembers(childrenKey(parent), path)
 }
 
 func removeChild(parent string, path string) error {
-	fmt.Println("call remove child: ", path)
 	if len(path) == 0 { // root never remove root self
 		return nil
 	}
@@ -100,7 +98,6 @@ func removeChild(parent string, path string) error {
 
 func Members(path string) (protocols.WorkgroupMembers, error) {
 	// return array
-	fmt.Println("Members want get path ", path)
 	return rdb.GetSMembers(membersKey(path))
 }
 
@@ -119,11 +116,11 @@ func AddMembers(parent, path string, names ...string) error {
 			return err
 		}
 	} 
-	fmt.Println("AddMembers want add path ", path)
 	return rdb.AddSMembers(membersKey(path), names...)
 }
 
 func RemoveMembers(parent, path string, names ...string) error {
+	// fmt.Printf("delete %v from %s under %s\n", names, path, parent)
 	// if names is empry: delete all
 	// delete along the sub trees
 	if len(names) == 0 {
@@ -132,7 +129,6 @@ func RemoveMembers(parent, path string, names ...string) error {
 
 	// 1. delete names from path
 	deleteCnt, err := rdb.RemoveSMembers(membersKey(path), names...)
-	fmt.Println("remove return: ", deleteCnt, err)
 	if err != nil {
 		return err 
 	}

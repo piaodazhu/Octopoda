@@ -2,9 +2,9 @@ package workgroup
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
+	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/spf13/viper"
 )
@@ -12,26 +12,35 @@ import (
 var wg workgroupClient
 var conf *viper.Viper
 
-func InitWorkgroup(configPath string, client *http.Client) error {
-	conf = viper.New()
-	conf.SetConfigFile(configPath)
-	if err := conf.ReadInConfig(); err != nil {
-		fmt.Println(configPath)
-		return errors.New("cannot read config: " + err.Error())
-	}
-	root := conf.GetString("root")
-	current := conf.GetString("current")
-	password := conf.GetString("password")
+func InitWorkgroup(client *http.Client) error {
+	curPathFile := config.GlobalConfig.Workgroup.CurrentPathFile
+	root := config.GlobalConfig.Workgroup.Root
+	password := config.GlobalConfig.Workgroup.Password
 
+	conf = viper.New()
+	conf.SetConfigFile(curPathFile)
+	if err := conf.ReadInConfig(); err != nil {
+		conf.Set("current", root)
+		if err := conf.WriteConfig(); err != nil {
+			return errors.New("cannot create config: " + err.Error())
+		}
+	}
+
+	current := conf.GetString("current")
 	wg = newWorkgroupClient(root, password, current, client)
+	if !wg.valid() {
+		wg.toRoot()
+		conf.Set("current", wg.pwd())
+		if err := conf.WriteConfig(); err != nil {
+			output.PrintFatalln(err)
+			return errors.New("cannot switch to root path: " + err.Error())
+		}
+	}
 
 	if err := wg.auth(); err != nil {
 		return errors.New("cannot auth rootgroup: " + err.Error())
 	}
-
-	if !wg.valid() {
-		return errors.New("current path is invalid")
-	}
+	output.PrintInfof("root workgroup=%s, current workgroup path=%s", wg.root(), wg.pwd())
 
 	return nil
 }
@@ -71,8 +80,7 @@ func Pwd() string {
 	if len(res) == 0 {
 		res = "/"
 	}
-	fmt.Println(res)
-	output.PrintJSON(res)
+	output.PrintString(res)
 	return res
 }
 

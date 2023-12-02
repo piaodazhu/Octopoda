@@ -8,6 +8,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -21,6 +22,11 @@ func NodeAppsInfo(ctx *gin.Context) {
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack node name"
 		ctx.JSON(http.StatusNotFound, rmsg)
+		return
+	}
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 

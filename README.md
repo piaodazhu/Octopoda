@@ -155,7 +155,6 @@ sudo cp octl /usr/local/bin/
 
 # 7 Hello World
 $ octl node get
-# Info: NameService client is enabled. nsAddr=10.108.30.85:3455
 # {
 #   "nodes": [
 #     {

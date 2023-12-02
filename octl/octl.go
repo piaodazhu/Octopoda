@@ -68,7 +68,7 @@ func main() {
 		output.PrintFatalf("cannot init http nameclient: %s\n", err.Error())
 	}
 
-	if err := workgroup.InitWorkgroup(config.GlobalConfig.WorkgroupConfigPath, httpclient.BrainClient); err != nil {
+	if err := workgroup.InitWorkgroup(httpclient.BrainClient); err != nil {
 		output.PrintFatalf("cannot init workgroup: %s\n", err.Error())
 	}
 
