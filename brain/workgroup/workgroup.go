@@ -141,7 +141,7 @@ func RemoveMembers(parent, path string, names ...string) error {
 	if err != nil {
 		return err 
 	}
-	if cnt == 0 {
+	if cnt == 0 && path != "" { // path == "" means current is root
 		// path has no members. remove all of it
 		return removeChild(parent, path)
 	}

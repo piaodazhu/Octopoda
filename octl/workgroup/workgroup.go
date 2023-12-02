@@ -100,6 +100,7 @@ func AddMembers(path string, names ...string) error {
 		output.PrintFatalln(err)
 		return err
 	}
+	output.PrintInfoln("OK")
 	return nil
 }
 
@@ -109,6 +110,7 @@ func RemoveMembers(path string, names ...string) error {
 		output.PrintFatalln(err)
 		return err
 	}
+	output.PrintInfoln("OK")
 	return nil
 }
 
@@ -118,5 +120,6 @@ func Grant(path string, password string) error {
 		output.PrintFatalln(err)
 		return err
 	}
+	output.PrintInfoln("OK")
 	return nil
 }
