@@ -21,6 +21,6 @@ git:
 jsonFast: true
 outputPretty: true
 workgroup:
-  root: ""
-  password: "admin123"
+  root: "smallgroup"
+  password: "passwd"
   currentPathFile: "./.curPath.yaml"

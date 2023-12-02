@@ -15,7 +15,6 @@ import (
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
-	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/octl/workgroup"
@@ -68,7 +67,7 @@ func Run(runtask string, params []string) ([]protocols.ExecutionResults, *errs.O
 }
 
 func runTask(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -121,7 +120,7 @@ func XRunScript(cmd string, shouldAlign bool, delayExec int, names []string) ([]
 }
 
 func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -183,7 +182,7 @@ func runScript(runtask string, names []string, delay int, align bool) ([]protoco
 }
 
 func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)

@@ -114,7 +114,7 @@ func GroupDel(name string) *errs.OctlError {
 }
 
 func GroupSet(name string, nocheck bool, names []string) *errs.OctlError {
-	nodes, err := NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse: " + err.Error()
 		output.PrintFatalln(emsg)

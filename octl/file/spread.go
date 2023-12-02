@@ -8,7 +8,6 @@ import (
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
-	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
 	"github.com/piaodazhu/Octopoda/octl/workgroup"
@@ -17,7 +16,7 @@ import (
 )
 
 func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)

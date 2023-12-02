@@ -104,11 +104,15 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 		}
 	}
 
-	nodes, err := NodesParse(names_filtered)
-	if err != nil {
-		emsg := "node parse error: " + err.Error()
-		output.PrintFatalln(emsg)
-		return "", errs.New(errs.OctlNodeParseError, emsg)
+	var nodes []string
+	var err error
+	if len(names_filtered) != 0 {
+		nodes, err = workgroup.NodesParse(names_filtered)
+		if err != nil {
+			emsg := "node parse error: " + err.Error()
+			output.PrintFatalln(emsg)
+			return "", errs.New(errs.OctlNodeParseError, emsg)
+		}
 	}
 
 	if hasBrain {

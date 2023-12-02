@@ -1,9 +1,7 @@
 package node
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,7 +51,7 @@ func NodeInfo(name string) (*protocols.NodeInfo, *errs.OctlError) {
 }
 
 func NodesInfo(names []string) (*protocols.NodesInfo, *errs.OctlError) {
-	nodes, err := NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse." + err.Error()
 		output.PrintFatalln(emsg)
@@ -130,7 +128,7 @@ func filterMatch(value, target string) bool {
 }
 
 func NodesPrune(names []string) *errs.OctlError {
-	nodes, err := NodesParseNoCheck(names)
+	nodes, err := workgroup.NodesParseNoCheck(names)
 	if err != nil {
 		emsg := "node parse." + err.Error()
 		output.PrintFatalln(emsg)
@@ -153,58 +151,4 @@ func NodesPrune(names []string) *errs.OctlError {
 	}
 	res.Body.Close()
 	return nil
-}
-
-func NodesParse(names []string) ([]string, error) {
-	result, err := nodesParse(names)
-	if err != nil {
-		return nil, err
-	}
-	if len(result.InvalidNames) != 0 {
-		return nil, fmt.Errorf("node parse return invalid names: %v", result.InvalidNames)
-	}
-	if len(result.UnhealthyNodes) != 0 {
-		return nil, fmt.Errorf("node parse return unhealthy nodes: %v", result.UnhealthyNodes)
-	}
-	return result.OutputNames, nil
-}
-
-func NodesParseNoCheck(names []string) ([]string, error) {
-	result, err := nodesParse(names)
-	if err != nil {
-		return nil, err
-	}
-	return result.OutputNames, nil
-}
-
-func nodesParse(names []string) (protocols.NodeParseResult, error) {
-	body, _ := json.Marshal(names)
-	result := protocols.NodeParseResult{}
-
-	url := fmt.Sprintf("https://%s/%s%s",
-		config.BrainAddr,
-		config.GlobalConfig.Brain.ApiPrefix,
-		config.API_NodesParse,
-	)
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	workgroup.SetHeader(req)
-	req.Header.Set("Content-Type", "application/json")
-	res, err := httpclient.BrainClient.Do(req)
-	if err != nil {
-		output.PrintFatalln("nodeparse post")
-		return result, err
-	}
-	defer res.Body.Close()
-
-	raw, _ := io.ReadAll(res.Body)
-	if res.StatusCode == http.StatusOK {
-		err := json.Unmarshal(raw, &result)
-		if err != nil {
-			output.PrintFatalln(err)
-			return result, err
-		}
-		return result, nil
-	} else {
-		return result, errors.New(string(raw))
-	}
 }

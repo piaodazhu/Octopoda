@@ -86,7 +86,7 @@ func (wg *workgroupClient) ls(groupPath string) ([]string, error) {
 	} else {
 		res := make([]string, len(children))
 		for i := range children {
-			res[i] = strings.TrimPrefix(children[i], groupPath + "/")
+			res[i] = strings.TrimPrefix(children[i], groupPath+"/")
 		}
 		return res, nil
 	}
@@ -160,7 +160,7 @@ func (wg *workgroupClient) fixPath(path string) string {
 	} else {
 		fixed = filepath.Clean(wg.currentPath + "/" + path)
 	}
-	
+
 	if fixed == "/" {
 		return ""
 	}
@@ -306,6 +306,10 @@ func (wg *workgroupClient) remoteRemoveMember(path string, names []string) error
 }
 
 func (wg *workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
+	var err error
+	if names, err = NodesParseNoCheck(names); err != nil {
+		return err
+	}
 	params := protocols.WorkgroupMembersPostParams{
 		Path:    path,
 		IsAdd:   isAdd,
