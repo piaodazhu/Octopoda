@@ -10,7 +10,6 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
-	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -25,11 +24,7 @@ func ScenarioCreate(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
+
 	if !model.AddScenario(name, description) {
 		rmsg.Rmsg = "ERROR: Scenario Exists"
 		ctx.JSON(http.StatusNotFound, rmsg)
@@ -49,11 +44,7 @@ func ScenarioUpdate(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
+
 	modified, ok := model.UpdateScenario(name, msg)
 	if !ok {
 		rmsg.Rmsg = "ERROR: UpdateScenario"
@@ -77,12 +68,6 @@ func ScenarioDelete(ctx *gin.Context) {
 	}
 	if len(name) == 0 {
 		rmsg.Rmsg = "Lack scenario name"
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
-
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
@@ -164,12 +149,6 @@ func ScenarioInfo(ctx *gin.Context) {
 		return
 	}
 
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
-
 	if scen, ok = model.GetScenarioInfoByName(name); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
 		ctx.JSON(http.StatusNotFound, rmsg)
@@ -205,12 +184,6 @@ func ScenarioVersion(ctx *gin.Context) {
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack Name"
 		ctx.JSON(http.StatusNotFound, rmsg)
-		return
-	}
-
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
-		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 
@@ -271,12 +244,6 @@ func ScenarioReset(ctx *gin.Context) {
 
 	if len(name) == 0 || len(msg) == 0 || len(prefix) < 2 || len(prefix) > 40 {
 		rmsg.Rmsg = "ERROR: Wrong Args. (should specific name and prefix. prefix length should be in [2, 40])"
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
-
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
@@ -385,12 +352,6 @@ func ScenarioFix(ctx *gin.Context) {
 	if name, ok = ctx.GetQuery("name"); !ok {
 		rmsg.Rmsg = "Lack scenario name"
 		ctx.JSON(http.StatusNotFound, rmsg)
-		return
-	}
-
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
-		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
 

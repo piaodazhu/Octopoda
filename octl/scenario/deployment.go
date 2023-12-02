@@ -731,7 +731,7 @@ func ScenarioCommit(ctx context.Context, configuration *ScenarioConfigModel, mes
 
 func ScenarioCreate(ctx context.Context, name, description string) ([]string, *errs.OctlError) {
 	var logList []string
-	output.PrintInfoln(">> create scenario", name)
+	output.PrintInfoln(">> create scenario ", name)
 	url := fmt.Sprintf("https://%s/%s%s",
 		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
