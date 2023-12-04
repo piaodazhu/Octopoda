@@ -2,6 +2,8 @@ package workgroup
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/output"
@@ -21,6 +23,7 @@ func InitWorkgroup(client *http.Client) *errs.OctlError {
 	conf.SetConfigFile(curPathFile)
 	if err := conf.ReadInConfig(); err != nil {
 		conf.Set("current", root)
+		os.MkdirAll(filepath.Dir(curPathFile), os.ModePerm)
 		if err := conf.WriteConfig(); err != nil {
 			emsg := "cannot create config: " + err.Error()
 			return errs.New(errs.OctlWriteConfigError, emsg)
