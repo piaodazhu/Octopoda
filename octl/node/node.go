@@ -51,7 +51,7 @@ func NodeInfo(name string) (*protocols.NodeInfo, *errs.OctlError) {
 }
 
 func NodesInfo(names []string) (*protocols.NodesInfo, *errs.OctlError) {
-	nodes, err := workgroup.NodesParse(names)
+	nodes, err := workgroup.NodesParseNoCheck(names)
 	if err != nil {
 		emsg := "node parse." + err.Error()
 		output.PrintFatalln(emsg)
