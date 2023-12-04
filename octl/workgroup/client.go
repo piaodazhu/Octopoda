@@ -298,18 +298,22 @@ func (wg *workgroupClient) remoteGetMembers(path string) (protocols.WorkgroupMem
 }
 
 func (wg *workgroupClient) remoteAddMember(path string, names []string) error {
+	var err error
+	if names, err = NodesParse(names); err != nil {
+		return err
+	}
 	return wg.remoteOperateMember(path, true, names)
 }
 
 func (wg *workgroupClient) remoteRemoveMember(path string, names []string) error {
-	return wg.remoteOperateMember(path, false, names)
-}
-
-func (wg *workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
 	var err error
 	if names, err = NodesParseNoCheck(names); err != nil {
 		return err
 	}
+	return wg.remoteOperateMember(path, false, names)
+}
+
+func (wg *workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
 	params := protocols.WorkgroupMembersPostParams{
 		Path:    path,
 		IsAdd:   isAdd,

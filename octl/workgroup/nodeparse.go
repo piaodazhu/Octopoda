@@ -33,7 +33,7 @@ func NodesParseNoCheck(names []string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.OutputNames, nil
+	return append(result.OutputNames, result.UnhealthyNodes...) , nil
 }
 
 func nodesParse(names []string) (protocols.NodeParseResult, error) {
