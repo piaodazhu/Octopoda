@@ -6,6 +6,7 @@ const (
 	API_NodeLog        = "/node/log"
 	API_NodePrune      = "/node/prune"
 	API_NodeApps       = "/node/apps"
+	API_NodeAppInfo    = "/node/app/info"
 	API_NodeAppVersion = "/node/app/version"
 	API_NodeAppReset   = "/node/app/version"
 
@@ -19,6 +20,7 @@ const (
 	API_ScenarioFix       = "/scenario/fix"
 	API_ScenarioAppDeploy = "/scenario/app/deployment"
 	API_ScenarioAppCreate = "/scenario/app/prepare"
+	API_ScenarioAppCommit = "/scenario/app/commit"
 
 	API_ScenariosInfo = "/scenarios/info"
 
@@ -40,4 +42,10 @@ const (
 
 	API_Group  = "/group"
 	API_Groups = "/groups"
+
+	API_WorkgroupInfo = "/workgroup/info"
+	API_WorkgroupMembers = "/workgroup/members"
+	API_WorkgroupChildren = "/workgroup/children"
 )
+
+var BrainAddr string

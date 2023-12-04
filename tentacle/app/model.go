@@ -204,12 +204,11 @@ func Digest() []byte {
 	return serialized
 }
 
-func Versions(appname, scenario string) []byte {
+func AppInfo(appname, scenario string) []byte {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	idx := -1
-	serialized := []byte{}
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
 			idx = i
@@ -217,10 +216,53 @@ func Versions(appname, scenario string) []byte {
 		}
 	}
 
-	if idx >= 0 {
-		serialized, _ = config.Jsoner.Marshal(&nodeApps.Apps[idx])
+	if idx == -1 {
+		return []byte("{}")
 	}
+	app := nodeApps.Apps[idx]
+	versions := app.Versions
+	app.Versions = nil
+	for i := len(versions) - 1; i >= 0 && i >= len(versions)-3; i-- {
+		app.Versions = append(app.Versions, versions[i])
+	}
+	serialized, _ := config.Jsoner.Marshal(app)
 	return serialized
+}
+
+func Versions(appname, scenario string, offset, limit int) []Version {
+	name := appname + "@" + scenario
+	nLock.Lock()
+	defer nLock.Unlock()
+	idx := -1
+	vlist := []Version{}
+	for i := range nodeApps.Apps {
+		if nodeApps.Apps[i].Name == name {
+			idx = i
+			break
+		}
+	}
+
+	if idx == -1 {
+		return vlist
+	}
+
+	allVersions := nodeApps.Apps[idx].Versions
+	if len(allVersions) <= offset {
+		return vlist
+	}
+	end := offset + limit
+	if len(allVersions) < end {
+		end = len(allVersions)
+	}
+
+	// reverse list
+	offset = len(allVersions) - 1 - offset
+	end = len(allVersions) - 1 - end
+	for i := offset; i > end; i-- {
+		vlist = append(vlist, allVersions[i])
+	}
+
+	return vlist
 }
 
 func CurVersion(appname, scenario string) Version {

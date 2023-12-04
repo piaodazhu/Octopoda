@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -23,12 +24,13 @@ func ScenarioCreate(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+
 	if !model.AddScenario(name, description) {
 		rmsg.Rmsg = "ERROR: Scenario Exists"
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }
 
 func ScenarioUpdate(ctx *gin.Context) {
@@ -42,6 +44,7 @@ func ScenarioUpdate(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+
 	modified, ok := model.UpdateScenario(name, msg)
 	if !ok {
 		rmsg.Rmsg = "ERROR: UpdateScenario"
@@ -49,7 +52,7 @@ func ScenarioUpdate(ctx *gin.Context) {
 		return
 	}
 	rmsg.Modified = modified
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }
 
 type AppDeleteParams struct {
@@ -102,7 +105,7 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	// finally delete this scenario locallly
 	model.DelScenario(name)
-	ctx.JSON(200, results)
+	ctx.JSON(http.StatusOK, results)
 }
 
 func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
@@ -145,12 +148,13 @@ func ScenarioInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
+
 	if scen, ok = model.GetScenarioInfoByName(name); !ok {
 		rmsg.Rmsg = "Error: GetScenarioInfoByName"
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, scen)
+	ctx.JSON(http.StatusOK, scen)
 }
 
 func ScenariosInfo(ctx *gin.Context) {
@@ -165,13 +169,14 @@ func ScenariosInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.JSON(200, scens)
+	ctx.JSON(http.StatusOK, scens)
 }
 
 func ScenarioVersion(ctx *gin.Context) {
-	var versions []model.BasicVersionModel
-	var name string
+	var vlist []model.BasicVersionModel
+	var name, offsetStr, limitStr string
 	var ok bool
+	var err error
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -181,8 +186,46 @@ func ScenarioVersion(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	versions = model.GetScenarioVersionByName(name)
-	ctx.JSON(200, versions)
+
+	offset := 0
+	limit := 5
+
+	offsetStr = ctx.Query("offset")
+	if len(offsetStr) != 0 {
+		if offset, err = strconv.Atoi(offsetStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: offset=" + offsetStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	limitStr = ctx.Query("limit")
+	if len(limitStr) != 0 {
+		if limit, err = strconv.Atoi(limitStr); err != nil {
+			rmsg.Rmsg = "ERROR: Wrong Args: limit=" + limitStr
+			ctx.JSON(http.StatusBadRequest, rmsg)
+			return
+		}
+	}
+
+	allVersions := model.GetScenarioVersionByName(name)
+	if len(allVersions) <= offset {
+		ctx.JSON(http.StatusOK, vlist)
+		return
+	}
+	end := offset + limit
+	if len(allVersions) < end {
+		end = len(allVersions)
+	}
+
+	// reverse list
+	offset = len(allVersions) - 1 - offset
+	end = len(allVersions) - 1 - end
+	for i := offset; i > end; i-- {
+		vlist = append(vlist, allVersions[i])
+	}
+
+	ctx.JSON(http.StatusOK, vlist)
 }
 
 type AppResetParams struct {
@@ -272,7 +315,7 @@ func ScenarioReset(ctx *gin.Context) {
 
 	// finally reset this scenario locallly
 	model.ResetScenario(name, version, msg)
-	ctx.JSON(200, results)
+	ctx.JSON(http.StatusOK, results)
 }
 
 func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
@@ -311,10 +354,11 @@ func ScenarioFix(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
+
 	err := model.Fix(name)
 	if err != nil {
 		rmsg.Rmsg = "Fix:" + err.Error()
 		ctx.JSON(http.StatusBadRequest, rmsg)
 	}
-	ctx.JSON(200, rmsg)
+	ctx.JSON(http.StatusOK, rmsg)
 }

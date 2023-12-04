@@ -9,6 +9,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -17,6 +18,12 @@ type AppBasic struct {
 	Scenario    string
 	Description string
 	Message     string
+}
+
+type AppVersionParams struct {
+	AppBasic
+	Offset int
+	Limit  int
 }
 
 type AppCreateParams struct {
@@ -55,7 +62,13 @@ func AppPrepare(ctx *gin.Context) {
 	nodes := []string{}
 	err = config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
-		rmsg.Rmsg = "targetNodes:" + err.Error()
+		rmsg.Rmsg = "ERROR: unmarshal targetNodes:" + err.Error()
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
@@ -101,14 +114,13 @@ func AppDeploy(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
 	scenario := ctx.PostForm("scenario")
 	description := ctx.PostForm("description")
-	messages := ctx.PostForm("message")
 	targetNodes := ctx.PostForm("targetNodes")
 	file, err := ctx.FormFile("script")
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
 
-	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(messages) == 0 || len(targetNodes) == 0 || err != nil {
+	if len(appName) == 0 || len(scenario) == 0 || len(description) == 0 || len(targetNodes) == 0 || err != nil {
 		rmsg.Rmsg = "ERROR: Wrong Args"
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
@@ -154,12 +166,58 @@ func AppDeploy(ctx *gin.Context) {
 				Name:        appName,
 				Scenario:    scenario,
 				Description: description,
-				Message:     messages,
 			},
 			content,
 		}
 		for i := range nodes {
 			go deployApp(taskid, nodes[i], &adParams)
+		}
+	}()
+}
+
+func AppCommit(ctx *gin.Context) {
+	appName := ctx.PostForm("appName")
+	scenario := ctx.PostForm("scenario")
+	description := ctx.PostForm("description")
+	messages := ctx.PostForm("message")
+	targetNodes := ctx.PostForm("targetNodes")
+	rmsg := protocols.Result{
+		Rmsg: "OK",
+	}
+
+	if len(appName) == 0 || len(scenario) == 0 || len(messages) == 0 || len(targetNodes) == 0 {
+		rmsg.Rmsg = "ERROR: Wrong Args"
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if _, exists := model.GetScenarioInfoByName(scenario); !exists {
+		rmsg.Rmsg = "ERROR: Scenario Not Exists"
+		ctx.JSON(http.StatusNotFound, rmsg)
+		return
+	}
+
+	nodes := []string{}
+	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
+	if err != nil {
+		rmsg.Rmsg = "targetNodes:" + err.Error()
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	taskid := model.BrainTaskManager.CreateTask(len(nodes))
+	ctx.String(http.StatusAccepted, taskid)
+
+	// async processing
+	go func() {
+		acParams := AppBasic{
+			Name:        appName,
+			Scenario:    scenario,
+			Description: description,
+			Message:     messages,
+		}
+		for i := range nodes {
+			go commitApp(taskid, nodes[i], &acParams)
 		}
 	}()
 }
@@ -176,7 +234,6 @@ func createApp(taskid string, name string, acParams *AppCreateParams) {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
 		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
-		// *result = "Failed: AddScenNodeApp"
 	}
 }
 
@@ -187,12 +244,20 @@ func deployApp(taskid string, name string, adParams *AppDeployParams) {
 		return
 	}
 
+	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%s", adParams.Name, adParams.Scenario, name, rmsg.Rmsg)
+}
+
+func commitApp(taskid string, name string, acParams *AppBasic) {
+	payload, _ := config.Jsoner.Marshal(acParams)
+	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCommit)
+	if err != nil {
+		return
+	}
 	// update scenario version
-	success := model.AddScenNodeApp(adParams.Scenario, adParams.Name, adParams.Description, name, rmsg.Version, rmsg.Modified)
+	success := model.AddScenNodeApp(acParams.Scenario, acParams.Name, acParams.Description, name, rmsg.Version, rmsg.Modified)
 	if success {
 		logger.Request.Print("Success: AddScenNodeApp")
 	} else {
-		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, adParams.Name, adParams.Scenario)
-		// *result = "Failed: AddScenNodeApp"
+		logger.Exceptions.Printf("failed to add nodeapp to scen: name=%s, %s@%s", name, acParams.Name, acParams.Scenario)
 	}
 }

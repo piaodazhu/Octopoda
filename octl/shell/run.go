@@ -5,51 +5,68 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"syscall"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
-	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	delay := 0
-	names := []string{}
-	for i := range params {
-		if len(params[i]) < 3 {
-			names = append(names, params[i])
-			continue
-		}
-		switch params[i][:2] {
-		case "-d":
-			x, err := strconv.Atoi(params[i][2:])
-			if err != nil {
-				emsg := "invalid args: " + err.Error()
-				return nil, errs.New(errs.OctlArgumentError, emsg)
-			}
-			delay = x
-		default:
-			names = append(names, params[i])
-		}
-	}
-	return runTask(runtask, names, delay)
-}
+// func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+// 	delay := 0
+// 	align := false
+// 	names := []string{}
+// 	for i := range params {
+// 		if len(params[i]) < 2 {
+// 			names = append(names, params[i])
+// 			continue
+// 		}
+// 		switch params[i][:2] {
+// 		case "-d":
+// 			x, err := strconv.Atoi(params[i][2:])
+// 			if err != nil {
+// 				emsg := "invalid args: " + err.Error()
+// 				return nil, errs.New(errs.OctlArgumentError, emsg)
+// 			}
+// 			delay = x
+// 		case "-a":
+// 			align = true
+// 		default:
+// 			names = append(names, params[i])
+// 		}
+// 	}
+// 	return runTask(runtask, names, delay, align)
+// }
 
-func Run(runtask string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	return runTask(runtask, names, -1)
-}
+// func Run(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+// 	align := false
+// 	names := []string{}
+// 	for i := range params {
+// 		if len(params[i]) < 2 {
+// 			names = append(names, params[i])
+// 			continue
+// 		}
+// 		switch params[i][:2] {
+// 		case "-a":
+// 			align = true
+// 		default:
+// 			names = append(names, params[i])
+// 		}
+// 	}
+// 	return runTask(runtask, names, -1, align)
+// }
 
-func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+func runTask(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -79,14 +96,30 @@ func runTask(runtask string, names []string, delay int) ([]protocols.ExecutionRe
 		}
 	}
 	if isScript {
-		return runScript(runtask, nodes, delay)
+		return runScript(runtask, nodes, delay, align)
 	} else {
-		return runCmd(runtask, nodes, isBackground, delay)
+		return runCmd(runtask, nodes, isBackground, delay, align)
 	}
 }
 
-func runScript(runtask string, names []string, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+func RunCommand(cmd string, isBackgroud bool, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runCmd(cmd, names, isBackgroud, -1, shouldAlign)
+}
+
+func RunScript(cmd string, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runScript(cmd, names, -1, shouldAlign)
+}
+
+func XRunCommand(cmd string, isBackgroud bool, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runCmd(cmd, names, isBackgroud, delayExec, shouldAlign)
+}
+
+func XRunScript(cmd string, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+	return runScript(cmd, names, delayExec, shouldAlign)
+}
+
+func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -103,7 +136,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	fname := filepath.Base(runtask)
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunScript,
 	)
@@ -111,12 +144,16 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.WriteField("delayTime", fmt.Sprint(delay))
+	writer.WriteField("needAlign", fmt.Sprint(align))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	fileWriter, _ := writer.CreateFormFile("script", fname)
 	io.Copy(fileWriter, f)
 	writer.Close()
 
-	res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
+	req, _ := http.NewRequest("POST", url, body)
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -129,6 +166,7 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
+		signal.Stop(sigChan)
 		RunCancel(tid)
 	}(string(taskid))
 
@@ -142,8 +180,8 @@ func runScript(runtask string, names []string, delay int) ([]protocols.Execution
 	return results, nil
 }
 
-func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -151,7 +189,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 	}
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunCmd,
 	)
@@ -164,10 +202,14 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 		writer.WriteField("background", "true")
 	}
 	writer.WriteField("delayTime", fmt.Sprint(delay))
+	writer.WriteField("needAlign", fmt.Sprint(align))
 	writer.WriteField("targetNodes", string(nodes_serialized))
 	writer.Close()
 
-	res, err := httpclient.BrainClient.Post(url, writer.FormDataContentType(), body)
+	req, _ := http.NewRequest("POST", url, body)
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -180,6 +222,7 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
+		signal.Stop(sigChan)
 		RunCancel(tid)
 	}(string(taskid))
 
@@ -195,13 +238,17 @@ func runCmd(runtask string, names []string, bg bool, delay int) ([]protocols.Exe
 
 func RunCancel(taskid string) {
 	URL := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_RunCancel,
 	)
 	values := url.Values{}
 	values.Add("taskid", taskid)
-	res, err := httpclient.BrainClient.PostForm(URL, values)
+
+	req, _ := http.NewRequest("POST", URL, bytes.NewBufferString(values.Encode()))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		output.PrintFatalln("runCancel http post error.")
 	}

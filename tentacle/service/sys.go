@@ -65,9 +65,6 @@ func execScript(sparams *protocols.ScriptParams, dir string, cmdChan chan *exec.
 	outputFile := scriptFile.String() + ".output"
 	output, _ := os.Create(outputFile)
 
-	// fbuf, _ := os.ReadFile(scriptFile.String())
-	// logger.Client.Println(string(fbuf))
-
 	cmd := exec.Command(shellPath, scriptFile.String())
 	cmd.Dir = dir
 	cmd.Env = append(syscall.Environ(), config.OctopodaEnv(scriptDir, sparams.FileName, outputFile)...)
@@ -110,7 +107,7 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 		return
 	}
 
-	if !ostp.SleepForExec(cparams.ExecTs) {
+	if cparams.NeedAlign && !ostp.SleepForExec(cparams.ExecTs) {
 		logger.Exceptions.Println("invalid exection timestamp.")
 		// SNED BACK
 		err := protocols.SendMessageUnique(conn, protocols.TypeRunCommandResponse, serialNum, []byte{})
@@ -260,7 +257,7 @@ func RunScript(conn net.Conn, serialNum uint32, raw []byte) {
 		return
 	}
 
-	if !ostp.SleepForExec(sparams.ExecTs) {
+	if sparams.NeedAlign && !ostp.SleepForExec(sparams.ExecTs) {
 		logger.Exceptions.Println("invalid exection timestamp.")
 		// SNED BACK
 		err := protocols.SendMessageUnique(conn, protocols.TypeRunScriptResponse, serialNum, []byte{})

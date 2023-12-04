@@ -13,43 +13,31 @@ func TestSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nodesInfo, err := NodesInfo(nil)
+	nodesInfo, err := NodeInfo(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(nodesInfo)
 
-	nodesStatus, err := NodesStatus(nil)
+	nodesStatus, err := NodeStatus(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(nodesStatus)
 
-	groups, err := GroupGetAll()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(groups)
-
-	group, err := GroupGet("grp")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(group)
-
-	results, err := Run("{ls}", []string{"pi4", "pi5"})
+	results, err := RunCommand("uname -a", false, []string{"pi4", "pi5"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(results)
 
-	results, err = DistribFile("testfile.txt", "foobar", []string{"pi4", "pi5"})
+	results, err = UploadFile("testfile.txt", "@fstore/foobar", true, []string{"pi4", "pi5"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(results)
 
-	result, err := PullFile("store", "pi4", "foobar/testfile.txt", "localfoobar")
+	result, err := DownloadFile("@fstore/foobar/testfile.txt", "localfoobar", "pi4")
 	if err != nil {
 		t.Fatal(err)
 	}

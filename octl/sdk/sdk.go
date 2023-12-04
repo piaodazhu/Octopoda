@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/file"
@@ -10,6 +9,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/scenario"
 	"github.com/piaodazhu/Octopoda/octl/shell"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
@@ -25,25 +25,15 @@ func Init(conf string) *errs.OctlError {
 		return err
 	}
 
+	if err := workgroup.InitWorkgroup(httpclient.BrainClient); err != nil {
+		return err
+	}
+
 	initalized = true
 	return nil
 }
 
-func NodeInfo(name string) (result *protocols.NodeInfo, err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	result, err = node.NodeInfo(name)
-	return
-}
-
-func NodesInfo(names []string) (result *protocols.NodesInfo, err *errs.OctlError) {
+func NodeInfo(names []string) (result *protocols.NodesInfo, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -57,21 +47,7 @@ func NodesInfo(names []string) (result *protocols.NodesInfo, err *errs.OctlError
 	return
 }
 
-func NodeStatus(name string) (result *protocols.Status, err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	result, err = node.NodeStatus(name)
-	return
-}
-
-func NodesStatus(names []string) (result *protocols.NodesStatus, err *errs.OctlError) {
+func NodeStatus(names []string) (result *protocols.NodesStatus, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -85,7 +61,7 @@ func NodesStatus(names []string) (result *protocols.NodesStatus, err *errs.OctlE
 	return
 }
 
-func DistribFile(localFileOrDir string, targetPath string, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func UploadFile(localFileOrDir string, remoteTargetPath string, isForce bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -95,11 +71,11 @@ func DistribFile(localFileOrDir string, targetPath string, names []string) (resu
 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
 		}
 	}()
-	results, err = file.DistribFile(localFileOrDir, targetPath, names)
+	results, err = file.Upload(localFileOrDir, remoteTargetPath, names, isForce)
 	return
 }
 
-func PullFile(pathtype string, node string, fileOrDir string, targetdir string) (result *protocols.ExecutionResults, err *errs.OctlError) {
+func DownloadFile(remoteFileOrDir string, localTargetPath string, name string) (result *protocols.ExecutionResults, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -109,11 +85,37 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
 		}
 	}()
-	result, err = file.PullFile(pathtype, node, fileOrDir, targetdir)
+	result, err = file.Download(remoteFileOrDir, localTargetPath, name)
 	return
 }
 
-func Run(runstask string, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func RunCommand(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+	return run(cmd, 0, needAlign, -1, names)
+}
+
+func RunScript(scriptFile string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+	return run(scriptFile, 1, needAlign, -1, names)
+}
+
+func RunCommandBackground(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+	return run(cmd, 2, needAlign, -1, names)
+}
+
+func XRunCommand(cmd string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+	if delay < 0 {
+		delay = 0
+	}
+	return run(cmd, 0, needAlign, delay, names)
+}
+
+func XRunScript(scriptFile string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+	if delay < 0 {
+		delay = 0
+	}
+	return run(scriptFile, 1, needAlign, delay, names)
+}
+
+func run(runtask string, cmdType int, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -123,96 +125,95 @@ func Run(runstask string, names []string) (results []protocols.ExecutionResults,
 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
 		}
 	}()
-	results, err = shell.Run(runstask, names)
+	if delay < 0 { // run
+		switch cmdType {
+		case 0:
+			results, err = shell.RunCommand(runtask, false, needAlign, names)
+		case 1:
+			results, err = shell.RunScript(runtask, needAlign, names)
+		case 2:
+			results, err = shell.RunCommand(runtask, true, needAlign, names)
+		}
+	} else {
+		switch cmdType {
+		case 0:
+			results, err = shell.XRunCommand(runtask, false, needAlign, delay, names)
+		case 1:
+			results, err = shell.XRunScript(runtask, needAlign, delay, names)
+		}
+	}
 	return
 }
 
-func XRun(runstask string, names []string, delay int) (results []protocols.ExecutionResults, err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	if delay > 0 {
-		names = append(names, fmt.Sprintf("-d%d", delay))
-	}
-	results, err = shell.XRun(runstask, names)
-	return
-}
+// func GroupGetAll() (result []string, err *errs.OctlError) {
+// 	if !initalized {
+// 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+// 		return
+// 	}
+// 	defer func() {
+// 		if panicErr := recover(); panicErr != nil {
+// 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+// 		}
+// 	}()
+// 	result, err = node.GroupGetAll()
+// 	return
+// }
 
-func GroupGetAll() (result []string, err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	result, err = node.GroupGetAll()
-	return
-}
+// func GroupGet(name string) (result *protocols.GroupInfo, err *errs.OctlError) {
+// 	if !initalized {
+// 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+// 		return
+// 	}
+// 	defer func() {
+// 		if panicErr := recover(); panicErr != nil {
+// 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+// 		}
+// 	}()
+// 	result, err = node.GroupGet(name)
+// 	return
+// }
 
-func GroupGet(name string) (result *protocols.GroupInfo, err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	result, err = node.GroupGet(name)
-	return
-}
+// func GroupSet(name string, nocheck bool, names []string) (err *errs.OctlError) {
+// 	if !initalized {
+// 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+// 		return
+// 	}
+// 	defer func() {
+// 		if panicErr := recover(); panicErr != nil {
+// 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+// 		}
+// 	}()
+// 	err = node.GroupSet(name, nocheck, names)
+// 	return
+// }
 
-func GroupSet(name string, nocheck bool, names []string) (err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	err = node.GroupSet(name, nocheck, names)
-	return
-}
+// func GroupDel(name string) (err *errs.OctlError) {
+// 	if !initalized {
+// 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+// 		return
+// 	}
+// 	defer func() {
+// 		if panicErr := recover(); panicErr != nil {
+// 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+// 		}
+// 	}()
+// 	err = node.GroupDel(name)
+// 	return
+// }
 
-func GroupDel(name string) (err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	err = node.GroupDel(name)
-	return
-}
-
-func Prune() (err *errs.OctlError) {
-	if !initalized {
-		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
-		return
-	}
-	defer func() {
-		if panicErr := recover(); panicErr != nil {
-			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
-		}
-	}()
-	err = node.NodePrune()
-	return
-}
+// func Prune(names []string) (err *errs.OctlError) {
+// 	if !initalized {
+// 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
+// 		return
+// 	}
+// 	defer func() {
+// 		if panicErr := recover(); panicErr != nil {
+// 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
+// 		}
+// 	}()
+// 	err = node.NodesPrune(names)
+// 	return
+// }
 
 func ScenarioInfo(name string) (rawresult_json []byte, err *errs.OctlError) {
 	if !initalized {
@@ -242,7 +243,7 @@ func ScenariosInfo() (rawresult_json [][]byte, err *errs.OctlError) {
 	return
 }
 
-func ScenarioVersion(name string) (rawresult_json []byte, err *errs.OctlError) {
+func ScenarioVersion(name string, offset, limit int) (rawresult_json []byte, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -252,7 +253,7 @@ func ScenarioVersion(name string) (rawresult_json []byte, err *errs.OctlError) {
 			err = errs.New(errs.OctlSdkPanicRecoverError, panicErr.(error).Error())
 		}
 	}()
-	rawresult_json, err = scenario.ScenarioVersion(name)
+	rawresult_json, err = scenario.ScenarioVersion(name, offset, limit)
 	return
 }
 

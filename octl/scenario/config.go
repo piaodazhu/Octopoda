@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/piaodazhu/Octopoda/octl/node"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 )
 
 type ScenarioConfigModel struct {
@@ -44,7 +44,7 @@ func checkConfig(ctx context.Context, config *ScenarioConfigModel) ([]string, er
 			return logList, fmt.Errorf("missing fields in deployment.yaml: app.name(%t) app.description(%t) app.applications(%t)",
 				config.Name == "", config.Description == "", len(config.Applications) == 0)
 		}
-		logList = append(logList, "succeed in checking basic fields of app " + app.Name)
+		logList = append(logList, "succeed in checking basic fields of app "+app.Name)
 
 		// path recorrect
 		app.SourcePath = basePath + "/" + app.SourcePath
@@ -55,37 +55,37 @@ func checkConfig(ctx context.Context, config *ScenarioConfigModel) ([]string, er
 		if err != nil || !info.IsDir() {
 			return logList, fmt.Errorf("invalid source filepath: %s", app.SourcePath)
 		}
-		logList = append(logList, "succeed in checking source path of app " + app.Name)
+		logList = append(logList, "succeed in checking source path of app "+app.Name)
 
 		app.Nodes, err = expandAlias(app.Nodes)
 		if err != nil {
 			return logList, err
 		}
-		logList = append(logList, "succeed in resolving alias of app " + app.Name)
+		logList = append(logList, "succeed in resolving alias of app "+app.Name)
 
 		doneChan := make(chan error, 1)
 		go func() {
-			app.Nodes, err = node.NodesParse(app.Nodes)
+			app.Nodes, err = workgroup.NodesParse(app.Nodes)
 			doneChan <- err
 			close(doneChan)
-		} ()
+		}()
 		select {
-		case err := <- doneChan:
+		case err := <-doneChan:
 			if err != nil {
 				return logList, fmt.Errorf("invalid nodes list in app %s: %v: %s", app.Name, strings.Join(app.Nodes, ", "), err.Error())
 			}
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return logList, errors.New("request canceled by context")
 		}
 
-		logList = append(logList, "succeed in parsing nodes of app " + app.Name)
+		logList = append(logList, "succeed in parsing nodes of app "+app.Name)
 
 		// check: must implement the 4 basic target
 		err = checkTarget(app.Name, app.Script, app.ScriptPath)
 		if err != nil {
 			return logList, err
 		}
-		logList = append(logList, "succeed in checking targets of app " + app.Name)
+		logList = append(logList, "succeed in checking targets of app "+app.Name)
 	}
 	return logList, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/config"
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -28,7 +29,7 @@ func InitNodeMap() {
 				if node.State == protocols.NodeStateDisconn && node.OfflineTs+int64(config.GlobalConfig.TentacleFace.RecordTimeout) < time.Now().UnixMilli() {
 					// logger.Tentacle.Print("MarkDeadNode", nodename)
 					node.State = protocols.NodeStateDead
-					node.ConnInfo.Close()
+					node.Close()
 				}
 			}
 			NodesLock.Unlock()
@@ -45,6 +46,7 @@ func StoreNode(name, version, addr string, conn net.Conn) {
 	if n, found := NodeMap[name]; found {
 		node = n
 		if conn != nil {
+			logger.Comm.Printf("[DBG]node %s call Fresh Conn", name)
 			node.ConnInfo.Fresh(conn)
 			node.ConnInfo.StartReceive()
 		}
@@ -85,16 +87,29 @@ func DisconnNode(name string) bool {
 	return false
 }
 
-func PruneDeadNode() {
+func PruneDeadNode(names []string) {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
 	toBePruned := []string{}
-	for name, node := range NodeMap {
-		if node.State == protocols.NodeStateDead {
-			toBePruned = append(toBePruned, name)
+
+	// names = [] means prune all dead nodes
+	if len(names) == 0 {
+		for name, node := range NodeMap {
+			if node.State == protocols.NodeStateDead {
+				toBePruned = append(toBePruned, name)
+			}
+		}
+	} else { // only prune dead nodes contained by names
+		for _, name := range names {
+			if node, found := NodeMap[name]; found {
+				if node.State == protocols.NodeStateDead {
+					toBePruned = append(toBePruned, name)
+				}
+			}
 		}
 	}
+
 	for i := range toBePruned {
 		delete(NodeMap, toBePruned[i])
 	}
@@ -153,12 +168,24 @@ func GetNodeMsgConn(name string) (*ConnInfo, int) {
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if !found {
+		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because NodeMap miss", name)
 		return nil, GetConnNoNode
 	}
-	if node.ConnState == "Off" {
+	if node.ConnState == protocols.ConnStateOff {
+		logger.Comm.Printf("[DBG]node %s GetNodeMsgConn return 2 because ConnState off", name)
 		return &node.ConnInfo, GetConnNoConn
 	}
 	return &node.ConnInfo, GetConnOk
+}
+
+func IsMsgConnOn(name string) bool {
+	NodesLock.RLock()
+	defer NodesLock.RUnlock()
+	node, found := NodeMap[name]
+	if !found {
+		return false
+	}
+	return node.ConnState == protocols.ConnStateOn
 }
 
 func ResetNodeMsgConn(name string) {
@@ -166,6 +193,7 @@ func ResetNodeMsgConn(name string) {
 	defer NodesLock.RUnlock()
 	node, found := NodeMap[name]
 	if found {
+		logger.Comm.Printf("[DBG]node %s call resetMsgConn", name)
 		node.Close()
 	}
 }
@@ -212,6 +240,7 @@ func GetNodesMaxDelay(names []string) int64 {
 	var maxDelay int64 = 0
 	for _, name := range names {
 		if node, found := NodeMap[name]; found {
+			// logger.Network.Printf("[DBG] delay of %s is %d", name, node.Delay)
 			if node.State == protocols.NodeStateReady && node.Delay > maxDelay {
 				maxDelay = node.Delay
 			}

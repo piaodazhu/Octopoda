@@ -8,15 +8,15 @@ import (
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
-	"github.com/piaodazhu/Octopoda/octl/node"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	nodes, err := node.NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -31,12 +31,15 @@ func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocol
 	buf, _ := config.Jsoner.Marshal(fsParams)
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FileSpread,
 	)
 
-	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewBuffer(buf))
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(buf))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

@@ -12,13 +12,12 @@ type NodeJoinResponse struct {
 }
 
 type HeartBeatRequest struct {
-	Msg   string `json:"msg"` // reserved for future usage
 	Num   uint32 `json:"num"`
 	Delay int64  `json:"delay"`
 }
 
 type HeartBeatResponse struct {
-	Msg    string `json:"msg"` // reserved for future usage
-	NewNum uint32 `json:"new_num"`
-	Ts     int64  `json:"ts"`
+	NewNum      uint32 `json:"new_num"`
+	Ts          int64  `json:"ts"`
+	IsMsgConnOn bool   `json:"is_msgconn_on"`
 }

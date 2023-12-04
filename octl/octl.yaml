@@ -1,7 +1,7 @@
 httpsNameServer:
   enable: true
   host: "10.108.30.85"
-  port: 3555
+  port: 3455
   requestInterval: 1
 brain:
   # if httpsNameServer is enabled
@@ -20,3 +20,7 @@ git:
   password: "testpass"
 jsonFast: true
 outputPretty: true
+workgroup:
+  root: "smallgroup"
+  password: "passwd"
+  currentPathFile: "./.curPath.yaml"

@@ -62,7 +62,7 @@ retry:
 		retryCnt--
 		goto retry
 	}
-
+	// TODO 加日志
 	connMsg, ok = connInfo.WaitMsg(serialNum)
 	if !ok {
 		if retryCnt == 0 {

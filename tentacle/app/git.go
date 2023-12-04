@@ -86,6 +86,46 @@ func GitCommit(app string, message string) (Version, error) {
 	return Version{commitTime.Unix(), hash.String(), message}, nil
 }
 
+func GitStatus(app string) (Version, bool, error) {
+	path := config.GlobalConfig.Workspace.Root + app
+	isClean := false
+	repo, err := git.PlainOpen(path)
+	if err != nil {
+		logger.Exceptions.Print("git.PlainOpen")
+		return Version{}, isClean, err
+	}
+	wt, err := repo.Worktree()
+	if err != nil {
+		logger.Exceptions.Print("repo.Worktree")
+		return Version{}, isClean, err
+	}
+
+	st, err := wt.Status()
+	if err != nil {
+		logger.Exceptions.Print("wt.Status")
+		return Version{}, isClean, err
+	}
+
+	isClean = st.IsClean()
+	head, err := repo.Head()
+	if err != nil {
+		logger.Exceptions.Print("repo.Head")
+		return Version{}, isClean, err
+	}
+
+	cmt, err := repo.CommitObject(head.Hash())
+	if err != nil {
+		logger.Exceptions.Print("repo.CommitObject")
+		return Version{}, isClean, err
+	}
+
+	return Version{
+		Time: cmt.Committer.When.Unix(),
+		Hash: cmt.Hash.String(),
+		Msg:  cmt.Message,
+	}, isClean, nil
+}
+
 func GitCreate(app string) bool {
 	path := config.GlobalConfig.Workspace.Root + app
 	if err := os.Mkdir(path, os.ModePerm); err != nil {

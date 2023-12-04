@@ -1,8 +1,10 @@
 package node
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
@@ -101,11 +104,15 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 		}
 	}
 
-	nodes, err := NodesParse(names_filtered)
-	if err != nil {
-		emsg := "node parse error: " + err.Error()
-		output.PrintFatalln(emsg)
-		return "", errs.New(errs.OctlNodeParseError, emsg)
+	var nodes []string
+	var err error
+	if len(names_filtered) != 0 {
+		nodes, err = workgroup.NodesParse(names_filtered)
+		if err != nil {
+			emsg := "node parse error: " + err.Error()
+			output.PrintFatalln(emsg)
+			return "", errs.New(errs.OctlNodeParseError, emsg)
+		}
 	}
 
 	if hasBrain {
@@ -113,7 +120,7 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 	}
 
 	URL := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Pakma,
 	)
@@ -135,7 +142,10 @@ func Pakma(firstarg string, args []string) (string, *errs.OctlError) {
 		}
 	}
 
-	res, err := httpclient.BrainClient.PostForm(URL, values)
+	req, _ := http.NewRequest("POST", URL, bytes.NewBufferString(values.Encode()))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http post error: " + err.Error()
 		output.PrintFatalln(emsg)

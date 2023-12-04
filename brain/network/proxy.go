@@ -52,7 +52,6 @@ func InitProxyServer() {
 	}
 
 	err = entriesRegister([]*protocols.NameServiceEntry{nameEntry})
-	fmt.Println("REGISTER: ", nameEntry.Key)
 	if err != nil {
 		panic(err)
 	}

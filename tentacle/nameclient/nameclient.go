@@ -26,7 +26,7 @@ func InitNameClient() {
 	}
 
 	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port+1) // port: http = https + 1
-	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
+	logger.Network.Printf("name server address=%s\n", nsAddr)
 	err := pingNameServer()
 	if err != nil {
 		logger.Network.Fatal("pingNameServer:", err.Error())

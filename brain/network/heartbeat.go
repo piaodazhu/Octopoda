@@ -20,7 +20,7 @@ type hbState struct {
 	delay     int64
 }
 
-func ProcessHeartbeat(ctx context.Context, c chan hbState, conn net.Conn, randNum uint32) {
+func ProcessHeartbeat(ctx context.Context, name string, c chan hbState, conn net.Conn, randNum uint32) {
 	var mtype int
 	var msg []byte
 	var hs hbState
@@ -31,23 +31,23 @@ func ProcessHeartbeat(ctx context.Context, c chan hbState, conn net.Conn, randNu
 		hs.isHealthy = true
 		mtype, _, msg, err = protocols.RecvMessageUnique(conn)
 		if err != nil || mtype != protocols.TypeHeartbeat {
-			logger.Network.Print(err) // TODO who?
+			logger.Network.Printf("node %s RecvMessageUnique error: %s", name, err.Error())
 			hs.isHealthy = false
 			goto reportstate
 		}
 
 		hbinfo, err = heartbeat.ParseHeartbeat(msg)
 		if err != nil || hbinfo.Num != randNum {
-			logger.Network.Println(err)
+			logger.Network.Printf("node %s ParseHeartbeat error: %s", name, err.Error())
 			hs.isHealthy = false
 			goto reportstate
 		}
 		hs.delay = hbinfo.Delay
 
 		randNum = snp.GenSerial()
-		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum))
+		err = protocols.SendMessageUnique(conn, protocols.TypeHeartbeatResponse, snp.GenSerial(), heartbeat.MakeHeartbeatResponse(randNum, model.IsMsgConnOn(name)))
 		if err != nil {
-			logger.Network.Print(err)
+			logger.Network.Printf("node %s SendMessageUnique error: %s", name, err.Error())
 			hs.isHealthy = false
 			goto reportstate
 		}
@@ -70,9 +70,9 @@ func startHeartbeat(conn net.Conn, name string, randNum uint32) {
 	timeout := time.Second * time.Duration(config.GlobalConfig.TentacleFace.ActiveTimeout)
 	hbStartTime := time.Now()
 
-	hbchan := make(chan hbState)
+	hbchan := make(chan hbState, 1)
 	ctx, cancel := context.WithCancel(context.Background())
-	go ProcessHeartbeat(ctx, hbchan, conn, randNum)
+	go ProcessHeartbeat(ctx, name, hbchan, conn, randNum)
 	for {
 		select {
 		case hbstate := <-hbchan:

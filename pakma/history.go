@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -75,7 +76,7 @@ func GetHistoryHandler(ctx *gin.Context) {
 	for _, h := range history {
 		res.HistoryList = append(res.HistoryList, fmt.Sprintf("[%s]: %s", time.Unix(h.Timestamp, 0).Format(timefmt), h.Message))
 	}
-	ctx.JSON(200, res)
+	ctx.JSON(http.StatusOK, res)
 }
 
 func min[T int | int64 | uint | uint64 | float32 | float64](x, y T) T {

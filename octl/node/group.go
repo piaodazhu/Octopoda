@@ -10,17 +10,20 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func GroupGetAll() ([]string, *errs.OctlError) {
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Groups,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -49,12 +52,14 @@ func GroupGetAll() ([]string, *errs.OctlError) {
 
 func GroupGet(name string) (*protocols.GroupInfo, *errs.OctlError) {
 	url := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 		name,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -83,12 +88,13 @@ func GroupGet(name string) (*protocols.GroupInfo, *errs.OctlError) {
 
 func GroupDel(name string) *errs.OctlError {
 	url := fmt.Sprintf("https://%s/%s%s?name=%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 		name,
 	)
 	req, _ := http.NewRequest("DELETE", url, nil)
+	workgroup.SetHeader(req)
 	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http delete error: " + err.Error()
@@ -108,7 +114,7 @@ func GroupDel(name string) *errs.OctlError {
 }
 
 func GroupSet(name string, nocheck bool, names []string) *errs.OctlError {
-	nodes, err := NodesParse(names)
+	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -122,11 +128,15 @@ func GroupSet(name string, nocheck bool, names []string) *errs.OctlError {
 	body, _ := json.Marshal(ginfo)
 
 	url := fmt.Sprintf("https://%s/%s%s",
-		httpclient.BrainAddr,
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_Group,
 	)
-	res, err := httpclient.BrainClient.Post(url, "application/json", bytes.NewBuffer(body))
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	workgroup.SetHeader(req)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)

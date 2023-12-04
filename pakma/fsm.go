@@ -154,12 +154,6 @@ func doConfirm() {
 	dumpState()
 }
 
-// func installVersion(version string) error {
-// 	fmt.Printf("intall %s_v%s_%s_%s\n", config.GlobalConfig.AppName, version, config.GlobalConfig.AppOS, config.GlobalConfig.AppArch)
-
-// 	return nil
-// }
-
 func installVersion(version string) error {
 	// 1 check config file: config file must be installed
 	if !fileExists(fmt.Sprintf("/etc/octopoda/%s/%s.yaml", config.GlobalConfig.AppName, config.GlobalConfig.AppName)) {

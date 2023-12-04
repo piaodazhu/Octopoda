@@ -15,14 +15,15 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
 type FileParams struct {
-	PackName   string
-	PathType   string
-	TargetPath string
-	FileBuf    string
+	PackName    string
+	TargetPath  string
+	FileBuf     string
+	ForceCreate bool
 }
 
 func pathFixing(path string, base string) string {
@@ -252,26 +253,14 @@ func FileTree(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	pathtype, ok := ctx.GetQuery("pathtype")
-	if !ok {
-		rmsg.Rmsg = "Lack pathtype"
-		ctx.JSON(http.StatusBadRequest, rmsg)
-		return
-	}
 	subdir, _ := ctx.GetQuery("subdir")
-	raw, err := getFileTree(pathtype, name, subdir)
+	raw, err := getFileTree(name, subdir)
 	if err != nil {
 		rmsg.Rmsg = err.Error()
 		ctx.JSON(http.StatusNotFound, rmsg)
 		return
 	}
-	ctx.Data(200, "application/json", raw)
-}
-
-type ErrInvalidPathType struct{ pathtype, node string }
-
-func (e ErrInvalidPathType) Error() string {
-	return fmt.Sprintf("Invalid path type: %s on %s\n", e.pathtype, e.node)
+	ctx.Data(http.StatusOK, "application/json", raw)
 }
 
 type ErrInvalidNode struct{ node string }
@@ -282,23 +271,13 @@ type ErrNetworkError struct{ node string }
 
 func (e ErrNetworkError) Error() string { return fmt.Sprintf("Network error: %s\n", e.node) }
 
-func getFileTree(pathtype string, name string, subdir string) ([]byte, error) {
-	var pathsb strings.Builder
+func getFileTree(name string, subdir string) ([]byte, error) {
 	if name == "brain" {
-		switch pathtype {
-		case "store":
-			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-		case "log":
-			pathsb.WriteString(config.GlobalConfig.Logger.Path)
-		default:
-			return nil, ErrInvalidPathType{pathtype: pathtype, node: name}
-		}
-		pathsb.WriteString(subdir)
-		return allFiles(pathsb.String()), nil
+		subdir = config.ParsePathWithEnv(subdir)
+		return allFiles(subdir), nil
 	}
 
 	params, _ := config.Jsoner.Marshal(&FileParams{
-		PathType:   pathtype,
 		TargetPath: subdir,
 	})
 	raw, err := model.Request(name, protocols.TypeFileTree, params)
@@ -363,6 +342,11 @@ func FileDistrib(ctx *gin.Context) {
 	packfiles, _ := ctx.FormFile("packfiles")
 	packName := packfiles.Filename
 	targetPath := ctx.PostForm("targetPath")
+	isForceStr := ctx.PostForm("isForce")
+	isForce := false
+	if isForceStr == "true" {
+		isForce = true
+	}
 	targetNodes := ctx.PostForm("targetNodes")
 	rmsg := protocols.Result{
 		Rmsg: "OK",
@@ -372,6 +356,12 @@ func FileDistrib(ctx *gin.Context) {
 	err := config.Jsoner.Unmarshal([]byte(targetNodes), &nodes)
 	if err != nil {
 		rmsg.Rmsg = "targetNodes:" + err.Error()
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
@@ -393,9 +383,10 @@ func FileDistrib(ctx *gin.Context) {
 	content := b64Encode(raw)
 	// content := base64.RawStdEncoding.EncodeToString(raw)
 	finfo := FileParams{
-		PackName:   packName,
-		TargetPath: targetPath,
-		FileBuf:    content,
+		PackName:    packName,
+		TargetPath:  targetPath,
+		FileBuf:     content,
+		ForceCreate: isForce,
 	}
 	payload, _ := config.Jsoner.Marshal(&finfo)
 
@@ -437,12 +428,12 @@ func FilePull(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
-	pathtype, ok := ctx.GetQuery("pathtype")
-	if !ok {
-		rmsg.Rmsg = "Lack pathtype"
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
 	}
+
 	fileOrDir, ok := ctx.GetQuery("fileOrDir")
 	if !ok {
 		rmsg.Rmsg = "Lack fileOrDir"
@@ -452,26 +443,15 @@ func FilePull(ctx *gin.Context) {
 
 	// pull brain file?
 	if name == "brain" {
-		var pathsb strings.Builder
-		switch pathtype {
-		case "store":
-			pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-		case "log":
-			pathsb.WriteString(config.GlobalConfig.Logger.Path)
-		default:
-			rmsg.Rmsg = ErrInvalidPathType{pathtype: pathtype, node: name}.Error()
-			ctx.JSON(http.StatusBadRequest, rmsg)
-			return
-		}
-		pathsb.WriteString(fileOrDir)
-		_, err := os.Stat(pathsb.String())
+		fileOrDir = config.ParsePathWithEnv(fileOrDir)
+		_, err := os.Stat(fileOrDir)
 		if err != nil {
 			rmsg.Rmsg = "file or path not found"
 			ctx.JSON(http.StatusNotFound, rmsg)
 			return
 		}
 		// pack the file or dir
-		packName := packFile(pathsb.String())
+		packName := packFile(fileOrDir)
 		if packName == "" {
 			rmsg.Rmsg = "Error when packing files"
 			ctx.JSON(http.StatusInternalServerError, rmsg)
@@ -479,7 +459,7 @@ func FilePull(ctx *gin.Context) {
 		}
 		defer os.Remove(packName)
 		rmsg.Output = loadFile(packName)
-		ctx.JSON(200, rmsg)
+		ctx.JSON(http.StatusOK, rmsg)
 		return
 	}
 
@@ -493,7 +473,6 @@ func FilePull(ctx *gin.Context) {
 		}
 
 		params, _ := config.Jsoner.Marshal(&FileParams{
-			PathType:   pathtype,
 			TargetPath: fileOrDir,
 		})
 		raw, err := model.Request(name, protocols.TypeFilePull, params)

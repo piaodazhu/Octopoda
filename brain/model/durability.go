@@ -20,6 +20,7 @@ func CheckReady() bool { return atomic.LoadInt32(&Busy) == 1 }
 
 func InitScenarioMap() {
 	SetBusy()
+	defer SetReady()
 	var file strings.Builder
 	file.WriteString(config.GlobalConfig.Workspace.Root)
 	file.WriteString(diskFileName)
@@ -29,8 +30,6 @@ func InitScenarioMap() {
 		ScenLock.Lock()
 		ScenarioMap = make(map[string]*ScenarioModel)
 		ScenLock.Unlock()
-		// new storage need not fix
-		SetReady()
 	} else {
 		logger.SysInfo.Printf("Scenario file found. Loading...")
 		defer f.Close()
@@ -120,6 +119,7 @@ func Fix(name string) error {
 	ScenLock.RUnlock()
 
 	// check real nodeapp versions
+	curNodeAppLatestVersion := make([]Version, len(curNodeApps))
 	for i := range curNodeApps {
 		aParams := AppBasic{
 			Name:     curNodeApps[i].AppName,
@@ -138,15 +138,21 @@ func Fix(name string) error {
 			return ErrorNodeAppError{}
 		}
 
+		curNodeAppLatestVersion[i] = latest
+	}
+
+	for i := range curNodeApps {
 		// check the latest version
-		if curNodeApps[i].Version != latest.Hash {
-			if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, latest.Hash, true) {
+		if curNodeApps[i].Version != curNodeAppLatestVersion[i].Hash {
+			if !AddScenNodeApp(curNodeApps[i].ScenName, curNodeApps[i].AppName, "", curNodeApps[i].NodeName, curNodeAppLatestVersion[i].Hash, true) {
 				return ErrorAddScenNodeApp{}
 			}
 		}
 	}
+
 	_, ok := UpdateScenario(name, "System Data Fix")
 	if !ok {
+		// should not happen
 		return ErrorUpdateScenario{}
 	}
 	return nil
@@ -156,35 +162,37 @@ func AutoFix() {
 	// 10s to wait active nodes connect to brain
 	time.Sleep(10 * time.Second)
 
+	scenList := []string{}
+
+	ScenLock.RLock()
 	for name := range ScenarioMap {
+		scenList = append(scenList, name)
+	}
+	ScenLock.RUnlock()
+
+	unfixed := []string{}
+	for _, name := range scenList {
 		if err := Fix(name); err != nil {
-			logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+			unfixed = append(unfixed, name)
 		}
 	}
-	// first roll fix done. Then http request can be accepted
-	SetReady()
 
-	for {
-		namelist := []string{}
-		ScenLock.RLock()
-		for name := range ScenarioMap {
-			namelist = append(namelist, name)
-		}
-		ScenLock.RUnlock()
-
-		for _, name := range namelist {
+	for len(unfixed) > 0 {
+		tmp := []string{}
+		logger.SysInfo.Printf("Scenarios to be fixed: %v", unfixed)
+		for _, name := range unfixed {
 			// each 30s, check a scenario
 			time.Sleep(30 * time.Second)
-
 			// fix failed is allowed. Because scenarios are dynamically changing.
 			if err := Fix(name); err != nil {
-				logger.Exceptions.Printf("Warning: scenario < %s >: %s Try to manually fix this scenario later.", name, err.Error())
+				tmp = append(tmp, name)
 			}
 		}
-
+		unfixed = tmp
 		// sleep 1min then start next roll fix
 		time.Sleep(60 * time.Second)
 	}
+	logger.SysInfo.Println("All scenarios are fixed.")
 }
 
 func saveNoLock() {

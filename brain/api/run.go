@@ -13,6 +13,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/ostp"
 )
@@ -21,6 +22,11 @@ func RunScript(ctx *gin.Context) {
 	script, _ := ctx.FormFile("script")
 	delayStr := ctx.PostForm("delayTime")
 	targetNodes := ctx.PostForm("targetNodes")
+	needAlignStr := ctx.PostForm("needAlign")
+	needAlign := false
+	if needAlignStr == "true" {
+		needAlign = true
+	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -60,12 +66,19 @@ func RunScript(ctx *gin.Context) {
 		return
 	}
 
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
 	sparams := protocols.ScriptParams{
 		FileName:   script.Filename,
 		TargetPath: "scripts/",
 		FileBuf:    content,
 		DelayTime:  delay,
-		ExecTs: ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		ExecTs:     ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		NeedAlign:  needAlign,
 	}
 	payload, _ := config.Jsoner.Marshal(&sparams)
 
@@ -93,6 +106,11 @@ func RunCmd(ctx *gin.Context) {
 		isbg = true
 	}
 	targetNodes := ctx.PostForm("targetNodes")
+	needAlignStr := ctx.PostForm("needAlign")
+	needAlign := false
+	if needAlignStr == "true" {
+		needAlign = true
+	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -121,11 +139,18 @@ func RunCmd(ctx *gin.Context) {
 		return
 	}
 
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), nodes...) {
+		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
+		ctx.JSON(http.StatusBadRequest, rmsg)
+		return
+	}
+
 	cParams := protocols.CommandParams{
 		Command:    cmd,
 		Background: isbg,
 		DelayTime:  delay,
 		ExecTs:     ostp.ExtimateExecTs(model.GetNodesMaxDelay(nodes)),
+		NeedAlign:  needAlign,
 	}
 	payload, _ := json.Marshal(cParams)
 
@@ -159,6 +184,8 @@ func runAndWait(taskid string, name string, payload []byte, rtype int) (*protoco
 		rstr = "createApp"
 	} else if rtype == protocols.TypeAppDeploy {
 		rstr = "deployApp"
+	} else if rtype == protocols.TypeAppCommit {
+		rstr = "commitApp"
 	} else {
 		logger.Comm.Println("unsupported rtype in runAndWait: ", rtype)
 		result.Code = protocols.ExecCommunicationError

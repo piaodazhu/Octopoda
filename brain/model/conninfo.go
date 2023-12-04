@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -16,19 +17,19 @@ type ConnMsg struct {
 }
 
 type ConnInfo struct {
-	ConnStatePtr *string
+	ConnStateRef *int32
 	Conn         net.Conn
 	Messages     sync.Map
 }
 
-func CreateConnInfo(conn net.Conn, connStatePtr *string) ConnInfo {
-	*connStatePtr = "On"
+func CreateConnInfo(conn net.Conn, connStateRef *int32) ConnInfo {
+	*connStateRef = protocols.ConnStateOn
 	if conn == nil {
-		*connStatePtr = "Off"
+		*connStateRef = protocols.ConnStateOff
 	}
 	return ConnInfo{
 		Conn:         conn,
-		ConnStatePtr: connStatePtr,
+		ConnStateRef: connStateRef,
 		Messages:     sync.Map{},
 	}
 }
@@ -38,7 +39,7 @@ func (c *ConnInfo) Close() {
 		c.Conn.Close()
 		c.Conn = nil
 	}
-	*(c.ConnStatePtr) = "Off"
+	*(c.ConnStateRef) = protocols.ConnStateOff
 
 	pendingList := []uint32{}
 	c.Messages.Range(func(key, value any) bool {
@@ -58,9 +59,9 @@ func (c *ConnInfo) Fresh(conn net.Conn) {
 	c.Close()
 	c.Conn = conn
 	if c.Conn == nil {
-		*(c.ConnStatePtr) = "Off"
+		*(c.ConnStateRef) = protocols.ConnStateOff
 	} else {
-		*(c.ConnStatePtr) = "On"
+		*(c.ConnStateRef) = protocols.ConnStateOn
 	}
 }
 
@@ -74,7 +75,6 @@ func (c *ConnInfo) StartReceive() {
 			}
 			mtype, serialNum, raw, err := protocols.RecvMessageUnique(conn)
 			if err != nil {
-				// TODO error reason
 				// fmt.Println("[DEBUG] receive error: ", err)
 				c.Close()
 				return
@@ -118,7 +118,7 @@ func (c *ConnInfo) WaitMsg(serialNum uint32) (msg *ConnMsg, ok bool) {
 	defer func() {
 		debug_waitmsg.WriteByte('\n')
 		if !ok {
-			fmt.Println(debug_waitmsg.String())
+			logger.Comm.Println(debug_waitmsg.String())
 		}
 	}()
 

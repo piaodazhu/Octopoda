@@ -9,25 +9,27 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/task"
+	"github.com/piaodazhu/Octopoda/octl/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func PullFile(pathtype string, node string, fileOrDir string, targetdir string) (*protocols.ExecutionResults, *errs.OctlError) {
+func Download(remoteFileOrDir string, localTargetPath string, node string) (*protocols.ExecutionResults, *errs.OctlError) {
 	if len(node) == 0 || node[0] == '@' {
 		emsg := "command pull not support node group"
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlArgumentError, emsg)
 	}
-	url := fmt.Sprintf("https://%s/%s%s?pathtype=%s&name=%s&fileOrDir=%s",
-		httpclient.BrainAddr,
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&fileOrDir=%s",
+		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FilePull,
-		pathtype,
 		node,
-		fileOrDir,
+		remoteFileOrDir,
 	)
-	res, err := httpclient.BrainClient.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
 	if err != nil {
 		emsg := "http get error: " + err.Error()
 		output.PrintFatalln(emsg)
@@ -76,7 +78,7 @@ func PullFile(pathtype string, node string, fileOrDir string, targetdir string) 
 		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 	// unpack result.Output
-	err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
+	err = unpackFiles(finfo.FileBuf, finfo.PackName, localTargetPath)
 	if err != nil {
 		emsg := "unpackFiles(finfo.FileBuf, finfo.PackName, targetdir) error: " + err.Error()
 		output.PrintFatalln(emsg)

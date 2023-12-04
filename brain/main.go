@@ -11,6 +11,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/network"
 	"github.com/piaodazhu/Octopoda/brain/rdb"
 	"github.com/piaodazhu/Octopoda/brain/sys"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols/buildinfo"
 )
 
@@ -46,6 +47,8 @@ func main() {
 	logger.InitLogger(stdout)
 
 	rdb.InitRedis()
+	workgroup.Check()
+	
 	alert.InitAlert()
 
 	model.InitNodeMap()

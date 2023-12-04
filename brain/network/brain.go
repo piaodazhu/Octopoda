@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/heartbeat"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/protocols/snp"
 
@@ -54,7 +56,12 @@ func acceptNodeJoin(listener net.Listener) {
 }
 
 func newTlsListener(address string) (net.Listener, error) {
-	return tls.Listen("tcp", address, config.TLSConfig)
+	lcfg := net.ListenConfig{}
+	listener, err := lcfg.Listen(context.Background(), "tcp", address)
+	if err != nil {
+		return nil, err
+	}
+	return tls.NewListener(listener, config.TLSConfig), nil
 }
 
 func ProcessNodeJoin(conn net.Conn) {
@@ -84,6 +91,7 @@ func ProcessNodeJoin(conn net.Conn) {
 		// heartbeat connection established
 		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, nil)
 		logger.Network.Printf("New node join, name=%s\n", joinRequest.Name)
+		workgroup.AddMembers("", "", joinRequest.Name)
 		startHeartbeat(conn, joinRequest.Name, randNum)
 	} else {
 		model.StoreNode(joinRequest.Name, joinRequest.Version, joinRequest.Addr, conn)

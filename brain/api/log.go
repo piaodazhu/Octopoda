@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -26,6 +27,11 @@ func NodeLog(ctx *gin.Context) {
 		ctx.Status(http.StatusNotFound)
 		return
 	}
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
 	maxlines, maxdaysbefore := 0, 0
 	l, ok := ctx.GetQuery("maxlines")
 	if !ok {
@@ -54,7 +60,7 @@ func NodeLog(ctx *gin.Context) {
 			return
 		}
 	}
-	ctx.JSON(200, lparams)
+	ctx.JSON(http.StatusOK, lparams)
 }
 
 func readLogs(params *LogParams) {

@@ -27,7 +27,7 @@ func InitNameClient() {
 	}
 
 	nsAddr = fmt.Sprintf("%s:%d", config.GlobalConfig.HttpsNameServer.Host, config.GlobalConfig.HttpsNameServer.Port)
-	logger.Network.Printf("NameService client is enabled. nsAddr=%s\n", nsAddr)
+	logger.Network.Printf("name server address=%s\n", nsAddr)
 
 	// init https client
 	err := InitHttpsClient(config.GlobalConfig.Sslinfo.CaCert, config.GlobalConfig.Sslinfo.ServerCert, config.GlobalConfig.Sslinfo.ServerKey)
@@ -55,7 +55,10 @@ func InitNameClient() {
 		}
 		err = entriesRegister(entries)
 		if err != nil {
-			logger.Network.Fatal("entriesRegister: ", err)
+			logger.Network.Println("entriesRegister: ", err)
+			time.Sleep(time.Second)
+			retry--
+			continue
 		}
 		success = true
 		retry = 0
@@ -75,7 +78,7 @@ func InitNameClient() {
 			}
 			err = entriesRegister(entries)
 			if err != nil {
-				logger.Network.Fatal("entriesRegister: ", err)
+				logger.Network.Println("entriesRegister: ", err)
 			}
 		}
 	}()

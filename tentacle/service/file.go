@@ -20,13 +20,32 @@ import (
 )
 
 type FileParams struct {
-	PackName   string
-	PathType   string
-	TargetPath string
-	FileBuf    string
+	PackName    string
+	TargetPath  string
+	FileBuf     string
+	ForceCreate bool
+}
+
+func dirExist(dir string) bool {
+	stat, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+	return stat.IsDir()
+}
+
+func fileExist(filePath string) bool {
+	stat, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	return !stat.IsDir()
 }
 
 func pathFixing(path string, base string) string {
+	// if path start with pathenv: expand it
+	path = config.ParsePathWithEnv(path)
+
 	// dstPath: the unpacked files will be moved under this path
 	var result strings.Builder
 	// find ~
@@ -52,7 +71,7 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 		Rmsg: "OK",
 	}
 
-	var file string
+	var targetPath string
 	fileinfo := FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
@@ -61,8 +80,20 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 		goto errorout
 	}
 
-	file = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
-	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, file)
+	targetPath = pathFixing(fileinfo.TargetPath, config.GlobalConfig.Workspace.Store)
+	if !fileinfo.ForceCreate && !dirExist(targetPath) {
+		logger.Exceptions.Println("target path not exist")
+		rmsg.Rmsg = "target path not exist"
+		goto errorout
+	}
+
+	if fileExist(targetPath) {
+		logger.Exceptions.Println("target path is a file")
+		rmsg.Rmsg = "target path is a file"
+		goto errorout
+	}
+
+	err = unpackFiles(fileinfo.FileBuf, fileinfo.PackName, targetPath)
 	if err != nil {
 		rmsg.Rmsg = "unpack Files"
 		goto errorout
@@ -77,7 +108,6 @@ errorout:
 }
 
 func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
-	var pathsb strings.Builder
 	var err error
 	var packName, wrapName, srcPath, pwd string
 	var cmd *exec.Cmd
@@ -89,26 +119,9 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 		logger.Exceptions.Println("FilePull")
 		goto errorout
 	}
-	switch fileinfo.PathType {
-	case "store":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-	case "log":
-		pathsb.WriteString(config.GlobalConfig.Logger.Path)
-	case "nodeapp":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
-	default:
-		goto errorout
-	}
-	pathsb.WriteString(fileinfo.TargetPath)
 
 	pwd, _ = os.Getwd()
-	srcPath = pathFixing(pathsb.String(), pwd+string(filepath.Separator))
-	// _, err = os.Stat(srcPath)
-	// if err != nil {
-	// 	logger.Exceptions.Println(srcPath, " not exist")
-	// 	goto errorout
-	// }
-
+	srcPath = pathFixing(fileinfo.TargetPath, pwd+string(filepath.Separator))
 	// wrap the files first
 	wrapName = fmt.Sprintf("%d.wrap", time.Now().Nanosecond())
 	os.MkdirAll(wrapName, os.ModePerm)
@@ -136,7 +149,6 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 
 	fileinfo.FileBuf = loadFile(packName)
 	fileinfo.PackName = packName
-
 	payload, _ = json.Marshal(&fileinfo)
 errorout:
 	err = protocols.SendMessageUnique(conn, protocols.TypeFilePullResponse, serialNum, payload)
@@ -146,7 +158,7 @@ errorout:
 }
 
 func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
-	var pathsb strings.Builder
+	var targetPath string
 	res := []byte{}
 	pathinfo := FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &pathinfo)
@@ -154,19 +166,8 @@ func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
 		goto errorout
 	}
 
-	switch pathinfo.PathType {
-	case "store":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Store)
-	case "log":
-		pathsb.WriteString(config.GlobalConfig.Logger.Path)
-	case "nodeapp":
-		pathsb.WriteString(config.GlobalConfig.Workspace.Root)
-	default:
-		goto errorout
-	}
-	pathsb.WriteString(pathinfo.TargetPath)
-
-	res = allFiles(pathsb.String())
+	targetPath = config.ParsePathWithEnv(pathinfo.TargetPath)
+	res = allFiles(targetPath)
 errorout:
 	err = protocols.SendMessageUnique(conn, protocols.TypeFileTreeResponse, serialNum, res)
 	if err != nil {
@@ -252,16 +253,6 @@ func saveFile(filebufb64, filename string) error {
 		}
 		Offset += ChunkSize
 	}
-	// content, err := base64.RawStdEncoding.DecodeString(filebufb64)
-	// if err != nil {
-	// 	logger.Server.Println("FileDecode")
-	// 	return err
-	// }
-	// err = os.WriteFile(filename, content, os.ModePerm)
-	// if err != nil {
-	// 	logger.Server.Println("WriteFile:", filename)
-	// 	return err
-	// }
 	return nil
 }
 
@@ -342,16 +333,6 @@ func unpackFilesNoWrap(packb64 string, dir string) error {
 	os.Remove(file.String())
 	return nil
 }
-
-// func packFile(fileOrDir string) string {
-// 	packName := fmt.Sprintf("%d.zip", time.Now().Nanosecond())
-// 	archiver.DefaultZip.OverwriteExisting = true
-// 	err := archiver.DefaultZip.Archive([]string{fileOrDir}, packName)
-// 	if err != nil {
-// 		return ""
-// 	}
-// 	return packName
-// }
 
 func loadFile(packName string) string {
 	var filebufb64 strings.Builder

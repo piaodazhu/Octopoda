@@ -68,6 +68,13 @@ func printBytes(b []byte, isPretty bool) {
 	fmt.Println(str)
 }
 
+func PrintString(info string) {
+	if !enablePrint {
+		return
+	}
+	fmt.Println(info)
+}
+
 func PrintJSON(message interface{}) {
 	if !enablePrint {
 		return

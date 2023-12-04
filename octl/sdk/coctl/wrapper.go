@@ -6,7 +6,7 @@ struct node_info {
     char* Version;
     char* Addr;
     int State;
-    char* ConnState;
+    int ConnState;
     long long Delay;
     long long OnlineTs;
     long long OfflineTs;
@@ -61,29 +61,8 @@ func Init(configFile string) (C.int, *C.char) {
 }
 
 //export NodeInfo
-func NodeInfo(name string, result *C.struct_node_info) (C.int, *C.char) {
-	res, err := sdk.NodeInfo(name)
-	if err != nil {
-		return C.int(err.Code()), C.CString(err.Error())
-	}
-	*result = C.struct_node_info{
-		Name:      C.CString(res.Name),
-		Version:   C.CString(res.Version),
-		Addr:      C.CString(res.Addr),
-		State:     C.int(res.State),
-		ConnState: C.CString(res.ConnState),
-		Delay:     C.longlong(res.Delay),
-		OnlineTs:  C.longlong(res.OnlineTs),
-		OfflineTs: C.longlong(res.OfflineTs),
-		ActiveTs:  C.longlong(res.ActiveTs),
-		BrainTs:   C.longlong(res.BrainTs),
-	}
-	return 0, nil
-}
-
-//export NodesInfo
-func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_node_info, size *C.int) (C.int, *C.char) {
-	res, err := sdk.NodesInfo(names)
+func NodeInfo(names []string, brain *C.struct_brain_info, results []C.struct_node_info, size *C.int) (C.int, *C.char) {
+	res, err := sdk.NodeInfo(names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -103,7 +82,7 @@ func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_no
 			Version:   C.CString(res.InfoList[i].Version),
 			Addr:      C.CString(res.InfoList[i].Addr),
 			State:     C.int(res.InfoList[i].State),
-			ConnState: C.CString(res.InfoList[i].ConnState),
+			ConnState: C.int(res.InfoList[i].ConnState),
 			Delay:     C.longlong(res.InfoList[i].Delay),
 			OnlineTs:  C.longlong(res.InfoList[i].OnlineTs),
 			OfflineTs: C.longlong(res.InfoList[i].OfflineTs),
@@ -115,30 +94,8 @@ func NodesInfo(names []string, brain *C.struct_brain_info, results []C.struct_no
 }
 
 //export NodeStatus
-func NodeStatus(name string, result *C.struct_node_status) (C.int, *C.char) {
-	res, err := sdk.NodeStatus(name)
-	if err != nil {
-		return C.int(err.Code()), C.CString(err.Error())
-	}
-
-	*result = C.struct_node_status{
-		Name:         C.CString(res.Name),
-		Platform:     C.CString(res.Platform),
-		CpuCores:     C.int(res.CpuCores),
-		LocalTime:    C.longlong(res.LocalTime.Unix()),
-		CpuLoadShort: C.double(res.CpuLoadShort),
-		CpuLoadLong:  C.double(res.CpuLoadLong),
-		MemUsed:      C.longlong(res.MemUsed),
-		MemTotal:     C.longlong(res.MemTotal),
-		DiskUsed:     C.longlong(res.DiskUsed),
-		DiskTotal:    C.longlong(res.DiskTotal),
-	}
-	return 0, nil
-}
-
-//export NodesStatus
-func NodesStatus(names []string, results []C.struct_node_status, size *C.int) (C.int, *C.char) {
-	res, err := sdk.NodesStatus(names)
+func NodeStatus(names []string, results []C.struct_node_status, size *C.int) (C.int, *C.char) {
+	res, err := sdk.NodeStatus(names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -164,9 +121,9 @@ func NodesStatus(names []string, results []C.struct_node_status, size *C.int) (C
 	return 0, nil
 }
 
-//export DistribFile
-func DistribFile(localFileOrDir string, targetPath string, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
-	res, err := sdk.DistribFile(localFileOrDir, targetPath, names)
+//export UploadFile
+func UploadFile(localFileOrDir string, remoteTargetPath string, isForce bool, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.UploadFile(localFileOrDir, remoteTargetPath, isForce, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -187,9 +144,9 @@ func DistribFile(localFileOrDir string, targetPath string, names []string, resul
 	return 0, nil
 }
 
-//export PullFile
-func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_execution_result) (C.int, *C.char) {
-	res, err := sdk.PullFile(pathtype, node, fileOrDir, targetdir)
+//export DownloadFile
+func DownloadFile(remoteFileOrDir string, localTargetPath string, name string, result *C.struct_execution_result) (C.int, *C.char) {
+	res, err := sdk.DownloadFile(remoteFileOrDir, localTargetPath, name)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -203,9 +160,9 @@ func PullFile(pathtype, node, fileOrDir, targetdir string, result *C.struct_exec
 	return 0, nil
 }
 
-//export Run
-func Run(runtask string, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
-	res, err := sdk.Run(runtask, names)
+//export RunCommand
+func RunCommand(cmd string, needAlign bool, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.RunCommand(cmd, needAlign, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -226,9 +183,9 @@ func Run(runtask string, names []string, results []C.struct_execution_result, si
 	return 0, nil
 }
 
-//export XRun
-func XRun(runtask string, names []string, delay int, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
-	res, err := sdk.XRun(runtask, names, delay)
+//export RunScript
+func RunScript(cmd string, needAlign bool, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.RunScript(cmd, needAlign, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -249,9 +206,9 @@ func XRun(runtask string, names []string, delay int, results []C.struct_executio
 	return 0, nil
 }
 
-//export GroupGetAll
-func GroupGetAll(results []*C.char, size *C.int) (C.int, *C.char) {
-	res, err := sdk.GroupGetAll()
+//export RunCommandBackground
+func RunCommandBackground(cmd string, needAlign bool, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.RunCommandBackground(cmd, needAlign, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
@@ -260,57 +217,126 @@ func GroupGetAll(results []*C.char, size *C.int) (C.int, *C.char) {
 	}
 
 	*size = C.int(len(res))
-	for i, name := range res {
-		results[i] = C.CString(name)
+	for i := range res {
+		results[i] = C.struct_execution_result{
+			Name:                  C.CString(res[i].Name),
+			Code:                  C.int(res[i].Code),
+			CommunicationErrorMsg: C.CString(res[i].CommunicationErrorMsg),
+			ProcessErrorMsg:       C.CString(res[i].ProcessErrorMsg),
+			Result:                C.CString(res[i].Result),
+		}
 	}
-	// copy(results, res)
 	return 0, nil
 }
 
-//export GroupGet
-func GroupGet(name string, results []*C.char, size *C.int) (C.int, *C.char) {
-	res, err := sdk.GroupGet(name)
+//export XRunCommand
+func XRunCommand(cmd string, needAlign bool, delay int, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.XRunCommand(cmd, needAlign, delay, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
-	if len(results) < len(res.Nodes) {
-		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.Nodes)))
+	if len(results) < len(res) {
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
 	}
 
-	*size = C.int(len(res.Nodes))
-	for i, name := range res.Nodes {
-		results[i] = C.CString(name)
+	*size = C.int(len(res))
+	for i := range res {
+		results[i] = C.struct_execution_result{
+			Name:                  C.CString(res[i].Name),
+			Code:                  C.int(res[i].Code),
+			CommunicationErrorMsg: C.CString(res[i].CommunicationErrorMsg),
+			ProcessErrorMsg:       C.CString(res[i].ProcessErrorMsg),
+			Result:                C.CString(res[i].Result),
+		}
 	}
-	// copy(results, res.Nodes)
 	return 0, nil
 }
 
-//export GroupSet
-func GroupSet(name string, nocheck bool, names []string) (C.int, *C.char) {
-	err := sdk.GroupSet(name, nocheck, names)
+//export XRunScript
+func XRunScript(cmd string, needAlign bool, delay int, names []string, results []C.struct_execution_result, size *C.int) (C.int, *C.char) {
+	res, err := sdk.XRunScript(cmd, needAlign, delay, names)
 	if err != nil {
 		return C.int(err.Code()), C.CString(err.Error())
 	}
-	return 0, nil
-}
+	if len(results) < len(res) {
+		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+	}
 
-//export GroupDel
-func GroupDel(name string) (C.int, *C.char) {
-	err := sdk.GroupDel(name)
-	if err != nil {
-		return C.int(err.Code()), C.CString(err.Error())
+	*size = C.int(len(res))
+	for i := range res {
+		results[i] = C.struct_execution_result{
+			Name:                  C.CString(res[i].Name),
+			Code:                  C.int(res[i].Code),
+			CommunicationErrorMsg: C.CString(res[i].CommunicationErrorMsg),
+			ProcessErrorMsg:       C.CString(res[i].ProcessErrorMsg),
+			Result:                C.CString(res[i].Result),
+		}
 	}
 	return 0, nil
 }
 
-//export Prune
-func Prune() (C.int, *C.char) {
-	err := sdk.Prune()
-	if err != nil {
-		return C.int(err.Code()), C.CString(err.Error())
-	}
-	return 0, nil
-}
+// //export GroupGetAll
+// func GroupGetAll(results []*C.char, size *C.int) (C.int, *C.char) {
+// 	res, err := sdk.GroupGetAll()
+// 	if err != nil {
+// 		return C.int(err.Code()), C.CString(err.Error())
+// 	}
+// 	if len(results) < len(res) {
+// 		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res)))
+// 	}
+
+// 	*size = C.int(len(res))
+// 	for i, name := range res {
+// 		results[i] = C.CString(name)
+// 	}
+// 	// copy(results, res)
+// 	return 0, nil
+// }
+
+// //export GroupGet
+// func GroupGet(name string, results []*C.char, size *C.int) (C.int, *C.char) {
+// 	res, err := sdk.GroupGet(name)
+// 	if err != nil {
+// 		return C.int(err.Code()), C.CString(err.Error())
+// 	}
+// 	if len(results) < len(res.Nodes) {
+// 		return C.int(errs.OctlSdkBufferError), C.CString(fmt.Sprintf("receiver buffer length is only %d but require %d", len(results), len(res.Nodes)))
+// 	}
+
+// 	*size = C.int(len(res.Nodes))
+// 	for i, name := range res.Nodes {
+// 		results[i] = C.CString(name)
+// 	}
+// 	// copy(results, res.Nodes)
+// 	return 0, nil
+// }
+
+// //export GroupSet
+// func GroupSet(name string, nocheck bool, names []string) (C.int, *C.char) {
+// 	err := sdk.GroupSet(name, nocheck, names)
+// 	if err != nil {
+// 		return C.int(err.Code()), C.CString(err.Error())
+// 	}
+// 	return 0, nil
+// }
+
+// //export GroupDel
+// func GroupDel(name string) (C.int, *C.char) {
+// 	err := sdk.GroupDel(name)
+// 	if err != nil {
+// 		return C.int(err.Code()), C.CString(err.Error())
+// 	}
+// 	return 0, nil
+// }
+
+// //export Prune
+// func Prune() (C.int, *C.char) {
+// 	err := sdk.Prune()
+// 	if err != nil {
+// 		return C.int(err.Code()), C.CString(err.Error())
+// 	}
+// 	return 0, nil
+// }
 
 //export ScenarioInfo
 func ScenarioInfo(name string) (*C.char, C.int, *C.char) {
@@ -339,8 +365,8 @@ func ScenariosInfo(results []*C.char, size *C.int) (C.int, *C.char) {
 }
 
 //export ScenarioVersion
-func ScenarioVersion(name string) (*C.char, C.int, *C.char) {
-	res, err := sdk.ScenarioVersion(name)
+func ScenarioVersion(name string, offset, limit int) (*C.char, C.int, *C.char) {
+	res, err := sdk.ScenarioVersion(name, offset, limit)
 	if err != nil {
 		return nil, C.int(err.Code()), C.CString(err.Error())
 	}

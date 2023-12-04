@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/api"
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 
 	"github.com/piaodazhu/Octopoda/protocols"
 
@@ -30,6 +32,7 @@ func Run() {
 func initRouter(engine *gin.Engine) {
 	engine.Use(gin.Recovery())
 	engine.Use(BusyBlocker())
+	engine.Use(WorkgroupAuth())
 	group := engine.Group("/api/v1")
 	{
 		group.GET("/taskstate", api.TaskState)
@@ -42,6 +45,7 @@ func initRouter(engine *gin.Engine) {
 		group.GET("/node/prune", api.NodePrune)
 
 		group.GET("/node/apps", api.NodeAppsInfo)
+		group.GET("/node/app/info", api.NodeAppInfo)
 		group.GET("/node/app/version", api.NodeAppVersion)
 		group.POST("/node/app/version", api.NodeAppReset)
 
@@ -63,6 +67,7 @@ func initRouter(engine *gin.Engine) {
 
 		group.POST("/scenario/app/prepare", api.AppPrepare)
 		group.POST("/scenario/app/deployment", api.AppDeploy)
+		group.POST("/scenario/app/commit", api.AppCommit)
 
 		group.POST("/file/upload", api.FileUpload)
 		group.POST("/file/spread", api.FileSpread)
@@ -85,6 +90,12 @@ func initRouter(engine *gin.Engine) {
 		group.DELETE("/group", api.GroupDeleteGroup)
 
 		group.GET("/groups", RateLimiter(1, 1), api.GroupGetAll)
+
+		group.GET("/workgroup/info", api.WorkgroupInfo)
+		group.POST("/workgroup/info", api.WorkgroupGrant)
+		group.GET("/workgroup/children", api.WorkgroupChildren)
+		group.GET("/workgroup/members", api.WorkgroupMembers)
+		group.POST("/workgroup/members", api.WorkgroupMembersOperation)
 	}
 }
 
@@ -117,6 +128,7 @@ func BusyBlocker() gin.HandlerFunc {
 				Rcode: -1,
 				Rmsg:  "Server Busy",
 			})
+			return 
 		}
 		c.Next()
 	}
@@ -153,8 +165,59 @@ func RateLimiter(r float64, burst int) gin.HandlerFunc {
 	limiter := rate.NewLimiter(rate.Limit(r), burst)
 	return func(ctx *gin.Context) {
 		if !limiter.Allow() {
-			ctx.AbortWithStatusJSON(403, fmt.Sprintf("rate limit(r=%.1f,b=%d)", r, burst))
+			ctx.AbortWithStatusJSON(http.StatusForbidden, fmt.Sprintf("rate limit(r=%.1f,b=%d)", r, burst))
+			return 
 		}
+		ctx.Next()
+	}
+}
+
+func WorkgroupAuth() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		rootpath := ctx.GetHeader("rootpath")
+		rootpath = strings.TrimSuffix(rootpath, "/")
+		currentPath := ctx.GetHeader("currentpath")
+		currentPath = strings.TrimSuffix(currentPath, "/")
+		password := ctx.GetHeader("password")
+		if len(password) == 0 {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		if !workgroup.IsSameOrSubPath(currentPath, rootpath) {
+			fmt.Println("!workgroup.IsSameOrSubPath(currentPath, rootpath)")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		info, err := workgroup.Info(rootpath)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return 
+		}
+		if info == nil { // rootgroup not found
+			fmt.Println("info == nil")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		if info.Password != password { // rootgroup unauth
+			fmt.Println("info.Password != password: ", info.Password, password)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		members, err := workgroup.Members(currentPath)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return 
+		}
+		if len(currentPath) > 0 && len(members) == 0 {
+			fmt.Println("len(members) == 0")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		ctx.Set("octopoda_scope", workgroup.MakeScope(members))
 		ctx.Next()
 	}
 }

@@ -6,16 +6,12 @@
 #define WIN_DLL_EXPORT
 #endif
 
-enum PATHTYPE {
-	FSTORE,
-	LOG,
-	NODEAPP,
-};
-
 enum ERRORTYPE {
 	OK,
 	OctlReadConfigError,
+	OctlWriteConfigError,
 	OctlInitClientError,
+	OctlWorkgroupAuthError,
 	OctlHttpRequestError,
 	OctlHttpStatusError,
 	OctlMessageParseError,
@@ -27,6 +23,7 @@ enum ERRORTYPE {
 	OctlSdkNotInitializedError,
 	OctlSdkPanicRecoverError,
 	OctlSdkBufferError,
+	OctlContextCancelError,
 };
 
 
@@ -48,86 +45,96 @@ int octl_init(char* config,
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_get_node_info(char* name, octl_node_info *output_obj, 
-		char *errbuf, int *errbuflen);
-
-#ifdef WIN_DLL_EXPORT
-__declspec(dllexport) 
-#endif
-int octl_get_nodes_info_list(char** names, int input_size, 
+int octl_get_node_info(char** names, int input_size, 
 		octl_brain_info *output_obj, octl_node_info *output_list, int *output_size,
 		char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif 
-int octl_get_node_status(char* name, octl_node_status *output_obj,
-		char* errbuf, int *errbuflen);
-
-#ifdef WIN_DLL_EXPORT
-__declspec(dllexport) 
-#endif 
-int octl_get_nodes_status_list(char** names, int input_size, 
+int octl_get_node_status(char** names, int input_size, 
 		octl_node_status *output_list, int *output_size,
 		char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif 
-int octl_distribute_file(char* local_file_or_dir, char* target_path, 
+int octl_upload_file(char* local_file_or_dir, char* remote_target_path, int is_force,
 		char** names, int input_size, octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_pull_file(enum PATHTYPE type, char* name, 
-		char* remote_file_or_dir, char* local_dir, 
+int octl_download_file(char* remote_file_or_dir, char* local_dir, char* name, 
 		octl_execution_result *output_obj,
 		char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_run(char *cmd_expr, char **names, int input_size, 
+int octl_run_command(char *cmd_str, int need_align, char **names, int input_size, 
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_xrun(char *cmd_expr, char **names, int input_size, int delay, 
+int octl_run_script(char *script_file, int need_align, char **names, int input_size, 
 	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_get_groups_list(char **output_list, int *output_size,
+int octl_run_command_background(char *cmd_str, int need_align, char **names, int input_size, 
+	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_get_group(char *group_name, char **output_list, int *output_size,
+int octl_xrun_command(char *cmd_str, int need_align, int delay, 
+	char **names, int input_size, 
+	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
-		char *errbuf, int *errbuflen);
-
-#ifdef WIN_DLL_EXPORT
-__declspec(dllexport) 
-#endif
-int octl_del_group(char *group_name,
+int octl_xrun_script(char *script_file, int need_align, int delay, 
+	char **names, int input_size, 
+	octl_execution_result *output_list, int *output_size,
 	char *errbuf, int *errbuflen);
 
-#ifdef WIN_DLL_EXPORT
-__declspec(dllexport) 
-#endif
-int octl_prune_nodes(char *errbuf, int *errbuflen);
+// #ifdef WIN_DLL_EXPORT
+// __declspec(dllexport) 
+// #endif
+// int octl_get_groups_list(char **output_list, int *output_size,
+// 	char *errbuf, int *errbuflen);
+
+// #ifdef WIN_DLL_EXPORT
+// __declspec(dllexport) 
+// #endif
+// int octl_get_group(char *group_name, char **output_list, int *output_size,
+// 	char *errbuf, int *errbuflen);
+
+// #ifdef WIN_DLL_EXPORT
+// __declspec(dllexport) 
+// #endif
+// int octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
+// 		char *errbuf, int *errbuflen);
+
+// #ifdef WIN_DLL_EXPORT
+// __declspec(dllexport) 
+// #endif
+// int octl_del_group(char *group_name,
+// 	char *errbuf, int *errbuflen);
+
+// #ifdef WIN_DLL_EXPORT
+// __declspec(dllexport) 
+// #endif
+// int octl_prune_nodes(char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
@@ -144,7 +151,8 @@ int octl_get_scenario_info(char *name, char *output_buf, int *output_size,
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-int octl_get_scenario_version(char *name, char *output_buf, int *output_size,
+int octl_get_scenario_version(char *name, int offset, int limit, 
+	char *output_buf, int *output_size,
 	char *errbuf, int *errbuflen);
 
 #ifdef WIN_DLL_EXPORT
@@ -191,17 +199,17 @@ void octl_clear_execution_result(octl_execution_result *obj);
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-void octl_clear_nodes_info_list(octl_node_info *list, int n);
+void octl_clear_node_info_list(octl_node_info *list, int n);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-void octl_clear_nodes_status_list(octl_node_status *list, int n);
+void octl_clear_node_status_list(octl_node_status *list, int n);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 
 #endif
-void octl_clear_execution_results_list(octl_execution_result *list, int n);
+void octl_clear_execution_result_list(octl_execution_result *list, int n);
 
 #ifdef WIN_DLL_EXPORT
 __declspec(dllexport) 

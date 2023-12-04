@@ -10,6 +10,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/brain/network"
+	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
@@ -21,8 +22,13 @@ type proxyMsg struct {
 
 func SshLoginInfo(ctx *gin.Context) {
 	name := ctx.Query("name")
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, struct{}{})
+		return
+	}
+
 	if info, found := network.GetSshInfo(name); found {
-		ctx.JSON(200, info)
+		ctx.JSON(http.StatusOK, info)
 		return
 	}
 	ctx.JSON(http.StatusNotFound, struct{}{})
@@ -40,6 +46,16 @@ func SshRegister(ctx *gin.Context) {
 		})
 		return
 	}
+
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, proxyMsg{
+			Code: -1,
+			Msg:  "ERR",
+			Data: "some nodes are invalid or out of scope",
+		})
+		return
+	}
+
 	services, err := network.ProxyServices()
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, proxyMsg{
@@ -69,6 +85,15 @@ func SshRegister(ctx *gin.Context) {
 
 func SshUnregister(ctx *gin.Context) {
 	name := ctx.Query("name")
+	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+		ctx.JSON(http.StatusBadRequest, proxyMsg{
+			Code: -1,
+			Msg:  "ERR",
+			Data: "some nodes are invalid or out of scope",
+		})
+		return
+	}
+
 	if proxyCmd(ctx, name, protocols.TypeSshUnregister) { // 成功就删除
 		network.DelSshInfo(name)
 	}
@@ -80,7 +105,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		if cmdType == protocols.TypeSshRegister {
 			network.CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
 		}
-		ctx.JSON(200, proxyMsg{
+		ctx.JSON(http.StatusOK, proxyMsg{
 			Code: 0,
 			Msg:  "OK",
 			Data: fmt.Sprintf("%s:%d", ip, config.GlobalConfig.OctlFace.SshPort),
@@ -118,7 +143,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		return false
 	}
 	if pmsg.Code == 0 {
-		ctx.JSON(200, pmsg)
+		ctx.JSON(http.StatusOK, pmsg)
 		return true
 	} else {
 		ctx.JSON(http.StatusInternalServerError, pmsg)
