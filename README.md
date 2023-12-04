@@ -129,7 +129,11 @@ sudo ./brain -p
 # or install it and start background
 sudo bash setup.sh
 
-# 4 Install Tentacle on a machine
+## 4 Set root workgroup password on Brain machine. (For step 7)
+redis-cli
+127.0.0.1:6379> set info: yourpass
+
+# 5 Install Tentacle on a machine
 tar -Jxvf tentacle_v1.5.2_linux_amd64.tar.xz
 cd tentacle_v1.5.2_linux_amd64
 # then modify tentacle.yaml if you want (httpsNameServer, name, brain is important)
@@ -138,7 +142,7 @@ sudo ./tentacle -p
 # or install it and start background
 sudo bash setup.sh
 
-# 5 Install Pakma on your Brain or Tentacle machine (optional, only for online upgrade)
+# 6 Install Pakma on your Brain or Tentacle machine (optional, only for online upgrade)
 tar -Jxvf pakma_v1.5.2_linux_amd64.tar.xz
 cd pakma_v1.5.2_linux_amd64
 # make sure pakma is installed after Brain or Tentacle
@@ -147,18 +151,18 @@ sudo bash setup.sh brain
 # or install it for your Tentacle
 sudo bash setup.sh tentacle
 
-# 6 Install Octl
+# 7 Install Octl
 cd octl_v1.5.2_linux_amd64
-# then modify octl.yaml if you want (httpsNameServer, name is important)
+# then modify octl.yaml. (workgroup.root="", workgroup.password="yourpass")
 sudo cp octl.yaml /etc/octopoda/octl/
 sudo cp octl /usr/local/bin/
 
-# 7 Hello World
+# 8 Hello World
 $ octl node get
 # {
 #   "nodes": [
 #     {
-#       "name": "hello",
+#       "name": "pi0",
 #       "addr": "192.168.1.4",
 #       "state": "online",
 #       "delay": "3ms",
