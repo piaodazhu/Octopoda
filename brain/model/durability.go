@@ -166,24 +166,29 @@ func AutoFix() {
 
 	ScenLock.RLock()
 	for name := range ScenarioMap {
-		if err := Fix(name); err != nil {
-			scenList = append(scenList, name)
-		}
+		scenList = append(scenList, name)
 	}
 	ScenLock.RUnlock()
 
-	for len(scenList) > 0 {
-		unfixed := []string{}
-		logger.SysInfo.Printf("Scenarios to be fixed: %v", scenList)
-		for _, name := range scenList {
+	unfixed := []string{}
+	for _, name := range scenList {
+		if err := Fix(name); err != nil {
+			unfixed = append(unfixed, name)
+		}
+	}
+
+	for len(unfixed) > 0 {
+		tmp := []string{}
+		logger.SysInfo.Printf("Scenarios to be fixed: %v", unfixed)
+		for _, name := range unfixed {
 			// each 30s, check a scenario
 			time.Sleep(30 * time.Second)
 			// fix failed is allowed. Because scenarios are dynamically changing.
 			if err := Fix(name); err != nil {
-				unfixed = append(unfixed, name)
+				tmp = append(tmp, name)
 			}
 		}
-		scenList = unfixed
+		unfixed = tmp
 		// sleep 1min then start next roll fix
 		time.Sleep(60 * time.Second)
 	}
