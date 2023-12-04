@@ -14,7 +14,7 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func Download(fileOrDir string, targetdir string, node string) (*protocols.ExecutionResults, *errs.OctlError) {
+func Download(remoteFileOrDir string, localTargetPath string, node string) (*protocols.ExecutionResults, *errs.OctlError) {
 	if len(node) == 0 || node[0] == '@' {
 		emsg := "command pull not support node group"
 		output.PrintFatalln(emsg)
@@ -25,7 +25,7 @@ func Download(fileOrDir string, targetdir string, node string) (*protocols.Execu
 		config.GlobalConfig.Brain.ApiPrefix,
 		config.API_FilePull,
 		node,
-		fileOrDir,
+		remoteFileOrDir,
 	)
 	req, _ := http.NewRequest("GET", url, nil)
 	workgroup.SetHeader(req)
@@ -78,7 +78,7 @@ func Download(fileOrDir string, targetdir string, node string) (*protocols.Execu
 		return nil, errs.New(errs.OctlMessageParseError, emsg)
 	}
 	// unpack result.Output
-	err = unpackFiles(finfo.FileBuf, finfo.PackName, targetdir)
+	err = unpackFiles(finfo.FileBuf, finfo.PackName, localTargetPath)
 	if err != nil {
 		emsg := "unpackFiles(finfo.FileBuf, finfo.PackName, targetdir) error: " + err.Error()
 		output.PrintFatalln(emsg)

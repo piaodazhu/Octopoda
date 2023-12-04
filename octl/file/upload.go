@@ -23,7 +23,7 @@ import (
 	"github.com/mholt/archiver/v3"
 )
 
-func Upload(localFileOrDir string, targetPath string, names []string, isForce bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+func Upload(localFileOrDir string, remoteTargetPath string, names []string, isForce bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -31,10 +31,10 @@ func Upload(localFileOrDir string, targetPath string, names []string, isForce bo
 		return nil, errs.New(errs.OctlNodeParseError, emsg)
 	}
 
-	if targetPath == "." {
-		targetPath = ""
-	} else if targetPath[len(targetPath)-1] != '/' {
-		targetPath = targetPath + "/"
+	if remoteTargetPath == "." {
+		remoteTargetPath = ""
+	} else if remoteTargetPath[len(remoteTargetPath)-1] != '/' {
+		remoteTargetPath = remoteTargetPath + "/"
 	}
 
 	pwd, _ := os.Getwd()
@@ -84,7 +84,7 @@ func Upload(localFileOrDir string, targetPath string, names []string, isForce bo
 	bodyWriter := multipart.NewWriter(&bodyBuffer)
 	fileWriter, _ := bodyWriter.CreateFormFile("packfiles", packName)
 	io.Copy(fileWriter, f)
-	bodyWriter.WriteField("targetPath", targetPath)
+	bodyWriter.WriteField("targetPath", remoteTargetPath)
 	bodyWriter.WriteField("isForce", fmt.Sprint(isForce))
 	bodyWriter.WriteField("targetNodes", string(nodes_serialized))
 

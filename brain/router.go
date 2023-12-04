@@ -188,8 +188,7 @@ func WorkgroupAuth() gin.HandlerFunc {
 			fmt.Println("!workgroup.IsSameOrSubPath(currentPath, rootpath)")
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
-		} 
-		fmt.Printf("%s, %s\n", rootpath, currentPath)
+		}
 
 		info, err := workgroup.Info(rootpath)
 		if err != nil {

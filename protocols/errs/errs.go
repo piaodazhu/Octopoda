@@ -37,7 +37,9 @@ func New(code int, emsg string) *OctlError {
 
 const (
 	OctlReadConfigError = 1 + iota
+	OctlWriteConfigError
 	OctlInitClientError
+	OctlWorkgroupAuthError
 	OctlHttpRequestError
 	OctlHttpStatusError
 	OctlMessageParseError

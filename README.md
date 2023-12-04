@@ -597,7 +597,7 @@ if err := octl.Init("/your/path/of/octl_conf.yaml"); err != nil {
   // something wrong
 }
 
-nodesInfo, err := octl.NodesInfo([]string{"node1", "node2", "node3"})
+nodesInfo, err := octl.NodeInfo([]string{"node1", "node2", "node3"})
 if err != nil {
   // something wrong
 }
@@ -617,7 +617,7 @@ APIs are exported in `octl/sdk/pyoctl/pyoctl.py`. For using them in Python progr
 ```python
 try:
   octl = pyoctl.OctlClient("/path/of/libcoctl.so", "/path/of/octl_conf.yaml")
-  results = octl.run(r"{uname -a}", ['node1', 'node2'])
+  results = octl.run_command("uname -a", ['node1', 'node2'])
     for result in results:
       print(result)
 except pyoctl.OctlException as e: # capture the exception of octl

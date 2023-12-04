@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strconv"
 	"syscall"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
@@ -22,49 +21,49 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	delay := 0
-	align := false
-	names := []string{}
-	for i := range params {
-		if len(params[i]) < 2 {
-			names = append(names, params[i])
-			continue
-		}
-		switch params[i][:2] {
-		case "-d":
-			x, err := strconv.Atoi(params[i][2:])
-			if err != nil {
-				emsg := "invalid args: " + err.Error()
-				return nil, errs.New(errs.OctlArgumentError, emsg)
-			}
-			delay = x
-		case "-a":
-			align = true
-		default:
-			names = append(names, params[i])
-		}
-	}
-	return runTask(runtask, names, delay, align)
-}
+// func XRun(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+// 	delay := 0
+// 	align := false
+// 	names := []string{}
+// 	for i := range params {
+// 		if len(params[i]) < 2 {
+// 			names = append(names, params[i])
+// 			continue
+// 		}
+// 		switch params[i][:2] {
+// 		case "-d":
+// 			x, err := strconv.Atoi(params[i][2:])
+// 			if err != nil {
+// 				emsg := "invalid args: " + err.Error()
+// 				return nil, errs.New(errs.OctlArgumentError, emsg)
+// 			}
+// 			delay = x
+// 		case "-a":
+// 			align = true
+// 		default:
+// 			names = append(names, params[i])
+// 		}
+// 	}
+// 	return runTask(runtask, names, delay, align)
+// }
 
-func Run(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
-	align := false
-	names := []string{}
-	for i := range params {
-		if len(params[i]) < 2 {
-			names = append(names, params[i])
-			continue
-		}
-		switch params[i][:2] {
-		case "-a":
-			align = true
-		default:
-			names = append(names, params[i])
-		}
-	}
-	return runTask(runtask, names, -1, align)
-}
+// func Run(runtask string, params []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+// 	align := false
+// 	names := []string{}
+// 	for i := range params {
+// 		if len(params[i]) < 2 {
+// 			names = append(names, params[i])
+// 			continue
+// 		}
+// 		switch params[i][:2] {
+// 		case "-a":
+// 			align = true
+// 		default:
+// 			names = append(names, params[i])
+// 		}
+// 	}
+// 	return runTask(runtask, names, -1, align)
+// }
 
 func runTask(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)

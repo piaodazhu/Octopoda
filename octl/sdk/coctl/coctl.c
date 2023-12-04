@@ -36,22 +36,7 @@ octl_init(char* config,
 }
 
 int
-octl_get_node_info(char* name, octl_node_info *output_obj, 
-		char *errbuf, int *errbuflen) {
-	struct NodeInfo_return ret = NodeInfo(make_GoString(name), output_obj);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
-}
-
-int
-octl_get_nodes_info_list(char** names, int input_size, 
+octl_get_node_info(char** names, int input_size, 
 		octl_brain_info *output_obj, octl_node_info *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
@@ -59,7 +44,7 @@ octl_get_nodes_info_list(char** names, int input_size,
 	for (i = 0; i < input_size; i++) {
 		name_strs[i] = make_GoString(names[i]);
 	}
-	struct NodesInfo_return ret = NodesInfo(make_GoSlice(name_strs, input_size), output_obj, make_GoSlice(output_list, *output_size), output_size);
+	struct NodeInfo_return ret = NodeInfo(make_GoSlice(name_strs, input_size), output_obj, make_GoSlice(output_list, *output_size), output_size);
 	free(name_strs);
 	int code = ret.r0;
 	char *emsg = ret.r1;
@@ -73,22 +58,7 @@ octl_get_nodes_info_list(char** names, int input_size,
 }
 
 int
-octl_get_node_status(char* name, octl_node_status *output_obj,
-		char* errbuf, int *errbuflen) {
-	struct NodeStatus_return ret = NodeStatus(make_GoString(name), output_obj);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
-}
-
-int
-octl_get_nodes_status_list(char** names, int input_size, 
+octl_get_node_status(char** names, int input_size, 
 		octl_node_status *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
@@ -96,7 +66,7 @@ octl_get_nodes_status_list(char** names, int input_size,
 	for (i = 0; i < input_size; i++) {
 		name_strs[i] = make_GoString(names[i]);
 	}
-	struct NodesStatus_return ret = NodesStatus(make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+	struct NodeStatus_return ret = NodeStatus(make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
 	free(name_strs);
 	int code = ret.r0;
 	char *emsg = ret.r1;
@@ -110,7 +80,7 @@ octl_get_nodes_status_list(char** names, int input_size,
 }
 
 int
-octl_distribute_file(char* local_file_or_dir, char* target_path, 
+octl_upload_file(char* local_file_or_dir, char* remote_target_path, int is_force,
 		char** names, int input_size, octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
@@ -118,7 +88,7 @@ octl_distribute_file(char* local_file_or_dir, char* target_path,
 	for (i = 0; i < input_size; i++) {
 		name_strs[i] = make_GoString(names[i]);
 	}
-	struct DistribFile_return ret = DistribFile(make_GoString(local_file_or_dir), make_GoString(target_path), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+	struct UploadFile_return ret = UploadFile(make_GoString(local_file_or_dir), make_GoString(remote_target_path), (GoInt)is_force, make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
 	free(name_strs);
 	int code = ret.r0;
 	char *emsg = ret.r1;
@@ -132,51 +102,59 @@ octl_distribute_file(char* local_file_or_dir, char* target_path,
 }
 
 int
-octl_pull_file(enum PATHTYPE type, char* name, 
-		char* remote_file_or_dir, char* local_dir, 
+octl_download_file(char* remote_file_or_dir, char* local_dir, char* name, 
 		octl_execution_result *output_obj,
 		char *errbuf, int *errbuflen) {
-	GoString type_str;
-	switch (type)
-	{
-	case FSTORE:
-		type_str = make_GoString("store");
-		break;
-	case LOG:
-		type_str = make_GoString("log");
-		break;
-	case NODEAPP:
-		type_str = make_GoString("nodeapp");
-		break;
-	default:
-		break;
+	struct DownloadFile_return ret = DownloadFile(make_GoString(remote_file_or_dir), make_GoString(local_dir), make_GoString(name), output_obj);
+	int code = ret.r0;
+	char *emsg = ret.r1;
+	if (code == 0) {
+		return 0;
+	}
+	*errbuflen = min(*errbuflen, strlen(emsg));
+	memcpy(errbuf, emsg, *errbuflen);
+	free(emsg);
+	return code;
+}
+
+int octl_run(char *cmd, int runtype, int need_align, int delay, 
+		char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
+		char *errbuf, int *errbuflen) {
+	GoString *name_strs = malloc(sizeof(GoString) * input_size);
+	int i;
+	for (i = 0; i < input_size; i++) {
+		name_strs[i] = make_GoString(names[i]);
 	}
 	
-	struct PullFile_return ret = PullFile(type_str, make_GoString(name), make_GoString(remote_file_or_dir), make_GoString(local_dir), output_obj);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
+	int code;
+	char *emsg;
+	if (delay < 0) { // must be run 
+		if (runtype == 0) {
+			struct RunCommand_return ret = RunCommand(make_GoString(cmd), (GoInt)(need_align), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+			code = ret.r0;
+			emsg = ret.r1;
+		} else if (runtype == 1) {
+			struct RunScript_return ret = RunScript(make_GoString(cmd), (GoInt)(need_align), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+			code = ret.r0;
+			emsg = ret.r1;
+		} else {
+			struct RunCommandBackground_return ret = RunCommandBackground(make_GoString(cmd), (GoInt)(need_align), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+			code = ret.r0;
+			emsg = ret.r1;
+		}
+	} else { // must be xrun
+		if (runtype == 0) {
+			struct XRunCommand_return ret = XRunCommand(make_GoString(cmd), (GoInt)(need_align), (GoInt)(delay), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+			code = ret.r0;
+			emsg = ret.r1;
+		} else {
+			struct XRunScript_return ret = XRunScript(make_GoString(cmd), (GoInt)(need_align), (GoInt)(delay), make_GoSlice(name_strs, input_size), make_GoSlice(output_list, *output_size), output_size);
+			code = ret.r0;
+			emsg = ret.r1;
+		}
 	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
-}
-
-int
-octl_run(char *cmd_expr, char **names, int input_size, int need_align, 
-	octl_execution_result *output_list, int *output_size,
-	char *errbuf, int *errbuflen) {
-	GoString *name_strs = malloc(sizeof(GoString) * input_size);
-	int i;
-	for (i = 0; i < input_size; i++) {
-		name_strs[i] = make_GoString(names[i]);
-	}
-	struct Run_return ret = Run(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), (GoInt)(need_align), make_GoSlice(output_list, 2), output_size);
 	free(name_strs);
-	int code = ret.r0;
-	char *emsg = ret.r1;
 	if (code == 0) {
 		return 0;
 	}
@@ -187,105 +165,116 @@ octl_run(char *cmd_expr, char **names, int input_size, int need_align,
 }
 
 int
-octl_xrun(char *cmd_expr, char **names, int input_size, int delay, int need_align, 
-	octl_execution_result *output_list, int *output_size,
-	char *errbuf, int *errbuflen) {
-	GoString *name_strs = malloc(sizeof(GoString) * input_size);
-	int i;
-	for (i = 0; i < input_size; i++) {
-		name_strs[i] = make_GoString(names[i]);
-	}
-	struct XRun_return ret = XRun(make_GoString(cmd_expr), make_GoSlice(name_strs, input_size), (GoInt)(delay), (GoInt)(need_align), make_GoSlice(output_list, *output_size), output_size);
-	free(name_strs);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
-}
-
-int
-octl_get_groups_list(char **output_list, int *output_size,
+octl_run_command(char *cmd_str, int need_align, char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
-	struct GroupGetAll_return ret = GroupGetAll(make_GoSlice(output_list, *output_size), output_size);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
+	return octl_run(cmd_str, 0, need_align, -1, names, input_size, output_list, output_size, errbuf, errbuflen);
 }
 
-int
-octl_get_group(char *group_name, char **output_list, int *output_size,
+int octl_run_script(char *script_file, int need_align, char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
-	struct GroupGet_return ret = GroupGet(make_GoString(group_name), make_GoSlice(output_list, *output_size), output_size);
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
+	return octl_run(script_file, 1, need_align, -1, names, input_size, output_list, output_size, errbuf, errbuflen);
 }
 
-int
-octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
+int octl_run_command_background(char *cmd_str, int need_align, char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
-	GoString *name_strs = malloc(sizeof(GoString) * input_size);
-	int i;
-	for (i = 0; i < input_size; i++) {
-		name_strs[i] = make_GoString(names[i]);
-	}
-	struct GroupSet_return ret = GroupSet(make_GoString(group_name), skipCheck, make_GoSlice(name_strs, input_size));
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
+	return octl_run(cmd_str, 2, need_align, -1, names, input_size, output_list, output_size, errbuf, errbuflen);
 }
 
-int
-octl_del_group(char *group_name,
+int octl_xrun_command(char *cmd_str, int need_align, int delay, 
+		char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
 		char *errbuf, int *errbuflen) {
-	struct GroupDel_return ret = GroupDel(make_GoString(group_name));
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
+	return octl_run(cmd_str, 0, need_align, delay, names, input_size, output_list, output_size, errbuf, errbuflen);
 }
 
-
-int octl_prune_nodes(char *errbuf, int *errbuflen) {
-	struct Prune_return ret = Prune();
-	int code = ret.r0;
-	char *emsg = ret.r1;
-	if (code == 0) {
-		return 0;
-	}
-	*errbuflen = min(*errbuflen, strlen(emsg));
-	memcpy(errbuf, emsg, *errbuflen);
-	free(emsg);
-	return code;
+int octl_xrun_script(char *script_file, int need_align, int delay, 
+		char **names, int input_size, 
+		octl_execution_result *output_list, int *output_size,
+		char *errbuf, int *errbuflen) {
+	return octl_run(script_file, 1, need_align, delay, names, input_size, output_list, output_size, errbuf, errbuflen);
 }
+
+// int
+// octl_get_groups_list(char **output_list, int *output_size,
+// 		char *errbuf, int *errbuflen) {
+// 	struct GroupGetAll_return ret = GroupGetAll(make_GoSlice(output_list, *output_size), output_size);
+// 	int code = ret.r0;
+// 	char *emsg = ret.r1;
+// 	if (code == 0) {
+// 		return 0;
+// 	}
+// 	*errbuflen = min(*errbuflen, strlen(emsg));
+// 	memcpy(errbuf, emsg, *errbuflen);
+// 	free(emsg);
+// 	return code;
+// }
+
+// int
+// octl_get_group(char *group_name, char **output_list, int *output_size,
+// 		char *errbuf, int *errbuflen) {
+// 	struct GroupGet_return ret = GroupGet(make_GoString(group_name), make_GoSlice(output_list, *output_size), output_size);
+// 	int code = ret.r0;
+// 	char *emsg = ret.r1;
+// 	if (code == 0) {
+// 		return 0;
+// 	}
+// 	*errbuflen = min(*errbuflen, strlen(emsg));
+// 	memcpy(errbuf, emsg, *errbuflen);
+// 	free(emsg);
+// 	return code;
+// }
+
+// int
+// octl_set_group(char *group_name, int skipCheck, char **names, int input_size,
+// 		char *errbuf, int *errbuflen) {
+// 	GoString *name_strs = malloc(sizeof(GoString) * input_size);
+// 	int i;
+// 	for (i = 0; i < input_size; i++) {
+// 		name_strs[i] = make_GoString(names[i]);
+// 	}
+// 	struct GroupSet_return ret = GroupSet(make_GoString(group_name), skipCheck, make_GoSlice(name_strs, input_size));
+// 	int code = ret.r0;
+// 	char *emsg = ret.r1;
+// 	if (code == 0) {
+// 		return 0;
+// 	}
+// 	*errbuflen = min(*errbuflen, strlen(emsg));
+// 	memcpy(errbuf, emsg, *errbuflen);
+// 	free(emsg);
+// 	return code;
+// }
+
+// int
+// octl_del_group(char *group_name,
+// 		char *errbuf, int *errbuflen) {
+// 	struct GroupDel_return ret = GroupDel(make_GoString(group_name));
+// 	int code = ret.r0;
+// 	char *emsg = ret.r1;
+// 	if (code == 0) {
+// 		return 0;
+// 	}
+// 	*errbuflen = min(*errbuflen, strlen(emsg));
+// 	memcpy(errbuf, emsg, *errbuflen);
+// 	free(emsg);
+// 	return code;
+// }
+
+
+// int octl_prune_nodes(char *errbuf, int *errbuflen) {
+// 	struct Prune_return ret = Prune();
+// 	int code = ret.r0;
+// 	char *emsg = ret.r1;
+// 	if (code == 0) {
+// 		return 0;
+// 	}
+// 	*errbuflen = min(*errbuflen, strlen(emsg));
+// 	memcpy(errbuf, emsg, *errbuflen);
+// 	free(emsg);
+// 	return code;
+// }
 
 
 int octl_get_scenarios_info_list(char **output_list, int *output_size,
@@ -329,9 +318,9 @@ int octl_get_scenario_info(char *name, char *output_buf, int *output_size,
 }
 
 
-int octl_get_scenario_version(char *name, char *output_buf, int *output_size,
+int octl_get_scenario_version(char *name, int offset, int limit, char *output_buf, int *output_size,
 		char *errbuf, int *errbuflen) {
-	struct ScenarioVersion_return ret = ScenarioVersion(make_GoString(name));
+	struct ScenarioVersion_return ret = ScenarioVersion(make_GoString(name), (GoInt)(offset), (GoInt)(limit));
 	char *verBuf = ret.r0;
 	int verLen = strlen(verBuf);
 	int code = ret.r1;
@@ -420,8 +409,6 @@ octl_clear_node_info(octl_node_info *obj) {
 		free(obj->Version);
 	if (obj->Addr != NULL)
 		free(obj->Addr);
-	if (obj->ConnState != NULL)
-		free(obj->ConnState);
 	memset(obj, 0, sizeof(octl_node_info));
 }
 
@@ -459,7 +446,7 @@ octl_clear_execution_result(octl_execution_result *obj) {
 }
 
 void
-octl_clear_nodes_info_list(octl_node_info *list, int n) {
+octl_clear_node_info_list(octl_node_info *list, int n) {
 	int i;
 	for (i = 0; i < n; i++)
 		octl_clear_node_info(&list[i]);
@@ -473,14 +460,14 @@ octl_clear_string_list(char **list, int n) {
 }
 
 void
-octl_clear_nodes_status_list(octl_node_status *list, int n) {
+octl_clear_node_status_list(octl_node_status *list, int n) {
 	int i;
 	for (i = 0; i < n; i++)
 		octl_clear_node_status(&list[i]);
 }
 
 void
-octl_clear_execution_results_list(octl_execution_result *list, int n) {
+octl_clear_execution_result_list(octl_execution_result *list, int n) {
 	int i;
 	for (i = 0; i < n; i++)
 		octl_clear_execution_result(&list[i]);

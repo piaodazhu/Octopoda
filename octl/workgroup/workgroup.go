@@ -1,18 +1,18 @@
 package workgroup
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/output"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 	"github.com/spf13/viper"
 )
 
 var wg workgroupClient
 var conf *viper.Viper
 
-func InitWorkgroup(client *http.Client) error {
+func InitWorkgroup(client *http.Client) *errs.OctlError {
 	curPathFile := config.GlobalConfig.Workgroup.CurrentPathFile
 	root := config.GlobalConfig.Workgroup.Root
 	password := config.GlobalConfig.Workgroup.Password
@@ -22,7 +22,8 @@ func InitWorkgroup(client *http.Client) error {
 	if err := conf.ReadInConfig(); err != nil {
 		conf.Set("current", root)
 		if err := conf.WriteConfig(); err != nil {
-			return errors.New("cannot create config: " + err.Error())
+			emsg := "cannot create config: " + err.Error()
+			return errs.New(errs.OctlWriteConfigError, emsg)
 		}
 	}
 
@@ -32,13 +33,14 @@ func InitWorkgroup(client *http.Client) error {
 		wg.toRoot()
 		conf.Set("current", wg.pwd())
 		if err := conf.WriteConfig(); err != nil {
-			output.PrintFatalln(err)
-			return errors.New("cannot switch to root path: " + err.Error())
+			emsg := "cannot switch to root path: " + err.Error()
+			return errs.New(errs.OctlWriteConfigError, emsg)
 		}
 	}
 
 	if err := wg.auth(); err != nil {
-		return errors.New("cannot auth rootgroup: " + err.Error())
+		emsg := "cannot auth rootgroup: " + err.Error()
+		return errs.New(errs.OctlWorkgroupAuthError, emsg)
 	}
 	output.PrintInfof("root workgroup=%s, current workgroup path=%s", wg.root(), wg.pwd())
 
@@ -62,6 +64,7 @@ func Cd(path string) error {
 		output.PrintFatalln(err)
 		return err
 	}
+	output.PrintInfof("cd to %s", wg.pwd())
 	return nil
 }
 

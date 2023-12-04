@@ -26,7 +26,7 @@ struct node_info {
     char* Version;
     char* Addr;
     int State;
-    char* ConnState;
+    int ConnState;
     long long Delay;
     long long OnlineTs;
     long long OfflineTs;
@@ -124,91 +124,63 @@ struct NodeInfo_return {
 	int r0;
 	char* r1;
 };
-extern struct NodeInfo_return NodeInfo(GoString name, struct node_info* result);
-
-/* Return type for NodesInfo */
-struct NodesInfo_return {
-	int r0;
-	char* r1;
-};
-extern struct NodesInfo_return NodesInfo(GoSlice names, struct brain_info* brain, GoSlice results, int* size);
+extern struct NodeInfo_return NodeInfo(GoSlice names, struct brain_info* brain, GoSlice results, int* size);
 
 /* Return type for NodeStatus */
 struct NodeStatus_return {
 	int r0;
 	char* r1;
 };
-extern struct NodeStatus_return NodeStatus(GoString name, struct node_status* result);
+extern struct NodeStatus_return NodeStatus(GoSlice names, GoSlice results, int* size);
 
-/* Return type for NodesStatus */
-struct NodesStatus_return {
+/* Return type for UploadFile */
+struct UploadFile_return {
 	int r0;
 	char* r1;
 };
-extern struct NodesStatus_return NodesStatus(GoSlice names, GoSlice results, int* size);
+extern struct UploadFile_return UploadFile(GoString localFileOrDir, GoString remoteTargetPath, GoUint8 isForce, GoSlice names, GoSlice results, int* size);
 
-/* Return type for DistribFile */
-struct DistribFile_return {
+/* Return type for DownloadFile */
+struct DownloadFile_return {
 	int r0;
 	char* r1;
 };
-extern struct DistribFile_return DistribFile(GoString localFileOrDir, GoString targetPath, GoSlice names, GoSlice results, int* size);
+extern struct DownloadFile_return DownloadFile(GoString remoteFileOrDir, GoString localTargetPath, GoString name, struct execution_result* result);
 
-/* Return type for PullFile */
-struct PullFile_return {
+/* Return type for RunCommand */
+struct RunCommand_return {
 	int r0;
 	char* r1;
 };
-extern struct PullFile_return PullFile(GoString pathtype, GoString node, GoString fileOrDir, GoString targetdir, struct execution_result* result);
+extern struct RunCommand_return RunCommand(GoString cmd, GoUint8 needAlign, GoSlice names, GoSlice results, int* size);
 
-/* Return type for Run */
-struct Run_return {
+/* Return type for RunScript */
+struct RunScript_return {
 	int r0;
 	char* r1;
 };
-extern struct Run_return Run(GoString runtask, GoSlice names, GoUint8 needAlign, GoSlice results, int* size);
+extern struct RunScript_return RunScript(GoString cmd, GoUint8 needAlign, GoSlice names, GoSlice results, int* size);
 
-/* Return type for XRun */
-struct XRun_return {
+/* Return type for RunCommandBackground */
+struct RunCommandBackground_return {
 	int r0;
 	char* r1;
 };
-extern struct XRun_return XRun(GoString runtask, GoSlice names, GoInt delay, GoUint8 needAlign, GoSlice results, int* size);
+extern struct RunCommandBackground_return RunCommandBackground(GoString cmd, GoUint8 needAlign, GoSlice names, GoSlice results, int* size);
 
-/* Return type for GroupGetAll */
-struct GroupGetAll_return {
+/* Return type for XRunCommand */
+struct XRunCommand_return {
 	int r0;
 	char* r1;
 };
-extern struct GroupGetAll_return GroupGetAll(GoSlice results, int* size);
+extern struct XRunCommand_return XRunCommand(GoString cmd, GoUint8 needAlign, GoInt delay, GoSlice names, GoSlice results, int* size);
 
-/* Return type for GroupGet */
-struct GroupGet_return {
+/* Return type for XRunScript */
+struct XRunScript_return {
 	int r0;
 	char* r1;
 };
-extern struct GroupGet_return GroupGet(GoString name, GoSlice results, int* size);
-
-/* Return type for GroupSet */
-struct GroupSet_return {
-	int r0;
-	char* r1;
-};
-extern struct GroupSet_return GroupSet(GoString name, GoUint8 nocheck, GoSlice names);
-
-/* Return type for GroupDel */
-struct GroupDel_return {
-	int r0;
-	char* r1;
-};
-extern struct GroupDel_return GroupDel(GoString name);
-
-/* Return type for Prune */
-struct Prune_return {
-	int r0;
-	char* r1;
-};
-extern struct Prune_return Prune();
+extern struct XRunScript_return XRunScript(GoString cmd, GoUint8 needAlign, GoInt delay, GoSlice names, GoSlice results, int* size);
 
 /* Return type for ScenarioInfo */
 struct ScenarioInfo_return {
@@ -231,7 +203,7 @@ struct ScenarioVersion_return {
 	int r1;
 	char* r2;
 };
-extern struct ScenarioVersion_return ScenarioVersion(GoString name);
+extern struct ScenarioVersion_return ScenarioVersion(GoString name, GoInt offset, GoInt limit);
 
 /* Return type for NodeAppInfo */
 struct NodeAppInfo_return {
