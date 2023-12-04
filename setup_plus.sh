@@ -21,7 +21,7 @@ fi
 
 NAME=$1
 INSTALL_ARCH=arm
-INSTALL_VERSION='1.7.1'
+INSTALL_VERSION='1.8.0'
 OUTPUT_DIR=./installers/
 
 HTTPNS_URL=https://10.108.30.85:3455/release

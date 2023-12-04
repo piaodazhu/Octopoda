@@ -5,19 +5,29 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/rdb"
 	"github.com/piaodazhu/Octopoda/protocols"
 )
+
+func Check() {
+	_, found, err := rdb.GetString(infoKey(""))
+	if err != nil{
+		err = fmt.Errorf("cannot get key from redis, please check redis server. err = %s", err.Error())
+		logger.SysInfo.Panic(err)
+	}
+	if !found {
+		err = errors.New("cannot read root workgroup password from redis, please set it (<db=config.Db,key=info:,value=password>) on redis server")
+		logger.SysInfo.Panic(err)
+	}
+}
 
 func Info(path string) (*protocols.WorkgroupInfo, error) {
 	// if not found : return nil, nil
 	// if access error: return nil, err
 	// else return : info, nil
-	if len(path) == 0 || path == "/" {
-		return &protocols.WorkgroupInfo{
-			Path: "",
-			Password: "admin123",
-		}, nil
+	if path == "/" {
+		path = ""
 	}
 
 	passwd, found, err := rdb.GetString(infoKey(path))

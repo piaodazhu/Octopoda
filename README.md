@@ -29,10 +29,10 @@ Features of Octopoda:
     - [GET](#get)
     - [PRUNE](#prune)
     - [STATUS](#status)
-  - [B. Group Information](#b-group-information)
-    - [SET](#set)
-    - [GET](#get-1)
-    - [DEL](#del)
+  - [B. Workgroup](#b-workgroup)
+    - [CONCEPT](#concept)
+    - [PATH COMMAND](#path-command)
+    - [MEMBERS COMMAND](#members-command)
   - [C. Command Exection](#c-command-exection)
     - [RUN](#run)
     - [XRUN](#xrun)
@@ -40,9 +40,9 @@ Features of Octopoda:
     - [UPLOAD](#upload)
     - [DOWNLOAD](#download)
   - [E. Fast SSH](#e-fast-ssh)
-    - [SET](#set-1)
+    - [SET](#set)
     - [LS](#ls)
-    - [DEL](#del-1)
+    - [DEL](#del)
     - [LOGIN](#login)
   - [F. Scenario Deployment](#f-scenario-deployment)
     - [CREATE](#create)
@@ -210,27 +210,41 @@ With this subcmd we can get the running log of brain or a given node. The argume
 
 Default `l` is 30 and default `d` is 0, means latest 30 lines of logs will be return. -->
 
-## B. Group Information
-### SET
-> `usage: octl group set <group> [-n] [<node1> ...] [<@group1> ...]`
+## B. Workgroup
 
-With this subcmd we can create a node group, which is a set consists of multiple nodes. When calling `file distrib/spread`, `run` and writing scenarios deployment file, we can use `@GroupName` to represent multiple nodes with the group name. Its useful when the number of nodes is large. For example:
+### CONCEPT
 
-1. We set a group g1 to present node1 and node2: `octl group set g1 node1 node2`.
-2. Then we run command: `octl cmd run 'hostname' @g1 node3`
-3. Then we get the result: the hostname of node1, node2 and node3.
+Workgroup are an Octopoda mechanism that supports resource isolation at node granularity, hierarchical device authorization and referencing multiple node names with a group name. Workgroups are organized in a **tree structure**, with each node having a unique path, a non-empty set of node names, and a collection of subworkgroups. 
 
-Note that we can use more than one groups in arguments, or mix node names with group names, and the final node names will be automatically de-duplicated. When we set a group with some nodes, **Brain** will check if all nodes are healthy or if the group is already exists. To disable this check, use flag `-n (or --no-check)` to disable health check.
+For example, workgroup with path `/room1/alice` and node names set `(pi1,pi2,pi3)` will never be aware of `pi4` even if it is in the same Octopoda network. And group `/room1` can list, add and remove members in/to/from `/room1/alice`. And `/room1/alice` can create `/room1/alice/g1` with node names set `(pi1,pi2)`. 
 
-### GET
-> `usage: octl group get [[ALL] | <group>]`
+The **relative** group name can be used to reference its node names set. For example, if **currentPath=/room1**, then `octl cmd run 'uname -a' @alice pi4` is equivalent to `octl cmd run 'uname -a' pi1 pi2 pi3 pi4`.
 
-With this subcmd we can list all groups or a given group which is a set consists of multiple nodes.
+Workgroup is a mechanism forshould be configured in `octl.yaml`.
 
-### DEL
-> `usage: octl group del <group>`
+```yaml
+workgroup:
+  root: "grouppath"
+  password: "password"
+  currentPathFile: "/etc/octopoda/octl/.curPath.yaml"
+```
 
-With this subcmd we can delete a given group.
+### PATH COMMAND
+> `usage: octl wg pwd`
+> 
+> `usage: octl ls [<grouppath>]`
+> 
+> `usage: octl cd [<grouppath>]`
+> 
+> `usage: octl wg grant <grouppath> <password>`
+
+
+### MEMBERS COMMAND
+> `usage: octl wg get [<grouppath>]`
+> 
+> `usage: octl wg add <grouppath> [<node1>] [@<group1>] ...`
+> 
+> `usage: octl wg rm <grouppath> [[<node1>] [@<node1>] ...]`
 
 ## C. Command Exection
 
