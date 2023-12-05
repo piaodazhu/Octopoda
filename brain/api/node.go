@@ -44,7 +44,7 @@ func NodesInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
-
+	fmt.Println(names)
 	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), names...) {
 		emsg := "some nodes are invalid or out of scope"
 		ctx.JSON(http.StatusBadRequest, errors.New(emsg))
@@ -221,6 +221,10 @@ func NodesParse(ctx *gin.Context) {
 
 			members, err := workgroup.Members(groupPath)
 			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, err)
+				return
+			}
+			if len(members) == 0 {
 				invalidNameSet[name] = struct{}{}
 				continue
 			}
@@ -247,13 +251,13 @@ func NodesParse(ctx *gin.Context) {
 
 		state, ok := model.GetNodeState(name)
 		if !ok {
-			unhealthyNodeSet[name] = struct{}{}
+			invalidNameSet[name] = struct{}{}
 			continue
 		}
 
 		if state != protocols.NodeStateReady {
 			unhealthyNodeSet[name] = struct{}{}
-			// there is no continue because unhealthy node should be also put into outputSet
+			continue
 		}
 		nodeSet[name] = struct{}{}
 	}

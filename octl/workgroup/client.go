@@ -23,8 +23,13 @@ type workgroupClient struct {
 	client *http.Client
 }
 
+func pathClean(path string) string {
+	path = filepath.Clean(path)
+	return strings.ReplaceAll(filepath.Clean(path), "\\", "/")
+}
+
 func newWorkgroupClient(rootGroup, passwd, currentGroup string, client *http.Client) workgroupClient {
-	rootGroup = filepath.Clean(rootGroup)
+	rootGroup = pathClean(rootGroup)
 	if rootGroup == "." {
 		rootGroup = ""
 	}
@@ -156,9 +161,9 @@ func (wg *workgroupClient) removeMembers(groupPath string, names ...string) erro
 func (wg *workgroupClient) fixPath(path string) string {
 	var fixed string
 	if strings.HasPrefix(path, "/") {
-		fixed = filepath.Clean(path)
+		fixed = pathClean(path)
 	} else {
-		fixed = filepath.Clean(wg.currentPath + "/" + path)
+		fixed = pathClean(wg.currentPath + "/" + path)
 	}
 
 	if fixed == "/" {

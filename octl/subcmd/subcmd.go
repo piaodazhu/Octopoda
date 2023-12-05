@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"fmt"
-
 	"github.com/piaodazhu/Octopoda/octl/output"
 )
 
 func Execute(subcmd string, args []string) {
-	fmt.Println("tag3")
 	switch subcmd {
 	case "node":
 		nodeCmd(args)
