@@ -221,6 +221,10 @@ func NodesParse(ctx *gin.Context) {
 
 			members, err := workgroup.Members(groupPath)
 			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, err)
+				return
+			}
+			if len(members) == 0 {
 				invalidNameSet[name] = struct{}{}
 				continue
 			}
