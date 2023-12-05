@@ -11,16 +11,20 @@ brain:
   port: 12345
   apiPrefix : "api/v1"
 ssl:
-  caCert: "./cert/ca.pem"
-  clientCert: "./cert/client.pem"
-  clientKey: "./cert/client.key"
+  caCert: "/etc/octopoda/octl/cert/ca.pem"
+  clientCert: "/etc/octopoda/octl/cert/client.pem"
+  clientKey: "/etc/octopoda/octl/cert/client.key"
 git:
+  # local git service
   serveUrl: "http://10.108.30.85:3000"
   username: "testuser"
   password: "testpass"
 jsonFast: true
 outputPretty: true
 workgroup:
-  root: "smallgroup"
+  # leave it empty for administrator. 
+  # Then use octl wg grant <subgroup> <password> to create more account.
+  root: ""
+  # for administrator, make sure manually set <key=info:,value=passwd> in redis db
   password: "passwd"
-  currentPathFile: "./.curPath.yaml"
+  currentPathFile: "/etc/octopoda/octl/.curPath.yaml"
