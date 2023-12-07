@@ -23,10 +23,6 @@ func RunScript(ctx *gin.Context) {
 	delayStr := ctx.PostForm("delayTime")
 	targetNodes := ctx.PostForm("targetNodes")
 	needAlignStr := ctx.PostForm("needAlign")
-	needAlign := false
-	if needAlignStr == "true" {
-		needAlign = true
-	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -72,6 +68,11 @@ func RunScript(ctx *gin.Context) {
 		return
 	}
 
+	needAlign := false
+	if needAlignStr == "true" && len(targetNodes) > 1 {
+		needAlign = true
+	}
+
 	sparams := protocols.ScriptParams{
 		FileName:   script.Filename,
 		TargetPath: "scripts/",
@@ -107,10 +108,6 @@ func RunCmd(ctx *gin.Context) {
 	}
 	targetNodes := ctx.PostForm("targetNodes")
 	needAlignStr := ctx.PostForm("needAlign")
-	needAlign := false
-	if needAlignStr == "true" {
-		needAlign = true
-	}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -143,6 +140,11 @@ func RunCmd(ctx *gin.Context) {
 		rmsg.Rmsg = "ERROR: some nodes are invalid or out of scope."
 		ctx.JSON(http.StatusBadRequest, rmsg)
 		return
+	}
+
+	needAlign := false
+	if needAlignStr == "true" && len(targetNodes) > 1 {
+		needAlign = true
 	}
 
 	cParams := protocols.CommandParams{
