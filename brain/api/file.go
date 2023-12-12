@@ -390,7 +390,7 @@ func FileDistrib(ctx *gin.Context) {
 	}
 	payload, _ := config.Jsoner.Marshal(&finfo)
 
-	taskid := model.BrainTaskManager.CreateTask(1)
+	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
