@@ -127,7 +127,7 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 	os.MkdirAll(wrapName, os.ModePerm)
 
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force -r %s %s", srcPath, wrapName))
 	} else {
 		cmd = exec.Command(shellPath, "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
 	}
