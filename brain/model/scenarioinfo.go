@@ -67,7 +67,7 @@ func UpdateScenario(name, message string) (bool, bool) {
 				Version: san.Version{
 					Hash: hex.EncodeToString(versionhash[:]),
 					Msg:  message,
-					Time: time.Now().UnixMilli(),
+					Time: time.Now().Unix(),
 				},
 				Apps: scen.newversionbuf,
 			})
@@ -312,7 +312,7 @@ func ResetScenario(scenario, version, message string) bool {
 		Version: san.Version{
 			Hash: version,
 			Msg:  message,
-			Time: time.Now().UnixMilli(),
+			Time: time.Now().Unix(),
 		},
 		Apps: scen.Versions[idx].Apps,
 	})
