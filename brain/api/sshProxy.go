@@ -88,10 +88,6 @@ func SshUnregister(ctx *gin.Context) {
 		return
 	}
 
-	// if proxyCmd(ctx, name, protocols.TypeSshUnregister) { // 成功就删除
-	// 	network.DelSshInfo(name)
-	// }
-
 	network.DelSshInfo(name)
 	if !proxyCmd(ctx, name, protocols.TypeSshUnregister) {
 		logger.SysInfo.Println("cannot unregister ssh proxy of node " + name)

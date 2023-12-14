@@ -46,10 +46,8 @@ func Upload(localFileOrDir string, remoteTargetPath string, names []string, isFo
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force -r %s %s", srcPath, wrapName))
-		// fmt.Println("Platform: Windows. Cmd: ", cmd.String())
 	} else {
 		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
-		// fmt.Println("Platform: Linux. Cmd: ", cmd.String())
 	}
 	err = cmd.Run()
 	if err != nil {

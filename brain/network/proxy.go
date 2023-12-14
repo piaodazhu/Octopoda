@@ -92,24 +92,6 @@ func ProxyServices() ([]proxylite.ServiceInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// clean sshinfo
-	// set := map[string]struct{}{}
-	// for _, s := range services {
-	// 	set[s.Name] = struct{}{}
-	// }
-	// itemToBeDel := []string{}
-	// sshInfos.Range(func(key, value any) bool {
-	// 	name := key.(string)
-	// 	if _, found := set[name]; !found {
-	// 		itemToBeDel = append(itemToBeDel, name)
-	// 	}
-	// 	return true
-	// })
-	// for _, name := range itemToBeDel {
-	// 	DelSshInfo(name)
-	// }
-
 	return services, err
 }
 
