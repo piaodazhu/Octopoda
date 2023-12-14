@@ -467,11 +467,15 @@ When running subcmd `apply` in command line, target `default` or `(empty)` means
 Some environment variables are predefined when any script is executed. It can be directly referred in any script. Current Octopoda support these:
 - `OCTOPODA_NODENAME`: the name of the node who executes this script.
 - `OCTOPODA_CURRENTDIR`: work directory of the node who executes this script.
-- `OCTOPODA_STOREDIR`: storage directory of the node who executes this script.
 - `OCTOPODA_FILENAME`: file name of this script.
 - `OCTOPODA_OUTPUT`: output file of this script.
 - `OCTOPODA_APP`: current application name of this script.
 - `OCTOPODA_SCENARIO`: current scenario name of this script.
+- `OCTOPODA_ROOT`: system super user home directory of the node who executes this script.
+- `OCTOPODA_WORKSPACE`: workspace root directory of the node who executes this script.
+- `OCTOPODA_FSTORE`: storage directory of the node who executes this script.
+- `OCTOPODA_LOG`: log directory of the node who executes this script.
+- `OCTOPODA_PAKMA`: pakma directory of the node who executes this script.
 
 Note that in scripts, output to stdout (for example, `echo "done"`) won't work. If some output information need to be collected and shown in execution results, we have to **append them to `OCTOPODA_OUTPUT`**. (for example, `echo "done" >> $OCTOPODA_OUTPUT`)
 
