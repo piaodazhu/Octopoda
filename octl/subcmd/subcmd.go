@@ -8,8 +8,6 @@ func Execute(subcmd string, args []string) {
 	switch subcmd {
 	case "node":
 		nodeCmd(args)
-	case "group":
-		groupCmd(args)
 	case "wg":
 		workgroupCmd(args)
 	case "cmd":

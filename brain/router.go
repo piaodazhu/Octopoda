@@ -84,13 +84,7 @@ func initRouter(engine *gin.Engine) {
 		group.DELETE("/ssh", api.SshUnregister)
 
 		group.POST("/pakma", api.PakmaCmd)
-
-		group.POST("/group", api.GroupSetGroup)
-		group.GET("/group", api.GroupGetGroup)
-		group.DELETE("/group", api.GroupDeleteGroup)
-
-		group.GET("/groups", RateLimiter(1, 1), api.GroupGetAll)
-
+		
 		group.GET("/workgroup/info", api.WorkgroupInfo)
 		group.POST("/workgroup/info", api.WorkgroupGrant)
 		group.GET("/workgroup/children", api.WorkgroupChildren)
