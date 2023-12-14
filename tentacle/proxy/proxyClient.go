@@ -17,11 +17,12 @@ var done chan struct{}
 func RegisterSshService() (string, error) {
 	var err error
 	var proxyAddr string
+	proxyAddr, err = getProxyServerAddr()
+	if err != nil {
+		return "", err
+	}
+
 	if proxyClient == nil {
-		proxyAddr, err = getProxyServerAddr()
-		if err != nil {
-			return "", err
-		}
 		proxyClient = proxylite.NewProxyLiteClient(proxyAddr)
 		proxyClient.SetLogger(nil)
 	}
@@ -43,6 +44,7 @@ func RegisterSshService() (string, error) {
 		proxyClient = nil
 		return "", err
 	}
+
 	proxyIpPort := strings.Split(proxyAddr, ":")
 	if len(proxyIpPort) != 2 {
 		return "", errors.New("invalid proxy service address entry value: " + proxyAddr)

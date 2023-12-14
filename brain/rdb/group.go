@@ -6,6 +6,8 @@ import (
 	"context"
 )
 
+// should deprecated 
+
 func GroupAdd(name string, nodes []string) bool {
 	value, _ := config.Jsoner.Marshal(nodes)
 	pipe := rdb.TxPipeline()
