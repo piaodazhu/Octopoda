@@ -5,13 +5,14 @@ import (
 	"net"
 
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 	"github.com/piaodazhu/Octopoda/tentacle/app"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
 func AppLatestVersion(conn net.Conn, serialNum uint32, raw []byte) {
-	aParams := AppBasic{}
+	aParams := san.AppBasic{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte
 	if err != nil {
@@ -29,10 +30,10 @@ func AppLatestVersion(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func AppVersions(conn net.Conn, serialNum uint32, raw []byte) {
-	aParams := AppVersionParams{}
+	aParams := san.AppVersionParams{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte
-	var vlist []app.Version
+	var vlist []san.Version
 	if err != nil {
 		logger.Exceptions.Println(err)
 		goto errorout
@@ -46,14 +47,8 @@ errorout:
 	}
 }
 
-type AppResetParams struct {
-	AppBasic
-	VersionHash string
-	Mode        string
-}
-
 func AppReset(conn net.Conn, serialNum uint32, raw []byte) {
-	arParams := &AppResetParams{}
+	arParams := &san.AppResetParams{}
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}

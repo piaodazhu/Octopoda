@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 	"github.com/piaodazhu/Octopoda/tentacle/app"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
@@ -22,7 +23,7 @@ func AppsInfo(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func AppInfo(conn net.Conn, serialNum uint32, raw []byte) {
-	aParams := AppBasic{}
+	aParams := san.AppBasic{}
 	err := config.Jsoner.Unmarshal(raw, &aParams)
 	var payload []byte = []byte("[]")
 	if err != nil {
@@ -37,31 +38,8 @@ errorout:
 	}
 }
 
-type AppBasic struct {
-	Name        string
-	Scenario    string
-	Description string
-	Message     string
-}
-
-type AppVersionParams struct {
-	AppBasic
-	Offset int
-	Limit  int
-}
-
-type AppCreateParams struct {
-	AppBasic
-	FilePack string
-}
-
-type AppDeployParams struct {
-	AppBasic
-	Script string
-}
-
 func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
-	acParams := AppCreateParams{}
+	acParams := san.AppCreateParams{}
 	if err := config.Jsoner.Unmarshal(raw, &acParams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
@@ -81,7 +59,7 @@ func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 		}
 		rmsg.Modified = false
 		fullname := acParams.Name + "@" + acParams.Scenario
-		var version app.Version
+		var version san.Version
 
 		// is exists?
 		if !app.Exists(acParams.Name, acParams.Scenario) {
@@ -151,7 +129,7 @@ func AppCreate(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
-	adParams := AppDeployParams{}
+	adParams := san.AppDeployParams{}
 	if err := config.Jsoner.Unmarshal(raw, &adParams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
@@ -173,7 +151,7 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 
 		rmsg.Modified = false
 		fullname := adParams.Name + "@" + adParams.Scenario
-		var version app.Version
+		var version san.Version
 
 		// is new?
 		if !app.Exists(adParams.Name, adParams.Scenario) {
@@ -210,7 +188,7 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 			return &rmsg
 		}
 		rmsg.Version = version.Hash
-		rmsg.Modified = !isClean 
+		rmsg.Modified = !isClean
 
 		return &rmsg
 	}
@@ -238,7 +216,7 @@ func AppDeploy(conn net.Conn, serialNum uint32, raw []byte) {
 }
 
 func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
-	acParams := AppBasic{}
+	acParams := san.AppBasic{}
 	if err := config.Jsoner.Unmarshal(raw, &acParams); err != nil {
 		logger.Exceptions.Println("invalid arguments: ", err)
 		// SNED BACK
@@ -260,7 +238,7 @@ func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
 
 		rmsg.Modified = false
 		fullname := acParams.Name + "@" + acParams.Scenario
-		var version app.Version
+		var version san.Version
 
 		// is new?
 		if !app.Exists(acParams.Name, acParams.Scenario) {
@@ -322,7 +300,6 @@ func AppCommit(conn net.Conn, serialNum uint32, raw []byte) {
 		logger.Comm.Println("TypeAppCommitResponse send error")
 	}
 }
-
 
 type AppDeleteParams struct {
 	Name     string

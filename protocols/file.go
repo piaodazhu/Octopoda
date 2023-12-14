@@ -1,5 +1,12 @@
 package protocols
 
+type FileParams struct {
+	PackName    string
+	TargetPath  string
+	FileBuf     string
+	ForceCreate bool
+}
+
 type FileDistribParams struct {
 	LocalFile   string
 	TargetPath  string

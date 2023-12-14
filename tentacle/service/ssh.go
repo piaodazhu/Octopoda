@@ -9,14 +9,8 @@ import (
 	"github.com/piaodazhu/Octopoda/tentacle/proxy"
 )
 
-type proxyMsg struct {
-	Code int
-	Msg  string
-	Data string
-}
-
 func SshRegister(conn net.Conn, serialNum uint32, raw []byte) {
-	msg := proxyMsg{
+	msg := protocols.ProxyMsg{
 		Code: 0,
 		Msg:  "OK",
 	}
@@ -39,7 +33,7 @@ errorout:
 }
 
 func SshUnregister(conn net.Conn, serialNum uint32, raw []byte) {
-	msg := proxyMsg{
+	msg := protocols.ProxyMsg{
 		Code: 0,
 		Msg:  "OK",
 	}

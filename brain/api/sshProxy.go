@@ -33,7 +33,7 @@ func SshRegister(ctx *gin.Context) {
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")
 	if len(name) == 0 || len(username) == 0 {
-		ctx.JSON(http.StatusBadRequest, network.ProxyMsg{
+		ctx.JSON(http.StatusBadRequest, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: "invalid arguments",
@@ -42,7 +42,7 @@ func SshRegister(ctx *gin.Context) {
 	}
 
 	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		ctx.JSON(http.StatusBadRequest, network.ProxyMsg{
+		ctx.JSON(http.StatusBadRequest, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: "some nodes are invalid or out of scope",
@@ -52,7 +52,7 @@ func SshRegister(ctx *gin.Context) {
 
 	services, err := network.ProxyServices()
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, network.ProxyMsg{
+		ctx.JSON(http.StatusNotFound, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("cannot get proxy services: %s", err.Error()),
@@ -63,7 +63,7 @@ func SshRegister(ctx *gin.Context) {
 	// 存在一致性问题，但是危害不大
 	for _, s := range services {
 		if name == s.Name {
-			ctx.JSON(http.StatusBadRequest, network.ProxyMsg{
+			ctx.JSON(http.StatusBadRequest, protocols.ProxyMsg{
 				Code: -1,
 				Msg:  "ERR",
 				Data: fmt.Sprintf("service %s already exists", name),
@@ -80,7 +80,7 @@ func SshRegister(ctx *gin.Context) {
 func SshUnregister(ctx *gin.Context) {
 	name := ctx.Query("name")
 	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
-		ctx.JSON(http.StatusBadRequest, network.ProxyMsg{
+		ctx.JSON(http.StatusBadRequest, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: "some nodes are invalid or out of scope",
@@ -100,7 +100,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		if cmdType == protocols.TypeSshRegister {
 			network.CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
 		}
-		ctx.JSON(http.StatusOK, network.ProxyMsg{
+		ctx.JSON(http.StatusOK, protocols.ProxyMsg{
 			Code: 0,
 			Msg:  "OK",
 			Data: fmt.Sprintf("%s:%d", ip, config.GlobalConfig.OctlFace.SshPort),
@@ -108,7 +108,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		return true
 	}
 	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
-		ctx.JSON(http.StatusNotFound, network.ProxyMsg{
+		ctx.JSON(http.StatusNotFound, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("node %s not found", name),
@@ -118,7 +118,7 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 	raw, err := model.Request(name, cmdType, []byte{})
 	if err != nil {
 		logger.Comm.Println(protocols.MsgTypeString[cmdType], err)
-		ctx.JSON(http.StatusInternalServerError, network.ProxyMsg{
+		ctx.JSON(http.StatusInternalServerError, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
 			Data: fmt.Sprintf("brain request %s error", name),
@@ -126,14 +126,14 @@ func proxyCmd(ctx *gin.Context, name string, cmdType int) bool {
 		return false
 	}
 
-	pmsg := network.ProxyMsg{}
+	pmsg := protocols.ProxyMsg{}
 	err = json.Unmarshal(raw, &pmsg)
 	if err != nil {
-		logger.Comm.Println("network.ProxyMsg Unmarshal", err)
-		ctx.JSON(http.StatusInternalServerError, network.ProxyMsg{
+		logger.Comm.Println("protocols.ProxyMsg Unmarshal", err)
+		ctx.JSON(http.StatusInternalServerError, protocols.ProxyMsg{
 			Code: -1,
 			Msg:  "ERR",
-			Data: fmt.Sprintf("network.ProxyMsg Unmarshal error: %s", err),
+			Data: fmt.Sprintf("protocols.ProxyMsg Unmarshal error: %s", err),
 		})
 		return false
 	}

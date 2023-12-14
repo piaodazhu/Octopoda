@@ -7,6 +7,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
@@ -47,28 +48,28 @@ func GitReset(app string, hash string, mode string) error {
 type EmptyCommitError struct{}
 
 func (e EmptyCommitError) Error() string { return "EmptyCommitError" }
-func GitCommit(app string, message string) (Version, error) {
+func GitCommit(app string, message string) (san.Version, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		logger.Exceptions.Print("git.PlainOpen")
-		return Version{}, err
+		return san.Version{}, err
 	}
 	wt, err := repo.Worktree()
 	if err != nil {
 		logger.Exceptions.Print("repo.Worktree")
-		return Version{}, err
+		return san.Version{}, err
 	}
 
 	wt.Add("./")
 	state, err := wt.Status()
 	if err != nil {
 		logger.Exceptions.Print("wt.Status")
-		return Version{}, err
+		return san.Version{}, err
 	}
 	if state.IsClean() {
 		// logger.Exceptions.Print("state.IsClean")
-		return Version{}, EmptyCommitError{}
+		return san.Version{}, EmptyCommitError{}
 	}
 
 	commitTime := time.Now()
@@ -81,45 +82,45 @@ func GitCommit(app string, message string) (Version, error) {
 	})
 	if err != nil {
 		logger.Exceptions.Print("wt.Commit")
-		return Version{}, err
+		return san.Version{}, err
 	}
-	return Version{commitTime.Unix(), hash.String(), message}, nil
+	return san.Version{Time: commitTime.Unix(), Hash: hash.String(), Msg: message}, nil
 }
 
-func GitStatus(app string) (Version, bool, error) {
+func GitStatus(app string) (san.Version, bool, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	isClean := false
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		logger.Exceptions.Print("git.PlainOpen")
-		return Version{}, isClean, err
+		return san.Version{}, isClean, err
 	}
 	wt, err := repo.Worktree()
 	if err != nil {
 		logger.Exceptions.Print("repo.Worktree")
-		return Version{}, isClean, err
+		return san.Version{}, isClean, err
 	}
 
 	st, err := wt.Status()
 	if err != nil {
 		logger.Exceptions.Print("wt.Status")
-		return Version{}, isClean, err
+		return san.Version{}, isClean, err
 	}
 
 	isClean = st.IsClean()
 	head, err := repo.Head()
 	if err != nil {
 		logger.Exceptions.Print("repo.Head")
-		return Version{}, isClean, err
+		return san.Version{}, isClean, err
 	}
 
 	cmt, err := repo.CommitObject(head.Hash())
 	if err != nil {
 		logger.Exceptions.Print("repo.CommitObject")
-		return Version{}, isClean, err
+		return san.Version{}, isClean, err
 	}
 
-	return Version{
+	return san.Version{
 		Time: cmt.Committer.When.Unix(),
 		Hash: cmt.Hash.String(),
 		Msg:  cmt.Message,
@@ -148,7 +149,7 @@ func GitCreate(app string) bool {
 }
 
 // for Fix and FixAll
-func gitLogs(app string, N int) ([]Version, error) {
+func gitLogs(app string, N int) ([]san.Version, error) {
 	path := config.GlobalConfig.Workspace.Root + app
 	repo, err := git.PlainOpen(path)
 	if err != nil {
@@ -165,13 +166,13 @@ func gitLogs(app string, N int) ([]Version, error) {
 	}
 	defer iter.Close()
 
-	v := []Version{}
+	v := []san.Version{}
 	for i := 0; i < N; i++ {
 		cmt, err := iter.Next()
 		if err != nil {
 			break
 		}
-		v = append(v, Version{
+		v = append(v, san.Version{
 			Time: cmt.Committer.When.Unix(),
 			Hash: cmt.Hash.String(),
 			Msg:  cmt.Message,

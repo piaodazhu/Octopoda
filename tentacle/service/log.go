@@ -12,14 +12,8 @@ import (
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
-type LogParams struct {
-	MaxLines      int
-	MaxDaysBefore int
-	Logs          []string
-}
-
 func NodeLog(conn net.Conn, serialNum uint32, raw []byte) {
-	lparams := LogParams{}
+	lparams := protocols.LogParams{}
 	config.Jsoner.Unmarshal(raw, &lparams)
 	if lparams.MaxLines <= 0 {
 		lparams.MaxLines = 30
@@ -38,7 +32,7 @@ func NodeLog(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 }
 
-func readLogs(params *LogParams) {
+func readLogs(params *protocols.LogParams) {
 	offset := 0
 	daysBefore := 0
 	validdate, validlines := 0, 0

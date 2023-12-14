@@ -16,12 +16,6 @@ import (
 	"github.com/piaodazhu/proxylite"
 )
 
-type ProxyMsg struct {
-	Code int
-	Msg  string
-	Data string
-}
-
 var proxyliteServer *proxylite.ProxyLiteServer
 
 func InitProxyServer() {
@@ -45,7 +39,7 @@ func InitProxyServer() {
 	})
 	proxyliteServer.OnTunnelDestroyed(func(ctx *proxylite.Context) {
 		if sshinfo, found := GetSshInfo(ctx.ServiceInfo().Name); found {
-			info := SSHInfoDump{
+			info := protocols.SSHInfoDump{
 				Name:     ctx.ServiceInfo().Name,
 				Username: sshinfo.Username,
 				Password: sshinfo.Password,
@@ -95,19 +89,6 @@ func ProxyServices() ([]proxylite.ServiceInfo, error) {
 	return services, err
 }
 
-type SSHInfo struct {
-	Ip       string
-	Port     uint32
-	Username string
-	Password string
-}
-
-type SSHInfoDump struct {
-	Name     string
-	Username string
-	Password string
-}
-
 const sshInfoDumpKey = "sshInfoDumpKey"
 
 var sshInfos sync.Map
@@ -117,16 +98,16 @@ func init() {
 }
 
 func dumpSshInfos() error {
-	infos := []SSHInfoDump{}
+	infos := []protocols.SSHInfoDump{}
 	sshInfos.Range(func(key, value any) bool {
-		sshInfo := value.(SSHInfo)
+		sshInfo := value.(protocols.SSHInfo)
 		if len(sshInfo.Ip) == 0 { // haven't complete. continue
 			return true
 		}
-		infos = append(infos, SSHInfoDump{
+		infos = append(infos, protocols.SSHInfoDump{
 			Name:     key.(string),
-			Username: value.(SSHInfo).Username,
-			Password: value.(SSHInfo).Password,
+			Username: value.(protocols.SSHInfo).Username,
+			Password: value.(protocols.SSHInfo).Password,
 		})
 		return true
 	})
@@ -135,7 +116,7 @@ func dumpSshInfos() error {
 }
 
 func CreateSshInfo(name string, username, password string) {
-	sshInfos.Store(name, SSHInfo{
+	sshInfos.Store(name, protocols.SSHInfo{
 		Username: username,
 		Password: password,
 	})
@@ -143,7 +124,7 @@ func CreateSshInfo(name string, username, password string) {
 
 func CompleteSshInfo(name string, ip string, port uint32) {
 	if v, found := sshInfos.Load(name); found {
-		info := v.(SSHInfo)
+		info := v.(protocols.SSHInfo)
 		info.Ip = ip
 		info.Port = port
 		sshInfos.Store(name, info)
@@ -155,16 +136,16 @@ func DelSshInfo(name string) {
 	sshInfos.Delete(name)
 }
 
-func GetSshInfo(name string) (SSHInfo, bool) {
+func GetSshInfo(name string) (protocols.SSHInfo, bool) {
 	if v, found := sshInfos.Load(name); found {
-		info := v.(SSHInfo)
+		info := v.(protocols.SSHInfo)
 		if len(info.Username) == 0 || len(info.Ip) == 0 {
 			DelSshInfo(name)
-			return SSHInfo{}, false
+			return protocols.SSHInfo{}, false
 		}
-		return v.(SSHInfo), true
+		return v.(protocols.SSHInfo), true
 	}
-	return SSHInfo{}, false
+	return protocols.SSHInfo{}, false
 }
 
 func askRegister(name string) error {
@@ -181,7 +162,7 @@ func askRegister(name string) error {
 		return fmt.Errorf("cannot request node %s: %s", name, err.Error())
 	}
 
-	pmsg := ProxyMsg{}
+	pmsg := protocols.ProxyMsg{}
 	err = json.Unmarshal(raw, &pmsg)
 	if err != nil {
 		return fmt.Errorf("cannot marshal response from node %s: %s", name, err.Error())
@@ -192,7 +173,7 @@ func askRegister(name string) error {
 	return nil
 }
 
-func innerRestore(info SSHInfoDump) error {
+func innerRestore(info protocols.SSHInfoDump) error {
 	services, err := ProxyServices()
 	if err != nil {
 		return err
@@ -228,7 +209,7 @@ retryDb:
 		return
 	}
 
-	infos := []SSHInfoDump{}
+	infos := []protocols.SSHInfoDump{}
 	if err := json.Unmarshal([]byte(res), &infos); err != nil {
 		logger.Exceptions.Println("restoreSessions: ", err)
 		return
@@ -238,7 +219,7 @@ retryDb:
 
 	retryCnt = 10
 retryRestore:
-	failed := []SSHInfoDump{}
+	failed := []protocols.SSHInfoDump{}
 	for _, info := range infos {
 		if err := innerRestore(info); err != nil {
 			logger.Exceptions.Printf("restoreSessions restore failed: %s", err.Error())
@@ -253,7 +234,7 @@ retryRestore:
 	}
 }
 
-func autoRestore(info SSHInfoDump) {
+func autoRestore(info protocols.SSHInfoDump) {
 	fmt.Println("call autoRestore for " + info.Name)
 	retryCnt := 5
 	for retryCnt > 0 {

@@ -7,31 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/piaodazhu/Octopoda/protocols/san"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
-type Version struct {
-	Time int64
-	Hash string
-	Msg  string
-}
-
-type App struct {
-	Name        string
-	Discription string
-
-	Versions []Version
-}
-
-type NodeApps struct {
-	NodeVersion int64
-	Apps        []App
-}
-
 const diskFileName = "nodeapps.json"
 
-var nodeApps NodeApps
+var nodeApps san.NodeApps
 var nLock sync.Mutex
 
 func InitAppModel() {
@@ -114,7 +97,7 @@ func Create(appname, scenario, description string) bool {
 			return false
 		}
 	}
-	nodeApps.Apps = append(nodeApps.Apps, App{
+	nodeApps.Apps = append(nodeApps.Apps, san.App{
 		Name:        name,
 		Discription: description,
 		Versions:    nil,
@@ -141,7 +124,7 @@ func Delete(appname, scenario string) bool {
 	return true
 }
 
-func Update(appname, scenario string, version Version) bool {
+func Update(appname, scenario string, version san.Version) bool {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
@@ -166,7 +149,7 @@ func Reset(appname, scenario, versionhash, message string) bool {
 			for j := range nodeApps.Apps[i].Versions {
 				if nodeApps.Apps[i].Versions[j].Hash[:len(versionhash)] == versionhash {
 					// nodeApps.Apps[i].VersionPtr = j
-					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, Version{
+					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, san.Version{
 						Time: time.Now().Unix(),
 						Hash: nodeApps.Apps[i].Versions[j].Hash,
 						Msg:  message,
@@ -180,21 +163,12 @@ func Reset(appname, scenario, versionhash, message string) bool {
 	return false
 }
 
-type NodeAppsDigest struct {
-	Apps []AppDigest
-}
-type AppDigest struct {
-	Name        string
-	Discription string
-	CurVersion  Version
-}
-
 func Digest() []byte {
-	digest := &NodeAppsDigest{}
+	digest := &san.NodeAppsDigest{}
 	nLock.Lock()
 	defer nLock.Unlock()
 	for i := range nodeApps.Apps {
-		digest.Apps = append(digest.Apps, AppDigest{
+		digest.Apps = append(digest.Apps, san.AppDigest{
 			Name:        nodeApps.Apps[i].Name,
 			Discription: nodeApps.Apps[i].Discription,
 			CurVersion:  nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1],
@@ -229,12 +203,12 @@ func AppInfo(appname, scenario string) []byte {
 	return serialized
 }
 
-func Versions(appname, scenario string, offset, limit int) []Version {
+func Versions(appname, scenario string, offset, limit int) []san.Version {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
 	idx := -1
-	vlist := []Version{}
+	vlist := []san.Version{}
 	for i := range nodeApps.Apps {
 		if nodeApps.Apps[i].Name == name {
 			idx = i
@@ -265,7 +239,7 @@ func Versions(appname, scenario string, offset, limit int) []Version {
 	return vlist
 }
 
-func CurVersion(appname, scenario string) Version {
+func CurVersion(appname, scenario string) san.Version {
 	name := appname + "@" + scenario
 	nLock.Lock()
 	defer nLock.Unlock()
@@ -273,12 +247,12 @@ func CurVersion(appname, scenario string) Version {
 		if nodeApps.Apps[i].Name == name {
 			if len(nodeApps.Apps[i].Versions) == 0 {
 				logger.Exceptions.Println("CurVersion is NULL")
-				return Version{}
+				return san.Version{}
 			}
 			return nodeApps.Apps[i].Versions[len(nodeApps.Apps[i].Versions)-1]
 		}
 	}
-	return Version{}
+	return san.Version{}
 }
 
 // --------------------------------------

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 
 	"github.com/google/uuid"
 )
@@ -22,59 +23,9 @@ type ScenarioModel struct {
 	Id            uint32
 	Name          string
 	Description   string
-	Versions      []*ScenarioVersionModel
-	newversionbuf []*AppModel
+	Versions      []*san.ScenarioVersionModel
+	newversionbuf []*san.AppModel
 	modified      bool
-}
-
-// ScenarioVersion: a snapshot of a scenario
-type ScenarioVersionModel struct {
-	BasicVersionModel
-	Apps []*AppModel
-}
-
-// App: a kind of application in a scenario
-type AppModel struct {
-	Id          uint32
-	Name        string
-	Description string
-	NodeApp     []*NodeAppModel
-	// Scenario    *ScenarioModel
-}
-
-// NodeApp: a application instence on the node
-type NodeAppModel struct {
-	Name    string
-	Version string
-	// Versions []*BasicVersionModel
-}
-
-// appversion: a snapshot of a NodeApp
-type BasicVersionModel struct {
-	Version   string
-	Message   string
-	Timestamp int64
-}
-
-// -------------------------
-// digest of a scenario
-type ScenarioDigest struct {
-	Name        string
-	Description string
-	Version     string
-	Timestamp   int64
-	Message     string
-}
-
-// detail info of a scenario
-type ScenarioInfo struct {
-	ScenarioDigest
-	Apps []*AppInfo
-}
-type AppInfo struct {
-	Name        string
-	Description string
-	NodeApps    []string
 }
 
 func AddScenario(name, description string) bool {
@@ -90,8 +41,8 @@ func AddScenario(name, description string) bool {
 			Id:            uuid.New().ID(),
 			Name:          name,
 			Description:   description,
-			Versions:      []*ScenarioVersionModel{},
-			newversionbuf: []*AppModel{},
+			Versions:      []*san.ScenarioVersionModel{},
+			newversionbuf: []*san.AppModel{},
 			modified:      false,
 		}
 		ScenarioMap[name] = scen
@@ -112,11 +63,11 @@ func UpdateScenario(name, message string) (bool, bool) {
 		hasModified := scen.modified
 		if hasModified {
 			versionhash := sha1.Sum([]byte(message + time.Now().String()))
-			scen.Versions = append(scen.Versions, &ScenarioVersionModel{
-				BasicVersionModel: BasicVersionModel{
-					Version:   hex.EncodeToString(versionhash[:]),
-					Message:   message,
-					Timestamp: time.Now().UnixMilli(),
+			scen.Versions = append(scen.Versions, &san.ScenarioVersionModel{
+				Version: san.Version{
+					Hash: hex.EncodeToString(versionhash[:]),
+					Msg:  message,
+					Time: time.Now().UnixMilli(),
 				},
 				Apps: scen.newversionbuf,
 			})
@@ -129,17 +80,17 @@ func UpdateScenario(name, message string) (bool, bool) {
 	}
 }
 
-func cloneLayer(prototype []*AppModel) []*AppModel {
-	res := []*AppModel{}
+func cloneLayer(prototype []*san.AppModel) []*san.AppModel {
+	res := []*san.AppModel{}
 	for _, app := range prototype {
-		nodeapps := []*NodeAppModel{}
+		nodeapps := []*san.NodeAppModel{}
 		for _, nodeapp := range app.NodeApp {
-			nodeapps = append(nodeapps, &NodeAppModel{
+			nodeapps = append(nodeapps, &san.NodeAppModel{
 				Name:    nodeapp.Name,
 				Version: nodeapp.Version,
 			})
 		}
-		res = append(res, &AppModel{
+		res = append(res, &san.AppModel{
 			Id:          app.Id,
 			Name:        app.Name,
 			Description: app.Description,
@@ -157,18 +108,11 @@ func DelScenario(name string) {
 	delete(ScenarioMap, name)
 }
 
-type NodeAppItem struct {
-	AppName  string
-	ScenName string
-	NodeName string
-	Version  string
-}
-
-func GetNodeApps(name string, version string) []NodeAppItem {
+func GetNodeApps(name string, version string) []san.NodeAppItem {
 	ScenLock.RLock()
 	defer ScenLock.RUnlock()
 
-	list := []NodeAppItem{}
+	list := []san.NodeAppItem{}
 	var scen *ScenarioModel
 	scen, found := ScenarioMap[name]
 	if !found {
@@ -187,7 +131,7 @@ func GetNodeApps(name string, version string) []NodeAppItem {
 	} else {
 		// for given version
 		for i, v := range scen.Versions {
-			if version == v.Version {
+			if version == v.Hash {
 				idx = i
 			}
 		}
@@ -201,7 +145,7 @@ func GetNodeApps(name string, version string) []NodeAppItem {
 
 	for _, app := range scen.Versions[idx].Apps {
 		for _, node := range app.NodeApp {
-			list = append(list, NodeAppItem{
+			list = append(list, san.NodeAppItem{
 				AppName:  app.Name,
 				ScenName: scen.Name,
 				NodeName: node.Name,
@@ -213,29 +157,29 @@ func GetNodeApps(name string, version string) []NodeAppItem {
 	return list
 }
 
-func GetScenariosDigestAll() ([]ScenarioDigest, bool) {
+func GetScenariosDigestAll() ([]san.ScenarioDigest, bool) {
 	ScenLock.RLock()
 	defer ScenLock.RUnlock()
 
 	if len(ScenarioMap) == 0 {
-		return []ScenarioDigest{}, true
+		return []san.ScenarioDigest{}, true
 	}
-	res := make([]ScenarioDigest, len(ScenarioMap))
+	res := make([]san.ScenarioDigest, len(ScenarioMap))
 	idx := 0
 	for _, val := range ScenarioMap {
 		res[idx].Name = val.Name
 		res[idx].Description = val.Description
 		if len(val.Versions) != 0 {
-			res[idx].Timestamp = val.Versions[len(val.Versions)-1].Timestamp
-			res[idx].Version = val.Versions[len(val.Versions)-1].Version
-			res[idx].Message = val.Versions[len(val.Versions)-1].Message
+			res[idx].Timestamp = val.Versions[len(val.Versions)-1].Time
+			res[idx].Version = val.Versions[len(val.Versions)-1].Hash
+			res[idx].Message = val.Versions[len(val.Versions)-1].Msg
 		}
 		idx++
 	}
 	return res, true
 }
 
-func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
+func GetScenarioInfoByName(name string) (*san.ScenarioInfo, bool) {
 	ScenLock.RLock()
 	defer ScenLock.RUnlock()
 
@@ -243,24 +187,24 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 		// init but empty
 		if len(scen.Versions) == 0 {
 			logger.Exceptions.Println("GetScenarioInfoByName Empty Scenario")
-			return &ScenarioInfo{
-				ScenarioDigest: ScenarioDigest{
+			return &san.ScenarioInfo{
+				ScenarioDigest: san.ScenarioDigest{
 					Name:        scen.Name,
 					Description: scen.Description,
 				}}, true
 		}
-		res := &ScenarioInfo{
-			ScenarioDigest: ScenarioDigest{
+		res := &san.ScenarioInfo{
+			ScenarioDigest: san.ScenarioDigest{
 				Name:        scen.Name,
 				Description: scen.Description,
-				Version:     scen.Versions[len(scen.Versions)-1].Version,
-				Message:     scen.Versions[len(scen.Versions)-1].Message,
-				Timestamp:   scen.Versions[len(scen.Versions)-1].Timestamp,
+				Version:     scen.Versions[len(scen.Versions)-1].Hash,
+				Message:     scen.Versions[len(scen.Versions)-1].Msg,
+				Timestamp:   scen.Versions[len(scen.Versions)-1].Time,
 			},
-			Apps: []*AppInfo{},
+			Apps: []*san.AppInfo{},
 		}
 		for _, v := range scen.Versions[len(scen.Versions)-1].Apps {
-			app := &AppInfo{
+			app := &san.AppInfo{
 				Name:        v.Name,
 				Description: v.Description,
 				NodeApps:    []string{},
@@ -275,14 +219,14 @@ func GetScenarioInfoByName(name string) (*ScenarioInfo, bool) {
 	return nil, false
 }
 
-func GetScenarioVersionByName(name string) []BasicVersionModel {
+func GetScenarioVersionByName(name string) []san.Version {
 	ScenLock.RLock()
 	defer ScenLock.RUnlock()
 
-	versions := []BasicVersionModel{}
+	versions := []san.Version{}
 	if scen, found := ScenarioMap[name]; found {
 		for _, v := range scen.Versions {
-			versions = append(versions, v.BasicVersionModel)
+			versions = append(versions, v.Version)
 		}
 	}
 	return versions
@@ -312,7 +256,7 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 			}
 			// build a new node app
 			// logger.SysInfo.Println("NodeApp Not Cover")
-			application.NodeApp = append(application.NodeApp, &NodeAppModel{
+			application.NodeApp = append(application.NodeApp, &san.NodeAppModel{
 				Name:    node,
 				Version: version,
 			})
@@ -324,11 +268,11 @@ func AddScenNodeApp(scenario, app, description, node, version string, modified b
 	}
 	// build a new application
 	// logger.SysInfo.Printf("Application <%s> Not Cover. New...", app)
-	scen.newversionbuf = append(scen.newversionbuf, &AppModel{
+	scen.newversionbuf = append(scen.newversionbuf, &san.AppModel{
 		Name:        app,
 		Description: description,
 	})
-	scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp = append(scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp, &NodeAppModel{
+	scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp = append(scen.newversionbuf[len(scen.newversionbuf)-1].NodeApp, &san.NodeAppModel{
 		Name:    node,
 		Version: version,
 	})
@@ -354,7 +298,7 @@ func ResetScenario(scenario, version, message string) bool {
 	// find the history version index
 	idx := -1
 	for i := range scen.Versions {
-		if version == scen.Versions[i].Version {
+		if version == scen.Versions[i].Hash {
 			idx = i
 			break
 		}
@@ -364,11 +308,11 @@ func ResetScenario(scenario, version, message string) bool {
 	}
 
 	// found. Is ok to only append the reference of this version's apps?
-	scen.Versions = append(scen.Versions, &ScenarioVersionModel{
-		BasicVersionModel: BasicVersionModel{
-			Version:   version,
-			Message:   message,
-			Timestamp: time.Now().UnixMilli(),
+	scen.Versions = append(scen.Versions, &san.ScenarioVersionModel{
+		Version: san.Version{
+			Hash: version,
+			Msg:  message,
+			Time: time.Now().UnixMilli(),
 		},
 		Apps: scen.Versions[idx].Apps,
 	})
