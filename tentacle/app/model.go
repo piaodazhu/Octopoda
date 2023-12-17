@@ -150,7 +150,7 @@ func Reset(appname, scenario, versionhash, message string) bool {
 				if nodeApps.Apps[i].Versions[j].Hash[:len(versionhash)] == versionhash {
 					// nodeApps.Apps[i].VersionPtr = j
 					nodeApps.Apps[i].Versions = append(nodeApps.Apps[i].Versions, san.Version{
-						Time: time.Now().Unix(),
+						Time: san.TsInt64(time.Now().Unix()),
 						Hash: nodeApps.Apps[i].Versions[j].Hash,
 						Msg:  message,
 					})

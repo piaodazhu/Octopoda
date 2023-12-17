@@ -27,7 +27,7 @@ type ScenarioDigest struct {
 	Name        string
 	Description string
 	Version     string
-	Timestamp   int64
+	Timestamp   TsInt64
 	Message     string
 }
 
@@ -48,6 +48,3 @@ type NodeAppItem struct {
 	NodeName string
 	Version  string
 }
-
-
-

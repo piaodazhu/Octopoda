@@ -84,7 +84,7 @@ func GitCommit(app string, message string) (san.Version, error) {
 		logger.Exceptions.Print("wt.Commit")
 		return san.Version{}, err
 	}
-	return san.Version{Time: commitTime.Unix(), Hash: hash.String(), Msg: message}, nil
+	return san.Version{Time: san.TsInt64(commitTime.Unix()), Hash: hash.String(), Msg: message}, nil
 }
 
 func GitStatus(app string) (san.Version, bool, error) {
@@ -121,7 +121,7 @@ func GitStatus(app string) (san.Version, bool, error) {
 	}
 
 	return san.Version{
-		Time: cmt.Committer.When.Unix(),
+		Time: san.TsInt64(cmt.Committer.When.Unix()),
 		Hash: cmt.Hash.String(),
 		Msg:  cmt.Message,
 	}, isClean, nil
@@ -173,7 +173,7 @@ func gitLogs(app string, N int) ([]san.Version, error) {
 			break
 		}
 		v = append(v, san.Version{
-			Time: cmt.Committer.When.Unix(),
+			Time: san.TsInt64(cmt.Committer.When.Unix()),
 			Hash: cmt.Hash.String(),
 			Msg:  cmt.Message,
 		})
