@@ -11,9 +11,14 @@ func OctopodaEnv(scriptDir string, scriptName string, output string) []string {
 	env := []string{
 		"OCTOPODA_NODENAME=" + GlobalConfig.Name,
 		"OCTOPODA_CURRENTDIR=" + scriptDir,
-		"OCTOPODA_STOREDIR=" + GlobalConfig.Workspace.Store,
 		"OCTOPODA_FILENAME=" + scriptName,
 		"OCTOPODA_OUTPUT=" + output,
+
+		"OCTOPODA_ROOT=" + "/root/",
+		"OCTOPODA_WORKSPACE=" + GlobalConfig.Workspace.Root,
+		"OCTOPODA_FSTORE=" + GlobalConfig.Workspace.Store,
+		"OCTOPODA_LOG=" + GlobalConfig.Logger.Path,
+		"OCTOPODA_PAKMA=" + GlobalConfig.PakmaServer.Root,
 	}
 	s := strings.Split(scriptDir, "@")
 	if len(s) == 2 && len(s[0]) > 0 && len(s[1]) > 0 {

@@ -10,6 +10,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 )
 
 var Busy int32
@@ -42,20 +43,6 @@ func InitScenarioMap() {
 
 		go AutoFix()
 	}
-}
-
-// bad code...
-type AppBasic struct {
-	Name        string
-	Scenario    string
-	Description string
-	Message     string
-}
-
-type Version struct {
-	Time int64
-	Hash string
-	Msg  string
 }
 
 // Define some error type
@@ -103,11 +90,11 @@ func Fix(name string) error {
 		return ErrorScenarioDirty{}
 	}
 
-	curNodeApps := []NodeAppItem{}
+	curNodeApps := []san.NodeAppItem{}
 	if len(scen.Versions) > 0 {
 		for _, app := range scen.Versions[len(scen.Versions)-1].Apps {
 			for _, nodeapp := range app.NodeApp {
-				curNodeApps = append(curNodeApps, NodeAppItem{
+				curNodeApps = append(curNodeApps, san.NodeAppItem{
 					AppName:  app.Name,
 					ScenName: scen.Name,
 					NodeName: nodeapp.Name,
@@ -119,9 +106,9 @@ func Fix(name string) error {
 	ScenLock.RUnlock()
 
 	// check real nodeapp versions
-	curNodeAppLatestVersion := make([]Version, len(curNodeApps))
+	curNodeAppLatestVersion := make([]san.Version, len(curNodeApps))
 	for i := range curNodeApps {
-		aParams := AppBasic{
+		aParams := san.AppBasic{
 			Name:     curNodeApps[i].AppName,
 			Scenario: curNodeApps[i].ScenName,
 		}
@@ -132,7 +119,7 @@ func Fix(name string) error {
 			return ErrorNodeAppError{}
 		}
 
-		var latest Version
+		var latest san.Version
 		err = config.Jsoner.Unmarshal(raw, &latest)
 		if err != nil || len(latest.Hash) == 0 {
 			return ErrorNodeAppError{}

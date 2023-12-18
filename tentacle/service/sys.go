@@ -211,6 +211,9 @@ func RunCmd(conn net.Conn, serialNum uint32, raw []byte) {
 					return
 				}
 				rmsg.Output = stdoutSb.String()
+				if len(rmsg.Output) == 0 {
+					logger.Exceptions.Printf("[warn] run cmd has no output: cmd=%s, stderr=%s!\n", cmd.String(), stderrSb.String())
+				}
 			}
 		}
 

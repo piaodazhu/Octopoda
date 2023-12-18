@@ -47,7 +47,7 @@ func unpackFiles(packb64 string, packName string, targetDir string) error {
 	os.MkdirAll(targetDir, os.ModePerm)
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s/* %s", wpath, targetDir))
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force -r %s/* %s", wpath, targetDir))
 	} else {
 		cmd = exec.Command("/bin/bash", "-c", fmt.Sprintf("cp -r %s/* %s", wpath, targetDir))
 	}

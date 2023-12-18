@@ -53,6 +53,12 @@ func GetString(key string) (result string, found bool, err error) {
 	return
 }
 
+func SetString(key, value string) error {
+	cache.Remove(key)
+	defer time.AfterFunc(time.Millisecond*200, func() { cache.Remove(key) })
+	return rdb.Set(context.TODO(), key, value, 0).Err()
+}
+
 func SetStringXX(key, value string) (bool, error) {
 	cache.Remove(key)
 	defer time.AfterFunc(time.Millisecond*200, func() { cache.Remove(key) })

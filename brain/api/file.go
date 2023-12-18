@@ -19,13 +19,6 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-type FileParams struct {
-	PackName    string
-	TargetPath  string
-	FileBuf     string
-	ForceCreate bool
-}
-
 func pathFixing(path string, base string) string {
 	// dstPath: the unpacked files will be moved under this path
 	var result strings.Builder
@@ -193,7 +186,7 @@ func FileSpread(ctx *gin.Context) {
 	os.Remove(packName)
 
 	content := base64.RawStdEncoding.EncodeToString(raw)
-	finfo := FileParams{
+	finfo := protocols.FileParams{
 		PackName:   packName,
 		TargetPath: fsParams.TargetPath,
 		FileBuf:    content,
@@ -277,7 +270,7 @@ func getFileTree(name string, subdir string) ([]byte, error) {
 		return allFiles(subdir), nil
 	}
 
-	params, _ := config.Jsoner.Marshal(&FileParams{
+	params, _ := config.Jsoner.Marshal(&protocols.FileParams{
 		TargetPath: subdir,
 	})
 	raw, err := model.Request(name, protocols.TypeFileTree, params)
@@ -382,7 +375,7 @@ func FileDistrib(ctx *gin.Context) {
 	}
 	content := b64Encode(raw)
 	// content := base64.RawStdEncoding.EncodeToString(raw)
-	finfo := FileParams{
+	finfo := protocols.FileParams{
 		PackName:    packName,
 		TargetPath:  targetPath,
 		FileBuf:     content,
@@ -472,7 +465,7 @@ func FilePull(ctx *gin.Context) {
 			Code: protocols.ExecOK,
 		}
 
-		params, _ := config.Jsoner.Marshal(&FileParams{
+		params, _ := config.Jsoner.Marshal(&protocols.FileParams{
 			TargetPath: fileOrDir,
 		})
 		raw, err := model.Request(name, protocols.TypeFilePull, params)

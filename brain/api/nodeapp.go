@@ -10,6 +10,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 )
 
 func NodeAppsInfo(ctx *gin.Context) {
@@ -56,7 +57,7 @@ func NodeAppInfo(ctx *gin.Context) {
 		return
 	}
 
-	aParams := &AppBasic{
+	aParams := &san.AppBasic{
 		Name:     app,
 		Scenario: scen,
 	}
@@ -108,8 +109,8 @@ func NodeAppVersion(ctx *gin.Context) {
 		}
 	}
 
-	aParams := &AppVersionParams{
-		AppBasic: AppBasic{
+	aParams := &san.AppVersionParams{
+		AppBasic: san.AppBasic{
 			Name:     app,
 			Scenario: scen,
 		},
@@ -144,8 +145,8 @@ func NodeAppReset(ctx *gin.Context) {
 		return
 	}
 
-	arParams := &AppResetParams{
-		AppBasic: AppBasic{
+	arParams := &san.AppResetParams{
+		AppBasic: san.AppBasic{
 			Name:     app,
 			Scenario: scen,
 			Message:  msg,

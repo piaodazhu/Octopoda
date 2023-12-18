@@ -11,6 +11,7 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/logger"
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 )
 
 func ScenarioCreate(ctx *gin.Context) {
@@ -55,11 +56,6 @@ func ScenarioUpdate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rmsg)
 }
 
-type AppDeleteParams struct {
-	Name     string
-	Scenario string
-}
-
 func ScenarioDelete(ctx *gin.Context) {
 	// This is not so simple. Should delete all apps of a scenario in this function
 	name := ctx.Query("name")
@@ -89,7 +85,10 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	for i := range dlist {
 		//payload
-		payload, _ := config.Jsoner.Marshal(&AppDeleteParams{dlist[i].AppName, dlist[i].ScenName})
+		payload, _ := config.Jsoner.Marshal(&san.AppDeleteParams{
+			Name: dlist[i].AppName, 
+			Scenario: dlist[i].ScenName,
+		})
 
 		// item name
 		item := dlist[i].NodeName + ":" + dlist[i].AppName + "@" + dlist[i].ScenName
@@ -139,7 +138,7 @@ func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocol
 func ScenarioInfo(ctx *gin.Context) {
 	var name string
 	var ok bool
-	var scen *model.ScenarioInfo
+	var scen *san.ScenarioInfo
 	rmsg := protocols.Result{
 		Rmsg: "OK",
 	}
@@ -158,7 +157,7 @@ func ScenarioInfo(ctx *gin.Context) {
 }
 
 func ScenariosInfo(ctx *gin.Context) {
-	var scens []model.ScenarioDigest
+	var scens []san.ScenarioDigest
 	var ok bool
 	rmsg := protocols.Result{
 		Rmsg: "OK",
@@ -173,7 +172,7 @@ func ScenariosInfo(ctx *gin.Context) {
 }
 
 func ScenarioVersion(ctx *gin.Context) {
-	var vlist []model.BasicVersionModel
+	var vlist []san.Version
 	var name, offsetStr, limitStr string
 	var ok bool
 	var err error
@@ -228,12 +227,6 @@ func ScenarioVersion(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, vlist)
 }
 
-type AppResetParams struct {
-	AppBasic
-	VersionHash string
-	Mode        string
-}
-
 func ScenarioReset(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	prefix := ctx.PostForm("version")
@@ -259,7 +252,7 @@ func ScenarioReset(ctx *gin.Context) {
 	version := ""
 	ambiguity := false
 	for i := range vlist {
-		if vlist[i].Version[:len(prefix)] == prefix {
+		if vlist[i].Hash[:len(prefix)] == prefix {
 			// prefix matched
 			if version != "" {
 				// ambiguity arises
@@ -267,7 +260,7 @@ func ScenarioReset(ctx *gin.Context) {
 				break
 			}
 			// assign complete version string to version
-			version = vlist[i].Version
+			version = vlist[i].Hash
 		}
 	}
 	if len(version) == 0 {
@@ -291,8 +284,8 @@ func ScenarioReset(ctx *gin.Context) {
 
 	for i := range rlist {
 		//payload
-		arg := &AppResetParams{
-			AppBasic: AppBasic{
+		arg := &san.AppResetParams{
+			AppBasic: san.AppBasic{
 				Name:     rlist[i].AppName,
 				Scenario: rlist[i].ScenName,
 				Message:  msg,

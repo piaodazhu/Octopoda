@@ -11,30 +11,8 @@ import (
 	"github.com/piaodazhu/Octopoda/brain/model"
 	"github.com/piaodazhu/Octopoda/brain/workgroup"
 	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/san"
 )
-
-type AppBasic struct {
-	Name        string
-	Scenario    string
-	Description string
-	Message     string
-}
-
-type AppVersionParams struct {
-	AppBasic
-	Offset int
-	Limit  int
-}
-
-type AppCreateParams struct {
-	AppBasic
-	FilePack string
-}
-
-type AppDeployParams struct {
-	AppBasic
-	Script string
-}
 
 func AppPrepare(ctx *gin.Context) {
 	appName := ctx.PostForm("appName")
@@ -94,14 +72,14 @@ func AppPrepare(ctx *gin.Context) {
 	// async processing
 	go func() {
 		content := base64.RawStdEncoding.EncodeToString(raw)
-		acParams := AppCreateParams{
-			AppBasic{
+		acParams := san.AppCreateParams{
+			AppBasic: san.AppBasic{
 				Name:        appName,
 				Scenario:    scenario,
 				Description: description,
 				Message:     messages,
 			},
-			content,
+			FilePack: content,
 		}
 
 		for i := range nodes {
@@ -161,13 +139,13 @@ func AppDeploy(ctx *gin.Context) {
 	// async processing
 	go func() {
 		content := base64.RawStdEncoding.EncodeToString(raw)
-		adParams := AppDeployParams{
-			AppBasic{
+		adParams := san.AppDeployParams{
+			AppBasic: san.AppBasic{
 				Name:        appName,
 				Scenario:    scenario,
 				Description: description,
 			},
-			content,
+			Script: content,
 		}
 		for i := range nodes {
 			go deployApp(taskid, nodes[i], &adParams)
@@ -210,7 +188,7 @@ func AppCommit(ctx *gin.Context) {
 
 	// async processing
 	go func() {
-		acParams := AppBasic{
+		acParams := san.AppBasic{
 			Name:        appName,
 			Scenario:    scenario,
 			Description: description,
@@ -222,7 +200,7 @@ func AppCommit(ctx *gin.Context) {
 	}()
 }
 
-func createApp(taskid string, name string, acParams *AppCreateParams) {
+func createApp(taskid string, name string, acParams *san.AppCreateParams) {
 	payload, _ := config.Jsoner.Marshal(acParams)
 	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCreate)
 	if err != nil {
@@ -237,7 +215,7 @@ func createApp(taskid string, name string, acParams *AppCreateParams) {
 	}
 }
 
-func deployApp(taskid string, name string, adParams *AppDeployParams) {
+func deployApp(taskid string, name string, adParams *san.AppDeployParams) {
 	payload, _ := config.Jsoner.Marshal(adParams)
 	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppDeploy)
 	if err != nil {
@@ -247,7 +225,7 @@ func deployApp(taskid string, name string, adParams *AppDeployParams) {
 	logger.SysInfo.Printf("deploy App %s@%s on %s: rmsg=%s", adParams.Name, adParams.Scenario, name, rmsg.Rmsg)
 }
 
-func commitApp(taskid string, name string, acParams *AppBasic) {
+func commitApp(taskid string, name string, acParams *san.AppBasic) {
 	payload, _ := config.Jsoner.Marshal(acParams)
 	rmsg, err := runAndWait(taskid, name, payload, protocols.TypeAppCommit)
 	if err != nil {

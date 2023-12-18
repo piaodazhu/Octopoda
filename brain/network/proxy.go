@@ -1,12 +1,16 @@
 package network
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/piaodazhu/Octopoda/brain/config"
 	"github.com/piaodazhu/Octopoda/brain/logger"
+	"github.com/piaodazhu/Octopoda/brain/model"
+	"github.com/piaodazhu/Octopoda/brain/rdb"
 	"github.com/piaodazhu/Octopoda/protocols"
 
 	"github.com/piaodazhu/proxylite"
@@ -31,9 +35,17 @@ func InitProxyServer() {
 
 	proxyliteServer.OnTunnelCreated(func(ctx *proxylite.Context) {
 		CompleteSshInfo(ctx.ServiceInfo().Name, octlFaceIp, ctx.ServiceInfo().Port)
+		time.AfterFunc(time.Second, func() { dumpSshInfos() })
 	})
 	proxyliteServer.OnTunnelDestroyed(func(ctx *proxylite.Context) {
-		DelSshInfo(ctx.ServiceInfo().Name)
+		if sshinfo, found := GetSshInfo(ctx.ServiceInfo().Name); found {
+			info := protocols.SSHInfoDump{
+				Name:     ctx.ServiceInfo().Name,
+				Username: sshinfo.Username,
+				Password: sshinfo.Password,
+			}
+			go autoRestore(info)
+		}
 	})
 	go func() {
 		err := proxyliteServer.Run(fmt.Sprintf("0.0.0.0:%d", config.GlobalConfig.ProxyliteServer.Port))
@@ -65,6 +77,8 @@ func InitProxyServer() {
 			}
 		}
 	}()
+
+	go restoreSessions()
 }
 
 func ProxyServices() ([]proxylite.ServiceInfo, error) {
@@ -72,33 +86,10 @@ func ProxyServices() ([]proxylite.ServiceInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// clean sshinfo
-	set := map[string]struct{}{}
-	for _, s := range services {
-		set[s.Name] = struct{}{}
-	}
-	itemToBeDel := []string{}
-	sshInfos.Range(func(key, value any) bool {
-		name := key.(string)
-		if _, found := set[name]; !found {
-			itemToBeDel = append(itemToBeDel, name)
-		}
-		return true
-	})
-	for _, name := range itemToBeDel {
-		DelSshInfo(name)
-	}
-
 	return services, err
 }
 
-type SSHInfo struct {
-	Ip       string
-	Port     uint32
-	Username string
-	Password string
-}
+const sshInfoDumpKey = "sshInfoDumpKey"
 
 var sshInfos sync.Map
 
@@ -106,8 +97,26 @@ func init() {
 	sshInfos = sync.Map{}
 }
 
+func dumpSshInfos() error {
+	infos := []protocols.SSHInfoDump{}
+	sshInfos.Range(func(key, value any) bool {
+		sshInfo := value.(protocols.SSHInfo)
+		if len(sshInfo.Ip) == 0 { // haven't complete. continue
+			return true
+		}
+		infos = append(infos, protocols.SSHInfoDump{
+			Name:     key.(string),
+			Username: value.(protocols.SSHInfo).Username,
+			Password: value.(protocols.SSHInfo).Password,
+		})
+		return true
+	})
+	serialized, _ := json.Marshal(infos)
+	return rdb.SetString(sshInfoDumpKey, string(serialized))
+}
+
 func CreateSshInfo(name string, username, password string) {
-	sshInfos.Store(name, SSHInfo{
+	sshInfos.Store(name, protocols.SSHInfo{
 		Username: username,
 		Password: password,
 	})
@@ -115,7 +124,7 @@ func CreateSshInfo(name string, username, password string) {
 
 func CompleteSshInfo(name string, ip string, port uint32) {
 	if v, found := sshInfos.Load(name); found {
-		info := v.(SSHInfo)
+		info := v.(protocols.SSHInfo)
 		info.Ip = ip
 		info.Port = port
 		sshInfos.Store(name, info)
@@ -124,17 +133,133 @@ func CompleteSshInfo(name string, ip string, port uint32) {
 
 func DelSshInfo(name string) {
 	sshInfos.Delete(name)
+	dumpSshInfos()
 }
 
-func GetSshInfo(name string) (SSHInfo, bool) {
+func GetSshInfo(name string) (protocols.SSHInfo, bool) {
 	if v, found := sshInfos.Load(name); found {
-		info := v.(SSHInfo)
+		info := v.(protocols.SSHInfo)
 		if len(info.Username) == 0 || len(info.Ip) == 0 {
 			DelSshInfo(name)
-			return SSHInfo{}, false
+			return protocols.SSHInfo{}, false
 		}
-		return v.(SSHInfo), true
+		return v.(protocols.SSHInfo), true
 	}
-	return SSHInfo{}, false
+	return protocols.SSHInfo{}, false
 }
 
+func askRegister(name string) error {
+	if name == "brain" {
+		ip, _ := GetOctlFaceIp()
+		CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
+		return nil
+	}
+	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
+		return fmt.Errorf("invalid node %s", name)
+	}
+	raw, err := model.Request(name, protocols.TypeSshRegister, []byte{})
+	if err != nil {
+		return fmt.Errorf("cannot request node %s: %s", name, err.Error())
+	}
+
+	pmsg := protocols.ProxyMsg{}
+	err = json.Unmarshal(raw, &pmsg)
+	if err != nil {
+		return fmt.Errorf("cannot marshal response from node %s: %s", name, err.Error())
+	}
+	if pmsg.Code != 0 {
+		return fmt.Errorf("askRegister client failed %s: %s", name, pmsg.Msg)
+	}
+	return nil
+}
+
+func innerRestore(info protocols.SSHInfoDump) error {
+	services, err := ProxyServices()
+	if err != nil {
+		return err
+	}
+
+	for _, s := range services {
+		if info.Name == s.Name {
+			return nil
+		}
+	}
+	CreateSshInfo(info.Name, info.Username, info.Password)
+	if err := askRegister(info.Name); err != nil { // 不成功就删除
+		DelSshInfo(info.Name)
+		return errors.New("innerRestore: " + err.Error())
+	}
+	return nil
+}
+
+func restoreSessions() {
+	fmt.Println("restoreSessions start")
+	retryCnt := 3
+	found := false
+retryDb:
+	res, found, err := rdb.GetString(sshInfoDumpKey)
+	if err != nil && retryCnt > 0 {
+		time.Sleep(time.Second)
+		retryCnt--
+		goto retryDb
+	}
+
+	if !found {
+		logger.Exceptions.Println("restoreSessions: info not found")
+		return
+	}
+
+	infos := []protocols.SSHInfoDump{}
+	if err := json.Unmarshal([]byte(res), &infos); err != nil {
+		logger.Exceptions.Println("restoreSessions: ", err)
+		return
+	}
+
+	time.Sleep(time.Second * 20)
+
+	retryCnt = 10
+retryRestore:
+	failed := []protocols.SSHInfoDump{}
+	for _, info := range infos {
+		if err := innerRestore(info); err != nil {
+			logger.Exceptions.Printf("restoreSessions restore failed: %s", err.Error())
+			failed = append(failed, info)
+		}
+	}
+	if len(failed) != 0 && retryCnt > 0 {
+		infos = failed
+		time.Sleep(time.Second * 30)
+		retryCnt--
+		goto retryRestore
+	}
+}
+
+func autoRestore(info protocols.SSHInfoDump) {
+	fmt.Println("call autoRestore for " + info.Name)
+	retryCnt := 5
+	for retryCnt > 0 {
+		if _, exists := GetSshInfo(info.Name); !exists { // ssh info have been deleted
+			fmt.Println("autoRestore: ssh info have been deleted: " + info.Name)
+			return
+		}
+		if state, ok := model.GetNodeState(info.Name); !ok { // already deleted from cluster
+			fmt.Println("autoRestore: already deleted from cluster: " + info.Name)
+			return
+		} else if state != protocols.NodeStateReady { // just offline
+			fmt.Println("autoRestore: node offline: " + info.Name)
+			time.Sleep(time.Minute)
+			retryCnt = 5
+			continue
+		}
+
+		if err := innerRestore(info); err != nil {
+			logger.Exceptions.Printf("autoRestore failed: %s", err.Error())
+			retryCnt--
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		fmt.Println("autoRestore: success: " + info.Name)
+		return
+	}
+	DelSshInfo(info.Name)
+}

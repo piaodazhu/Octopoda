@@ -15,19 +15,13 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols"
 )
 
-type LogParams struct {
-	MaxLines      int
-	MaxDaysBefore int
-	Logs          []string
-}
-
 func NodeLog(ctx *gin.Context) {
 	name, ok := ctx.GetQuery("name")
 	if !ok {
 		ctx.Status(http.StatusNotFound)
 		return
 	}
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+	if name != "brain" && !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
@@ -45,7 +39,7 @@ func NodeLog(ctx *gin.Context) {
 	} else {
 		maxdaysbefore, _ = strconv.Atoi(d)
 	}
-	lparams := LogParams{
+	lparams := protocols.LogParams{
 		MaxLines:      maxlines,
 		MaxDaysBefore: maxdaysbefore,
 		Logs:          []string{},
@@ -63,7 +57,7 @@ func NodeLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, lparams)
 }
 
-func readLogs(params *LogParams) {
+func readLogs(params *protocols.LogParams) {
 	offset := 0
 	daysBefore := 0
 	validdate, validlines := 0, 0
@@ -111,7 +105,7 @@ func readLogs(params *LogParams) {
 	params.MaxDaysBefore = validdate
 }
 
-func readLogsRemote(name string, params *LogParams) bool {
+func readLogsRemote(name string, params *protocols.LogParams) bool {
 	query, _ := config.Jsoner.Marshal(params)
 	answer, err := model.Request(name, protocols.TypeNodeLog, query)
 	if err != nil {

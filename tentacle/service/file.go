@@ -19,13 +19,6 @@ import (
 	"github.com/piaodazhu/Octopoda/tentacle/logger"
 )
 
-type FileParams struct {
-	PackName    string
-	TargetPath  string
-	FileBuf     string
-	ForceCreate bool
-}
-
 func dirExist(dir string) bool {
 	stat, err := os.Stat(dir)
 	if err != nil {
@@ -72,7 +65,7 @@ func FilePush(conn net.Conn, serialNum uint32, raw []byte) {
 	}
 
 	var targetPath string
-	fileinfo := FileParams{}
+	fileinfo := protocols.FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
 		logger.Exceptions.Println("FilePush")
@@ -113,7 +106,7 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 	var cmd *exec.Cmd
 
 	payload := []byte{}
-	fileinfo := FileParams{}
+	fileinfo := protocols.FileParams{}
 	err = config.Jsoner.Unmarshal(raw, &fileinfo)
 	if err != nil {
 		logger.Exceptions.Println("FilePull")
@@ -127,7 +120,7 @@ func FilePull(conn net.Conn, serialNum uint32, raw []byte) {
 	os.MkdirAll(wrapName, os.ModePerm)
 
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force %s %s", srcPath, wrapName))
+		cmd = exec.Command("powershell.exe", "/C", fmt.Sprintf("cp -Force -r %s %s", srcPath, wrapName))
 	} else {
 		cmd = exec.Command(shellPath, "-c", fmt.Sprintf("cp -r %s %s", srcPath, wrapName))
 	}
@@ -160,7 +153,7 @@ errorout:
 func FileTree(conn net.Conn, serialNum uint32, raw []byte) {
 	var targetPath string
 	res := []byte{}
-	pathinfo := FileParams{}
+	pathinfo := protocols.FileParams{}
 	err := config.Jsoner.Unmarshal(raw, &pathinfo)
 	if err != nil {
 		goto errorout
