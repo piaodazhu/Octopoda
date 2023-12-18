@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
 	"github.com/piaodazhu/Octopoda/octl/output"
 	"github.com/piaodazhu/Octopoda/octl/workgroup"
+	"github.com/piaodazhu/Octopoda/protocols"
+	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
 func NodeLog(name string, params []string) (string, error) {
@@ -55,4 +58,40 @@ func NodeLog(name string, params []string) (string, error) {
 
 	output.PrintJSON(raw)
 	return string(raw), nil
+}
+
+func PullLog(name string, maxlines, maxdaysbefore int) (*protocols.LogParams, *errs.OctlError) {
+	url := fmt.Sprintf("https://%s/%s%s?name=%s&maxlines=%d&maxdaysbefore=%d",
+		config.BrainAddr,
+		config.GlobalConfig.Brain.ApiPrefix,
+		config.API_NodeLog,
+		name,
+		maxlines,
+		maxdaysbefore,
+	)
+	req, _ := http.NewRequest("GET", url, nil)
+	workgroup.SetHeader(req)
+	res, err := httpclient.BrainClient.Do(req)
+	if err != nil {
+		emsg := "http get error." + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlHttpRequestError, emsg)
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+	if res.StatusCode != http.StatusOK {
+		emsg := fmt.Sprintf("[%d]msg=%s\n", res.StatusCode, string(raw))
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlHttpStatusError, emsg)
+	}
+
+	logs := protocols.LogParams{}
+	err = json.Unmarshal(raw, &logs)
+	if err != nil {
+		emsg := "res unmarshal error: " + err.Error()
+		output.PrintFatalln(emsg)
+		return nil, errs.New(errs.OctlMessageParseError, emsg)
+	}
+	output.PrintJSON(raw)
+	return &logs, nil
 }

@@ -20,6 +20,8 @@ func Execute(subcmd string, args []string) {
 		scenCmd(args)
 	case "napp":
 		nappCmd(args)
+	case "log":
+		logCmd(args)
 	case "pakma":
 		pakmaCmd(args)
 	case "help":

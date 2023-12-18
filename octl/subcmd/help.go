@@ -49,7 +49,8 @@ f:Scenario:reset:octl scen reset <scen> -v <version> -m "your message":octl scen
 g:NodeApp:get:octl napp get <node> [[ALL] | <app>@<scen> [-o <offset>] [-l <limit>]]:octl napp get pi0 alice@ChatScen
 g:NodeApp:reset:octl napp reset <node> <app>@<scen> -v <version> -m "your message":octl napp reset pi0 alice@ChatScen -v b698 -m "back to yesterday"
 
-h:PAcKage MAnager:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<brain>|<node1>|<@group1>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 brain @upgradable
+h:Log:get:octl log get [-l <maxlines>] [-d <maxdaysbefore>]:octl log get pi0 -l 20
+i:PAcKage MAnager:pakma:octl pakma [state|install <version>|upgrade <version>|confirm|cancel|downgrade|history|clean] [<brain>|<node1>|<@group1>|...] [-t<timestr>] [-l<limit>]:octl pakma upgrade 1.5.1 brain @upgradable
 `
 
 func InitUsage() {

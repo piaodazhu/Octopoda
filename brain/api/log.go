@@ -21,7 +21,7 @@ func NodeLog(ctx *gin.Context) {
 		ctx.Status(http.StatusNotFound)
 		return
 	}
-	if !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
+	if name != "brain" && !workgroup.IsInScope(ctx.GetStringMapString("octopoda_scope"), name) {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
