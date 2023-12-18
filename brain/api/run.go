@@ -69,7 +69,7 @@ func RunScript(ctx *gin.Context) {
 	}
 
 	needAlign := false
-	if needAlignStr == "true" && len(targetNodes) > 1 {
+	if needAlignStr == "true" && len(nodes) > 1 {
 		needAlign = true
 	}
 
@@ -143,7 +143,7 @@ func RunCmd(ctx *gin.Context) {
 	}
 
 	needAlign := false
-	if needAlignStr == "true" && len(targetNodes) > 1 {
+	if needAlignStr == "true" && len(nodes) > 1 {
 		needAlign = true
 	}
 
@@ -155,7 +155,6 @@ func RunCmd(ctx *gin.Context) {
 		NeedAlign:  needAlign,
 	}
 	payload, _ := json.Marshal(cParams)
-
 	taskid := model.BrainTaskManager.CreateTask(len(nodes))
 	ctx.String(http.StatusAccepted, taskid)
 

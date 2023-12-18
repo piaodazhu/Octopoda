@@ -132,8 +132,8 @@ func CompleteSshInfo(name string, ip string, port uint32) {
 }
 
 func DelSshInfo(name string) {
-	fmt.Println("[X] call DelSshInfo: " + name)
 	sshInfos.Delete(name)
+	dumpSshInfos()
 }
 
 func GetSshInfo(name string) (protocols.SSHInfo, bool) {
