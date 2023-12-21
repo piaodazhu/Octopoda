@@ -105,7 +105,7 @@ func HttpServerStart(wg *sync.WaitGroup) {
 	})
 	r.GET("/query", NameQuery)
 
-	mountStatic(r)
+	// mountStatic(r)
 	log.Fatal(r.Run(fmt.Sprintf("%s:%d", config.GlobalConfig.ServeIp, config.GlobalConfig.ServePort+1)))
 }
 

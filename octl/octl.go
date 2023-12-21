@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	"github.com/piaodazhu/Octopoda/octl/config"
 	"github.com/piaodazhu/Octopoda/octl/httpclient"
@@ -76,5 +77,6 @@ func main() {
 		subcmd.PrintUsages(nil)
 		return
 	}
+	output.PrintInfoln("time=", time.Now().Format("2006-01-02 15:04:05"))
 	subcmd.Execute(args[0], args[1:])
 }
