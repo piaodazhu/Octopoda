@@ -172,7 +172,7 @@ func runCmd(taskid string, name string, payload []byte) {
 
 func runAndWait(taskid string, name string, payload []byte, rtype int) (*protocols.Result, error) {
 	var rstr string
-	result := protocols.ExecutionResults{
+	result := protocols.ExecutionResult{
 		Name: name,
 		Code: protocols.ExecOK,
 	}
@@ -242,7 +242,7 @@ func CancelRun(ctx *gin.Context) {
 	plist := model.BrainTaskManager.PendingList(taskid)
 	for i := range plist {
 		subtaskid := plist[i].SubTaskId
-		name := plist[i].Result.(*protocols.ExecutionResults).Name
+		name := plist[i].Result.(*protocols.ExecutionResult).Name
 		go cancelNodeRun(subtaskid, name)
 	}
 }

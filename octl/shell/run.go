@@ -21,23 +21,23 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func RunCommand(cmd string, isBackgroud bool, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+func RunCommand(cmd string, isBackgroud bool, shouldAlign bool, names []string) ([]protocols.ExecutionResult, *errs.OctlError) {
 	return runCmd(cmd, names, isBackgroud, -1, shouldAlign)
 }
 
-func RunScript(cmd string, shouldAlign bool, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+func RunScript(cmd string, shouldAlign bool, names []string) ([]protocols.ExecutionResult, *errs.OctlError) {
 	return runScript(cmd, names, -1, shouldAlign)
 }
 
-func XRunCommand(cmd string, isBackgroud bool, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+func XRunCommand(cmd string, isBackgroud bool, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResult, *errs.OctlError) {
 	return runCmd(cmd, names, isBackgroud, delayExec, shouldAlign)
 }
 
-func XRunScript(cmd string, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+func XRunScript(cmd string, shouldAlign bool, delayExec int, names []string) ([]protocols.ExecutionResult, *errs.OctlError) {
 	return runScript(cmd, names, delayExec, shouldAlign)
 }
 
-func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+func runScript(runtask string, names []string, delay int, align bool) ([]protocols.ExecutionResult, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -95,11 +95,11 @@ func runScript(runtask string, names []string, delay int, align bool) ([]protoco
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
-	output.PrintJSON(results)
+	output.PrintJSON(protocols.ExecutionResults(results))
 	return results, nil
 }
 
-func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]protocols.ExecutionResult, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
@@ -151,7 +151,7 @@ func runCmd(runtask string, names []string, bg bool, delay int, align bool) ([]p
 		output.PrintFatalln(emsg)
 		return nil, errs.New(errs.OctlTaskWaitingError, emsg)
 	}
-	output.PrintJSON(results)
+	output.PrintJSON(protocols.ExecutionResults(results))
 	return results, nil
 }
 

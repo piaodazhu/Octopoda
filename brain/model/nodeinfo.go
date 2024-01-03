@@ -87,7 +87,7 @@ func DisconnNode(name string) bool {
 	return false
 }
 
-func PruneDeadNode(names []string) {
+func PruneDeadNode(names []string) []string {
 	NodesLock.RLock()
 	defer NodesLock.RUnlock()
 
@@ -113,6 +113,8 @@ func PruneDeadNode(names []string) {
 	for i := range toBePruned {
 		delete(NodeMap, toBePruned[i])
 	}
+
+	return toBePruned
 }
 
 func GetNodeInfoByName(name string) (protocols.NodeInfo, bool) {

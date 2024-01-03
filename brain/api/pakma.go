@@ -42,7 +42,7 @@ func PakmaCmd(ctx *gin.Context) {
 	}
 
 	payload, _ := config.Jsoner.Marshal(&params)
-	results := make([]protocols.ExecutionResults, len(nodes))
+	results := make([]protocols.ExecutionResult, len(nodes))
 	var wg sync.WaitGroup
 
 	for i := range nodes {
@@ -59,7 +59,7 @@ func PakmaCmd(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, results)
 }
 
-func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
+func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResult) {
 	defer wg.Done()
 	result.Code = protocols.ExecOK
 
@@ -74,7 +74,7 @@ func pakmaRemote(name string, payload []byte, wg *sync.WaitGroup, result *protoc
 	result.Result = string(raw)
 }
 
-func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
+func pakmaLocal(params PakmaParams, wg *sync.WaitGroup, result *protocols.ExecutionResult) {
 	defer wg.Done()
 	result.Code = protocols.ExecOK
 

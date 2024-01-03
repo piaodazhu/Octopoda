@@ -15,7 +15,7 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResults, *errs.OctlError) {
+func SpreadFile(FileOrDir string, targetPath string, names []string) ([]protocols.ExecutionResult, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()

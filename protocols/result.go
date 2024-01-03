@@ -17,7 +17,7 @@ type Result struct {
 	Modified bool
 }
 
-type ExecutionResults struct {
+type ExecutionResult struct {
 	Name                  string
 	Code                  ExecStatus
 	CommunicationErrorMsg string
@@ -33,3 +33,32 @@ const (
 	ExecCommunicationError
 	ExecProcessError
 )
+
+type ExecutionResults []ExecutionResult
+type ExecutionResultsText struct {
+	Results            ExecutionResults
+	Total              int
+	Success            int
+	CommunicationError int
+	ProcessError       int
+}
+
+func (results *ExecutionResults) ToText() *ExecutionResultsText {
+	res := &ExecutionResultsText{
+		Results: *results,
+		Total: len(*results),
+		Success: 0,
+		CommunicationError: 0,
+		ProcessError: 0,
+	}
+	for _, result := range *results {
+		if result.Code == 0 {
+			res.Success++
+		} else if result.Code == ExecCommunicationError {
+			res.CommunicationError++
+		} else if result.Code == ExecProcessError {
+			res.ProcessError++
+		}
+	}
+	return res
+}

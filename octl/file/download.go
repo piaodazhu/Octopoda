@@ -14,7 +14,7 @@ import (
 	"github.com/piaodazhu/Octopoda/protocols/errs"
 )
 
-func Download(remoteFileOrDir string, localTargetPath string, node string) (*protocols.ExecutionResults, *errs.OctlError) {
+func Download(remoteFileOrDir string, localTargetPath string, node string) (*protocols.ExecutionResult, *errs.OctlError) {
 	if len(node) == 0 || node[0] == '@' {
 		emsg := "command pull not support node group"
 		output.PrintFatalln(emsg)

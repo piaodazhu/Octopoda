@@ -97,7 +97,7 @@ func FileUpload(ctx *gin.Context) {
 	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
-		result := protocols.ExecutionResults{
+		result := protocols.ExecutionResult{
 			Name:   "brain",
 			Code:   protocols.ExecOK,
 			Result: "OK",
@@ -204,7 +204,7 @@ func FileSpread(ctx *gin.Context) {
 }
 
 func pushFile(taskid string, name string, payload []byte) {
-	result := protocols.ExecutionResults{
+	result := protocols.ExecutionResult{
 		Name: name,
 		Code: protocols.ExecOK,
 	}
@@ -460,7 +460,7 @@ func FilePull(ctx *gin.Context) {
 	ctx.String(http.StatusAccepted, taskid)
 
 	go func() {
-		result := protocols.ExecutionResults{
+		result := protocols.ExecutionResult{
 			Name: name,
 			Code: protocols.ExecOK,
 		}

@@ -23,7 +23,7 @@ import (
 	"github.com/mholt/archiver/v3"
 )
 
-func Upload(localFileOrDir string, remoteTargetPath string, names []string, isForce bool) ([]protocols.ExecutionResults, *errs.OctlError) {
+func Upload(localFileOrDir string, remoteTargetPath string, names []string, isForce bool) ([]protocols.ExecutionResult, *errs.OctlError) {
 	nodes, err := workgroup.NodesParse(names)
 	if err != nil {
 		emsg := "node parse error: " + err.Error()
