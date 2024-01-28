@@ -14,8 +14,9 @@ var proxyClient *proxylite.ProxyLiteClient = nil
 var cancelFunc func()
 var done chan struct{}
 
-func RegisterSshService() (string, error) {
+func RegisterSshService(port uint32) (string, error) {
 	var err error
+	var ok bool
 	var proxyAddr string
 	proxyAddr, err = getProxyServerAddr()
 	if err != nil {
@@ -27,10 +28,13 @@ func RegisterSshService() (string, error) {
 		proxyClient.SetLogger(nil)
 	}
 
-	port, ok := proxyClient.AnyPort()
-	if !ok {
-		return "", errors.New("no any port avaliable on proxy server")
+	if port == 0 {
+		port, ok = proxyClient.AnyPort()
+		if !ok {
+			return "", errors.New("no any port avaliable on proxy server")
+		}
 	}
+	
 	name := config.GlobalConfig.Name
 	cancelFunc, done, err = proxyClient.RegisterInnerService(proxylite.RegisterInfo{
 		OuterPort: port,
@@ -41,8 +45,25 @@ func RegisterSshService() (string, error) {
 		MaxServeConn: 20,
 	})
 	if err != nil {
-		proxyClient = nil
-		return "", err
+		// random port and retry.
+		port, ok = proxyClient.AnyPort()
+		if !ok {
+			return "", errors.New("no any port avaliable on proxy server")
+		}
+		cancelFunc, done, err = proxyClient.RegisterInnerService(proxylite.RegisterInfo{
+			OuterPort: port,
+			InnerAddr: ":22",
+			Name:      name,
+			Message:   "ssh proxy of " + name,
+		}, proxylite.ControlInfo{
+			MaxServeConn: 20,
+		})
+
+		// still failed
+		if err != nil {
+			proxyClient = nil
+			return "", err
+		}
 	}
 
 	proxyIpPort := strings.Split(proxyAddr, ":")

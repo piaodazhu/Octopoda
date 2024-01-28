@@ -37,5 +37,5 @@ env:
 pakma:
   port: 3450
   root: "/var/octopoda/tentacle/pakma/"
-  previewDuration: 120
+  previewDuration: 600
 jsonFast: true
