@@ -11,6 +11,8 @@ type SSHInfoDump struct {
 	Name     string
 	Username string
 	Password string
+	Ip       string
+	Port     uint32
 }
 
 type ProxyMsg struct {

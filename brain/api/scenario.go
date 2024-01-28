@@ -80,13 +80,13 @@ func ScenarioDelete(ctx *gin.Context) {
 
 	// check target nodes
 	// delete app
-	results := make([]protocols.ExecutionResults, len(dlist))
+	results := make([]protocols.ExecutionResult, len(dlist))
 	var wg sync.WaitGroup
 
 	for i := range dlist {
 		//payload
 		payload, _ := config.Jsoner.Marshal(&san.AppDeleteParams{
-			Name: dlist[i].AppName, 
+			Name:     dlist[i].AppName,
 			Scenario: dlist[i].ScenName,
 		})
 
@@ -107,7 +107,7 @@ func ScenarioDelete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, results)
 }
 
-func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
+func deleteApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResult) {
 	defer wg.Done()
 	result.Code = protocols.ExecOK
 
@@ -279,7 +279,7 @@ func ScenarioReset(ctx *gin.Context) {
 	rlist := model.GetNodeApps(name, version)
 
 	// check target nodes
-	results := make([]protocols.ExecutionResults, len(rlist))
+	results := make([]protocols.ExecutionResult, len(rlist))
 	var wg sync.WaitGroup
 
 	for i := range rlist {
@@ -311,7 +311,7 @@ func ScenarioReset(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, results)
 }
 
-func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResults) {
+func resetApp(name string, payload []byte, wg *sync.WaitGroup, result *protocols.ExecutionResult) {
 	defer wg.Done()
 	result.Code = protocols.ExecOK
 

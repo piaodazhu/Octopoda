@@ -85,13 +85,14 @@ func PrintJSON(message interface{}) {
 		printBytes([]byte(msg), config.GlobalConfig.OutputPretty)
 	case []byte:
 		printBytes(msg, config.GlobalConfig.OutputPretty)
-	case []protocols.ExecutionResults:
-		for i := range msg {
-			if msg[i].Code == 0 {
-				msg[i].Result = "\n" + msg[i].Result
+	case protocols.ExecutionResults:
+		results := msg.ToText()
+		for i := range results.Results {
+			if results.Results[i].Code == 0 {
+				results.Results[i].Result = "\n" + results.Results[i].Result
 			}
 		}
-		raw, _ := json.Marshal(msg)
+		raw, _ := json.Marshal(results)
 		printBytes(raw, config.GlobalConfig.OutputPretty)
 	default:
 		raw, _ := json.Marshal(msg)

@@ -2,6 +2,7 @@ package service
 
 import (
 	"net"
+	"strconv"
 
 	"github.com/piaodazhu/Octopoda/protocols"
 	"github.com/piaodazhu/Octopoda/tentacle/config"
@@ -15,8 +16,15 @@ func SshRegister(conn net.Conn, serialNum uint32, raw []byte) {
 		Msg:  "OK",
 	}
 	var payload []byte
+	var port uint32
 
-	serviceAddr, err := proxy.RegisterSshService()
+	v, err := strconv.Atoi(string(raw))
+	if err != nil {
+		// logger.SysInfo.Println("SshRegister parse port error: ", err, string(raw))
+		port = 0
+	}
+	port = uint32(v)
+	serviceAddr, err := proxy.RegisterSshService(port)
 	if err != nil {
 		msg.Code = 1
 		msg.Msg = err.Error()

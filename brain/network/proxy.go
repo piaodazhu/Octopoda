@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -43,6 +44,7 @@ func InitProxyServer() {
 				Name:     ctx.ServiceInfo().Name,
 				Username: sshinfo.Username,
 				Password: sshinfo.Password,
+				Port:     sshinfo.Port,
 			}
 			go autoRestore(info)
 		}
@@ -108,6 +110,8 @@ func dumpSshInfos() error {
 			Name:     key.(string),
 			Username: value.(protocols.SSHInfo).Username,
 			Password: value.(protocols.SSHInfo).Password,
+			Ip:       value.(protocols.SSHInfo).Ip,
+			Port:     value.(protocols.SSHInfo).Port,
 		})
 		return true
 	})
@@ -140,6 +144,7 @@ func GetSshInfo(name string) (protocols.SSHInfo, bool) {
 	if v, found := sshInfos.Load(name); found {
 		info := v.(protocols.SSHInfo)
 		if len(info.Username) == 0 || len(info.Ip) == 0 {
+			fmt.Println("call del 1")
 			DelSshInfo(name)
 			return protocols.SSHInfo{}, false
 		}
@@ -148,7 +153,7 @@ func GetSshInfo(name string) (protocols.SSHInfo, bool) {
 	return protocols.SSHInfo{}, false
 }
 
-func askRegister(name string) error {
+func askRegister(name string, port uint32) error {
 	if name == "brain" {
 		ip, _ := GetOctlFaceIp()
 		CompleteSshInfo(name, ip, uint32(config.GlobalConfig.OctlFace.SshPort))
@@ -157,7 +162,8 @@ func askRegister(name string) error {
 	if state, ok := model.GetNodeState(name); !ok || state != protocols.NodeStateReady {
 		return fmt.Errorf("invalid node %s", name)
 	}
-	raw, err := model.Request(name, protocols.TypeSshRegister, []byte{})
+
+	raw, err := model.Request(name, protocols.TypeSshRegister, []byte(strconv.Itoa(int(port))))
 	if err != nil {
 		return fmt.Errorf("cannot request node %s: %s", name, err.Error())
 	}
@@ -185,8 +191,8 @@ func innerRestore(info protocols.SSHInfoDump) error {
 		}
 	}
 	CreateSshInfo(info.Name, info.Username, info.Password)
-	if err := askRegister(info.Name); err != nil { // 不成功就删除
-		DelSshInfo(info.Name)
+	if err := askRegister(info.Name, info.Port); err != nil { // 不成功就删除?
+		// DelSshInfo(info.Name)
 		return errors.New("innerRestore: " + err.Error())
 	}
 	return nil
@@ -232,6 +238,11 @@ retryRestore:
 		retryCnt--
 		goto retryRestore
 	}
+
+	for _, info := range failed {
+		fmt.Println("call del 2")
+		DelSshInfo(info.Name)
+	}
 }
 
 func autoRestore(info protocols.SSHInfoDump) {
@@ -261,5 +272,6 @@ func autoRestore(info protocols.SSHInfoDump) {
 		fmt.Println("autoRestore: success: " + info.Name)
 		return
 	}
+	fmt.Println("call del 3")
 	DelSshInfo(info.Name)
 }

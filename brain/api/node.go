@@ -184,7 +184,13 @@ func NodePrune(ctx *gin.Context) {
 		return
 	}
 
-	model.PruneDeadNode(names)
+	pruned := model.PruneDeadNode(names)
+	if len(pruned) > 0 {
+		err = workgroup.RemoveMembers("", "", pruned...)
+		if err != nil {
+			logger.Exceptions.Printf("remove members when prune error: " + err.Error())
+		}
+	}
 	ctx.Status(200)
 }
 

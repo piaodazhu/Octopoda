@@ -61,7 +61,7 @@ func NodeStatus(names []string) (result *protocols.NodesStatus, err *errs.OctlEr
 	return
 }
 
-func UploadFile(localFileOrDir string, remoteTargetPath string, isForce bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func UploadFile(localFileOrDir string, remoteTargetPath string, isForce bool, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -75,7 +75,7 @@ func UploadFile(localFileOrDir string, remoteTargetPath string, isForce bool, na
 	return
 }
 
-func DownloadFile(remoteFileOrDir string, localTargetPath string, name string) (result *protocols.ExecutionResults, err *errs.OctlError) {
+func DownloadFile(remoteFileOrDir string, localTargetPath string, name string) (result *protocols.ExecutionResult, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return
@@ -89,33 +89,33 @@ func DownloadFile(remoteFileOrDir string, localTargetPath string, name string) (
 	return
 }
 
-func RunCommand(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func RunCommand(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	return run(cmd, 0, needAlign, -1, names)
 }
 
-func RunScript(scriptFile string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func RunScript(scriptFile string, needAlign bool, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	return run(scriptFile, 1, needAlign, -1, names)
 }
 
-func RunCommandBackground(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func RunCommandBackground(cmd string, needAlign bool, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	return run(cmd, 2, needAlign, -1, names)
 }
 
-func XRunCommand(cmd string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func XRunCommand(cmd string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	if delay < 0 {
 		delay = 0
 	}
 	return run(cmd, 0, needAlign, delay, names)
 }
 
-func XRunScript(scriptFile string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func XRunScript(scriptFile string, needAlign bool, delay int, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	if delay < 0 {
 		delay = 0
 	}
 	return run(scriptFile, 1, needAlign, delay, names)
 }
 
-func run(runtask string, cmdType int, needAlign bool, delay int, names []string) (results []protocols.ExecutionResults, err *errs.OctlError) {
+func run(runtask string, cmdType int, needAlign bool, delay int, names []string) (results []protocols.ExecutionResult, err *errs.OctlError) {
 	if !initalized {
 		err = errs.New(errs.OctlSdkNotInitializedError, "SDK haven't been initalized")
 		return

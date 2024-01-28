@@ -20,8 +20,8 @@ then
 fi
 
 NAME=$1
-INSTALL_ARCH=arm
-INSTALL_VERSION='1.8.2'
+INSTALL_ARCH=amd64
+INSTALL_VERSION='1.8.4'
 OUTPUT_DIR=./installers/
 
 HTTPNS_URL=https://10.108.30.85:3455/release

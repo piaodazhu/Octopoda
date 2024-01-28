@@ -17,7 +17,7 @@ import (
 	"github.com/briandowns/spinner"
 )
 
-func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error) {
+func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResult, error) {
 	url := fmt.Sprintf("https://%s/%s%s?taskid=%s",
 		config.BrainAddr,
 		config.GlobalConfig.Brain.ApiPrefix,
@@ -52,7 +52,7 @@ func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error
 				output.PrintInfoln("  [DONE]")
 			}
 
-			results := []protocols.ExecutionResults{}
+			results := []protocols.ExecutionResult{}
 			err = json.Unmarshal(msg, &results)
 			if err != nil {
 				emsg := "res unmarshal error: " + err.Error()
@@ -77,7 +77,7 @@ func WaitTask(prefix string, taskid string) ([]protocols.ExecutionResults, error
 	}
 }
 
-func makeCompatible(results []protocols.ExecutionResults) {
+func makeCompatible(results []protocols.ExecutionResult) {
 	for i := range results {
 		if results[i].Code == 0 {
 			results[i].ResultCompatible = "[OK]"

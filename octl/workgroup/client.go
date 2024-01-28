@@ -312,10 +312,15 @@ func (wg *workgroupClient) remoteAddMember(path string, names []string) error {
 
 func (wg *workgroupClient) remoteRemoveMember(path string, names []string) error {
 	var err error
-	if names, err = NodesParseNoCheck(names); err != nil {
+	var parsedNames []string
+	if parsedNames, err = NodesParseNoCheck(names); err != nil {
 		return err
 	}
-	return wg.remoteOperateMember(path, false, names)
+	if len(names) > 0 && len(parsedNames) == 0 {
+		output.PrintWarningln("no valid names to be removed. do you mean remove this workgroup?")
+		return fmt.Errorf("invalid names: %v", names)
+	}
+	return wg.remoteOperateMember(path, false, parsedNames)
 }
 
 func (wg *workgroupClient) remoteOperateMember(path string, isAdd bool, names []string) error {
